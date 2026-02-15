@@ -51,25 +51,28 @@ function SearchContent() {
       const q = searchParams.get('q');
       const set = searchParams.get('set');
       const num = searchParams.get('number');
+      const gameParam = searchParams.get('game');
       
       if (q) setQuery(q);
       if (set) setSetCode(set);
       if (num) setCardNumber(num);
+      if (gameParam) setGame(gameParam);
       
       if (q || set || num) {
-        performSearch(q || '', set || '', num || '');
+        // Use the game param directly to avoid stale state
+        performSearch(q || '', set || '', num || '', gameParam || 'all');
       }
     }
   }, [searchParams]);
 
-  const performSearch = async (searchQuery: string, set?: string, num?: string) => {
+  const performSearch = async (searchQuery: string, set?: string, num?: string, gameType?: string) => {
     if (!searchQuery.trim() && !set && !num) return;
     
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (searchQuery) params.append('q', searchQuery);
-      params.append('game', game);
+      params.append('game', gameType || game);
       if (set) params.append('set', set);
       if (num) params.append('number', num);
       
