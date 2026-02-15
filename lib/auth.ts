@@ -30,7 +30,7 @@ export function generateToken(user: User): string {
       name: user.name,
     },
     config.jwt.secret,
-    { expiresIn: config.jwt.expiresIn }
+    { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
   );
 }
 
