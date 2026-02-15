@@ -4,6 +4,7 @@ import "./globals.css";
 import MessengerWidget from "@/components/MessengerWidget";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthPromptProvider } from "@/components/AuthPromptModal";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,12 @@ export default function RootLayout({
           <AuthPromptProvider>
             {children}
             <MessengerWidget />
+            <Toaster 
+              position="bottom-right"
+              toastOptions={{
+                className: 'dark:bg-gray-800 dark:text-white',
+              }}
+            />
           </AuthPromptProvider>
         </ThemeProvider>
       </body>
