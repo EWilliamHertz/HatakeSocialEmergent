@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { Home, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Bell } from 'lucide-react';
+import { Home, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Bell, Users, ArrowRightLeft, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 
 interface User {
@@ -15,8 +15,10 @@ interface User {
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -33,12 +35,24 @@ export default function Navbar() {
     router.push('/');
   };
 
+  const isActive = (path: string) => pathname === path;
+
   if (loading) return null;
 
   if (!user) return null;
 
+  const navLinks = [
+    { href: '/feed', icon: Home, label: 'Feed' },
+    { href: '/search', icon: Search, label: 'Search' },
+    { href: '/collection', icon: Package, label: 'Collection' },
+    { href: '/marketplace', icon: ShoppingBag, label: 'Market' },
+    { href: '/trades', icon: ArrowRightLeft, label: 'Trades' },
+    { href: '/friends', icon: Users, label: 'Friends' },
+    { href: '/messages', icon: MessageCircle, label: 'Messages' },
+  ];
+
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50" data-testid="navbar">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -55,36 +69,42 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Navigation Links */}
-          <div className="flex items-center gap-6">
-            <Link href="/feed" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition">
-              <Home className="w-5 h-5" />
-              <span className="hidden md:inline">Feed</span>
-            </Link>
-            <Link href="/search" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition">
-              <Search className="w-5 h-5" />
-              <span className="hidden md:inline">Search</span>
-            </Link>
-            <Link href="/collection" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition">
-              <Package className="w-5 h-5" />
-              <span className="hidden md:inline">Collection</span>
-            </Link>
-            <Link href="/marketplace" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition">
-              <ShoppingBag className="w-5 h-5" />
-              <span className="hidden md:inline">Market</span>
-            </Link>
-            <Link href="/messages" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition">
-              <MessageCircle className="w-5 h-5" />
-              <span className="hidden md:inline">Messages</span>
-            </Link>
+          {/* Desktop Navigation Links */}
+          <div className="hidden lg:flex items-center gap-4">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link 
+                  key={link.href}
+                  href={link.href} 
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
+                    isActive(link.href) 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                  }`}
+                  data-testid={`nav-${link.label.toLowerCase()}`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="hidden xl:inline text-sm font-medium">{link.label}</span>
+                </Link>
+              );
+            })}
           </div>
 
           {/* User Menu */}
           <div className="flex items-center gap-4">
-            <button className="relative text-gray-600 hover:text-blue-600">
+            <button 
+              className="relative text-gray-600 hover:text-blue-600"
+              data-testid="notifications-btn"
+            >
               <Bell className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-3">
+            
+            <Link 
+              href="/profile"
+              className="flex items-center gap-2 text-gray-600 hover:text-blue-600"
+              data-testid="profile-link"
+            >
               {user.picture ? (
                 <Image src={user.picture} alt={user.name} width={32} height={32} className="rounded-full" />
               ) : (
@@ -92,12 +112,60 @@ export default function Navbar() {
                   {user.name.charAt(0).toUpperCase()}
                 </div>
               )}
-              <button onClick={handleLogout} className="text-gray-600 hover:text-red-600">
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
+              <span className="hidden md:inline text-sm font-medium">{user.name.split(' ')[0]}</span>
+            </Link>
+            
+            <button 
+              onClick={handleLogout} 
+              className="text-gray-600 hover:text-red-600 hidden md:block"
+              data-testid="logout-btn"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+
+            {/* Mobile Menu Button */}
+            <button 
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="lg:hidden p-2 text-gray-600"
+              data-testid="mobile-menu-btn"
+            >
+              {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {showMobileMenu && (
+          <div className="lg:hidden border-t border-gray-200 py-4">
+            <div className="grid grid-cols-4 gap-2">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link 
+                    key={link.href}
+                    href={link.href} 
+                    onClick={() => setShowMobileMenu(false)}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${
+                      isActive(link.href) 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="text-xs">{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="mt-4 w-full flex items-center justify-center gap-2 p-3 text-red-600 hover:bg-red-50 rounded-lg"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   );
