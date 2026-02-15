@@ -60,10 +60,40 @@ export interface PokemonCard {
   };
 }
 
+export interface PokemonSearchOptions {
+  name?: string;
+  setId?: string;
+  number?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+// Build Lucene-style query for Pokemon TCG API
+function buildPokemonQuery(options: PokemonSearchOptions): string {
+  const parts: string[] = [];
+  
+  if (options.name) {
+    // Use wildcard for partial matching
+    parts.push(`name:${options.name}*`);
+  }
+  
+  if (options.setId) {
+    parts.push(`set.id:${options.setId}`);
+  }
+  
+  if (options.number) {
+    parts.push(`number:${options.number}`);
+  }
+  
+  return parts.join(' ');
+}
+
 export async function searchPokemonCards(
   query: string,
   page: number = 1,
-  pageSize: number = 50
+  pageSize: number = 50,
+  setId?: string,
+  number?: string
 ): Promise<{ data: PokemonCard[]; totalCount: number }> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -73,15 +103,32 @@ export async function searchPokemonCards(
     headers['X-Api-Key'] = config.pokemon.apiKey;
   }
 
-  const url = `${config.pokemon.baseUrl}/cards?q=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`;
+  // Build the search query using Pokemon TCG API Lucene syntax
+  const searchQuery = buildPokemonQuery({
+    name: query,
+    setId,
+    number,
+  });
 
-  const response = await fetch(url, { headers });
+  const url = `${config.pokemon.baseUrl}/cards?q=${encodeURIComponent(searchQuery)}&page=${page}&pageSize=${pageSize}`;
+  
+  console.log('[Pokemon API] Searching with URL:', url);
+  console.log('[Pokemon API] API Key present:', !!config.pokemon.apiKey);
+
+  const response = await fetch(url, { 
+    headers,
+    signal: AbortSignal.timeout(30000) // 30 second timeout
+  });
 
   if (!response.ok) {
-    throw new Error(`Pokemon API error: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('[Pokemon API] Error response:', response.status, errorText);
+    throw new Error(`Pokemon API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
+  console.log('[Pokemon API] Found', data.totalCount || 0, 'cards');
+  
   return {
     data: data.data || [],
     totalCount: data.totalCount || 0,
