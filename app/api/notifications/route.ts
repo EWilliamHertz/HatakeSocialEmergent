@@ -71,3 +71,42 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
+
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const sessionToken = request.cookies.get('session_token')?.value;
+    if (!sessionToken) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const user = await getSessionUser(sessionToken);
+    if (!user) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
+
+    const { notificationId } = await request.json();
+
+    if (notificationId) {
+      // Delete single notification
+      await sql`
+        DELETE FROM notifications
+        WHERE notification_id = ${notificationId} AND user_id = ${user.user_id}
+      `;
+    } else {
+      // Delete all notifications
+      await sql`
+        DELETE FROM notifications
+        WHERE user_id = ${user.user_id}
+      `;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
