@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { Home, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Bell, Users, ArrowRightLeft, Menu, X } from 'lucide-react';
+import { Home, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound } from 'lucide-react';
 import Link from 'next/link';
+import NotificationsDropdown from './NotificationsDropdown';
+import ThemeToggle from './ThemeToggle';
 
 interface User {
   user_id: string;
@@ -48,11 +50,12 @@ export default function Navbar() {
     { href: '/marketplace', icon: ShoppingBag, label: 'Market' },
     { href: '/trades', icon: ArrowRightLeft, label: 'Trades' },
     { href: '/friends', icon: Users, label: 'Friends' },
+    { href: '/groups', icon: UsersRound, label: 'Groups' },
     { href: '/messages', icon: MessageCircle, label: 'Messages' },
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50" data-testid="navbar">
+    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50" data-testid="navbar">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -70,7 +73,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-2">
             {navLinks.map((link) => {
               const Icon = link.icon;
               return (
@@ -79,8 +82,8 @@ export default function Navbar() {
                   href={link.href} 
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
                     isActive(link.href) 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                   data-testid={`nav-${link.label.toLowerCase()}`}
                 >
@@ -92,17 +95,13 @@ export default function Navbar() {
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center gap-4">
-            <button 
-              className="relative text-gray-600 hover:text-blue-600"
-              data-testid="notifications-btn"
-            >
-              <Bell className="w-5 h-5" />
-            </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <NotificationsDropdown />
             
             <Link 
               href="/profile"
-              className="flex items-center gap-2 text-gray-600 hover:text-blue-600"
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-2"
               data-testid="profile-link"
             >
               {user.picture ? (
@@ -117,7 +116,7 @@ export default function Navbar() {
             
             <button 
               onClick={handleLogout} 
-              className="text-gray-600 hover:text-red-600 hidden md:block"
+              className="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hidden md:block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
               data-testid="logout-btn"
             >
               <LogOut className="w-5 h-5" />
@@ -126,7 +125,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button 
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="lg:hidden p-2 text-gray-600"
+              className="lg:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               data-testid="mobile-menu-btn"
             >
               {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -136,7 +135,7 @@ export default function Navbar() {
 
         {/* Mobile Navigation Menu */}
         {showMobileMenu && (
-          <div className="lg:hidden border-t border-gray-200 py-4">
+          <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 py-4">
             <div className="grid grid-cols-4 gap-2">
               {navLinks.map((link) => {
                 const Icon = link.icon;
@@ -147,8 +146,8 @@ export default function Navbar() {
                     onClick={() => setShowMobileMenu(false)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${
                       isActive(link.href) 
-                        ? 'bg-blue-50 text-blue-600' 
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -159,7 +158,7 @@ export default function Navbar() {
             </div>
             <button
               onClick={handleLogout}
-              className="mt-4 w-full flex items-center justify-center gap-2 p-3 text-red-600 hover:bg-red-50 rounded-lg"
+              className="mt-4 w-full flex items-center justify-center gap-2 p-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
             >
               <LogOut className="w-5 h-5" />
               <span>Sign Out</span>
