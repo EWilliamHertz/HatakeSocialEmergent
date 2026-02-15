@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import { Search, Grid, List, Plus, Heart } from 'lucide-react';
 import Image from 'next/image';
 
+export const dynamic = 'force-dynamic';
+
 interface Card {
   id: string;
   name: string;
