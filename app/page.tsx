@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Sparkles, Users, ShoppingBag, MessageCircle } from 'lucide-react';
+import { Search, Users, ShoppingBag, MessageCircle, Sparkles } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Home() {
   const router = useRouter();
@@ -10,21 +11,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated
-    fetch('/api/auth/me', {
-      credentials: 'include',
-    })
+    fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
-        if (res.ok) {
-          // User is authenticated, redirect to feed
-          router.push('/feed');
-        } else {
-          setIsLoading(false);
-        }
+        if (res.ok) router.push('/feed');
+        else setIsLoading(false);
       })
-      .catch(() => {
-        setIsLoading(false);
-      });
+      .catch(() => setIsLoading(false));
   }, [router]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -44,12 +36,20 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Hero Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="flex items-center justify-center mb-6">
-            <Sparkles className="w-12 h-12 text-blue-600" />
+          {/* Logo */}
+          <div className="flex items-center justify-center mb-8">
+            <Image
+              src="https://i.imgur.com/B06rBhI.png"
+              alt="TCG Social Hub Logo"
+              width={120}
+              height={120}
+              className="rounded-2xl shadow-lg"
+              priority
+            />
           </div>
+
           <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
             TCG Social Hub
           </h1>
@@ -73,7 +73,7 @@ export default function Home() {
           </form>
 
           {/* CTA Buttons */}
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center mb-20">
             <button
               onClick={() => router.push('/auth/signup')}
               className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
@@ -90,7 +90,7 @@ export default function Home() {
         </div>
 
         {/* Features */}
-        <div className="grid md:grid-cols-4 gap-8 mt-20 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
           <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
               <Search className="w-6 h-6 text-blue-600" />
