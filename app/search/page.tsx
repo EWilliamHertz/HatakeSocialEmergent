@@ -24,17 +24,19 @@ interface Card {
 export default function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [query, setQuery] = useState(searchParams?.get('q') || '');
+  const [query, setQuery] = useState('');
   const [game, setGame] = useState('all');
   const [results, setResults] = useState<Card[]>([]);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
-    const q = searchParams?.get('q');
-    if (q) {
-      setQuery(q);
-      performSearch(q);
+    if (searchParams) {
+      const q = searchParams.get('q');
+      if (q) {
+        setQuery(q);
+        performSearch(q);
+      }
     }
   }, [searchParams]);
 
