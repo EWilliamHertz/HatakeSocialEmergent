@@ -52,7 +52,7 @@ export async function getUserFromToken(token: string): Promise<User | null> {
     WHERE user_id = ${decoded.user_id}
   `;
 
-  return result[0] || null;
+  return (result[0] as User) || null;
 }
 
 export async function createSession(
@@ -77,7 +77,7 @@ export async function getSessionUser(
       AND s.expires_at > NOW()
   `;
 
-  return result[0] || null;
+  return (result[0] as User) || null;
 }
 
 export async function deleteSession(sessionToken: string) {
