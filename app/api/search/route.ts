@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { searchPokemonCards } from '@/lib/pokemon-api';
 import { searchScryfallCards } from '@/lib/scryfall-api';
 
-// Use edge runtime for faster response times
-export const runtime = 'edge';
-
 // Maximum results to return to prevent timeouts
 const MAX_RESULTS = 50;
 
