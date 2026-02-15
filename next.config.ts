@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ['@neondatabase/serverless'],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
   images: {
     remotePatterns: [
       {
@@ -17,6 +23,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'c1.scryfall.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
       },
     ],
   },
