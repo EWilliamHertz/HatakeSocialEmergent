@@ -18,7 +18,7 @@ async function setupDatabase() {
   try {
     for (const statement of statements) {
       if (statement.trim()) {
-        await sql([statement]);
+        await sql`${sql(statement)}`;
       }
     }
     console.log('✅ Database setup complete!');
