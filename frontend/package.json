@@ -1,1 +1,7 @@
-/app/package.json
+{
+  "name": "tcg-hub-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "cd /app && yarn start"
+  }
+}
