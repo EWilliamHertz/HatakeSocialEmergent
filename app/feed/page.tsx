@@ -5,9 +5,12 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Users, Globe, Hash, Heart, MessageCircle, Send } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
+// 1. Added user_id to the interface so TypeScript doesn't complain
 interface Post {
   post_id: string;
+  user_id: string; 
   content: string;
   name: string;
   picture?: string;
@@ -27,8 +30,7 @@ export default function FeedPage() {
   const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check auth
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch('/api/auth/me')
       .then((res) => {
         if (!res.ok) {
           router.push('/auth/login');
@@ -39,12 +41,19 @@ export default function FeedPage() {
       })
       .then(() => loadPosts())
       .catch(() => router.push('/auth/login'));
-  }, [router, tab]);
+  }, [router, tab]); // Added tab to dependency to reload when tab switches
+
+  // Added tab dependency here so it re-fetches when you switch tabs
+  useEffect(() => {
+    if (authenticated) {
+        loadPosts();
+    }
+  }, [tab, authenticated]);
 
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/feed?tab=${tab}`, { credentials: 'include' });
+      const res = await fetch(`/api/feed?tab=${tab}`);
       const data = await res.json();
       if (data.success) {
         setPosts(data.posts || []);
@@ -63,7 +72,6 @@ export default function FeedPage() {
       const res = await fetch('/api/feed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ content: newPost, visibility: tab === 'public' ? 'public' : 'friends' }),
       });
       
@@ -78,43 +86,47 @@ export default function FeedPage() {
 
   const toggleLike = async (postId: string) => {
     try {
-      await fetch(`/api/feed/${postId}/like`, { method: 'POST', credentials: 'include' });
-      loadPosts();
+      await fetch(`/api/feed/${postId}/like`, { method: 'POST' });
+      // Optimistic update (feels faster)
+      setPosts(current => current.map(p => {
+        if (p.post_id === postId) {
+            return {
+                ...p,
+                liked: !p.liked,
+                like_count: p.liked ? p.like_count - 1 : p.like_count + 1
+            };
+        }
+        return p;
+      }));
     } catch (error) {
       console.error('Like error:', error);
+      loadPosts(); // Fallback to reload if error
     }
   };
 
   if (!authenticated) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-2xl"> {/* Reduced max-w for better feed look */}
+        
         {/* Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-6 p-2 flex gap-2">
-          <button
-            onClick={() => setTab('friends')}
-            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'friends' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-          >
-            <Users className="w-5 h-5 inline mr-2" />
-            Friends
-          </button>
-          <button
-            onClick={() => setTab('groups')}
-            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'groups' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-          >
-            <Hash className="w-5 h-5 inline mr-2" />
-            Groups
-          </button>
-          <button
-            onClick={() => setTab('public')}
-            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'public' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-          >
-            <Globe className="w-5 h-5 inline mr-2" />
-            Public
-          </button>
+          {['friends', 'groups', 'public'].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition capitalize flex items-center justify-center gap-2
+                ${tab === t ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+            >
+              {t === 'friends' && <Users className="w-5 h-5" />}
+              {t === 'groups' && <Hash className="w-5 h-5" />}
+              {t === 'public' && <Globe className="w-5 h-5" />}
+              {t}
+            </button>
+          ))}
         </div>
 
         {/* Create Post */}
@@ -122,7 +134,7 @@ export default function FeedPage() {
           <textarea
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
-            placeholder="Share your latest pull, trade, or TCG thoughts..."
+            placeholder={`What's happening in your collection?`}
             className="w-full p-4 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             rows={3}
           />
@@ -138,7 +150,7 @@ export default function FeedPage() {
           </div>
         </div>
 
-        {/* Posts */}
+        {/* Posts Feed */}
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -152,20 +164,37 @@ export default function FeedPage() {
           <div className="space-y-6">
             {posts.map((post) => (
               <div key={post.post_id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                {/* Post Header */}
+                
+                {/* --- HEADER WITH LINKS --- */}
                 <div className="flex items-center gap-3 mb-4">
-                  {post.picture ? (
-                    <Image src={post.picture} alt={post.name} width={40} height={40} className="rounded-full" />
-                  ) : (
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                      {post.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  {/* Link wrapping the Avatar */}
+                  <Link href={`/profile/${post.user_id}`} className="hover:opacity-80 transition">
+                    {post.picture ? (
+                      <Image 
+                        src={post.picture} 
+                        alt={post.name} 
+                        width={40} 
+                        height={40} 
+                        className="rounded-full object-cover" 
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        {post.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </Link>
+
+                  {/* Link wrapping the Name */}
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{post.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(post.created_at).toLocaleDateString()}</p>
+                    <Link href={`/profile/${post.user_id}`} className="hover:underline hover:text-blue-600">
+                      <p className="font-semibold text-gray-900 dark:text-white">{post.name}</p>
+                    </Link>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {new Date(post.created_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
+                {/* --- END HEADER --- */}
 
                 {/* Post Content */}
                 <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">{post.content}</p>

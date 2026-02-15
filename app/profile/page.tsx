@@ -3,259 +3,206 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { User, Package, ShoppingBag, Users, Settings, Camera } from 'lucide-react';
+import { Users, Globe, Hash, Heart, MessageCircle, Send } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
-interface UserProfile {
-  user_id: string;
+interface Post {
+  post_id: string;
+  content: string;
   name: string;
-  email: string;
   picture?: string;
-  bio?: string;
+  like_count: number;
+  comment_count: number;
+  liked: boolean;
   created_at: string;
+  card_data?: any;
 }
 
-interface Stats {
-  collection_count: number;
-  listings_count: number;
-  friends_count: number;
-  trades_count: number;
-}
-
-export default function ProfilePage() {
+export default function FeedPage() {
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [stats, setStats] = useState<Stats>({
-    collection_count: 0,
-    listings_count: 0,
-    friends_count: 0,
-    trades_count: 0
-  });
+  const [tab, setTab] = useState('public');
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editBio, setEditBio] = useState('');
+  const [newPost, setNewPost] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
+    // Check auth
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
         if (!res.ok) {
           router.push('/auth/login');
           return;
         }
+        setAuthenticated(true);
         return res.json();
       })
-      .then((data) => {
-        if (data?.user) {
-          setUser(data.user);
-          setEditName(data.user.name);
-          setEditBio(data.user.bio || '');
-          loadStats();
-        }
-      })
-      .catch(() => router.push('/auth/login'))
-      .finally(() => setLoading(false));
-  }, [router]);
+      .then(() => loadPosts())
+      .catch(() => router.push('/auth/login'));
+  }, [router, tab]);
 
-  const loadStats = async () => {
+  const loadPosts = async () => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/profile/stats', { credentials: 'include' });
+      const res = await fetch(`/api/feed?tab=${tab}`, { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
-        setStats(data.stats);
+        setPosts(data.posts || []);
       }
     } catch (error) {
-      console.error('Load stats error:', error);
+      console.error('Load posts error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const saveProfile = async () => {
+  const createPost = async () => {
+    if (!newPost.trim()) return;
+    
     try {
-      const res = await fetch('/api/profile', {
-        method: 'PATCH',
+      const res = await fetch('/api/feed', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          name: editName,
-          bio: editBio
-        })
+        body: JSON.stringify({ content: newPost, visibility: tab === 'public' ? 'public' : 'friends' }),
       });
       
       if (res.ok) {
-        const data = await res.json();
-        if (data.user) {
-          setUser(data.user);
-        }
-        setEditing(false);
+        setNewPost('');
+        loadPosts();
       }
     } catch (error) {
-      console.error('Save profile error:', error);
+      console.error('Create post error:', error);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="flex items-center justify-center h-[80vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
-  }
+  const toggleLike = async (postId: string) => {
+    try {
+      await fetch(`/api/feed/${postId}/like`, { method: 'POST', credentials: 'include' });
+      loadPosts();
+    } catch (error) {
+      console.error('Like error:', error);
+    }
+  };
 
-  if (!user) return null;
+  if (!authenticated) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Profile Header */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-          {/* Cover */}
-          <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600"></div>
-          
-          {/* Profile Info */}
-          <div className="px-6 pb-6">
-            <div className="flex flex-col md:flex-row items-start md:items-end gap-4 -mt-12">
-              <div className="relative">
-                {user.picture ? (
-                  <Image 
-                    src={user.picture} 
-                    alt={user.name} 
-                    width={96} 
-                    height={96} 
-                    className="rounded-full border-4 border-white shadow-lg"
-                  />
-                ) : (
-                  <div className="w-24 h-24 bg-blue-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-white text-3xl font-bold">
-                    {user.name.charAt(0).toUpperCase()}
+        {/* Tabs */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-6 p-2 flex gap-2">
+          <button
+            onClick={() => setTab('friends')}
+            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'friends' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          >
+            <Users className="w-5 h-5 inline mr-2" />
+            Friends
+          </button>
+          <button
+            onClick={() => setTab('groups')}
+            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'groups' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          >
+            <Hash className="w-5 h-5 inline mr-2" />
+            Groups
+          </button>
+          <button
+            onClick={() => setTab('public')}
+            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'public' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          >
+            <Globe className="w-5 h-5 inline mr-2" />
+            Public
+          </button>
+        </div>
+
+        {/* Create Post */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          <textarea
+            value={newPost}
+            onChange={(e) => setNewPost(e.target.value)}
+            placeholder="Share your latest pull, trade, or TCG thoughts..."
+            className="w-full p-4 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            rows={3}
+          />
+          <div className="flex justify-end mt-3">
+            <button
+              onClick={createPost}
+              disabled={!newPost.trim()}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              Post
+            </button>
+          </div>
+        </div>
+
+        {/* Posts */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+            <Globe className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No posts yet. Be the first to share!</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {posts.map((post) => (
+              <div className="flex items-center gap-3 mb-4">
+  <Link href={`/profile/${post.user_id}`}>
+     {/* Wrap Image and Name in Link */}
+     {post.picture ? (
+       <Image src={post.picture} ... />
+     ) : ( ... )}
+  </Link>
+  <div>
+    <Link href={`/profile/${post.user_id}`} className="hover:underline">
+      <p className="font-semibold">{post.name}</p>
+    </Link>
+    <p className="text-sm text-gray-500">...</p>
+  </div>
+</div>
+              <div key={post.post_id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                {/* Post Header */}
+                <div className="flex items-center gap-3 mb-4">
+                  {post.picture ? (
+                    <Image src={post.picture} alt={post.name} width={40} height={40} className="rounded-full" />
+                  ) : (
+                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                      {post.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">{post.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(post.created_at).toLocaleDateString()}</p>
                   </div>
-                )}
-                <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100">
-                  <Camera className="w-4 h-4 text-gray-600" />
-                </button>
-              </div>
-              
-              <div className="flex-1 pt-4 md:pt-0">
-                {editing ? (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="text-2xl font-bold border-b-2 border-blue-600 focus:outline-none w-full"
-                      placeholder="Your name"
-                    />
-                    <textarea
-                      value={editBio}
-                      onChange={(e) => setEditBio(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg text-gray-600"
-                      placeholder="Tell us about yourself..."
-                      rows={2}
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h1 className="text-2xl font-bold">{user.name}</h1>
-                    <p className="text-gray-600">{user.bio || 'No bio yet'}</p>
-                  </>
-                )}
-                <p className="text-sm text-gray-500 mt-1">
-                  Member since {new Date(user.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              
-              <div className="flex gap-2">
-                {editing ? (
-                  <>
-                    <button
-                      onClick={() => setEditing(false)}
-                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={saveProfile}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      Save
-                    </button>
-                  </>
-                ) : (
+                </div>
+
+                {/* Post Content */}
+                <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">{post.content}</p>
+
+                {/* Post Actions */}
+                <div className="flex items-center gap-6 pt-4 border-t border-gray-100 dark:border-gray-700">
                   <button
-                    onClick={() => setEditing(true)}
-                    className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center gap-2"
-                    data-testid="edit-profile-btn"
+                    onClick={() => toggleLike(post.post_id)}
+                    className={`flex items-center gap-2 ${post.liked ? 'text-red-600' : 'text-gray-600 dark:text-gray-400'} hover:text-red-600 transition`}
                   >
-                    <Settings className="w-4 h-4" />
-                    Edit Profile
+                    <Heart className={`w-5 h-5 ${post.liked ? 'fill-current' : ''}`} />
+                    <span>{post.like_count || 0}</span>
                   </button>
-                )}
+                  <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition">
+                    <MessageCircle className="w-5 h-5" />
+                    <span>{post.comment_count || 0}</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-            <Package className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{stats.collection_count}</p>
-            <p className="text-gray-600 text-sm">Cards</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-            <ShoppingBag className="w-8 h-8 text-green-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{stats.listings_count}</p>
-            <p className="text-gray-600 text-sm">Listings</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-            <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{stats.friends_count}</p>
-            <p className="text-gray-600 text-sm">Friends</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-            <User className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{stats.trades_count}</p>
-            <p className="text-gray-600 text-sm">Trades</p>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-bold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button
-              onClick={() => router.push('/collection')}
-              className="p-4 bg-blue-50 rounded-lg text-blue-600 hover:bg-blue-100 transition text-center"
-            >
-              <Package className="w-6 h-6 mx-auto mb-2" />
-              <span className="text-sm font-semibold">My Collection</span>
-            </button>
-            <button
-              onClick={() => router.push('/marketplace')}
-              className="p-4 bg-green-50 rounded-lg text-green-600 hover:bg-green-100 transition text-center"
-            >
-              <ShoppingBag className="w-6 h-6 mx-auto mb-2" />
-              <span className="text-sm font-semibold">Marketplace</span>
-            </button>
-            <button
-              onClick={() => router.push('/friends')}
-              className="p-4 bg-purple-50 rounded-lg text-purple-600 hover:bg-purple-100 transition text-center"
-            >
-              <Users className="w-6 h-6 mx-auto mb-2" />
-              <span className="text-sm font-semibold">Friends</span>
-            </button>
-            <button
-              onClick={() => router.push('/search')}
-              className="p-4 bg-orange-50 rounded-lg text-orange-600 hover:bg-orange-100 transition text-center"
-            >
-              <Package className="w-6 h-6 mx-auto mb-2" />
-              <span className="text-sm font-semibold">Search Cards</span>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
