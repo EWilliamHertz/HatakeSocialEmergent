@@ -4,7 +4,7 @@ import sql from '@/lib/db';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     const sessionToken = request.cookies.get('session_token')?.value;
@@ -17,7 +17,7 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    const { postId } = params;
+    const { postId } = await params;
 
     // Check if already liked
     const existing = await sql`

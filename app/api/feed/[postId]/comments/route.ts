@@ -5,7 +5,7 @@ import sql from '@/lib/db';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     const sessionToken = request.cookies.get('session_token')?.value;
@@ -19,7 +19,7 @@ export async function POST(
     }
 
     const { content } = await request.json();
-    const { postId } = params;
+    const { postId } = await params;
 
     if (!content) {
       return NextResponse.json(
@@ -47,10 +47,10 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const { postId } = params;
+    const { postId } = await params;
 
     const comments = await sql`
       SELECT c.*, u.name, u.picture
