@@ -134,3 +134,44 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const sessionToken = request.cookies.get('session_token')?.value;
+    if (!sessionToken) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const user = await getSessionUser(sessionToken);
+    if (!user) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
+
+    const { id, quantity, condition, foil, notes } = await request.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Item ID is required' },
+        { status: 400 }
+      );
+    }
+
+    await sql`
+      UPDATE collection_items
+      SET 
+        quantity = COALESCE(${quantity}, quantity),
+        condition = COALESCE(${condition}, condition),
+        foil = COALESCE(${foil}, foil),
+        notes = COALESCE(${notes}, notes)
+      WHERE id = ${id} AND user_id = ${user.user_id}
+    `;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Update collection item error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
