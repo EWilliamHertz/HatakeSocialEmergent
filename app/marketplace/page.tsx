@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { ShoppingBag, MessageCircle } from 'lucide-react';
+import { ShoppingBag, MessageCircle, Filter, X, Search, SlidersHorizontal, Plus } from 'lucide-react';
 import Image from 'next/image';
 
 interface Listing {
@@ -17,16 +17,28 @@ interface Listing {
   foil: boolean;
   quantity: number;
   description: string;
+  user_id: string;
   name: string;
   picture?: string;
   created_at: string;
 }
 
+const CONDITIONS = ['All', 'Mint', 'Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played', 'Damaged'];
+
 export default function MarketplacePage() {
   const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+  const [gameFilter, setGameFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
+  const [conditionFilter, setConditionFilter] = useState('All');
+  const [foilOnly, setFoilOnly] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const [currentUserId, setCurrentUserId] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -35,15 +47,31 @@ export default function MarketplacePage() {
           router.push('/auth/login');
           return;
         }
-        return loadListings();
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.user) {
+          setCurrentUserId(data.user.user_id);
+          loadListings();
+        }
       })
       .catch(() => router.push('/auth/login'));
-  }, [router, filter]);
+  }, [router]);
+
+  useEffect(() => {
+    if (currentUserId) {
+      loadListings();
+    }
+  }, [gameFilter, sortBy]);
 
   const loadListings = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/marketplace?game=${filter === 'all' ? '' : filter}`, {
+      const params = new URLSearchParams();
+      if (gameFilter !== 'all') params.append('game', gameFilter);
+      params.append('sort', sortBy);
+      
+      const res = await fetch(`/api/marketplace?${params.toString()}`, {
         credentials: 'include'
       });
       const data = await res.json();
@@ -66,6 +94,59 @@ export default function MarketplacePage() {
     return '/placeholder-card.png';
   };
 
+  const contactSeller = async (listing: Listing) => {
+    if (listing.user_id === currentUserId) {
+      alert("This is your own listing!");
+      return;
+    }
+    
+    try {
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          recipientId: listing.user_id,
+          content: `Hi! I'm interested in your listing: ${listing.card_data.name} for $${listing.price.toFixed(2)}`
+        })
+      });
+      router.push('/messages');
+    } catch (error) {
+      console.error('Contact seller error:', error);
+    }
+  };
+
+  // Apply client-side filters
+  const filteredListings = listings.filter(listing => {
+    // Search filter
+    if (searchQuery && !listing.card_data.name?.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    
+    // Price filters
+    if (priceMin && listing.price < parseFloat(priceMin)) return false;
+    if (priceMax && listing.price > parseFloat(priceMax)) return false;
+    
+    // Condition filter
+    if (conditionFilter !== 'All' && listing.condition !== conditionFilter) return false;
+    
+    // Foil filter
+    if (foilOnly && !listing.foil) return false;
+    
+    return true;
+  });
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setPriceMin('');
+    setPriceMax('');
+    setConditionFilter('All');
+    setFoilOnly(false);
+    setGameFilter('all');
+  };
+
+  const hasActiveFilters = searchQuery || priceMin || priceMax || conditionFilter !== 'All' || foilOnly || gameFilter !== 'all';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -73,32 +154,156 @@ export default function MarketplacePage() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">Marketplace</h1>
               <p className="text-gray-600">Buy and sell cards with the community</p>
             </div>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 flex items-center gap-2"
+              data-testid="create-listing-btn"
+            >
+              <Plus className="w-4 h-4" />
+              Sell Card
+            </button>
+          </div>
+          
+          {/* Search & Filter Bar */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex-1 min-w-64 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search listings..."
+                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                data-testid="marketplace-search"
+              />
+            </div>
+            
             <div className="flex gap-2">
               <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setGameFilter('all')}
+                className={`px-4 py-2 rounded-lg font-semibold transition ${gameFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 All
               </button>
               <button
-                onClick={() => setFilter('pokemon')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'pokemon' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setGameFilter('pokemon')}
+                className={`px-4 py-2 rounded-lg font-semibold transition ${gameFilter === 'pokemon' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Pokemon
               </button>
               <button
-                onClick={() => setFilter('mtg')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setGameFilter('mtg')}
+                className={`px-4 py-2 rounded-lg font-semibold transition ${gameFilter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
                 Magic
               </button>
             </div>
+            
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${showFilters ? 'border-blue-600 text-blue-600' : 'border-gray-300'}`}
+              data-testid="toggle-filters-btn"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+              {hasActiveFilters && (
+                <span className="bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">!</span>
+              )}
+            </button>
+            
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg"
+              data-testid="sort-select"
+            >
+              <option value="newest">Newest First</option>
+              <option value="price_low">Price: Low to High</option>
+              <option value="price_high">Price: High to Low</option>
+            </select>
           </div>
+          
+          {/* Advanced Filters Panel */}
+          {showFilters && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Min Price ($)</label>
+                  <input
+                    type="number"
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    data-testid="price-min-input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Price ($)</label>
+                  <input
+                    type="number"
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    placeholder="No limit"
+                    min="0"
+                    step="0.01"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    data-testid="price-max-input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                  <select
+                    value={conditionFilter}
+                    onChange={(e) => setConditionFilter(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    data-testid="condition-select"
+                  >
+                    {CONDITIONS.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={foilOnly}
+                      onChange={(e) => setFoilOnly(e.target.checked)}
+                      className="w-4 h-4"
+                      data-testid="foil-only-checkbox"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Foil/Holo Only</span>
+                  </label>
+                </div>
+              </div>
+              
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 text-sm text-blue-600 hover:underline flex items-center gap-1"
+                  data-testid="clear-filters-btn"
+                >
+                  <X className="w-4 h-4" />
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Results Info */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-gray-600">
+            {loading ? 'Loading...' : `${filteredListings.length} listings found`}
+          </p>
         </div>
 
         {/* Listings */}
@@ -106,15 +311,29 @@ export default function MarketplacePage() {
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           </div>
-        ) : listings.length === 0 ? (
+        ) : filteredListings.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-12 text-center">
             <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No listings available</p>
+            <p className="text-gray-500 mb-4">
+              {listings.length === 0 ? 'No listings available yet' : 'No listings match your filters'}
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-blue-600 hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {listings.map((listing) => (
-              <div key={listing.listing_id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition">
+            {filteredListings.map((listing) => (
+              <div 
+                key={listing.listing_id} 
+                className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition"
+                data-testid={`listing-${listing.listing_id}`}
+              >
                 <div className="relative aspect-[2/3]">
                   <Image
                     src={getCardImage(listing)}
@@ -138,15 +357,19 @@ export default function MarketplacePage() {
                   <h3 className="font-semibold text-sm mb-1 truncate">{listing.card_data.name}</h3>
                   <p className="text-xs text-gray-500 mb-2">{listing.condition}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-blue-600">
+                    <span className="text-lg font-bold text-green-600">
                       ${listing.price.toFixed(2)}
                     </span>
-                    <button
-                      className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                      title="Contact seller"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                    </button>
+                    {listing.user_id !== currentUserId && (
+                      <button
+                        onClick={() => contactSeller(listing)}
+                        className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        title="Contact seller"
+                        data-testid={`contact-seller-${listing.listing_id}`}
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     {listing.picture ? (
@@ -156,7 +379,9 @@ export default function MarketplacePage() {
                         {listing.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="text-xs text-gray-600 truncate">{listing.name}</span>
+                    <span className="text-xs text-gray-600 truncate">
+                      {listing.user_id === currentUserId ? 'Your listing' : listing.name}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -164,6 +389,32 @@ export default function MarketplacePage() {
           </div>
         )}
       </div>
+
+      {/* Create Listing Modal Placeholder */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-bold mb-4">Create Listing</h3>
+            <p className="text-gray-600 mb-4">
+              To sell a card, go to your Collection and use the "List for Sale" option on any card.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => router.push('/collection')}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Go to Collection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
