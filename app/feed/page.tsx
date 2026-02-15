@@ -88,29 +88,29 @@ export default function FeedPage() {
   if (!authenticated) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-sm mb-6 p-2 flex gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-6 p-2 flex gap-2">
           <button
             onClick={() => setTab('friends')}
-            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'friends' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'friends' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
           >
             <Users className="w-5 h-5 inline mr-2" />
             Friends
           </button>
           <button
             onClick={() => setTab('groups')}
-            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'groups' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'groups' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
           >
             <Hash className="w-5 h-5 inline mr-2" />
             Groups
           </button>
           <button
             onClick={() => setTab('public')}
-            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'public' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${tab === 'public' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
           >
             <Globe className="w-5 h-5 inline mr-2" />
             Public
@@ -118,12 +118,12 @@ export default function FeedPage() {
         </div>
 
         {/* Create Post */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <textarea
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             placeholder="Share your latest pull, trade, or TCG thoughts..."
-            className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full p-4 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             rows={3}
           />
           <div className="flex justify-end mt-3">
@@ -144,14 +144,14 @@ export default function FeedPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           </div>
         ) : posts.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <Globe className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No posts yet. Be the first to share!</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+            <Globe className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No posts yet. Be the first to share!</p>
           </div>
         ) : (
           <div className="space-y-6">
             {posts.map((post) => (
-              <div key={post.post_id} className="bg-white rounded-xl shadow-sm p-6">
+              <div key={post.post_id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
                 {/* Post Header */}
                 <div className="flex items-center gap-3 mb-4">
                   {post.picture ? (
@@ -162,24 +162,24 @@ export default function FeedPage() {
                     </div>
                   )}
                   <div>
-                    <p className="font-semibold">{post.name}</p>
-                    <p className="text-sm text-gray-500">{new Date(post.created_at).toLocaleDateString()}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{post.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(post.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
 
                 {/* Post Content */}
-                <p className="text-gray-800 mb-4 whitespace-pre-wrap">{post.content}</p>
+                <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">{post.content}</p>
 
                 {/* Post Actions */}
-                <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-6 pt-4 border-t border-gray-100 dark:border-gray-700">
                   <button
                     onClick={() => toggleLike(post.post_id)}
-                    className={`flex items-center gap-2 ${post.liked ? 'text-red-600' : 'text-gray-600'} hover:text-red-600 transition`}
+                    className={`flex items-center gap-2 ${post.liked ? 'text-red-600' : 'text-gray-600 dark:text-gray-400'} hover:text-red-600 transition`}
                   >
                     <Heart className={`w-5 h-5 ${post.liked ? 'fill-current' : ''}`} />
                     <span>{post.like_count || 0}</span>
                   </button>
-                  <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition">
+                  <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition">
                     <MessageCircle className="w-5 h-5" />
                     <span>{post.comment_count || 0}</span>
                   </button>
