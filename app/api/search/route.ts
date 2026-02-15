@@ -9,10 +9,13 @@ export async function GET(request: NextRequest) {
     const game = searchParams.get('game') || 'all';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const setCode = searchParams.get('set') || undefined;
+    const cardNumber = searchParams.get('number') || undefined;
 
-    if (!query) {
+    // Allow search without query if set or number is provided
+    if (!query && !setCode && !cardNumber) {
       return NextResponse.json(
-        { error: 'Query parameter is required' },
+        { error: 'Query parameter, set code, or card number is required' },
         { status: 400 }
       );
     }
@@ -22,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     if (game === 'pokemon' || game === 'all') {
       try {
-        const pokemonData = await searchPokemonCards(query, page, limit);
+        const pokemonData = await searchPokemonCards(query, page, limit, setCode, cardNumber);
         results = [
           ...results,
           ...pokemonData.data.map((card) => ({
