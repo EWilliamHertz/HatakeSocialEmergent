@@ -466,6 +466,17 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                   Posts
                 </button>
                 <button
+                  onClick={() => setActiveTab('chat')}
+                  className={`py-4 border-b-2 font-medium transition flex items-center gap-2 ${
+                    activeTab === 'chat'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Chat
+                </button>
+                <button
                   onClick={() => setActiveTab('members')}
                   className={`py-4 border-b-2 font-medium transition ${
                     activeTab === 'members'
@@ -475,6 +486,19 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                 >
                   Members ({members.length})
                 </button>
+                {(role === 'admin' || role === 'moderator') && (
+                  <button
+                    onClick={() => setActiveTab('invite')}
+                    className={`py-4 border-b-2 font-medium transition flex items-center gap-2 ${
+                      activeTab === 'invite'
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    Invite
+                  </button>
+                )}
               </div>
             </div>
           )}
