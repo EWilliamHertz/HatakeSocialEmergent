@@ -47,44 +47,87 @@ export interface PokemonSet {
 
 const TCGDEX_BASE = 'https://api.tcgdex.net/v2/en';
 
-// Search for Pokemon cards by name
-export async function searchPokemonCards(query: string): Promise<PokemonCard[]> {
+// Map TCGdex card to our standard format
+function mapTCGdexCard(card: any): PokemonCard {
+  return {
+    id: card.id,
+    name: card.name,
+    supertype: card.category || 'Pokemon',
+    subtypes: card.stage ? [card.stage] : [],
+    hp: card.hp?.toString(),
+    types: card.types || [],
+    set: {
+      id: card.set?.id || card.id?.split('-')[0] || '',
+      name: card.set?.name || '',
+      series: card.set?.serie || '',
+    },
+    number: card.localId || card.id?.split('-').pop() || '',
+    artist: card.illustrator,
+    rarity: card.rarity,
+    images: {
+      small: card.image ? `${card.image}/low.webp` : '',
+      large: card.image ? `${card.image}/high.webp` : '',
+    }
+  };
+}
+
+// Search for Pokemon cards (compatible with old API signature)
+export async function searchPokemonCards(
+  query: string, 
+  page: number = 1, 
+  limit: number = 50,
+  setCode?: string,
+  cardNumber?: string
+): Promise<{ data: PokemonCard[]; totalCount: number }> {
   try {
-    const response = await fetch(`${TCGDEX_BASE}/cards?name=${encodeURIComponent(query)}`, {
+    let url = `${TCGDEX_BASE}/cards`;
+    
+    if (query) {
+      url += `?name=${encodeURIComponent(query)}`;
+    }
+    
+    const response = await fetch(url, {
       signal: AbortSignal.timeout(15000)
     });
     
     if (!response.ok) {
       console.error('TCGdex API error:', response.status);
-      return [];
+      return { data: [], totalCount: 0 };
     }
     
-    const cards = await response.json();
+    let cards = await response.json();
     
-    // Map TCGdex format to our standard format
-    return cards.map((card: any) => ({
-      id: card.id,
-      name: card.name,
-      supertype: card.category || 'Pokemon',
-      subtypes: card.stage ? [card.stage] : [],
-      hp: card.hp?.toString(),
-      types: card.types || [],
-      set: {
-        id: card.set?.id || card.id?.split('-')[0] || '',
-        name: card.set?.name || '',
-        series: card.set?.serie || '',
-      },
-      number: card.localId || card.id?.split('-').pop() || '',
-      artist: card.illustrator,
-      rarity: card.rarity,
-      images: {
-        small: card.image ? `${card.image}/low.webp` : '',
-        large: card.image ? `${card.image}/high.webp` : '',
-      }
-    }));
+    // Filter by set code if provided
+    if (setCode) {
+      const setLower = setCode.toLowerCase();
+      cards = cards.filter((card: any) => 
+        card.id?.toLowerCase().includes(setLower) ||
+        card.set?.id?.toLowerCase() === setLower
+      );
+    }
+    
+    // Filter by card number if provided
+    if (cardNumber) {
+      cards = cards.filter((card: any) => 
+        card.localId === cardNumber || 
+        card.id?.endsWith('-' + cardNumber)
+      );
+    }
+    
+    // Pagination
+    const startIndex = (page - 1) * limit;
+    const paginatedCards = cards.slice(startIndex, startIndex + limit);
+    
+    // Map to standard format
+    const mappedCards = paginatedCards.map(mapTCGdexCard);
+    
+    return {
+      data: mappedCards,
+      totalCount: cards.length
+    };
   } catch (error) {
     console.error('Error searching Pokemon cards:', error);
-    return [];
+    return { data: [], totalCount: 0 };
   }
 }
 
