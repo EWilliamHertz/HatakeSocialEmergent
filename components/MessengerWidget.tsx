@@ -300,7 +300,51 @@ export default function MessengerWidget() {
 
   const startCall = (type: 'audio' | 'video') => {
     setCallType(type);
+    setIsReceivingCall(false);
     setShowVideoCall(true);
+  };
+
+  const acceptIncomingCall = () => {
+    if (!incomingCall) return;
+    
+    // Stop ringtone
+    if (ringtoneRef.current) {
+      ringtoneRef.current.pause();
+      ringtoneRef.current.currentTime = 0;
+    }
+    
+    setCallType(incomingCall.callType);
+    setIsReceivingCall(true);
+    setShowVideoCall(true);
+    setIncomingCall(null);
+  };
+
+  const rejectIncomingCall = async () => {
+    if (!incomingCall) return;
+    
+    // Stop ringtone
+    if (ringtoneRef.current) {
+      ringtoneRef.current.pause();
+      ringtoneRef.current.currentTime = 0;
+    }
+    
+    // Send rejection signal
+    try {
+      await fetch('/api/calls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          type: 'call_rejected',
+          target: incomingCall.callerId,
+          data: {}
+        })
+      });
+    } catch (err) {
+      console.error('Reject call error:', err);
+    }
+    
+    setIncomingCall(null);
   };
 
   const getSelectedConversation = () => {
