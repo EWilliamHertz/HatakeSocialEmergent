@@ -467,7 +467,10 @@ export default function NewTradePage() {
           {/* Right: Your Request */}
           <div className="space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-              <h3 className="font-bold text-gray-900 dark:text-white mb-3">You Request ({requestedCards.length} cards)</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900 dark:text-white">You Request ({requestedCards.length} cards)</h3>
+                <span className="text-lg font-bold text-blue-600">${requestedValue.toFixed(2)}</span>
+              </div>
               {requestedCards.length === 0 ? (
                 <p className="text-gray-500 text-sm text-center py-3">
                   {selectedPartner ? "Select cards from their collection below" : "Select a trade partner first"}
