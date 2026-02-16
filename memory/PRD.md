@@ -47,10 +47,25 @@ Create a new TCG social platform featuring:
    - **WebRTC Voice/Video Calls with Screensharing** (IMPLEMENTED)
 7. **Dark Mode**: ThemeProvider implemented
 8. **Notifications**: System with API endpoints
-9. **Groups**: Placeholder page created
+9. **Groups/Communities** (FULL FEATURE):
+   - Create public/private groups
+   - Group detail page with Posts/Members tabs
+   - Post to groups, like posts
+   - Member management with roles (admin, moderator, member)
+   - Join/leave groups
 10. **Auth Prompts**: Modal for unauthenticated users
+11. **Deck Builder** (FULL FEATURE):
+    - Create decks for MTG and Pokemon
+    - Choose format (Standard, Modern, Commander, etc.)
+    - Public/private visibility
+    - Search and add cards from Scryfall API
+    - Manage card quantities (add/remove/update)
+    - Main deck and sideboard categories
+    - Deck settings editor
+    - View deck statistics
 
 ### WebRTC Video Calling Features
+- WebSocket signaling server in FastAPI backend
 - Full-screen video call interface
 - Voice call mode (audio only)
 - Video call mode (audio + video)
