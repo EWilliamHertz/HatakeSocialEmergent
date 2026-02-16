@@ -364,6 +364,14 @@ export default function CollectionPage() {
             </div>
             <div className="flex gap-2">
               <button
+                onClick={() => setShowImportModal(true)}
+                className="px-4 py-2 rounded-lg font-semibold transition bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
+                data-testid="import-btn"
+              >
+                <Upload className="w-4 h-4" />
+                Import CSV
+              </button>
+              <button
                 onClick={() => setFilter('all')}
                 className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
                 data-testid="filter-all"
