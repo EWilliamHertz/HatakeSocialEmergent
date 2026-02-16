@@ -615,16 +615,31 @@ export default function MessengerWidget() {
       )}
 
       {/* Video Call Modal */}
-      {showVideoCall && selectedConv && (
+      {showVideoCall && (selectedConv || incomingCall) && (
         <VideoCall
           isOpen={showVideoCall}
-          onClose={() => setShowVideoCall(false)}
+          onClose={() => {
+            setShowVideoCall(false);
+            setIsReceivingCall(false);
+          }}
           callType={callType}
-          remoteUserId={getSelectedConversation()?.user_id || ''}
-          remoteUserName={getSelectedConversation()?.name || 'User'}
-          remoteUserPicture={getSelectedConversation()?.picture}
+          remoteUserId={isReceivingCall && incomingCall ? incomingCall.callerId : (getSelectedConversation()?.user_id || '')}
+          remoteUserName={isReceivingCall && incomingCall ? incomingCall.callerName : (getSelectedConversation()?.name || 'User')}
+          remoteUserPicture={isReceivingCall && incomingCall ? incomingCall.callerPicture : getSelectedConversation()?.picture}
           currentUserId={currentUserId}
           currentUserName={currentUserName}
+          isReceiver={isReceivingCall}
+        />
+      )}
+
+      {/* Incoming Call Modal */}
+      {incomingCall && !showVideoCall && (
+        <IncomingCall
+          callerName={incomingCall.callerName}
+          callerPicture={incomingCall.callerPicture}
+          callType={incomingCall.callType}
+          onAccept={acceptIncomingCall}
+          onReject={rejectIncomingCall}
         />
       )}
     </>
