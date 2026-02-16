@@ -18,188 +18,127 @@ Create a new TCG social platform featuring:
 - **Styling**: Tailwind CSS
 - **UI Components**: Custom components + Lucide Icons
 
-## What's Been Implemented
+## What's Been Implemented (December 2025)
 
 ### Core Infrastructure
 - [x] FastAPI proxy backend to handle platform routing (port 8001 → 3000)
 - [x] PostgreSQL (Neon) database connection
-- [x] Session-based authentication with cookies
+- [x] Session-based authentication with cookies (Fixed for HTTPS/preview deployments)
 - [x] Scryfall API integration for MTG cards (WORKING)
 
 ### Authentication
 - [x] Email/Password signup and login
 - [x] Google OAuth via Emergent Auth (session cookie properly set)
 - [x] Session management with httpOnly cookies
-- [x] Auth callback page
+- [x] Fixed secure cookie flag for HTTPS previews
 
 ### Features Implemented
-1. **Renamed App**: "TCG Social Hub" → "Hatake.Social" (all references updated)
-2. **Card Search**: Scryfall/MTG search working
-3. **Marketplace**: Fixed price.toFixed() error - prices now properly converted from string
-4. **Social Feed**: Posts with profile links on avatars
-5. **Friends System**: Add/remove friends, friendship status
-6. **Messaging System** (Enhanced):
-   - Shift+Enter for new lines
-   - Emoji picker (emoji-picker-react)
-   - Sound notifications for new messages
-   - Message anyone (not just friends)
-   - Media messages support (images/videos in database schema)
-   - **WebRTC Voice/Video Calls with Screensharing** (WORKING with REST Polling)
-7. **Dark Mode**: ThemeProvider implemented
-8. **Notifications**: System with API endpoints
-9. **Groups/Communities** (FULL FEATURE):
-   - Create public/private groups
-   - Group detail page with Posts/Members tabs
-   - Post to groups, like posts
-   - Member management with roles (admin, moderator, member)
-   - Join/leave groups
-10. **Auth Prompts**: Modal for unauthenticated users
-11. **Deck Builder** (FULL FEATURE):
-    - Create decks for MTG and Pokemon
-    - Choose format (Standard, Modern, Commander, etc.)
-    - Public/private visibility
-    - Search and add cards from Scryfall API
-    - Manage card quantities (add/remove/update)
-    - Main deck and sideboard categories
-    - Deck settings editor
-    - **Import decklist from text** (WORKING)
-12. **Trades** (FULL FEATURE):
-    - `/trades/new` page for creating new trade offers
-    - Select trade partner from friends
-    - Add cards from collection to offer
-    - Request specific cards
-    - Add notes to trade
-    - View active trades
 
-### Video Calling - REST Polling Implementation (Serverless Compatible)
-- **NEW**: REST API at `/api/calls` for signaling (replaces WebSocket)
-- In-memory signal store for low-latency polling
-- Supports all signaling: offers, answers, ICE candidates, call events
-- Video/Voice call buttons in MessengerWidget and Messages page
-- Full-screen video call interface
-- Voice call mode (audio only)
-- Video call mode (audio + video)
-- Screen sharing with system audio
-- Mute/unmute microphone
-- Toggle camera on/off
-- Call duration timer
+#### 1. **Card Search (Updated)**
+- Full card image display
+- Set code and collector number shown below each card
+- Price display
+- Add to collection button
+
+#### 2. **Deck Builder (Enhanced)**
+- **My Decks** and **Community Decks** tabs
+- Community Decks with game/format filters
+- Search decks by name
+- Create public/private decks
+- Choose format (Standard, Modern, Commander, etc.)
+- **Multi-select delete**: Select multiple cards and delete them at once
+- **Sideboard import**: Support for "SB:" or "Sideboard" prefix in imports
+- Main deck and sideboard categories
+
+#### 3. **Trades (Enhanced)**
+- Search for **ANY user** (not just friends)
+- Browse **other party's collection** with search and filters
+- Add cards from your collection to offer
+- Request cards from partner's collection
+- Add notes to trade
+
+#### 4. **Groups/Communities (Enhanced)**
+- Create public/private groups
+- Group detail page with multiple tabs:
+  - **Posts Tab**: Create and view posts
+  - **Chat Tab**: Real-time group chat messaging
+  - **Members Tab**: View group members
+  - **Invite Tab** (Admin only): Invite users to group
+- Member management with roles (admin, moderator, member)
+- Join/leave groups
+
+#### 5. **Messaging System**
+- Direct messaging between users
+- Emoji picker
+- Media uploads (images/videos)
+- Shift+Enter for new lines
+- Sound notifications
+- **Video/Voice calls** with REST polling signaling (serverless compatible)
+
+#### 6. **Collection Management**
+- **ManaBox CSV Import** with preview modal
+- View cards with pricing
+- Bulk listing with % of market price option
+- Edit card details
+
+#### 7. **Video Calls (Fixed)**
+- REST polling-based signaling (works on serverless/Vercel)
+- WebRTC peer-to-peer connection
+- Mute/unmute, camera toggle
+- Screen sharing
 - Fullscreen mode
-- Connection status indicators
-- Error handling for camera/mic access
+- Call duration timer
 
-### Collection Management
-- View collection with card pricing
-- Bulk listing with **percentage of market price** option (WORKING)
-- Fixed price option
-- Bulk delete functionality
-- Edit card details (condition, quantity, foil, notes)
-
-## Database Schema
-- `messages.message_type` VARCHAR(50) DEFAULT 'text' - For text/image/video types
-- `messages.media_url` TEXT - For storing media URLs
-- `trades` table with initiator_id, receiver_id, initiator_cards, receiver_cards, message, status
+### Database Tables
+- `users` - User accounts
+- `collections` - User card collections
+- `decks` - User decks
+- `deck_cards` - Cards in decks
+- `groups` - Community groups
+- `group_members` - Group membership
+- `group_posts` - Posts in groups
+- `group_messages` - Group chat messages (NEW)
+- `group_invites` - Group invitations (NEW)
+- `messages` - Direct messages
+- `trades` - Trade offers
+- `call_signals` - Video call signaling
+- `notifications` - User notifications
 
 ## API Endpoints
 
-### Working
-- `GET /api/search?game=mtg&q=[query]` - Card search (Scryfall)
-- `GET /api/marketplace` - List marketplace items
-- `POST /api/marketplace` - Create listing
-- `GET /api/auth/me` - Get current user
-- `POST /api/auth/login` - Email login
-- `POST /api/auth/signup` - Email signup
-- `POST /api/auth/session` - Google OAuth session exchange
-- `GET /api/messages` - List conversations
-- `GET /api/messages/[id]` - Get messages in conversation
-- `POST /api/messages` - Send message (supports media)
-- `GET /api/users/search` - Search all users
-- `POST /api/upload` - File upload for media
-- `GET /api/friends` - List friends
-- `GET /api/feed` - Social feed
-- `GET /api/notifications` - User notifications
-- `GET /api/decks` - List user's decks
-- `POST /api/decks` - Create deck
-- `GET /api/decks/[id]` - Get deck details
-- `PATCH /api/decks/[id]` - Update deck settings
-- `DELETE /api/decks/[id]` - Delete deck
-- `POST /api/decks/[id]/cards` - Add card to deck
-- `GET /api/trades` - List trades
-- `POST /api/trades` - Create trade offer
-- `GET /api/calls` - Poll for signaling messages (WORKING)
-- `POST /api/calls` - Send signaling message (WORKING)
-- `DELETE /api/calls` - End call/clear signals (WORKING)
-- `GET /api/groups` - List groups
-- `POST /api/groups` - Create group
-- `GET /api/groups/[id]` - Get group details
-- `POST /api/groups/[id]/posts` - Create group post
-- `POST /api/collection/bulk-list` - Bulk list with % pricing (WORKING)
+### New/Updated Endpoints
+- `GET/POST /api/decks/community` - Community decks with filters
+- `GET /api/collection/user/[userId]` - Get user's collection for trades
+- `GET/POST /api/groups/[groupId]/chat` - Group chat messages
+- `GET/POST/DELETE /api/groups/[groupId]/invite` - Group invitations
+- `GET/POST /api/groups/invites` - User's pending invites
+- `GET/POST/DELETE /api/calls` - Video call signaling (REST polling)
 
-### Known Issues
-- Pokemon TCG API: External timeout (504) - Not a code issue, API is down
+## Issues Resolved This Session
+1. ✅ Login not working on preview - Fixed cookie secure flag
+2. ✅ Video calls stuck - Updated to database-backed signaling
+3. ✅ Decks page - Added My Decks/Community Decks tabs
+4. ✅ Trades - Can search any user, browse their collection
+5. ✅ Search - Full card images with setcode and collector number
+6. ✅ Deck - Multi-select delete functionality
+7. ✅ Deck import - Sideboard support (SB: prefix)
+8. ✅ Groups - Added Chat tab with real-time messaging
+9. ✅ Groups - Added Invite tab to invite users to private groups
 
-## File Structure (Key Files)
-```
-/app/
-├── app/                    # Next.js App Router
-│   ├── api/                # API routes
-│   │   ├── auth/           # Authentication
-│   │   ├── calls/          # Video call signaling (NEW - REST polling)
-│   │   ├── messages/       # Messaging
-│   │   ├── marketplace/    # Marketplace
-│   │   ├── decks/          # Deck Builder API
-│   │   ├── trades/         # Trading API
-│   │   ├── groups/         # Groups API
-│   │   └── upload/         # File uploads
-│   ├── auth/               # Auth pages
-│   ├── decks/              # Deck Builder pages
-│   ├── trades/             # Trading pages (including /new)
-│   ├── feed/               # Social feed
-│   ├── groups/             # Groups pages
-│   ├── marketplace/        # Marketplace page
-│   ├── messages/           # Messages page (with video calls)
-│   └── profile/            # User profiles
-├── backend/                # FastAPI proxy
-│   └── server.py           # Proxy server
-├── components/             # Shared components
-│   ├── VideoCall.tsx       # Video call component (REST polling)
-│   ├── MessengerWidget.tsx # Chat widget (with call buttons)
-│   ├── Navbar.tsx          # Navigation
-│   ├── AuthPromptModal.tsx # Auth prompt
-│   └── ThemeProvider.tsx   # Dark mode
-└── lib/                    # Utilities
-    ├── db.ts               # Database connection
-    ├── auth.ts             # Auth helpers
-    └── db-schema.sql       # Database schema
-```
-
-## Issues Resolved (This Session)
-1. ✅ Video calls now use REST polling instead of WebSocket (serverless compatible)
-2. ✅ `/trades/new` page working correctly
-3. ✅ Bulk listing with % of market price working
-4. ✅ Deck import functionality working
-5. ✅ Video/Voice call buttons added to MessengerWidget
-6. ✅ Fixed trades API column name mismatch (receiver_id, initiator_cards, receiver_cards)
-7. ✅ Fixed collection page syntax error
-
-## P2/Future Tasks
-- Advanced marketplace filtering
+## Upcoming Tasks
+- Advanced marketplace filters
+- Admin dashboard with analytics (zudran@gmail.com, ernst@hatake.eu as admins)
 - TURN server for robust NAT traversal
-- Mobile application
+
+## Future/Backlog
+- Mobile application (waiting until web is complete)
 - Card scanner (camera-based identification)
 - Advanced analytics
-- Invite members to private groups
-- Group chat/messaging
-- Card deck sharing functionality
 
-## Environment Variables
-- `DATABASE_URL` - Neon PostgreSQL connection string
-- `JWT_SECRET` - Secret for JWT tokens
-- Google OAuth handled via Emergent Auth
-
-## Testing
-- All 17 backend API tests passing
-- All frontend pages load correctly
-- Video call REST polling API verified working
+## Deployment Notes
+- Video calls work on Emergent.SH deployment (REST polling is serverless compatible)
+- Cookie secure flag auto-detects HTTPS
+- All database-backed features persist across serverless instances
 
 ## Last Updated
 December 2025
