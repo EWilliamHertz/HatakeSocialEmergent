@@ -64,6 +64,8 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
   const [editPublic, setEditPublic] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
