@@ -15,10 +15,12 @@ interface Card {
   name: string;
   game: string;
   number?: string;
+  collector_number?: string;
   images?: { small?: string; large?: string };
-  image_uris?: { small?: string; normal?: string; large?: string };
+  image_uris?: { small?: string; normal?: string; large?: string; png?: string };
   set?: { name?: string; id?: string };
   set_name?: string;
+  set_code?: string;
   rarity?: string;
   tcgplayer?: { prices?: any };
   prices?: any;
