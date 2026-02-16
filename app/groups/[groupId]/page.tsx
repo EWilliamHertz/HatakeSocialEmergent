@@ -595,7 +595,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
               ))
             )}
           </div>
-        ) : (
+        ) : activeTab === 'members' ? (
           /* Members Tab */
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
             <div className="divide-y divide-gray-100 dark:divide-gray-700">
