@@ -35,7 +35,7 @@ Create a new TCG social platform featuring:
 ### Features Implemented
 1. **Renamed App**: "TCG Social Hub" → "Hatake.Social" (all references updated)
 2. **Card Search**: Scryfall/MTG search working
-3. **Marketplace**: Listings with card data, pricing, conditions
+3. **Marketplace**: Fixed price.toFixed() error - prices now properly converted from string
 4. **Social Feed**: Posts with profile links on avatars
 5. **Friends System**: Add/remove friends, friendship status
 6. **Messaging System** (Enhanced):
@@ -44,11 +44,23 @@ Create a new TCG social platform featuring:
    - Sound notifications for new messages
    - Message anyone (not just friends)
    - Media messages support (images/videos in database schema)
-   - Voice/Video call buttons (placeholder for WebRTC)
+   - **WebRTC Voice/Video Calls with Screensharing** (IMPLEMENTED)
 7. **Dark Mode**: ThemeProvider implemented
 8. **Notifications**: System with API endpoints
 9. **Groups**: Placeholder page created
 10. **Auth Prompts**: Modal for unauthenticated users
+
+### WebRTC Video Calling Features
+- Full-screen video call interface
+- Voice call mode (audio only)
+- Video call mode (audio + video)
+- Screen sharing with system audio
+- Mute/unmute microphone
+- Toggle camera on/off
+- Call duration timer
+- Fullscreen mode
+- Connection status indicators
+- Error handling for camera/mic access
 
 ## Database Schema Additions
 - `messages.message_type` VARCHAR(50) DEFAULT 'text' - For text/image/video types
@@ -111,12 +123,13 @@ Create a new TCG social platform featuring:
 3. ✅ Messaging shift+enter, emojis, sounds implemented
 4. ✅ Message anyone (not just friends)
 5. ✅ Profile links on feed avatars
+6. ✅ Marketplace blank screen - Fixed price.toFixed() error
+7. ✅ WebRTC Voice/Video calls with screensharing
 
 ## P1 Issues - Pending
-1. Marketplace client-side error (needs user testing to reproduce)
-2. Voice/Video calls (WebRTC implementation)
-3. Groups full implementation (currently placeholder)
-4. Pokemon API timeout (external issue)
+1. Groups full implementation (currently placeholder)
+2. Pokemon API timeout (external issue - not code-related)
+3. Real-time signaling for WebRTC (currently demo mode)
 
 ## P2/Future Tasks
 - Deck Builder feature
