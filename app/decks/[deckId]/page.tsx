@@ -268,20 +268,54 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
     
     try {
       // Parse decklist format: "4 Lightning Bolt" or "4x Lightning Bolt"
+      // Support "SB:" or "Sideboard" prefix for sideboard cards
       const lines = importText.split('\n').filter(line => line.trim());
-      const cardsToAdd: { name: string; quantity: number }[] = [];
+      const cardsToAdd: { name: string; quantity: number; category: string }[] = [];
+      let currentCategory = 'main';
       
       for (const line of lines) {
-        const match = line.trim().match(/^(\d+)x?\s+(.+)$/i);
+        const trimmedLine = line.trim();
+        
+        // Check for sideboard section markers
+        if (trimmedLine.toLowerCase() === 'sideboard' || 
+            trimmedLine.toLowerCase() === 'sideboard:' ||
+            trimmedLine.toLowerCase() === 'sb' ||
+            trimmedLine.toLowerCase() === 'sb:') {
+          currentCategory = 'sideboard';
+          continue;
+        }
+        
+        // Check for main deck section marker
+        if (trimmedLine.toLowerCase() === 'main' || 
+            trimmedLine.toLowerCase() === 'main deck' ||
+            trimmedLine.toLowerCase() === 'maindeck' ||
+            trimmedLine.toLowerCase() === 'main:') {
+          currentCategory = 'main';
+          continue;
+        }
+        
+        // Check for "SB: 4 Lightning Bolt" format
+        const sbMatch = trimmedLine.match(/^(?:SB:|Sideboard:)\s*(\d+)x?\s+(.+)$/i);
+        if (sbMatch) {
+          const quantity = parseInt(sbMatch[1]);
+          const name = sbMatch[2].trim();
+          if (quantity > 0 && name) {
+            cardsToAdd.push({ name, quantity, category: 'sideboard' });
+          }
+          continue;
+        }
+        
+        // Regular card line
+        const match = trimmedLine.match(/^(\d+)x?\s+(.+)$/i);
         if (match) {
           const quantity = parseInt(match[1]);
           const name = match[2].trim();
           if (quantity > 0 && name) {
-            cardsToAdd.push({ name, quantity });
+            cardsToAdd.push({ name, quantity, category: currentCategory });
           }
-        } else if (line.trim() && !line.startsWith('//') && !line.startsWith('#')) {
+        } else if (trimmedLine && !trimmedLine.startsWith('//') && !trimmedLine.startsWith('#')) {
           // Single card without quantity
-          cardsToAdd.push({ name: line.trim(), quantity: 1 });
+          cardsToAdd.push({ name: trimmedLine, quantity: 1, category: currentCategory });
         }
       }
       
