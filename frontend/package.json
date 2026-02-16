@@ -2,6 +2,6 @@
   "name": "tcg-hub-frontend",
   "version": "1.0.0",
   "scripts": {
-    "start": "cd /app && yarn dev"
+    "start": "cd /app && PATH=/app/node_modules/.bin:$PATH yarn dev"
   }
 }
