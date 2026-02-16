@@ -772,8 +772,11 @@ export default function MessagesPage() {
           isOpen={showVideoCall}
           onClose={() => setShowVideoCall(false)}
           callType="video"
+          remoteUserId={conversations.find(c => c.conversation_id === selectedConv)?.user_id || ''}
           remoteUserName={conversations.find(c => c.conversation_id === selectedConv)?.name || 'User'}
           remoteUserPicture={conversations.find(c => c.conversation_id === selectedConv)?.picture}
+          currentUserId={currentUserId}
+          currentUserName={currentUserName}
         />
       )}
 
@@ -783,8 +786,11 @@ export default function MessagesPage() {
           isOpen={showAudioCall}
           onClose={() => setShowAudioCall(false)}
           callType="audio"
+          remoteUserId={conversations.find(c => c.conversation_id === selectedConv)?.user_id || ''}
           remoteUserName={conversations.find(c => c.conversation_id === selectedConv)?.name || 'User'}
           remoteUserPicture={conversations.find(c => c.conversation_id === selectedConv)?.picture}
+          currentUserId={currentUserId}
+          currentUserName={currentUserName}
         />
       )}
     </div>
