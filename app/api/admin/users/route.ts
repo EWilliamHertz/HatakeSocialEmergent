@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       const [postCount, deckCount, collectionCount] = await Promise.all([
         sql`SELECT COUNT(*) as count FROM posts WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
         sql`SELECT COUNT(*) as count FROM decks WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
-        sql`SELECT COUNT(*) as count FROM collection WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0)
+        sql`SELECT COUNT(*) as count FROM collection_items WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0)
       ]);
 
       return {
@@ -107,7 +107,7 @@ export async function DELETE(request: NextRequest) {
 
     // Delete user's related data first
     await sql`DELETE FROM posts WHERE user_id = ${userId}`.catch(() => {});
-    await sql`DELETE FROM collection WHERE user_id = ${userId}`.catch(() => {});
+    await sql`DELETE FROM collection_items WHERE user_id = ${userId}`.catch(() => {});
     await sql`DELETE FROM decks WHERE user_id = ${userId}`.catch(() => {});
     await sql`DELETE FROM friends WHERE user_id = ${userId} OR friend_id = ${userId}`.catch(() => {});
     await sql`DELETE FROM messages WHERE sender_id = ${userId}`.catch(() => {});

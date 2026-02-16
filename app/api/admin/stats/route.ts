@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       sql`SELECT COUNT(*) as count FROM users`.then(r => Number(r[0]?.count || 0)),
       sql`SELECT COUNT(*) as count FROM posts`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
       sql`SELECT COUNT(*) as count FROM decks`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
-      sql`SELECT COUNT(*) as count FROM collection`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
+      sql`SELECT COUNT(*) as count FROM collection_items`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
       sql`SELECT COUNT(*) as count FROM trades`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
       sql`SELECT COUNT(*) as count FROM groups`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
       sql`SELECT user_id, name, email, picture, created_at FROM users ORDER BY created_at DESC LIMIT 5`.catch(() => []),
