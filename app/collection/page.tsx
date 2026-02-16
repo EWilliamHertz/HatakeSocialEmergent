@@ -373,9 +373,9 @@ export default function CollectionPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          card_id: card.id,
+          cardId: card.id,
           game: addCardGame,
-          card_data: card,
+          cardData: card,
           quantity: addCardQuantity,
           condition: addCardCondition,
           foil: addCardFoil
