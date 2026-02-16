@@ -39,6 +39,17 @@ interface Post {
   created_at: string;
 }
 
+interface ChatMessage {
+  message_id: string;
+  user_id: string;
+  name: string;
+  picture?: string;
+  content: string;
+  message_type: string;
+  media_url?: string;
+  created_at: string;
+}
+
 export default function GroupDetailPage({ params }: { params: Promise<{ groupId: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
@@ -48,12 +59,25 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const [role, setRole] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [activeTab, setActiveTab] = useState<'posts' | 'members'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'members' | 'chat' | 'invite'>('posts');
   const [newPost, setNewPost] = useState('');
   const [posting, setPosting] = useState(false);
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [currentUserId, setCurrentUserId] = useState('');
+  
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [newChatMessage, setNewChatMessage] = useState('');
+  const [sendingChat, setSendingChat] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Invite state
+  const [inviteSearch, setInviteSearch] = useState('');
+  const [inviteSearchResults, setInviteSearchResults] = useState<any[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
