@@ -1096,6 +1096,154 @@ export default function CollectionPage() {
           </div>
         </div>
       )}
+
+      {/* Add Card Modal */}
+      {showAddCardModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b dark:border-gray-700 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold dark:text-white">Add Card Manually</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Search by set code and collector number</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowAddCardModal(false);
+                  setAddCardSearchResults([]);
+                  setAddCardSetCode('');
+                  setAddCardCollectorNum('');
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Search Form */}
+            <div className="p-6 border-b dark:border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Game</label>
+                  <select
+                    value={addCardGame}
+                    onChange={(e) => {
+                      setAddCardGame(e.target.value as 'mtg' | 'pokemon');
+                      setAddCardSearchResults([]);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  >
+                    <option value="mtg">Magic: The Gathering</option>
+                    <option value="pokemon">Pokemon TCG</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Set Code *</label>
+                  <input
+                    type="text"
+                    value={addCardSetCode}
+                    onChange={(e) => setAddCardSetCode(e.target.value.toUpperCase())}
+                    placeholder="e.g., MH3, NEO"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg uppercase"
+                    data-testid="set-code-input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Collector #</label>
+                  <input
+                    type="text"
+                    value={addCardCollectorNum}
+                    onChange={(e) => setAddCardCollectorNum(e.target.value)}
+                    placeholder="e.g., 141, 23"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                    data-testid="collector-num-input"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={searchCardManually}
+                    disabled={!addCardSetCode.trim() || addCardSearching}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                    data-testid="search-card-btn"
+                  >
+                    {addCardSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    Search
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Results */}
+            <div className="flex-1 overflow-auto p-4">
+              {addCardSearching ? (
+                <div className="text-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+                  <p className="text-gray-500 mt-2">Searching...</p>
+                </div>
+              ) : addCardSearchResults.length === 0 ? (
+                <div className="text-center py-12">
+                  <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {addCardSetCode ? 'No cards found. Try a different set code or collector number.' : 'Enter a set code to search for cards'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {addCardSearchResults.map((card) => (
+                    <div key={card.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                      <div className="aspect-[488/680] relative mb-2">
+                        <img
+                          src={card.image_uris?.small || card.images?.small || '/placeholder-card.png'}
+                          alt={card.name}
+                          className="w-full h-full object-contain rounded"
+                        />
+                      </div>
+                      <h4 className="font-medium text-sm truncate dark:text-white" title={card.name}>{card.name}</h4>
+                      <div className="flex items-center gap-1 mb-2">
+                        <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1 rounded font-mono uppercase">
+                          {card.set || card.set_name?.slice(0, 3)}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          #{card.collector_number || card.number}
+                        </span>
+                      </div>
+                      
+                      {/* Add options */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <input
+                          type="number"
+                          min="1"
+                          value={addCardQuantity}
+                          onChange={(e) => setAddCardQuantity(parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 text-sm border rounded dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                        />
+                        <label className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                          <input
+                            type="checkbox"
+                            checked={addCardFoil}
+                            onChange={(e) => setAddCardFoil(e.target.checked)}
+                            className="rounded"
+                          />
+                          Foil
+                        </label>
+                      </div>
+                      
+                      <button
+                        onClick={() => addCardToCollection(card)}
+                        disabled={addingCard}
+                        className="w-full px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-1"
+                      >
+                        {addingCard ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
