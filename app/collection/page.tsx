@@ -124,24 +124,52 @@ export default function CollectionPage() {
     setShowListModal(true);
   };
 
+  const calculateSelectedValue = () => {
+    let total = 0;
+    items.forEach(item => {
+      if (selectedItems.has(item.id)) {
+        total += getCardPrice(item) * item.quantity;
+      }
+    });
+    return total;
+  };
+
   const submitBulkList = async () => {
-    if (!listPrice) return;
-    
     try {
       const ids = Array.from(selectedItems);
+      const selectedCards = items.filter(item => selectedItems.has(item.id));
+      
+      // Calculate prices based on mode
+      const listings = selectedCards.map(item => {
+        const marketPrice = getCardPrice(item);
+        let price: number;
+        
+        if (listPriceMode === 'percent') {
+          price = marketPrice * (parseFloat(listPercent) / 100);
+        } else {
+          price = parseFloat(listPrice);
+        }
+        
+        return {
+          card_id: item.card_id,
+          card_data: item.card_data,
+          game: item.game,
+          price: Math.max(0.01, price),
+          condition: listCondition,
+          quantity: item.quantity
+        };
+      });
+      
       await fetch('/api/collection/bulk-list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ 
-          ids, 
-          price: parseFloat(listPrice),
-          condition: listCondition 
-        })
+        body: JSON.stringify({ listings })
       });
       setSelectedItems(new Set());
       setShowListModal(false);
       setListPrice('');
+      setListPercent('90');
       alert('Cards listed for sale!');
     } catch (error) {
       console.error('Bulk list error:', error);
