@@ -42,7 +42,7 @@ export default function Home() {
           <div className="flex items-center justify-center mb-8">
             <Image
               src="https://i.imgur.com/B06rBhI.png"
-              alt="TCG Social Hub Logo"
+              alt="Hatake.Social Logo"
               width={120}
               height={120}
               className="rounded-2xl shadow-lg"
@@ -51,7 +51,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            TCG Social Hub
+            Hatake.Social
           </h1>
           <p className="text-xl text-gray-600 mb-12">
             The ultimate platform for trading card game collectors. Manage your collection,

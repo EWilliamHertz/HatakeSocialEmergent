@@ -172,7 +172,7 @@ function SearchContent() {
                   className="rounded-lg"
                 />
                 <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  TCG Hub
+                  Hatake.Social
                 </span>
               </a>
               <div className="flex items-center gap-3">
