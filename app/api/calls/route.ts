@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
+import sql from '@/lib/db';
 
-// In-memory signaling store (for serverless compatibility)
-// In production, you'd use Redis or a database table
-const signalStore: Map<string, {
-  signals: any[];
-  lastAccess: number;
-}> = new Map();
-
-// Clean up old signals (older than 30 seconds)
-function cleanupOldSignals() {
-  const now = Date.now();
-  for (const [key, value] of signalStore.entries()) {
-    if (now - value.lastAccess > 30000) {
-      signalStore.delete(key);
-    }
+// Ensure call_signals table exists
+async function ensureTable() {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS call_signals (
+        id SERIAL PRIMARY KEY,
+        from_user_id VARCHAR(255) NOT NULL,
+        target_user_id VARCHAR(255) NOT NULL,
+        signal_type VARCHAR(50) NOT NULL,
+        signal_data JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+  } catch (e) {
+    // Table might already exist
   }
 }
 
@@ -32,16 +33,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    await ensureTable();
     const userId = user.user_id;
-    cleanupOldSignals();
 
-    // Get signals for this user from in-memory store
-    const userSignals = signalStore.get(userId);
-    if (userSignals && userSignals.signals.length > 0) {
-      const signals = [...userSignals.signals];
-      userSignals.signals = [];
-      userSignals.lastAccess = Date.now();
-      return NextResponse.json({ success: true, signals });
+    // Get signals for this user (last 30 seconds)
+    const signals = await sql`
+      SELECT id, from_user_id, signal_type, signal_data, created_at
+      FROM call_signals 
+      WHERE target_user_id = ${userId}
+      AND created_at > NOW() - INTERVAL '30 seconds'
+      ORDER BY created_at ASC
+    `;
+
+    if (signals.length > 0) {
+      // Delete the fetched signals
+      const ids = signals.map(s => s.id);
+      await sql`DELETE FROM call_signals WHERE id = ANY(${ids})`;
+      
+      return NextResponse.json({ 
+        success: true, 
+        signals: signals.map(s => ({
+          type: s.signal_type,
+          from: s.from_user_id,
+          data: s.signal_data
+        }))
+      });
     }
 
     return NextResponse.json({ success: true, signals: [] });
@@ -64,6 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    await ensureTable();
     const userId = user.user_id;
     const body = await request.json();
     const { type, target, data } = body;
@@ -72,21 +89,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing type or target' }, { status: 400 });
     }
 
-    cleanupOldSignals();
+    // Store signal in database
+    await sql`
+      INSERT INTO call_signals (from_user_id, target_user_id, signal_type, signal_data)
+      VALUES (${userId}, ${target}, ${type}, ${JSON.stringify(data || {})})
+    `;
 
-    // Store signal in memory for the target user
-    if (!signalStore.has(target)) {
-      signalStore.set(target, { signals: [], lastAccess: Date.now() });
-    }
-    
-    const targetSignals = signalStore.get(target)!;
-    targetSignals.signals.push({
-      type,
-      from: userId,
-      data,
-      timestamp: Date.now()
-    });
-    targetSignals.lastAccess = Date.now();
+    // Clean up old signals (older than 1 minute)
+    await sql`DELETE FROM call_signals WHERE created_at < NOW() - INTERVAL '60 seconds'`;
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -108,24 +118,20 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    await ensureTable();
     const userId = user.user_id;
     const { searchParams } = new URL(request.url);
     const targetId = searchParams.get('target');
 
-    // Clear in-memory signals for this user
-    signalStore.delete(userId);
+    // Clear signals for this user
+    await sql`DELETE FROM call_signals WHERE from_user_id = ${userId} OR target_user_id = ${userId}`;
     
     if (targetId) {
-      // Notify the other user that call ended
-      if (!signalStore.has(targetId)) {
-        signalStore.set(targetId, { signals: [], lastAccess: Date.now() });
-      }
-      const targetSignals = signalStore.get(targetId)!;
-      targetSignals.signals.push({
-        type: 'call_ended',
-        from: userId,
-        timestamp: Date.now()
-      });
+      // Send call_ended signal to the other user
+      await sql`
+        INSERT INTO call_signals (from_user_id, target_user_id, signal_type, signal_data)
+        VALUES (${userId}, ${targetId}, 'call_ended', '{}')
+      `;
     }
 
     return NextResponse.json({ success: true });
