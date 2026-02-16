@@ -57,15 +57,23 @@ function parseCSV(csvText: string): ManaBoxCard[] {
   return cards;
 }
 
-function mapCondition(condition: string): string {
+function mapCondition(condition: string | undefined): string {
+  if (!condition) return 'Near Mint';
   const conditionMap: { [key: string]: string } = {
     'near_mint': 'Near Mint',
-    'lightly_played': 'Lightly Played',
+    'lightly_played': 'Lightly Played', 
     'moderately_played': 'Moderately Played',
     'heavily_played': 'Heavily Played',
     'damaged': 'Damaged',
+    'mint': 'Near Mint',
+    'nm': 'Near Mint',
+    'lp': 'Lightly Played',
+    'mp': 'Moderately Played',
+    'hp': 'Heavily Played',
+    'dmg': 'Damaged',
   };
-  return conditionMap[condition.toLowerCase()] || condition;
+  const normalizedCondition = condition.toLowerCase().trim();
+  return conditionMap[normalizedCondition] || condition || 'Near Mint';
 }
 
 // POST - Preview CSV import
