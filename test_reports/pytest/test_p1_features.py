@@ -219,12 +219,14 @@ class TestSearchWithFilters:
         data = response.json()
         assert data.get("success") == True
         
-        # Check if results have set_code and collector_number
+        # Check if results have set code and collector_number
         if len(data.get("results", [])) > 0:
             card = data["results"][0]
             print(f"Card: {card.get('name')}")
-            print(f"Set code: {card.get('set_code') or card.get('set', {}).get('id', 'N/A')}")
-            print(f"Collector number: {card.get('collector_number') or card.get('number', 'N/A')}")
+            # MTG cards have 'set' as a string (set code) and 'collector_number'
+            set_code = card.get('set') if isinstance(card.get('set'), str) else card.get('set_code', 'N/A')
+            print(f"Set code: {set_code}")
+            print(f"Collector number: {card.get('collector_number', 'N/A')}")
         
         print(f"✓ MTG search working, found {len(data['results'])} results")
     
