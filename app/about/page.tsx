@@ -41,7 +41,7 @@ const teamMembers: TeamMember[] = [
     name: 'Phoebe Wang',
     role: 'Partner in Asia',
     description: 'Our Chinese Partner who oversees merchandise production and serves as our key liaison for building our network and presence in China. Phoebe plays a crucial role in our global reach and quality assurance.',
-    image: 'https://firebasestorage.googleapis.com/v0/b/hatakesocial-88b5e.firebasestorage.app/o/IMG_8321.webp?alt=media&token=20ddfeb6-fe17-4435-a4e2-e744a1359da9',
+    image: 'https://firebasestorage.googleapis.com/v0/b/hatakesocial-88b5e.firebasestorage.app/o/IMG_8321.webp?alt=media&token=trading-hub-test',
   },
 ];
 

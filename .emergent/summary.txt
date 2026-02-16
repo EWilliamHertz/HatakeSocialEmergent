@@ -1,213 +1,213 @@
-<analysis>original_problem_statement:
+<analysis>**original_problem_statement:**
 The user's goal is to create a new, full-stack TCG (Trading Card Game) social platform called Hatake.Social, using a previous project () as a feature reference.
 
 **PRODUCT REQUIREMENTS:**
 1.  **Application:** A modern, full-stack Next.js web application.
 2.  **Core Features:**
     *   **Authentication:** Comprehensive system with Google Sign-In and Email/Password.
-    *   **Card Management:** Search cards, manage a personal collection (with manual add and CSV import), view collection pricing with detailed card info.
-    *   **Social:** Social Feed, Friends system, Groups/Communities with group chat and member invites.
-    *   **Messaging:** Real-time Messaging with advanced features (emojis, media sending) and WebRTC voice/video calls.
-    *   **Commerce:** A Marketplace for buying/selling cards. A trade creation page with user search, collection browsing, and trade value summaries.
-    *   **Profiles & Decks:** User profiles and a Deck Builder with My Decks and Community Decks tabs, filters, multi-select delete, and decklist import functionality (supporting SB for sideboard).
-3.  **Integrations:** Connect to Scryfall API. Use a user-provided Neon PostgreSQL database.
-4.  **UI/UX:** A functional Dark Mode, in-app notifications, and prompts for unauthenticated users.
+    *   **Card Management:** Search cards, manage a personal collection (with manual add and CSV import), view collection pricing.
+    *   **Social:** Social Feed with posts, comments, replies, and emoji reactions. Friends system, Groups/Communities with group chat and member invites.
+    *   **Messaging:** Real-time Messaging with an incoming call notification system. WebRTC voice/video calls.
+    *   **Commerce:** A Marketplace for buying/selling cards. A trade creation page. A Shop page for official merchandise.
+    *   **Profiles & Decks:** User profiles and a Deck Builder.
+    *   **Admin Panel:** A dashboard for site administration, including shop inventory management, user stats, and user management.
+3.  **Integrations:** Connect to Scryfall API for MTG cards and TCGdex API for Pokemon cards. Use a user-provided Neon PostgreSQL database.
+4.  **UI/UX:** A functional Dark Mode, in-app notifications, an 'About Us' page, and a landing page that showcases features.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The project is a Next.js monolithic application with a FastAPI proxy backend. A large number of features have been implemented, including Google Auth, messaging, groups, a deck builder, and a marketplace. In the last session, the agent fixed a critical login bug, implemented a new REST-polling-based video call system (which is still not working), and added a significant number of user-requested features:
-*   **Decks:** Community Decks and My Decks tabs with filters.
-*   **Trades:** User search and partner collection browsing on the trade creation page, plus trade value summaries.
-*   **Card Search:** Now displays full card images with detailed info.
-*   **Deck Editor:** Added multi-select delete and sideboard import parsing.
-*   **Collection:** Added a Manually Add Card feature and fixed a CSV import bug. The card display now shows more details.
-*   **Groups:** Implemented group chat and member invitation functionality.
-*   **UI:** Implemented a fix for the broken dark mode.
+The application is a functional Next.js monolith with a FastAPI proxy backend. In this session, the agent implemented a large number of new features, including a complete commenting system (with replies and emoji reactions), new 'About Us' and 'Shop' pages, and an Admin panel for shop inventory management. The problematic Pokemon TCG API was successfully replaced with the TCGdex API, and the card search functionality was improved. The video call system was significantly reworked to include an incoming call notification and is now able to establish a connection, although it remains unstable.
 
 **Last working item**:
-    - Last item agent was working: Implementing a batch of user-requested features and bug fixes: fixing the CSV import, fixing dark mode, adding a Manually Add Card feature, enhancing the collection card display, and adding trade value summaries to the trade page.
+    - Last item agent was working: The agent was implementing the remaining tabs (Analytics, Users, Settings) in the Admin panel. It had created the backend APIs to fetch user data and stats and was about to implement the frontend UI for these sections.
     - Status: IN PROGRESS
-    - Agent Testing Done: N (Only manual screenshot verification was performed for this batch of features).
-    - Which testing method agent to use? both. The frontend needs to be tested for the new modals, UI changes, and dark mode. The backend needs testing for the new add card and CSV import logic.
+    - Agent Testing Done: N
+    - Which testing method agent to use? both. The frontend needs to be tested for the new admin UI components and data display. The backend needs testing for the new  and  endpoints.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-*   **Issue 1: Video calls do not work (P0)**
-*   **Issue 2: Login on preview was broken (P0)**
-*   **Issue 3: CSV import fails with a  error (P1)**
-*   **Issue 4: Dark mode is broken (P1)**
-*   **Issue 5: Collection card display lacks detail (P2)**
-*   **Issue 6: Trade window is missing value summaries for both parties (P2)**
-
-**Issues Detail:**
+  - Issue 1: Video calls are unstable (P0)
+  - Issue 2: Admin Panel is incomplete (P1)
+  - Issue 3: Verify fix for Pokémon card search (P1)
+  - Issue 4: User testing pending for multiple features (P2)
+  
+  **Issues Detail:**
   - **Issue 1:** 
-     - **Description:** After replacing the non-functional WebSocket signaling with a REST-polling mechanism, the user reports that video calls are still broken. The call UI appears but is stuck at  with no audio or video transmission.
-     - **Attempted fixes:** The agent replaced the original WebSocket signaling with a REST API () that uses a database table () to store and poll for WebRTC signals. The frontend  component was rewritten to use this polling mechanism. The fix was unsuccessful.
+     - **Description:** After the latest fixes, users can connect to a video call, but they are kicked out shortly after. The connection is unstable.
+     - **Attempted fixes:** The agent identified that brief  states during ICE negotiation were causing the call to terminate prematurely. A fix was implemented in  to be more tolerant of this state. Additional STUN/TURN servers were also added to improve NAT traversal.
      - **Next debug checklist:**
-        1.  Review the  component to trace the flow of offer/answer/ICE candidate exchange via the polling mechanism. Check for race conditions or logic errors in  and .
-        2.  Inspect the browser console logs on both the caller and receiver's side during a call attempt to look for WebRTC or application errors.
-        3.  Verify that the  endpoint is correctly storing and retrieving signals from the database for both users in a call.
-        4.  Answer the user's question: Will the calls work if I change to Emergent hosting through a deployment?. Explain that the issue is with the application logic, not the hosting environment, since the new REST-based approach is serverless-compatible.
-     - **Why fix this issue and what will be achieved with the fix?** This is a critical, user-requested feature that has been broken for a long time.
+        1.  Have the user re-test the video call functionality with another user.
+        2.  If the issue persists, inspect browser console logs from both participants at the moment of disconnection to look for WebRTC errors.
+        3.  Review the  logic in  to ensure it correctly handles all connection states (, , , , , ).
+     - **Why fix this issue and what will be achieved with the fix?** This is a critical, high-priority feature that has been a recurring problem. Fixing it is essential for the social platform's core functionality.
      - **Status:** IN PROGRESS
      - **Is recurring issue?** Y
      - **Should Test frontend/backend/both after fix?** both
      - **Blocked on other issue:** None
-  - **Issue 2:** 
-     - **Description:** The user reported that login was not working on the app preview; it would just refresh the page.
-     - **Attempted fixes:** The agent identified that the session cookie was not being set correctly on HTTPS environments because the  flag was not being set to . The agent modified  to correctly set the flag based on . The agent's own tests showed this was successful.
+
+  - **Issue 2:**
+     - **Description:** The user requested a full-featured admin panel. The agent implemented the Shop Inventory tab, but the Analytics, Users, and Settings tabs are still placeholders.
+     - **Attempted fixes:** The agent created API endpoints (, ) and started scaffolding the UI in .
+     - **Next debug checklist:**
+         1.  Complete the UI for the Analytics tab, fetching and displaying data from the  endpoint.
+         2.  Implement the Users tab with a table of users from , including functionality to view details or take administrative actions.
+         3.  Clarify requirements for the Settings tab and implement it.
+     - **Why fix this issue and what will be achieved with the fix?** Provides essential management capabilities for the site owner.
+     - **Status:** IN PROGRESS
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on other issue:** None
+
+  - **Issue 3:**
+     - **Description:** The user reported being unable to search for Pokémon cards by name only and that specific set+number searches were failing (e.g., JTG + 24).
+     - **Attempted fixes:** The agent replaced the unreliable Pokemon TCG API with the faster TCGdex API. The search logic in  and the corresponding backend API () were updated to allow name-only searches and handle the new API format.
+     - **Next debug checklist:**
+         1.  Prompt the user to test the Add Card Manually feature again for Pokémon cards.
+         2.  Specifically ask them to try searching by name only (e.g., Blaziken) and by a valid set + number combination.
+     - **Why fix this issue and what will be achieved with the fix?** It makes a core feature (collection management) usable for Pokémon TCG players.
      - **Status:** USER VERIFICATION PENDING
-  - **Issue 3:** 
-     - **Description:** The ManaBox CSV import was failing with a .
-     - **Attempted fixes:** The agent added null checks in  within the  function and where it's called, to prevent  from being called on an undefined  value.
+     - **Is recurring issue?** Y
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on other issue:** None
+
+  - **Issue 4:**
+     - **Description:** Several features implemented in the previous session (CSV import, Dark Mode, Trade Value Summaries) and this session (Group Chat, Group Invites) are pending user verification.
+     - **Attempted fixes:** NA
+     - **Next debug checklist:**
+         1.  Remind the user that these features are implemented and awaiting their testing. The user specifically mentioned they would test the group features themselves.
+     - **Why fix this issue and what will be achieved with the fix?** Ensures that completed work meets user expectations before moving on.
      - **Status:** USER VERIFICATION PENDING
-  - **Issue 4:** 
-     - **Description:** Dark mode was not working correctly. For one user it was stuck on dark, for another it was stuck on light.
-     - **Attempted fixes:** The agent updated the  in  to better handle initialization from localStorage and system preferences. It also inspected the tailwind configuration.
-     - **Status:** USER VERIFICATION PENDING
-  - **Issue 5:** 
-     - **Description:** The card display in the collection view only showed the name and condition, lacking other important details.
-     - **Attempted fixes:** The agent modified the card rendering logic in  to display the collector's number, set code, and foil status.
-     - **Status:** USER VERIFICATION PENDING
-  - **Issue 6:** 
-     - **Description:** The trade creation window did not show a summary of the total value of cards being offered by each party.
-     - **Attempted fixes:** The agent added value calculation logic and UI elements to  to display the total value for both the user's offer and the partner's requested cards.
-     - **Status:** USER VERIFICATION PENDING
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on other issue:** None
 
 **In progress Task List**:
-  - **Task 1:** 
-     - **Description:** Implement a Manually Add Card feature on the collection page.
-     - **Where to resume:** The feature has been implemented. The agent added a button, a modal with search inputs (game, set code, collector number), and the backend logic to add the card to the user's collection.
-     - **What will be achieved with this?** Allows users to add cards to their collection without needing a CSV file.
-     - **Status:** USER VERIFICATION PENDING
+  - **Task 1: Complete Admin Panel**
+     - **Where to resume:** . The API endpoints are ready. The task is to build out the React components for the Analytics, Users, and Settings tabs to consume the data.
+     - **What will be achieved with this?** A fully functional admin dashboard for site management.
+     - **Status:** IN PROGRESS
      - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **P1:** Implement advanced marketplace filters.
-    *   **P2:** Implement group chat/messaging (UI and APIs are created but need full testing and integration).
-    -   **P2:** Implement inviting members to private groups (API created, needs UI integration and testing).
+    *   **P1:** Advanced marketplace filters.
+    *   **P2:** User verification of group chat/messaging and member invites.
 *   **Future Tasks:**
-    *   Advanced analytics dashboard for Admin page (make  and  admins).
+    *   Implement a payment gateway for the Shop (user asked for a recommendation).
     *   Implement card deck sharing functionality.
-    *   Consider a TURN server for robust NAT traversal in video calls (once the basic call functionality is fixed).
-    *   Mobile Application (on hold).
+    *   Develop a mobile Android application (user agreed to postpone this).
 
 **Completed work in this session**
-- **Login Bug:** Fixed the login loop on the preview environment by correctly setting the  cookie attribute.
-- **Deck Page:** Implemented My Decks and Community Decks tabs with game/format filters.
-- **Trades Page:** Reworked the UI to include user search and browsing of a trade partner's collection.
-- **Search Page:** Updated to show large, full card images with collector number and set name.
-- **Deck Editor:** Added multi-select delete and support for SB / Sideboard prefixes in decklist imports.
-- **Group Functionality:** Added a Chat tab and an Invite feature to group pages, along with the necessary backend API endpoints.
-- **CSV Import:** Implemented a fix for the  bug.
-- **Dark Mode:** Implemented a fix for the broken theme toggling.
-- **Collection View:** Enhanced to show collector number, set, and foil status.
-- **Manual Card Add:** Added a button and modal to the collection page to manually search for and add cards.
-- **Trade Value Summary:** Added a summary of the total card value for both parties in the trade window.
+- **Social Feed:** Implemented a complete commenting system with nested replies and emoji reactions on posts and comments.
+- **Video Call Rework:** Re-architected the signaling flow with an incoming call notification system in . Connection is now established before dropping. Added more robust STUN/TURN server configuration.
+- **New Pages:** Created the 'About Us' () and 'Shop' () pages.
+- **Admin Panel:** Created the initial admin panel at  and fully implemented the Shop Inventory management tab (CRUD for products).
+- **Pokémon API Integration:** Replaced the faulty  with the  API for all Pokémon card searches, fixing search and performance issues.
+- **Card Search Fix:** Updated the Add Card Manually modal to allow searching by card name in addition to set/collector number.
+- **Landing Page:** Updated the landing page to reflect the newly added features.
 
 **Earlier issues found/mentioned but not fixed**
-   - **Issue 1: Video calls are non-functional.**
-     - **Debug checklist:** See Issue 1 in the pending list. The REST polling fix was not successful and needs complete debugging.
-     - **Why to solve this issue and what will be achieved with this?** It's a critical, high-priority feature for the social platform.
-     - **Should Test frontend/backend/both after fix:** both
-     - **Is recurring issue?** Y
+   - **Issue 1: Video call instability.** While the connection is now established, it is not stable. This is the main remaining issue from the recurring video call problem.
+
+**Known issue recurrence from previous fork**
+  - **Issue recurrence in previous fork**: Video calls were non-functional.
+  - **Recurrence count**: 2+
+  - **Status**: IN PROGRESS (The issue has evolved from no connection to unstable connection).
 
 **Code Architecture**
 *   **Framework:** Next.js 15+ with App Router
 *   **Structure:** Monolithic Next.js app in .
-*   **Language:** TypeScript (Frontend)
+*   **Backend:** FastAPI proxy for some routes.
+*   **Language:** TypeScript
 *   **Styling:** Tailwind CSS, shadcn/ui
 *   **Database:** PostgreSQL (Neon) via  library.
 
-**Key Technical Concepts**
-*   Next.js App Router
-*   PostgreSQL
-*   WebRTC for peer-to-peer video calls.
-*   **REST API Polling** for WebRTC signaling (currently not working).
-
 **key DB schema**
-  - **signaling:**  (new table for video call signals)
-  - **messages:** 
-  - **decks:** 
+  - **signaling:** Modified to use a boolean  flag for signals instead of deleting them, to improve WebRTC race condition handling.
+  - **comments:** 
+  - **reactions:** 
+  - **products:** 
+
+**changes in tech stack**
+  - Replaced  library with direct  calls to the  API () for all Pokémon card data.
 
 **All files of reference**
-*   **/app/app/(pages)/collection/page.tsx**: **UPDATED** to fix CSV import, add manual card add modal, and enhance card display.
-*   **/app/app/(pages)/trades/new/page.tsx**: **UPDATED** with user/collection search and trade value summaries.
-*   **/app/app/(pages)/decks/page.tsx**: **UPDATED** with My Decks / Community Decks tabs and filters.
-*   **/app/app/(pages)/decks/[id]/page.tsx**: **UPDATED** with multi-select delete and sideboard import logic.
-*   **/app/app/api/auth/[...nextauth]/route.ts**: **UPDATED** to fix the  cookie issue for login.
-*   **/app/components/VideoCall.tsx**: **REWRITTEN** to use REST polling for signaling (still buggy).
-*   **/app/api/calls/route.ts**: **REWRITTEN** to handle REST-based signaling with database storage.
-*   **/app/app/api/collection/import-csv/route.ts**: **CREATED** for handling CSV uploads.
-*   **/app/app/api/decks/community/route.ts**: **CREATED** to fetch community decks.
-*   **/app/app/api/users/[id]/collection/route.ts**: **CREATED** to fetch another user's collection for trades.
-*   **/app/app/(pages)/groups/[id]/page.tsx**: **UPDATED** with Group Chat and Invite Member functionality.
-*   **/app/app/api/groups/[id]/chat/route.ts**: **CREATED** for group messaging.
-*   **/app/app/api/groups/[id]/invite/route.ts**: **CREATED** for inviting users to groups.
-*   **/app/components/ThemeProvider.tsx**: **UPDATED** to fix dark mode issues.
+*   : **UPDATED** with tolerant connection state handling and more STUN/TURN servers.
+*   : **UPDATED** with an incoming call polling and notification system.
+*   : **UPDATED** to use a  flag for signals.
+*   : **REWRITTEN** to support comments, replies, and reactions.
+*   : **CREATED** for site administration, with a functional shop inventory tab.
+*   : **CREATED** and linked to the new products DB table.
+*   : **CREATED**.
+*   : **UPDATED** the Add Card modal search logic.
+*   : **REWRITTEN** to use the TCGdex API.
+*   : **CREATED** for CRUD operations on shop products.
+*   : **CREATED** to provide data for the admin dashboard.
+*   : **CREATED** to provide data for the admin dashboard.
+*   : **CREATED** for managing comments and replies.
+*   : **CREATED** for managing post reactions.
+*   : **CREATED** for managing comment reactions.
 
 **Areas that need refactoring**:
-*   The **video call signaling mechanism** in  and  needs to be completely debugged. The current REST polling implementation is not working.
+*   The  file contains logic for multiple tabs. It should be broken down into separate components for each administrative section (e.g., , ).
+*    and  are very large and complex. The WebRTC and signaling logic could be extracted into custom hooks (e.g., , ) to simplify the components.
 
 **key api endpoints**
-*   : Creates/updates a call signal. **(Buggy)**
-*   : Polls for call signals. **(Buggy)**
-*   : Imports cards from a ManaBox CSV file.
-*   : Manually adds a card to the collection.
-*   : Fetches all public decks.
-*   : Fetches a specific user's tradeable collection.
-*   : Sends a message in a group chat.
-*   : Invites a user to a group.
+*    (GET, POST): Handles WebRTC signaling.
+*    (POST): Creates a comment or reply.
+*    (POST): Adds a reaction to a post.
+*    (POST): Adds a reaction to a comment.
+*    (GET, POST, PUT, DELETE): Manages shop inventory.
+*    (GET): Retrieves site statistics for the admin panel.
+*    (GET): Retrieves user list for the admin panel.
+*    (GET): Fetches shop products for the public-facing page.
 
 **Critical Info for New Agent**
-*   **Video Calls are the #1 Blocker:** The most critical issue is the non-functional video call feature. The agent's attempt to fix it by switching from WebSockets to REST polling has failed. The user confirmed it's stuck at . This requires immediate and thorough debugging. Do not assume the current implementation is close to working.
-*   **Answer User's Deployment Question:** The user asked if deploying via Emergent.sh would fix the calls. You need to explain that the issue is in the application's WebRTC signaling logic, not the hosting environment, and must be fixed in the code.
-*   **Verify Recent Fixes:** The previous agent implemented many features and fixes in the last run (Login, CSV import, Dark Mode, Manual Add, etc.) but only performed a cursory screenshot check. A full round of testing is needed for these before moving on to new features.
-*   **Login Flow:** The agent fixed the login issue on the preview URL, and its own tests confirmed it works. This needs to be verified by the user or the testing agent. Use  /  for testing.
+*   **Video Calls are P0:** This is the absolute top priority. The user confirmed the last fix allows a connection, but it's unstable and drops. The next step is to verify if the very last agent change (tolerating  state) solved the instability. This needs immediate user testing.
+*   **Admin Panel Completion is P1:** The user explicitly asked for the other tabs in the admin panel to be fixed/completed. The backend APIs are done; the task is now primarily frontend work in .
+*   **Verify Pokémon Search Fix:** The user's complaint about Pokémon card search was addressed by switching to a new API (TCGdex) and enabling name-only search. This needs to be confirmed as fixed by the user.
+*   **Payment Gateway Decision Pending:** The user asked for a payment gateway recommendation. The agent provided options. This topic will likely come up again when the user wants to make the shop functional. Be prepared to integrate a service like Stripe.
 
 **documents and test reports created in this job**
-*   /app/memory/PRD.md (updated by the previous agent)
-*   
-*   
+*   None.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests multiple features for decks, trades, and search. Asks if calls will work on Emergent hosting. (Partially implemented)
-2.  **Agent:** Asks for confirmation to proceed with the requested features.
-3.  **User:** Confirms yes and specifies priorities: group chat/messaging, then inviting members.
-4.  **Agent:** Starts implementing the deck page changes.
-5.  ... (Agent implements all P1 features requested by the user, including deck tabs, trade page search, search page UI, and deck editor multi-select/sideboard import) ...
-6.  **Agent:** Runs testing agent, which passes. Proceeds to implement group chat.
-7.  ... (Agent implements group chat and invite features) ...
-8.  **Agent:** Finishes and provides a summary.
-9.  **User:** Provides a new list of bugs and features: (1) Manually add cards to collection, (2) Show more card details in collection, (3) CSV import is failing with an error, (4) Sets priorities for future tasks, (5) Add trade value summaries, (6) Dark mode is broken. (PENDING)
-10. **Agent:** Proposes a plan to fix the CSV bug and dark mode first, then add the other features.
-11. **User:** Says yes please continue. (ADDRESSED by previous agent, but needs verification).
+1.  **User:** Agreed to integrate a new Pokémon API, test video calls, and complete the admin panel. (PENDING)
+2.  **Agent:** Proposed integrating TCGdex as the new Pokémon API and outlined next steps for testing calls and fixing the admin panel.
+3.  **User:** Reported video calls disconnect after connecting, asked for a new Pokémon API, and asked for the agent's opinion on the website's quality. (ADDRESSED)
+4.  **Agent:** Provided instructions on how to test the video call fix with two users.
+5.  **User:** Confirmed they will focus on the website before a mobile app and detailed the Pokémon search issue: can't search by name, and set+number search fails. (ADDRESSED)
+6.  **Agent:** Asked for clarification on priorities: video calls, Pokémon cards, or mobile app.
+7.  **User:** Reported video calls are stuck at Connecting..., and asked to look at Pokémon cards and a mobile app. (ADDRESSED)
+8.  **Agent:** Provided payment gateway recommendations (Stripe, PayPal, etc.).
+9.  **User:** Reported multiple issues: card search is broken, requested a landing page update, asked for a payment gateway recommendation, and asked for shop inventory management in the admin panel. (ADDRESSED)
+10. **Agent:** Began calling the testing agent but was interrupted by the user's message.
 
 **Project Health Check:**
 *   **Broken:**
-    *   **Video/Voice Calls:** The core functionality is not working despite a complete rewrite of the signaling mechanism.
+    *   **Video/Voice Calls:** The connection is unstable and drops shortly after being established.
 *   **Mocked:**
-    *   **Group Chat/Messaging:** The UI and API have been created, but the feature is untested.
-    *   **All recently added features:** Manual card add, CSV import fix, dark mode fix, and trade summaries have only been verified via agent screenshots and require comprehensive testing.
+    *   **Admin Panel:** The Analytics, Users, and Settings tabs are non-functional UI placeholders.
+    *   **Group Chat/Messaging & Invites:** These features are implemented but remain untested by the user.
 
 **3rd Party Integrations**
-*   **Emergent-managed Google Auth:** Integrated and working.
-*   **Scryfall API (MTG):** Integrated and working.
-*   **PostgreSQL (Neon):** Connection is working.
+*   **Scryfall API:** For Magic: The Gathering card data.
+*   **TCGdex API:** For Pokémon TCG card data (replaces the old Pokemon TCG SDK).
+*   **Emergent-managed Google Auth:** For user sign-in.
+*   **PostgreSQL (Neon):** The primary database.
 
 **Testing status**
-  - Testing agent used after significant changes: YES (but not on the most recent batch of fixes/features)
+  - Testing agent used after significant changes: NO
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
-  - Known regressions: Video calls remain non-functional after the attempted fix.
+  - Known regressions: None, but the video call feature remains unstable.
 
 **Credentials to test flow:**
-*   **Email:** 
-*   **Password:** 
+*   **User:**  / 
+*   **Admin Users:** ,  (logging in with these emails will show the Admin link in the user menu).
 
 **What agent forgot to execute**
-*   The agent did not re-address the broken video call feature after the user reported the new implementation was also failing.
-*   The agent did not answer the user's question about whether deploying on Emergent.sh would fix the video calls.
-*   The agent did not run the testing agent on the final batch of fixes and features, relying only on screenshots for verification.</analysis>
+*   The agent did not run the  after implementing a very large batch of new features (comments, reactions, admin panel, new pages, API replacement). This should be done to ensure no regressions were introduced.
+*   The agent did not implement the Advanced marketplace filters task, which was a P1 priority from the previous handoff and was requested again by the user in this session.</analysis>
