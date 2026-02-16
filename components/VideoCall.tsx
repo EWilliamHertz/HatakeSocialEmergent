@@ -215,13 +215,29 @@ export default function VideoCall({
             setCallDuration((prev) => prev + 1);
           }, 1000);
         }
-      } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-        setDebugInfo(`Call ${pc.connectionState}`);
+      } else if (pc.connectionState === 'failed') {
+        // Only end call on complete failure, not on disconnected (which can recover)
+        setDebugInfo('Call failed - connection error');
         cleanup(false);
+      } else if (pc.connectionState === 'disconnected') {
+        // Disconnected can recover - wait before cleanup
+        setDebugInfo('Connection interrupted, attempting to reconnect...');
+        // Don't cleanup immediately - WebRTC often recovers from disconnected state
       }
     };
     
-    peerConnectionRef.current = pc;
+    // Handle ICE connection state separately for better reliability
+    pc.oniceconnectionstatechange = () => {
+      console.log('ICE connection state:', pc.iceConnectionState);
+      setDebugInfo(`ICE: ${pc.iceConnectionState}`);
+      
+      // ICE failed is more serious than disconnected
+      if (pc.iceConnectionState === 'failed') {
+        // Try to restart ICE
+        console.log('Attempting ICE restart...');
+        pc.restartIce();
+      }
+    };
     return pc;
   };
 
