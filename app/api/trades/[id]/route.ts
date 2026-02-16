@@ -26,18 +26,19 @@ export async function GET(
         t.created_at,
         t.updated_at,
         t.initiator_id,
-        t.recipient_id,
-        t.initiator_items,
-        t.recipient_items,
+        t.receiver_id,
+        t.initiator_cards,
+        t.receiver_cards,
+        t.message,
         i.name as initiator_name,
         i.picture as initiator_picture,
         r.name as recipient_name,
         r.picture as recipient_picture
       FROM trades t
       JOIN users i ON t.initiator_id = i.user_id
-      JOIN users r ON t.recipient_id = r.user_id
+      JOIN users r ON t.receiver_id = r.user_id
       WHERE t.trade_id = ${id}
-        AND (t.initiator_id = ${user.user_id} OR t.recipient_id = ${user.user_id})
+        AND (t.initiator_id = ${user.user_id} OR t.receiver_id = ${user.user_id})
     `;
 
     if (trades.length === 0) {
