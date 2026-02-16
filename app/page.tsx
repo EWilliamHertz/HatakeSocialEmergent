@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Users, ShoppingBag, MessageCircle, Sparkles } from 'lucide-react';
+import { Search, Users, ShoppingBag, MessageCircle, Sparkles, Store, Info } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Home() {
   const router = useRouter();
@@ -35,8 +36,28 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      <div className="container mx-auto px-4 py-20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col">
+      {/* Nav Links */}
+      <nav className="absolute top-4 right-4 flex items-center gap-4">
+        <Link 
+          href="/shop" 
+          className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition flex items-center gap-2"
+          data-testid="nav-shop"
+        >
+          <Store className="w-4 h-4" />
+          Shop
+        </Link>
+        <Link 
+          href="/about" 
+          className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition flex items-center gap-2"
+          data-testid="nav-about"
+        >
+          <Info className="w-4 h-4" />
+          About
+        </Link>
+      </nav>
+
+      <div className="flex-1 container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
           {/* Logo */}
           <div className="flex items-center justify-center mb-8">
@@ -68,24 +89,35 @@ export default function Home() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for Pokemon, Magic, or any TCG card..."
                 className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-lg shadow-lg"
+                data-testid="landing-search"
               />
             </div>
           </form>
 
           {/* CTA Buttons */}
-          <div className="flex gap-4 justify-center mb-20">
+          <div className="flex flex-wrap gap-4 justify-center mb-20">
             <button
               onClick={() => router.push('/auth/signup')}
               className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              data-testid="get-started-btn"
             >
               Get Started Free
             </button>
             <button
               onClick={() => router.push('/auth/login')}
               className="px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-lg border-2 border-blue-600"
+              data-testid="sign-in-btn"
             >
               Sign In
             </button>
+            <Link
+              href="/shop"
+              className="px-8 py-4 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
+              data-testid="shop-btn"
+            >
+              <Store className="w-5 h-5" />
+              Visit Shop
+            </Link>
           </div>
         </div>
 
@@ -132,6 +164,31 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 py-8 px-4 mt-auto">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <Image
+                src="https://i.imgur.com/B06rBhI.png"
+                alt="Hatake.Social Logo"
+                width={32}
+                height={32}
+                className="rounded-lg"
+              />
+              <span className="font-bold text-gray-900">Hatake.Social</span>
+            </div>
+            <div className="flex items-center gap-6 text-sm text-gray-600">
+              <Link href="/shop" className="hover:text-blue-600 transition">Shop</Link>
+              <Link href="/about" className="hover:text-blue-600 transition">About Us</Link>
+              <Link href="/feed" className="hover:text-blue-600 transition">Community</Link>
+              <Link href="/marketplace" className="hover:text-blue-600 transition">Marketplace</Link>
+            </div>
+            <p className="text-sm text-gray-500">© {new Date().getFullYear()} Hatake.Social</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
