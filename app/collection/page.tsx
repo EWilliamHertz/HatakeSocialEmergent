@@ -368,6 +368,31 @@ export default function CollectionPage() {
     setAddingCard(true);
     
     try {
+      let cardData = card;
+      
+      // For Pokemon cards, fetch full details to get pricing
+      if (addCardGame === 'pokemon' && card.id) {
+        try {
+          const detailRes = await fetch(`https://api.tcgdex.net/v2/en/cards/${card.id}`, {
+            signal: AbortSignal.timeout(10000)
+          });
+          if (detailRes.ok) {
+            const fullCard = await detailRes.json();
+            // Merge full card data with our mapped format
+            cardData = {
+              ...card,
+              pricing: fullCard.pricing,
+              rarity: fullCard.rarity,
+              hp: fullCard.hp,
+              types: fullCard.types,
+              artist: fullCard.illustrator,
+            };
+          }
+        } catch (e) {
+          console.warn('Could not fetch full card details:', e);
+        }
+      }
+      
       const res = await fetch('/api/collection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -375,7 +400,7 @@ export default function CollectionPage() {
         body: JSON.stringify({
           cardId: card.id,
           game: addCardGame,
-          cardData: card,
+          cardData: cardData,
           quantity: addCardQuantity,
           condition: addCardCondition,
           foil: addCardFoil
