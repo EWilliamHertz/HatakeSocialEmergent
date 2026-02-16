@@ -7,12 +7,12 @@ Hatake.Social is a modern, full-stack TCG (Trading Card Game) social platform bu
 Create a new TCG social platform featuring:
 - Authentication (Google Sign-In + Email/Password)
 - Card Management (Pokemon TCG API + Scryfall/MTG API)
-- Social Features (Feed, Friends, Groups, Real-time Messaging)
-- Commerce (Marketplace for buying/selling cards)
-- User Profiles & Deck Builder
+- Social Features (Feed, Friends, Groups, Real-time Messaging with Video Calls)
+- Commerce (Marketplace for buying/selling cards, Trading)
+- User Profiles & Deck Builder with Import functionality
 
 ## Current Architecture
-- **Frontend**: Next.js 15+ with App Router (TypeScript)
+- **Frontend**: Next.js 16+ with App Router (TypeScript)
 - **Backend Proxy**: FastAPI (Python) at port 8001 - proxies to Next.js at port 3000
 - **Database**: PostgreSQL (Neon) - user-provided external database
 - **Styling**: Tailwind CSS
@@ -28,7 +28,7 @@ Create a new TCG social platform featuring:
 
 ### Authentication
 - [x] Email/Password signup and login
-- [x] Google OAuth via Emergent Auth (session cookie now properly set)
+- [x] Google OAuth via Emergent Auth (session cookie properly set)
 - [x] Session management with httpOnly cookies
 - [x] Auth callback page
 
@@ -44,7 +44,7 @@ Create a new TCG social platform featuring:
    - Sound notifications for new messages
    - Message anyone (not just friends)
    - Media messages support (images/videos in database schema)
-   - **WebRTC Voice/Video Calls with Screensharing** (IMPLEMENTED)
+   - **WebRTC Voice/Video Calls with Screensharing** (WORKING with REST Polling)
 7. **Dark Mode**: ThemeProvider implemented
 8. **Notifications**: System with API endpoints
 9. **Groups/Communities** (FULL FEATURE):
@@ -62,10 +62,20 @@ Create a new TCG social platform featuring:
     - Manage card quantities (add/remove/update)
     - Main deck and sideboard categories
     - Deck settings editor
-    - View deck statistics
+    - **Import decklist from text** (WORKING)
+12. **Trades** (FULL FEATURE):
+    - `/trades/new` page for creating new trade offers
+    - Select trade partner from friends
+    - Add cards from collection to offer
+    - Request specific cards
+    - Add notes to trade
+    - View active trades
 
-### WebRTC Video Calling Features
-- WebSocket signaling server in FastAPI backend
+### Video Calling - REST Polling Implementation (Serverless Compatible)
+- **NEW**: REST API at `/api/calls` for signaling (replaces WebSocket)
+- In-memory signal store for low-latency polling
+- Supports all signaling: offers, answers, ICE candidates, call events
+- Video/Voice call buttons in MessengerWidget and Messages page
 - Full-screen video call interface
 - Voice call mode (audio only)
 - Video call mode (audio + video)
@@ -77,9 +87,17 @@ Create a new TCG social platform featuring:
 - Connection status indicators
 - Error handling for camera/mic access
 
-## Database Schema Additions
+### Collection Management
+- View collection with card pricing
+- Bulk listing with **percentage of market price** option (WORKING)
+- Fixed price option
+- Bulk delete functionality
+- Edit card details (condition, quantity, foil, notes)
+
+## Database Schema
 - `messages.message_type` VARCHAR(50) DEFAULT 'text' - For text/image/video types
 - `messages.media_url` TEXT - For storing media URLs
+- `trades` table with initiator_id, receiver_id, initiator_cards, receiver_cards, message, status
 
 ## API Endpoints
 
@@ -94,15 +112,30 @@ Create a new TCG social platform featuring:
 - `GET /api/messages` - List conversations
 - `GET /api/messages/[id]` - Get messages in conversation
 - `POST /api/messages` - Send message (supports media)
-- `GET /api/users/search` - Search all users (for messaging anyone)
+- `GET /api/users/search` - Search all users
 - `POST /api/upload` - File upload for media
 - `GET /api/friends` - List friends
 - `GET /api/feed` - Social feed
 - `GET /api/notifications` - User notifications
+- `GET /api/decks` - List user's decks
+- `POST /api/decks` - Create deck
+- `GET /api/decks/[id]` - Get deck details
+- `PATCH /api/decks/[id]` - Update deck settings
+- `DELETE /api/decks/[id]` - Delete deck
+- `POST /api/decks/[id]/cards` - Add card to deck
+- `GET /api/trades` - List trades
+- `POST /api/trades` - Create trade offer
+- `GET /api/calls` - Poll for signaling messages (WORKING)
+- `POST /api/calls` - Send signaling message (WORKING)
+- `DELETE /api/calls` - End call/clear signals (WORKING)
+- `GET /api/groups` - List groups
+- `POST /api/groups` - Create group
+- `GET /api/groups/[id]` - Get group details
+- `POST /api/groups/[id]/posts` - Create group post
+- `POST /api/collection/bulk-list` - Bulk list with % pricing (WORKING)
 
 ### Known Issues
-- Pokemon TCG API: External timeout (504) - Not a code issue
-- External preview URL may show "Preview Unavailable" - Platform infrastructure issue
+- Pokemon TCG API: External timeout (504) - Not a code issue, API is down
 
 ## File Structure (Key Files)
 ```
@@ -110,19 +143,26 @@ Create a new TCG social platform featuring:
 ├── app/                    # Next.js App Router
 │   ├── api/                # API routes
 │   │   ├── auth/           # Authentication
+│   │   ├── calls/          # Video call signaling (NEW - REST polling)
 │   │   ├── messages/       # Messaging
 │   │   ├── marketplace/    # Marketplace
-│   │   ├── upload/         # File uploads (NEW)
-│   │   └── users/search/   # User search
+│   │   ├── decks/          # Deck Builder API
+│   │   ├── trades/         # Trading API
+│   │   ├── groups/         # Groups API
+│   │   └── upload/         # File uploads
 │   ├── auth/               # Auth pages
+│   ├── decks/              # Deck Builder pages
+│   ├── trades/             # Trading pages (including /new)
 │   ├── feed/               # Social feed
+│   ├── groups/             # Groups pages
 │   ├── marketplace/        # Marketplace page
-│   ├── messages/           # Messages page (ENHANCED)
+│   ├── messages/           # Messages page (with video calls)
 │   └── profile/            # User profiles
 ├── backend/                # FastAPI proxy
-│   └── server.py           # Proxy server (routes all traffic to Next.js)
+│   └── server.py           # Proxy server
 ├── components/             # Shared components
-│   ├── MessengerWidget.tsx # Chat widget (ENHANCED)
+│   ├── VideoCall.tsx       # Video call component (REST polling)
+│   ├── MessengerWidget.tsx # Chat widget (with call buttons)
 │   ├── Navbar.tsx          # Navigation
 │   ├── AuthPromptModal.tsx # Auth prompt
 │   └── ThemeProvider.tsx   # Dark mode
@@ -132,54 +172,34 @@ Create a new TCG social platform featuring:
     └── db-schema.sql       # Database schema
 ```
 
-## P0 Issues - Resolved
-1. ✅ App renamed to "Hatake.Social"
-2. ✅ Google Auth session cookie properly set
-3. ✅ Messaging shift+enter, emojis, sounds implemented
-4. ✅ Message anyone (not just friends)
-5. ✅ Profile links on feed avatars
-6. ✅ Marketplace blank screen - Fixed price.toFixed() error
-7. ✅ WebRTC Voice/Video calls with screensharing
-8. ✅ WebSocket signaling server for peer-to-peer calls
-9. ✅ Full Groups/Communities feature
-
-## P1 Issues - Pending
-1. Pokemon API timeout (external issue - not code-related)
-
-## Groups Feature - COMPLETE
-- Create groups (public/private)
-- Join/leave groups
-- Group detail page with tabs (Posts/Members)
-- Post to groups
-- Like posts
-- View members with role badges
-- Admin can manage settings
-- Member roles (admin, moderator, member)
-
-## WebRTC Video Calling - COMPLETE
-- WebSocket signaling server in FastAPI backend
-- Peer-to-peer SDP offer/answer exchange
-- ICE candidate exchange
-- Voice and video calls
-- Screen sharing with system audio
-- Mute/unmute, camera toggle
-- Call duration timer
-- Fullscreen mode
-- Connection status indicators
+## Issues Resolved (This Session)
+1. ✅ Video calls now use REST polling instead of WebSocket (serverless compatible)
+2. ✅ `/trades/new` page working correctly
+3. ✅ Bulk listing with % of market price working
+4. ✅ Deck import functionality working
+5. ✅ Video/Voice call buttons added to MessengerWidget
+6. ✅ Fixed trades API column name mismatch (receiver_id, initiator_cards, receiver_cards)
+7. ✅ Fixed collection page syntax error
 
 ## P2/Future Tasks
-- Deck Builder feature
 - Advanced marketplace filtering
-- WebRTC voice/video with screensharing
+- TURN server for robust NAT traversal
 - Mobile application
-- Prisma ORM integration
+- Card scanner (camera-based identification)
+- Advanced analytics
+- Invite members to private groups
+- Group chat/messaging
+- Card deck sharing functionality
 
 ## Environment Variables
 - `DATABASE_URL` - Neon PostgreSQL connection string
-- `REACT_APP_BACKEND_URL` - External preview URL
+- `JWT_SECRET` - Secret for JWT tokens
 - Google OAuth handled via Emergent Auth
 
-## Deployment Notes
-- Preview may show "Unavailable" when pod is sleeping - this auto-resolves on activity
-- Local testing: `http://localhost:8001` for all requests
-- Backend proxy is essential for platform routing
+## Testing
+- All 17 backend API tests passing
+- All frontend pages load correctly
+- Video call REST polling API verified working
+
+## Last Updated
+December 2025
