@@ -272,73 +272,85 @@ export default function CollectionPage() {
           }
         }
       } else {
-        // Pokemon TCG API
-        let queryParts: string[] = [];
+        // TCGdex API for Pokemon (free, no API key required)
+        let searchUrl = 'https://api.tcgdex.net/v2/en/cards';
+        const params = new URLSearchParams();
         
         if (addCardName.trim()) {
-          // Use wildcard for partial matching, no quotes needed
-          queryParts.push(`name:${addCardName.trim()}*`);
+          params.append('name', addCardName.trim());
         }
-        if (addCardSetCode.trim()) {
-          // Set ID format for Pokemon TCG is usually lowercase letters
-          queryParts.push(`set.id:${addCardSetCode.toLowerCase()}`);
-        }
-        if (addCardCollectorNum.trim()) {
-          queryParts.push(`number:${addCardCollectorNum}`);
-        }
-        
-        const query = queryParts.join(' ');
-        console.log('Pokemon search query:', query);
-        
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json',
-        };
-        
-        // Add API key if available
-        const apiKey = 'card-hub-3';
-        headers['X-Api-Key'] = apiKey;
         
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
           
-          const res = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(query)}&pageSize=30`, {
-            headers,
+          let apiUrl = searchUrl;
+          if (params.toString()) {
+            apiUrl += '?' + params.toString();
+          }
+          
+          console.log('TCGdex search URL:', apiUrl);
+          
+          const res = await fetch(apiUrl, {
             signal: controller.signal
           });
           
           clearTimeout(timeoutId);
           
           if (res.ok) {
-            const data = await res.json();
-            // Map Pokemon cards to consistent format
-            const cards = (data.data || []).map((card: any) => ({
-              ...card,
+            let cards = await res.json();
+            
+            // If set code is provided, filter results
+            if (addCardSetCode.trim()) {
+              const setLower = addCardSetCode.toLowerCase();
+              cards = cards.filter((card: any) => 
+                card.id?.toLowerCase().includes(setLower) || 
+                card.set?.id?.toLowerCase().includes(setLower)
+              );
+            }
+            
+            // If collector number is provided, filter results
+            if (addCardCollectorNum.trim()) {
+              cards = cards.filter((card: any) => 
+                card.localId === addCardCollectorNum || 
+                card.id?.endsWith('-' + addCardCollectorNum)
+              );
+            }
+            
+            // Map TCGdex cards to consistent format
+            const mappedCards = cards.slice(0, 30).map((card: any) => ({
+              id: card.id,
+              name: card.name,
               game: 'pokemon',
               image_uris: {
-                small: card.images?.small,
-                normal: card.images?.large,
-                large: card.images?.large
+                small: card.image ? card.image + '/low.webp' : null,
+                normal: card.image ? card.image + '/high.webp' : null,
+                large: card.image ? card.image + '/high.webp' : null
               },
-              set_name: card.set?.name,
-              set_code: card.set?.id,
-              collector_number: card.number
+              images: {
+                small: card.image ? card.image + '/low.webp' : null,
+                large: card.image ? card.image + '/high.webp' : null
+              },
+              set_name: card.set?.name || '',
+              set_code: card.set?.id || card.id?.split('-')[0] || '',
+              collector_number: card.localId || card.id?.split('-').pop() || '',
+              set: { id: card.set?.id, name: card.set?.name }
             }));
-            setAddCardSearchResults(cards.slice(0, 30));
             
-            if (cards.length === 0) {
-              console.log('No Pokemon cards found for query:', query);
+            setAddCardSearchResults(mappedCards);
+            
+            if (mappedCards.length === 0) {
+              console.log('No Pokemon cards found for search');
             }
           } else {
-            console.error('Pokemon API error:', res.status);
-            // Set empty results to show "no cards found" message
+            console.error('TCGdex API error:', res.status);
             setAddCardSearchResults([]);
           }
         } catch (fetchError: any) {
           if (fetchError.name === 'AbortError') {
-            console.error('Pokemon API timeout - the API is slow, please try again');
+            console.error('TCGdex API timeout');
           } else {
-            console.error('Pokemon API fetch error:', fetchError);
+            console.error('TCGdex API fetch error:', fetchError);
           }
           setAddCardSearchResults([]);
         }
