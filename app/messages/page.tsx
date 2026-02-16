@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import VideoCall from '@/components/VideoCall';
 import { MessageCircle, Send, Plus, Users, X, Search, Smile, Image as ImageIcon, Video, Volume2, VolumeX, Phone, Video as VideoIcon, Upload, Camera } from 'lucide-react';
 import Image from 'next/image';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
