@@ -68,16 +68,24 @@ export default function MessengerWidget() {
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [currentUserName, setCurrentUserName] = useState('');
+  const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>(null);
+  const [isReceivingCall, setIsReceivingCall] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ringtoneRef = useRef<HTMLAudioElement | null>(null);
   const lastMessageCount = useRef(0);
+  const callPollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize audio
   useEffect(() => {
     audioRef.current = new Audio(NOTIFICATION_SOUND);
+    ringtoneRef.current = new Audio(RINGTONE_SOUND);
+    if (ringtoneRef.current) {
+      ringtoneRef.current.loop = true;
+    }
   }, []);
 
   // Play notification sound
