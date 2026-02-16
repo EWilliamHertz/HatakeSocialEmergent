@@ -764,38 +764,26 @@ export default function MessagesPage() {
         </div>
       )}
 
-      {/* Video Call Modal (Placeholder for WebRTC) */}
-      {showVideoCall && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50" data-testid="video-call-modal">
-          <div className="text-center text-white">
-            <VideoIcon className="w-24 h-24 mx-auto mb-4 animate-pulse" />
-            <h3 className="text-xl font-bold mb-2">Video Call</h3>
-            <p className="text-gray-400 mb-6">WebRTC video calling feature coming soon!</p>
-            <button
-              onClick={() => setShowVideoCall(false)}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700"
-            >
-              End Call
-            </button>
-          </div>
-        </div>
+      {/* Video Call */}
+      {showVideoCall && selectedConv && (
+        <VideoCall
+          isOpen={showVideoCall}
+          onClose={() => setShowVideoCall(false)}
+          callType="video"
+          remoteUserName={conversations.find(c => c.conversation_id === selectedConv)?.name || 'User'}
+          remoteUserPicture={conversations.find(c => c.conversation_id === selectedConv)?.picture}
+        />
       )}
 
-      {/* Audio Call Modal (Placeholder for WebRTC) */}
-      {showAudioCall && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50" data-testid="audio-call-modal">
-          <div className="text-center text-white">
-            <Phone className="w-24 h-24 mx-auto mb-4 animate-pulse" />
-            <h3 className="text-xl font-bold mb-2">Voice Call</h3>
-            <p className="text-gray-400 mb-6">WebRTC voice calling feature coming soon!</p>
-            <button
-              onClick={() => setShowAudioCall(false)}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700"
-            >
-              End Call
-            </button>
-          </div>
-        </div>
+      {/* Audio Call */}
+      {showAudioCall && selectedConv && (
+        <VideoCall
+          isOpen={showAudioCall}
+          onClose={() => setShowAudioCall(false)}
+          callType="audio"
+          remoteUserName={conversations.find(c => c.conversation_id === selectedConv)?.name || 'User'}
+          remoteUserPicture={conversations.find(c => c.conversation_id === selectedConv)?.picture}
+        />
       )}
     </div>
   );
