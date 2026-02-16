@@ -225,7 +225,7 @@ export default function VideoCall({
     return pc;
   };
 
-  // Initialize local media and create offer
+  // Initialize local media and create offer (for caller) or wait for offer (for receiver)
   const initializeCall = async () => {
     try {
       setDebugInfo('Requesting media access...');
@@ -251,12 +251,12 @@ export default function VideoCall({
         pc.addTrack(track, stream);
       });
 
-      // Create and send offer
-      if (!hasCreatedOffer.current) {
+      // If caller, create and send offer
+      if (!isReceiver && !hasCreatedOffer.current) {
         hasCreatedOffer.current = true;
         setDebugInfo('Creating offer...');
         
-        // Send call notification
+        // Send call notification to the other user
         await sendSignal('incoming_call', {
           call_type: callType,
           caller_name: currentUserName
@@ -270,6 +270,12 @@ export default function VideoCall({
         
         await sendSignal('offer', offer);
         setDebugInfo('Offer sent, waiting for answer...');
+        setCallStatus('calling');
+      } else if (isReceiver) {
+        // If receiver, notify that we accepted the call and wait for offer
+        setDebugInfo('Call accepted, waiting for offer...');
+        setCallStatus('ringing');
+        await sendSignal('call_accepted', {});
       }
 
       return stream;
