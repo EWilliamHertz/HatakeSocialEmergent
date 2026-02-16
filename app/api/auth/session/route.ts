@@ -75,11 +75,22 @@ export async function POST(request: NextRequest) {
       email_verified: true,
     };
 
-    return NextResponse.json({
+    const jsonResponse = NextResponse.json({
       success: true,
       user,
       session_token,
     });
+
+    // Set session cookie
+    jsonResponse.cookies.set('session_token', session_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60,
+      path: '/',
+    });
+
+    return jsonResponse;
   } catch (error) {
     console.error('Session exchange error:', error);
     return NextResponse.json(
