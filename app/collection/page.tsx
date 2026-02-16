@@ -215,6 +215,21 @@ export default function CollectionPage() {
     }
   };
 
+  // Pokemon set code aliases - common abbreviations users might use
+  const pokemonSetAliases: Record<string, string> = {
+    'jtg': 'sv09',          // Journey Together
+    'journey': 'sv09',      // Journey Together
+    'journeytogether': 'sv09',
+    'tef': 'sv05',          // Temporal Forces
+    'temporal': 'sv05',     
+    'par': 'sv04',          // Paradox Rift
+    'obsidian': 'sv03',     // Obsidian Flames
+    'paldea': 'sv02',       // Paldea Evolved
+    'scarlet': 'sv01',      // Scarlet & Violet Base
+    'violet': 'sv01',
+    'svbase': 'sv01',
+  };
+
   // Search for card - supports name search or set+number search
   const searchCardManually = async () => {
     const hasNameSearch = addCardName.trim().length >= 2;
@@ -224,6 +239,12 @@ export default function CollectionPage() {
     
     setAddCardSearching(true);
     setAddCardSearchResults([]);
+    
+    // Resolve set code alias for Pokemon
+    let resolvedSetCode = addCardSetCode.trim().toLowerCase();
+    if (addCardGame === 'pokemon' && pokemonSetAliases[resolvedSetCode]) {
+      resolvedSetCode = pokemonSetAliases[resolvedSetCode];
+    }
     
     try {
       if (addCardGame === 'mtg') {
