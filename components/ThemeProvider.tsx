@@ -18,18 +18,36 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    // Load theme from localStorage
-    const savedTheme = localStorage.getItem('tcg-theme') as Theme | null;
+    
+    // Load theme from localStorage or system preference
+    const savedTheme = localStorage.getItem('hatake-theme') as Theme | null;
+    
     if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
       setThemeState(savedTheme);
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+      applyTheme(savedTheme);
+    } else {
+      // Check system preference
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialTheme = systemPrefersDark ? 'dark' : 'light';
+      setThemeState(initialTheme);
+      applyTheme(initialTheme);
     }
   }, []);
 
+  const applyTheme = (newTheme: Theme) => {
+    // Remove both classes first, then add the correct one
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(newTheme);
+    
+    // Also set the class on body for better coverage
+    document.body.classList.remove('light', 'dark');
+    document.body.classList.add(newTheme);
+  };
+
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('tcg-theme', newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    localStorage.setItem('hatake-theme', newTheme);
+    applyTheme(newTheme);
   };
 
   const toggleTheme = () => {
@@ -37,9 +55,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(newTheme);
   };
 
-  // Prevent flash of wrong theme
+  // Prevent flash of wrong theme by showing nothing until mounted
   if (!mounted) {
-    return <>{children}</>;
+    return null;
   }
 
   return (
