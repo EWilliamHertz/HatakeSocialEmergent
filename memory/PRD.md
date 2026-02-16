@@ -125,11 +125,32 @@ Create a new TCG social platform featuring:
 5. ✅ Profile links on feed avatars
 6. ✅ Marketplace blank screen - Fixed price.toFixed() error
 7. ✅ WebRTC Voice/Video calls with screensharing
+8. ✅ WebSocket signaling server for peer-to-peer calls
+9. ✅ Full Groups/Communities feature
 
 ## P1 Issues - Pending
-1. Groups full implementation (currently placeholder)
-2. Pokemon API timeout (external issue - not code-related)
-3. Real-time signaling for WebRTC (currently demo mode)
+1. Pokemon API timeout (external issue - not code-related)
+
+## Groups Feature - COMPLETE
+- Create groups (public/private)
+- Join/leave groups
+- Group detail page with tabs (Posts/Members)
+- Post to groups
+- Like posts
+- View members with role badges
+- Admin can manage settings
+- Member roles (admin, moderator, member)
+
+## WebRTC Video Calling - COMPLETE
+- WebSocket signaling server in FastAPI backend
+- Peer-to-peer SDP offer/answer exchange
+- ICE candidate exchange
+- Voice and video calls
+- Screen sharing with system audio
+- Mute/unmute, camera toggle
+- Call duration timer
+- Fullscreen mode
+- Connection status indicators
 
 ## P2/Future Tasks
 - Deck Builder feature
