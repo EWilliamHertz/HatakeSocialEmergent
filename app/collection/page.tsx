@@ -250,6 +250,106 @@ export default function CollectionPage() {
     return item.card_data.name?.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
+  // Import functions
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportLoading(true);
+    setImportStatus('preview');
+
+    try {
+      const text = await file.text();
+      
+      const res = await fetch('/api/collection/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ csvContent: text, action: 'preview' })
+      });
+
+      const data = await res.json();
+      
+      if (data.success) {
+        setImportCards(data.cards);
+      } else {
+        alert('Failed to parse CSV: ' + (data.error || 'Unknown error'));
+        setImportStatus('idle');
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      alert('Failed to read file');
+      setImportStatus('idle');
+    } finally {
+      setImportLoading(false);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const confirmImport = async () => {
+    setImportLoading(true);
+    setImportStatus('importing');
+
+    try {
+      // Re-read the file for import
+      const file = fileInputRef.current?.files?.[0];
+      if (!file) {
+        // Use the already parsed cards
+        const res = await fetch('/api/collection/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            csvContent: importCards.map(c => 
+              `"${c.name}",${c.setCode},"${c.setName}",${c.collectorNumber},${c.foil ? 'foil' : 'normal'},${c.rarity},${c.quantity},,${c.scryfallId},${c.purchasePrice},false,${c.altered},${c.condition},${c.language},${c.currency}`
+            ).join('\n'),
+            action: 'import' 
+          })
+        });
+
+        const data = await res.json();
+        setImportResult(data);
+        setImportStatus('done');
+        loadCollection();
+        return;
+      }
+
+      const text = await file.text();
+      
+      const res = await fetch('/api/collection/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ csvContent: text, action: 'import' })
+      });
+
+      const data = await res.json();
+      setImportResult(data);
+      setImportStatus('done');
+      loadCollection();
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Failed to import cards');
+      setImportStatus('preview');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const closeImportModal = () => {
+    setShowImportModal(false);
+    setImportCards([]);
+    setImportStatus('idle');
+    setImportResult(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
