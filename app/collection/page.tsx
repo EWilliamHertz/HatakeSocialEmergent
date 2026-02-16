@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Package, Trash2, DollarSign, CheckSquare, Square, MoreHorizontal, Edit2, ShoppingBag, Search } from 'lucide-react';
+import { Package, Trash2, DollarSign, CheckSquare, Square, MoreHorizontal, Edit2, ShoppingBag, Search, Upload, FileSpreadsheet, X, AlertCircle, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
 
 interface CollectionItem {
@@ -16,6 +16,23 @@ interface CollectionItem {
   foil?: boolean;
   notes?: string;
   added_at: string;
+}
+
+interface ImportCard {
+  name: string;
+  setCode: string;
+  setName: string;
+  collectorNumber: string;
+  foil: boolean;
+  rarity: string;
+  quantity: number;
+  scryfallId: string;
+  purchasePrice: number;
+  currency: string;
+  condition: string;
+  language: string;
+  misprint: boolean;
+  altered: boolean;
 }
 
 export default function CollectionPage() {
@@ -33,6 +50,14 @@ export default function CollectionPage() {
   const [listCondition, setListCondition] = useState('Near Mint');
   const [listPriceMode, setListPriceMode] = useState<'fixed' | 'percent'>('percent');
   const [listPercent, setListPercent] = useState('90');
+  
+  // Import state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importCards, setImportCards] = useState<ImportCard[]>([]);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importStatus, setImportStatus] = useState<'idle' | 'preview' | 'importing' | 'done'>('idle');
+  const [importResult, setImportResult] = useState<{ imported: number; errors?: string[] } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
