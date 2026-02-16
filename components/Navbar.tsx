@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { Home, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound } from 'lucide-react';
+import { Home, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound, Layers } from 'lucide-react';
 import Link from 'next/link';
 import NotificationsDropdown from './NotificationsDropdown';
 import ThemeToggle from './ThemeToggle';
@@ -47,6 +47,7 @@ export default function Navbar() {
     { href: '/feed', icon: Home, label: 'Feed' },
     { href: '/search', icon: Search, label: 'Search' },
     { href: '/collection', icon: Package, label: 'Collection' },
+    { href: '/decks', icon: Layers, label: 'Decks' },
     { href: '/marketplace', icon: ShoppingBag, label: 'Market' },
     { href: '/trades', icon: ArrowRightLeft, label: 'Trades' },
     { href: '/friends', icon: Users, label: 'Friends' },
