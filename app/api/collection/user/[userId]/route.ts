@@ -19,23 +19,20 @@ export async function GET(
 
     const { userId } = await params;
 
-    // Get user's collection - only items marked as tradeable or all items for now
+    // Get user's collection - use collection_items table (same as main collection endpoint)
     const items = await sql`
       SELECT 
-        c.collection_id as id,
+        c.id,
         c.card_id,
         c.game,
         c.quantity,
         c.condition,
-        c.is_foil,
-        c.card_name,
-        c.card_image,
-        c.set_code,
-        c.market_price
-      FROM collections c
+        c.foil as is_foil,
+        c.card_data
+      FROM collection_items c
       WHERE c.user_id = ${userId}
       AND c.quantity > 0
-      ORDER BY c.card_name ASC
+      ORDER BY c.added_at DESC
     `;
 
     // Transform to match expected format
