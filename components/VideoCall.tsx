@@ -206,11 +206,6 @@ export default function VideoCall({
       }
     };
     
-    pc.oniceconnectionstatechange = () => {
-      console.log('ICE connection state:', pc.iceConnectionState);
-      setDebugInfo(`ICE: ${pc.iceConnectionState}`);
-    };
-    
     pc.ontrack = (event) => {
       console.log('Received remote track:', event.track.kind);
       setDebugInfo(`Received ${event.track.kind} track`);
