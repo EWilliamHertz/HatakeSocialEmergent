@@ -400,6 +400,32 @@ export default function NewTradePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Trade Value Summary */}
+          {(offeredCards.length > 0 || requestedCards.length > 0) && (
+            <div className="lg:col-span-2 bg-gradient-to-r from-blue-500/10 to-green-500/10 dark:from-blue-900/30 dark:to-green-900/30 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">You Offer</p>
+                  <p className="text-2xl font-bold text-green-600">${offeredValue.toFixed(2)}</p>
+                </div>
+                <ArrowRightLeft className="w-6 h-6 text-gray-400" />
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">You Request</p>
+                  <p className="text-2xl font-bold text-blue-600">${requestedValue.toFixed(2)}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Difference</p>
+                <p className={`text-xl font-bold ${
+                  offeredValue > requestedValue ? 'text-red-600' : 
+                  offeredValue < requestedValue ? 'text-green-600' : 'text-gray-600'
+                }`}>
+                  {offeredValue > requestedValue ? '-' : offeredValue < requestedValue ? '+' : ''}
+                  ${Math.abs(offeredValue - requestedValue).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          )}
           {/* Left: Your Offer */}
           <div className="space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
