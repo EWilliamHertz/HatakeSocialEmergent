@@ -36,19 +36,39 @@ export async function GET(request: NextRequest) {
     await ensureTable();
     const userId = user.user_id;
 
-    // Get signals for this user (last 30 seconds)
+    // Get signals for this user (last 60 seconds - increased from 30)
     const signals = await sql`
       SELECT id, from_user_id, signal_type, signal_data, created_at
       FROM call_signals 
       WHERE target_user_id = ${userId}
-      AND created_at > NOW() - INTERVAL '30 seconds'
+      AND created_at > NOW() - INTERVAL '60 seconds'
       ORDER BY created_at ASC
     `;
 
     if (signals.length > 0) {
-      // Delete the fetched signals
-      const ids = signals.map(s => s.id);
-      await sql`DELETE FROM call_signals WHERE id = ANY(${ids})`;
+      // Only delete signals that are NOT offers or answers (keep those for retransmission)
+      // Delete ice_candidates and other transient signals
+      const idsToDelete = signals
+        .filter(s => !['offer', 'answer'].includes(s.signal_type))
+        .map(s => s.id);
+      
+      if (idsToDelete.length > 0) {
+        await sql`DELETE FROM call_signals WHERE id = ANY(${idsToDelete})`;
+      }
+      
+      // Mark offers/answers as read by updating their timestamp (so they don't get re-fetched)
+      const offerAnswerIds = signals
+        .filter(s => ['offer', 'answer'].includes(s.signal_type))
+        .map(s => s.id);
+      
+      if (offerAnswerIds.length > 0) {
+        // Delete older duplicates, keep only the newest
+        await sql`
+          DELETE FROM call_signals 
+          WHERE id = ANY(${offerAnswerIds})
+          AND created_at < (SELECT MAX(created_at) FROM call_signals WHERE id = ANY(${offerAnswerIds}))
+        `;
+      }
       
       return NextResponse.json({ 
         success: true, 
