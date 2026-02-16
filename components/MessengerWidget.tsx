@@ -3,8 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { MessageCircle, X, Send, ChevronDown, Users, Smile, Image as ImageIcon, Volume2, VolumeX } from 'lucide-react';
 import Image from 'next/image';
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
+import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 
 interface Conversation {
   conversation_id: string;
@@ -212,8 +211,8 @@ export default function MessengerWidget() {
     }
   };
 
-  const handleEmojiSelect = (emoji: any) => {
-    setNewMessage((prev) => prev + emoji.native);
+  const handleEmojiSelect = (emojiData: EmojiClickData) => {
+    setNewMessage((prev) => prev + emojiData.emoji);
     textareaRef.current?.focus();
   };
 
@@ -328,13 +327,11 @@ export default function MessengerWidget() {
                   {/* Emoji Picker */}
                   {showEmojiPicker && (
                     <div className="absolute bottom-16 left-2 z-50" data-testid="widget-emoji-picker">
-                      <Picker 
-                        data={data} 
-                        onEmojiSelect={handleEmojiSelect}
-                        theme="light"
-                        previewPosition="none"
-                        skinTonePosition="none"
-                        perLine={7}
+                      <EmojiPicker 
+                        onEmojiClick={handleEmojiSelect}
+                        theme={Theme.LIGHT}
+                        width={300}
+                        height={350}
                       />
                     </div>
                   )}
