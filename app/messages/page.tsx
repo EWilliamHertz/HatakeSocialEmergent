@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { MessageCircle, Send, Plus, Users, X, Search, Smile, Image as ImageIcon, Video, Volume2, VolumeX, Phone, Video as VideoIcon, Upload, Camera } from 'lucide-react';
 import Image from 'next/image';
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
+import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 
 interface Conversation {
   conversation_id: string;
@@ -255,8 +254,8 @@ export default function MessagesPage() {
   };
 
   // Handle emoji selection
-  const handleEmojiSelect = (emoji: any) => {
-    setNewMessage((prev) => prev + emoji.native);
+  const handleEmojiSelect = (emojiData: EmojiClickData) => {
+    setNewMessage((prev) => prev + emojiData.emoji);
     textareaRef.current?.focus();
   };
 
@@ -584,12 +583,11 @@ export default function MessagesPage() {
                       {/* Emoji Picker */}
                       {showEmojiPicker && (
                         <div className="absolute bottom-16 left-0 z-50" data-testid="emoji-picker">
-                          <Picker 
-                            data={data} 
-                            onEmojiSelect={handleEmojiSelect}
-                            theme="light"
-                            previewPosition="none"
-                            skinTonePosition="none"
+                          <EmojiPicker 
+                            onEmojiClick={handleEmojiSelect}
+                            theme={Theme.LIGHT}
+                            width={350}
+                            height={400}
                           />
                         </div>
                       )}
