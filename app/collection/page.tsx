@@ -58,6 +58,18 @@ export default function CollectionPage() {
   const [importStatus, setImportStatus] = useState<'idle' | 'preview' | 'importing' | 'done'>('idle');
   const [importResult, setImportResult] = useState<{ imported: number; errors?: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Manual add card state
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
+  const [addCardGame, setAddCardGame] = useState<'mtg' | 'pokemon'>('mtg');
+  const [addCardSetCode, setAddCardSetCode] = useState('');
+  const [addCardCollectorNum, setAddCardCollectorNum] = useState('');
+  const [addCardSearchResults, setAddCardSearchResults] = useState<any[]>([]);
+  const [addCardSearching, setAddCardSearching] = useState(false);
+  const [addCardQuantity, setAddCardQuantity] = useState(1);
+  const [addCardCondition, setAddCardCondition] = useState('Near Mint');
+  const [addCardFoil, setAddCardFoil] = useState(false);
+  const [addingCard, setAddingCard] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
