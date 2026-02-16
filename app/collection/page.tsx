@@ -503,27 +503,90 @@ export default function CollectionPage() {
       {/* Bulk List Modal */}
       {showListModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-bold mb-4">List {selectedItems.size} Cards for Sale</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-bold mb-2 dark:text-white">List {selectedItems.size} Cards for Sale</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Total Market Value: ${calculateSelectedValue().toFixed(2)}
+            </p>
+            
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price per Card ($)</label>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={listPrice}
-                  onChange={(e) => setListPrice(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  placeholder="0.00"
-                />
+              {/* Pricing Mode Toggle */}
+              <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <button
+                  onClick={() => setListPriceMode('percent')}
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition ${
+                    listPriceMode === 'percent' 
+                      ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400' 
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  % of Market
+                </button>
+                <button
+                  onClick={() => setListPriceMode('fixed')}
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition ${
+                    listPriceMode === 'fixed' 
+                      ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400' 
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  Fixed Price
+                </button>
               </div>
+              
+              {listPriceMode === 'percent' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Percentage of Market Price
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="50"
+                      max="150"
+                      value={listPercent}
+                      onChange={(e) => setListPercent(e.target.value)}
+                      className="flex-1"
+                    />
+                    <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 w-24">
+                      <input
+                        type="number"
+                        min="1"
+                        max="200"
+                        value={listPercent}
+                        onChange={(e) => setListPercent(e.target.value)}
+                        className="w-12 bg-transparent text-center focus:outline-none dark:text-white"
+                      />
+                      <span className="text-gray-500 dark:text-gray-400">%</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Estimated listing total: ${(calculateSelectedValue() * parseFloat(listPercent || '0') / 100).toFixed(2)}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Fixed Price per Card ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={listPrice}
+                    onChange={(e) => setListPrice(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                    placeholder="0.00"
+                  />
+                </div>
+              )}
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Condition</label>
                 <select 
                   value={listCondition}
                   onChange={(e) => setListCondition(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
                 >
                   <option>Mint</option>
                   <option>Near Mint</option>
@@ -539,15 +602,17 @@ export default function CollectionPage() {
                 onClick={() => {
                   setShowListModal(false);
                   setListPrice('');
+                  setListPercent('90');
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
               >
                 Cancel
               </button>
               <button
                 onClick={submitBulkList}
-                disabled={!listPrice}
+                disabled={listPriceMode === 'fixed' && !listPrice}
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
               >
                 List for Sale
               </button>
