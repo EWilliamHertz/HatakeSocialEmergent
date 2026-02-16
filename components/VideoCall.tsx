@@ -12,6 +12,7 @@ interface VideoCallProps {
   remoteUserPicture?: string;
   currentUserId: string;
   currentUserName: string;
+  isReceiver?: boolean;
 }
 
 export default function VideoCall({ 
@@ -22,7 +23,8 @@ export default function VideoCall({
   remoteUserName, 
   remoteUserPicture,
   currentUserId,
-  currentUserName
+  currentUserName,
+  isReceiver = false
 }: VideoCallProps) {
   const [isConnecting, setIsConnecting] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
