@@ -229,6 +229,129 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
     return formatDate(dateString);
   };
 
+  // Load chat messages
+  const loadChatMessages = async () => {
+    setLoadingChat(true);
+    try {
+      const res = await fetch(`/api/groups/${resolvedParams.groupId}/chat`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setChatMessages(data.messages || []);
+        // Scroll to bottom
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Load chat error:', error);
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
+  // Send chat message
+  const sendChatMessage = async () => {
+    if (!newChatMessage.trim()) return;
+    setSendingChat(true);
+    
+    try {
+      const res = await fetch(`/api/groups/${resolvedParams.groupId}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content: newChatMessage })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewChatMessage('');
+        setChatMessages([...chatMessages, data.message]);
+        // Scroll to bottom
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Send chat error:', error);
+    } finally {
+      setSendingChat(false);
+    }
+  };
+
+  // Search users for invite
+  const searchUsersForInvite = async (query: string) => {
+    if (query.length < 2) {
+      setInviteSearchResults([]);
+      return;
+    }
+    setSearchingUsers(true);
+    try {
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        // Filter out existing members
+        const memberIds = new Set(members.map(m => m.user_id));
+        setInviteSearchResults((data.users || []).filter((u: any) => !memberIds.has(u.user_id)));
+      }
+    } catch (error) {
+      console.error('Search users error:', error);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
+  // Invite user to group
+  const inviteUser = async (userId: string) => {
+    setInviting(true);
+    try {
+      const res = await fetch(`/api/groups/${resolvedParams.groupId}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ userId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Invitation sent!');
+        setInviteSearchResults(inviteSearchResults.filter(u => u.user_id !== userId));
+      } else {
+        alert(data.error || 'Failed to send invite');
+      }
+    } catch (error) {
+      console.error('Invite error:', error);
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  // Load chat when tab changes
+  useEffect(() => {
+    if (activeTab === 'chat' && isMember) {
+      loadChatMessages();
+    }
+  }, [activeTab, isMember]);
+
+  // Poll for new chat messages
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (activeTab === 'chat' && isMember) {
+      interval = setInterval(loadChatMessages, 5000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeTab, isMember]);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return formatDate(dateString);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
