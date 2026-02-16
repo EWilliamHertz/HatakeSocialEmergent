@@ -172,7 +172,6 @@ export default function MessengerWidget() {
       }
     };
   }, [isAuthenticated, showVideoCall, incomingCall, soundEnabled]);
-  }, [isAuthenticated, selectedConv]);
 
   useEffect(() => {
     // Calculate unread total and play sound
