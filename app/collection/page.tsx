@@ -753,6 +753,220 @@ export default function CollectionPage() {
           </div>
         </div>
       )}
+
+      {/* Import CSV Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b dark:border-gray-700 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileSpreadsheet className="w-6 h-6 text-green-600" />
+                <div>
+                  <h3 className="text-lg font-bold dark:text-white">Import from ManaBox CSV</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {importStatus === 'idle' && 'Upload a ManaBox export file to import your cards'}
+                    {importStatus === 'preview' && `${importCards.length} cards ready to import`}
+                    {importStatus === 'importing' && 'Importing cards...'}
+                    {importStatus === 'done' && `Import complete!`}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={closeImportModal}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+              {importStatus === 'idle' && (
+                <div className="p-6 flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept=".csv"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <label
+                      htmlFor="csv-upload"
+                      className="cursor-pointer inline-flex flex-col items-center gap-4 p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition"
+                    >
+                      <Upload className="w-12 h-12 text-gray-400" />
+                      <div>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">Click to upload CSV</p>
+                        <p className="text-sm text-gray-500">ManaBox export format supported</p>
+                      </div>
+                    </label>
+                    <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                      Export your collection from ManaBox and upload the CSV file here
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {importStatus === 'preview' && (
+                <div className="flex-1 overflow-auto p-4">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <strong>{importCards.length}</strong> cards found • 
+                      <strong> {importCards.reduce((sum, c) => sum + c.quantity, 0)}</strong> total quantity • 
+                      <strong> ${importCards.reduce((sum, c) => sum + c.purchasePrice * c.quantity, 0).toFixed(2)}</strong> total purchase value
+                    </p>
+                  </div>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Name</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Set</th>
+                          <th className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">#</th>
+                          <th className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">Qty</th>
+                          <th className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">Foil</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Condition</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Rarity</th>
+                          <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">Price</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {importCards.map((card, index) => (
+                          <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td className="px-3 py-2 font-medium text-gray-900 dark:text-white max-w-[200px] truncate" title={card.name}>
+                              {card.name}
+                            </td>
+                            <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
+                              <span className="uppercase text-xs font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded">{card.setCode}</span>
+                              <span className="ml-1 text-xs truncate max-w-[100px] inline-block align-bottom" title={card.setName}>{card.setName}</span>
+                            </td>
+                            <td className="px-3 py-2 text-center text-gray-600 dark:text-gray-400 font-mono text-xs">
+                              {card.collectorNumber}
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              <span className="inline-flex items-center justify-center min-w-[24px] h-6 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded font-medium text-xs">
+                                {card.quantity}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              {card.foil ? (
+                                <span className="inline-flex items-center px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded text-xs font-medium">
+                                  Foil
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">
+                              {card.condition}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className={`text-xs font-medium capitalize ${
+                                card.rarity === 'mythic' ? 'text-orange-600 dark:text-orange-400' :
+                                card.rarity === 'rare' ? 'text-yellow-600 dark:text-yellow-400' :
+                                card.rarity === 'uncommon' ? 'text-gray-600 dark:text-gray-400' :
+                                'text-gray-400'
+                              }`}>
+                                {card.rarity}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">
+                              {card.purchasePrice > 0 ? `${card.purchasePrice.toFixed(2)} ${card.currency}` : '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {importStatus === 'importing' && (
+                <div className="p-6 flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600 dark:text-gray-400">Importing your cards...</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">This may take a moment</p>
+                  </div>
+                </div>
+              )}
+
+              {importStatus === 'done' && importResult && (
+                <div className="p-6 flex-1 flex items-center justify-center">
+                  <div className="text-center max-w-md">
+                    <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Import Complete!</h4>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      Successfully imported <strong>{importResult.imported}</strong> cards to your collection.
+                    </p>
+                    {importResult.errors && importResult.errors.length > 0 && (
+                      <div className="text-left bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mt-4">
+                        <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 mb-2">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="font-medium">Some cards had issues:</span>
+                        </div>
+                        <ul className="text-sm text-yellow-600 dark:text-yellow-400 list-disc list-inside max-h-32 overflow-y-auto">
+                          {importResult.errors.slice(0, 10).map((err, i) => (
+                            <li key={i}>{err}</li>
+                          ))}
+                          {importResult.errors.length > 10 && (
+                            <li>... and {importResult.errors.length - 10} more</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t dark:border-gray-700 flex justify-end gap-3">
+              {importStatus === 'preview' && (
+                <>
+                  <button
+                    onClick={() => {
+                      setImportCards([]);
+                      setImportStatus('idle');
+                    }}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
+                  >
+                    Upload Different File
+                  </button>
+                  <button
+                    onClick={confirmImport}
+                    disabled={importLoading}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Import {importCards.length} Cards
+                  </button>
+                </>
+              )}
+              {importStatus === 'done' && (
+                <button
+                  onClick={closeImportModal}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Done
+                </button>
+              )}
+              {importStatus === 'idle' && (
+                <button
+                  onClick={closeImportModal}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
