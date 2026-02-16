@@ -1,10 +1,10 @@
-import { config } from './config';
+// Pokemon TCG API using TCGdex (free, no API key required)
 
 export interface PokemonCard {
   id: string;
   name: string;
-  supertype: string;
-  subtypes: string[];
+  supertype?: string;
+  subtypes?: string[];
   hp?: string;
   types?: string[];
   attacks?: any[];
@@ -13,144 +13,177 @@ export interface PokemonCard {
   set: {
     id: string;
     name: string;
-    series: string;
-    printedTotal: number;
-    total: number;
-    legalities: any;
-    ptcgoCode?: string;
-    releaseDate: string;
-    updatedAt: string;
-    images: {
-      symbol: string;
-      logo: string;
+    series?: string;
+    printedTotal?: number;
+    total?: number;
+    releaseDate?: string;
+    images?: {
+      symbol?: string;
+      logo?: string;
     };
   };
   number: string;
   artist?: string;
   rarity?: string;
-  nationalPokedexNumbers?: number[];
-  legalities?: any;
   images: {
     small: string;
     large: string;
   };
   tcgplayer?: {
-    url: string;
-    updatedAt: string;
-    prices?: {
-      normal?: {
-        low?: number;
-        mid?: number;
-        high?: number;
-        market?: number;
-      };
-      holofoil?: {
-        low?: number;
-        mid?: number;
-        high?: number;
-        market?: number;
-      };
-      reverseHolofoil?: {
-        low?: number;
-        mid?: number;
-        high?: number;
-        market?: number;
-      };
+    url?: string;
+    prices?: any;
+  };
+}
+
+export interface PokemonSet {
+  id: string;
+  name: string;
+  series?: string;
+  releaseDate?: string;
+  total?: number;
+  logo?: string;
+  symbol?: string;
+}
+
+const TCGDEX_BASE = 'https://api.tcgdex.net/v2/en';
+
+// Search for Pokemon cards by name
+export async function searchPokemonCards(query: string): Promise<PokemonCard[]> {
+  try {
+    const response = await fetch(`${TCGDEX_BASE}/cards?name=${encodeURIComponent(query)}`, {
+      signal: AbortSignal.timeout(15000)
+    });
+    
+    if (!response.ok) {
+      console.error('TCGdex API error:', response.status);
+      return [];
+    }
+    
+    const cards = await response.json();
+    
+    // Map TCGdex format to our standard format
+    return cards.map((card: any) => ({
+      id: card.id,
+      name: card.name,
+      supertype: card.category || 'Pokemon',
+      subtypes: card.stage ? [card.stage] : [],
+      hp: card.hp?.toString(),
+      types: card.types || [],
+      set: {
+        id: card.set?.id || card.id?.split('-')[0] || '',
+        name: card.set?.name || '',
+        series: card.set?.serie || '',
+      },
+      number: card.localId || card.id?.split('-').pop() || '',
+      artist: card.illustrator,
+      rarity: card.rarity,
+      images: {
+        small: card.image ? `${card.image}/low.webp` : '',
+        large: card.image ? `${card.image}/high.webp` : '',
+      }
+    }));
+  } catch (error) {
+    console.error('Error searching Pokemon cards:', error);
+    return [];
+  }
+}
+
+// Get a specific Pokemon card by ID
+export async function getPokemonCard(cardId: string): Promise<PokemonCard | null> {
+  try {
+    const response = await fetch(`${TCGDEX_BASE}/cards/${cardId}`, {
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const card = await response.json();
+    
+    return {
+      id: card.id,
+      name: card.name,
+      supertype: card.category || 'Pokemon',
+      subtypes: card.stage ? [card.stage] : [],
+      hp: card.hp?.toString(),
+      types: card.types || [],
+      set: {
+        id: card.set?.id || '',
+        name: card.set?.name || '',
+        series: card.set?.serie || '',
+      },
+      number: card.localId || '',
+      artist: card.illustrator,
+      rarity: card.rarity,
+      images: {
+        small: card.image ? `${card.image}/low.webp` : '',
+        large: card.image ? `${card.image}/high.webp` : '',
+      }
     };
-  };
+  } catch (error) {
+    console.error('Error getting Pokemon card:', error);
+    return null;
+  }
 }
 
-export interface PokemonSearchOptions {
-  name?: string;
-  setId?: string;
-  number?: string;
-  page?: number;
-  pageSize?: number;
+// Get all Pokemon sets
+export async function getPokemonSets(): Promise<PokemonSet[]> {
+  try {
+    const response = await fetch(`${TCGDEX_BASE}/sets`, {
+      signal: AbortSignal.timeout(15000)
+    });
+    
+    if (!response.ok) {
+      return [];
+    }
+    
+    const sets = await response.json();
+    
+    return sets.map((set: any) => ({
+      id: set.id,
+      name: set.name,
+      series: set.serie,
+      releaseDate: set.releaseDate,
+      total: set.cardCount?.total,
+      logo: set.logo ? `${set.logo}/high.webp` : undefined,
+      symbol: set.symbol ? `${set.symbol}/high.webp` : undefined,
+    }));
+  } catch (error) {
+    console.error('Error getting Pokemon sets:', error);
+    return [];
+  }
 }
 
-// Build Lucene-style query for Pokemon TCG API
-function buildPokemonQuery(options: PokemonSearchOptions): string {
-  const parts: string[] = [];
-  
-  if (options.name) {
-    // Use wildcard for partial matching
-    parts.push(`name:${options.name}*`);
+// Search cards within a specific set
+export async function getCardsFromSet(setId: string): Promise<PokemonCard[]> {
+  try {
+    const response = await fetch(`${TCGDEX_BASE}/sets/${setId}`, {
+      signal: AbortSignal.timeout(15000)
+    });
+    
+    if (!response.ok) {
+      return [];
+    }
+    
+    const setData = await response.json();
+    const cards = setData.cards || [];
+    
+    return cards.map((card: any) => ({
+      id: card.id,
+      name: card.name,
+      set: {
+        id: setId,
+        name: setData.name || '',
+      },
+      number: card.localId || '',
+      images: {
+        small: card.image ? `${card.image}/low.webp` : '',
+        large: card.image ? `${card.image}/high.webp` : '',
+      }
+    }));
+  } catch (error) {
+    console.error('Error getting cards from set:', error);
+    return [];
   }
-  
-  if (options.setId) {
-    parts.push(`set.id:${options.setId}`);
-  }
-  
-  if (options.number) {
-    parts.push(`number:${options.number}`);
-  }
-  
-  return parts.join(' ');
-}
-
-export async function searchPokemonCards(
-  query: string,
-  page: number = 1,
-  pageSize: number = 50,
-  setId?: string,
-  number?: string
-): Promise<{ data: PokemonCard[]; totalCount: number }> {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
-
-  if (config.pokemon.apiKey) {
-    headers['X-Api-Key'] = config.pokemon.apiKey;
-  }
-
-  // Build the search query using Pokemon TCG API Lucene syntax
-  const searchQuery = buildPokemonQuery({
-    name: query,
-    setId,
-    number,
-  });
-
-  const url = `${config.pokemon.baseUrl}/cards?q=${encodeURIComponent(searchQuery)}&page=${page}&pageSize=${pageSize}`;
-  
-  console.log('[Pokemon API] Searching with URL:', url);
-  console.log('[Pokemon API] API Key present:', !!config.pokemon.apiKey);
-
-  const response = await fetch(url, { 
-    headers,
-    signal: AbortSignal.timeout(30000) // 30 second timeout
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[Pokemon API] Error response:', response.status, errorText);
-    throw new Error(`Pokemon API error: ${response.status} ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  console.log('[Pokemon API] Found', data.totalCount || 0, 'cards');
-  
-  return {
-    data: data.data || [],
-    totalCount: data.totalCount || 0,
-  };
-}
-
-export async function getPokemonCardById(cardId: string): Promise<PokemonCard> {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
-
-  if (config.pokemon.apiKey) {
-    headers['X-Api-Key'] = config.pokemon.apiKey;
-  }
-
-  const url = `${config.pokemon.baseUrl}/cards/${cardId}`;
-  const response = await fetch(url, { headers });
-
-  if (!response.ok) {
-    throw new Error(`Pokemon API error: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data.data;
 }
