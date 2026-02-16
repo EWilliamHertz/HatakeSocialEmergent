@@ -63,9 +63,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    const { recipientId, content } = await request.json();
+    const { recipientId, content, messageType, mediaUrl } = await request.json();
 
-    if (!recipientId || !content) {
+    if (!recipientId || (!content && !mediaUrl)) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
     // Send message
     const messageId = generateId('msg');
     await sql`
-      INSERT INTO messages (message_id, conversation_id, sender_id, content)
-      VALUES (${messageId}, ${conversationId}, ${user.user_id}, ${content})
+      INSERT INTO messages (message_id, conversation_id, sender_id, content, message_type, media_url)
+      VALUES (${messageId}, ${conversationId}, ${user.user_id}, ${content || ''}, ${messageType || 'text'}, ${mediaUrl || null})
     `;
 
     // Update conversation timestamp
