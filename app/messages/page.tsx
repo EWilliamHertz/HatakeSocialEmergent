@@ -46,6 +46,7 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUserId, setCurrentUserId] = useState('');
+  const [currentUserName, setCurrentUserName] = useState('');
   const [loading, setLoading] = useState(true);
   const [showNewConversationModal, setShowNewConversationModal] = useState(false);
   const [friends, setFriends] = useState<User[]>([]);
