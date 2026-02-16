@@ -215,47 +215,81 @@ export default function CollectionPage() {
     }
   };
 
-  // Search for card by set code and collector number
+  // Search for card - supports name search or set+number search
   const searchCardManually = async () => {
-    if (!addCardSetCode.trim()) return;
+    const hasNameSearch = addCardName.trim().length >= 2;
+    const hasSetSearch = addCardSetCode.trim().length > 0;
+    
+    if (!hasNameSearch && !hasSetSearch) return;
     
     setAddCardSearching(true);
     setAddCardSearchResults([]);
     
     try {
-      let query = '';
       if (addCardGame === 'mtg') {
-        // Search Scryfall with set code and collector number
-        if (addCardCollectorNum) {
-          query = `set:${addCardSetCode.toLowerCase()} cn:${addCardCollectorNum}`;
-        } else {
+        let query = '';
+        
+        // Build Scryfall query
+        if (addCardName.trim()) {
+          // Name search (with optional set filter)
+          query = addCardName.trim();
+          if (addCardSetCode.trim()) {
+            query += ` set:${addCardSetCode.toLowerCase()}`;
+          }
+          if (addCardCollectorNum.trim()) {
+            query += ` cn:${addCardCollectorNum}`;
+          }
+        } else if (addCardSetCode.trim()) {
+          // Set + collector number search
           query = `set:${addCardSetCode.toLowerCase()}`;
+          if (addCardCollectorNum.trim()) {
+            query += ` cn:${addCardCollectorNum}`;
+          }
         }
         
-        const res = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints`);
-        if (res.ok) {
-          const data = await res.json();
-          setAddCardSearchResults(data.data?.slice(0, 20) || []);
+        // Try search API first
+        const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`);
+        
+        if (searchRes.ok) {
+          const data = await searchRes.json();
+          setAddCardSearchResults(data.data?.slice(0, 30) || []);
         } else {
-          // Try direct set/number lookup
-          if (addCardCollectorNum) {
+          // If search fails and we have set+number, try direct lookup
+          if (addCardSetCode.trim() && addCardCollectorNum.trim()) {
             const directRes = await fetch(`https://api.scryfall.com/cards/${addCardSetCode.toLowerCase()}/${addCardCollectorNum}`);
             if (directRes.ok) {
               const card = await directRes.json();
               setAddCardSearchResults([card]);
+            } else {
+              // Try with padded collector number (some sets need leading zeros)
+              const paddedNum = addCardCollectorNum.padStart(3, '0');
+              const paddedRes = await fetch(`https://api.scryfall.com/cards/${addCardSetCode.toLowerCase()}/${paddedNum}`);
+              if (paddedRes.ok) {
+                const card = await paddedRes.json();
+                setAddCardSearchResults([card]);
+              }
             }
           }
         }
       } else {
         // Pokemon TCG API
-        const params = new URLSearchParams();
-        if (addCardSetCode) params.append('q', `set.id:${addCardSetCode}*`);
-        if (addCardCollectorNum) params.append('q', `number:${addCardCollectorNum}`);
+        let queryParts: string[] = [];
         
-        const res = await fetch(`https://api.pokemontcg.io/v2/cards?${params.toString()}`);
+        if (addCardName.trim()) {
+          queryParts.push(`name:"${addCardName.trim()}*"`);
+        }
+        if (addCardSetCode.trim()) {
+          queryParts.push(`set.id:${addCardSetCode.toLowerCase()}*`);
+        }
+        if (addCardCollectorNum.trim()) {
+          queryParts.push(`number:${addCardCollectorNum}`);
+        }
+        
+        const query = queryParts.join(' ');
+        const res = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(query)}&pageSize=30`);
         if (res.ok) {
           const data = await res.json();
-          setAddCardSearchResults(data.data?.slice(0, 20) || []);
+          setAddCardSearchResults(data.data?.slice(0, 30) || []);
         }
       }
     } catch (error) {
