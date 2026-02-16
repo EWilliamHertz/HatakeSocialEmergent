@@ -1,133 +1,136 @@
-# TCG Hub - Trading Card Game Social Platform
+# Hatake.Social - Product Requirements Document
+
+## Overview
+Hatake.Social is a modern, full-stack TCG (Trading Card Game) social platform built with Next.js 15+, FastAPI (proxy backend), and PostgreSQL (Neon).
 
 ## Original Problem Statement
-Build a full-stack TCG (Trading Card Game) social platform similar to hatake.social, with card search, collection management, marketplace, trading, and social features.
+Create a new TCG social platform featuring:
+- Authentication (Google Sign-In + Email/Password)
+- Card Management (Pokemon TCG API + Scryfall/MTG API)
+- Social Features (Feed, Friends, Groups, Real-time Messaging)
+- Commerce (Marketplace for buying/selling cards)
+- User Profiles & Deck Builder
+
+## Current Architecture
+- **Frontend**: Next.js 15+ with App Router (TypeScript)
+- **Backend Proxy**: FastAPI (Python) at port 8001 - proxies to Next.js at port 3000
+- **Database**: PostgreSQL (Neon) - user-provided external database
+- **Styling**: Tailwind CSS
+- **UI Components**: Custom components + Lucide Icons
 
 ## What's Been Implemented
 
-### Core Features
-1. **Card Search** (Working - MTG via Scryfall)
-   - Advanced search with Set Code and Collector Number filters
-   - Grid/List view toggle
-   - Game selection (Pokemon, MTG)
-   - Note: Pokemon TCG API times out from this cloud environment
+### Core Infrastructure
+- [x] FastAPI proxy backend to handle platform routing (port 8001 → 3000)
+- [x] PostgreSQL (Neon) database connection
+- [x] Session-based authentication with cookies
+- [x] Scryfall API integration for MTG cards (WORKING)
 
-2. **Collection Management** (Implemented)
-   - View cards in collection
-   - Add/remove cards
-   - Edit card details (quantity, condition, foil)
-   - Bulk actions: Select All, Bulk Delete, Bulk List for Sale
-   - Filter by game type
-   - Search within collection
+### Authentication
+- [x] Email/Password signup and login
+- [x] Google OAuth via Emergent Auth (session cookie now properly set)
+- [x] Session management with httpOnly cookies
+- [x] Auth callback page
 
-3. **Marketplace** (Implemented)
-   - Browse listings
-   - Advanced filters (price range, condition, foil only)
-   - Sort by newest, price
-   - Contact seller (starts conversation)
-   - Create listings from collection
+### Features Implemented
+1. **Renamed App**: "TCG Social Hub" → "Hatake.Social" (all references updated)
+2. **Card Search**: Scryfall/MTG search working
+3. **Marketplace**: Listings with card data, pricing, conditions
+4. **Social Feed**: Posts with profile links on avatars
+5. **Friends System**: Add/remove friends, friendship status
+6. **Messaging System** (Enhanced):
+   - Shift+Enter for new lines
+   - Emoji picker (emoji-picker-react)
+   - Sound notifications for new messages
+   - Message anyone (not just friends)
+   - Media messages support (images/videos in database schema)
+   - Voice/Video call buttons (placeholder for WebRTC)
+7. **Dark Mode**: ThemeProvider implemented
+8. **Notifications**: System with API endpoints
+9. **Groups**: Placeholder page created
+10. **Auth Prompts**: Modal for unauthenticated users
 
-4. **Trading System** (Implemented)
-   - View active/completed trades
-   - Accept/reject trade requests
-   - Trade detail view
+## Database Schema Additions
+- `messages.message_type` VARCHAR(50) DEFAULT 'text' - For text/image/video types
+- `messages.media_url` TEXT - For storing media URLs
 
-5. **Social Features**
-   - **Feed**: Posts with Friends/Groups/Public tabs
-   - **Friends**: Friends list, friend requests, search users
-   - **Messaging**: Conversations, send messages, start new conversations
-   - **Messenger Widget**: Floating chat popup on all pages
-
-6. **User Profile** (Implemented)
-   - Edit profile (name, bio)
-   - Stats display (cards, listings, friends, trades)
-   - Quick actions
-
-7. **Authentication**
-   - Email/Password signup/login
-   - Google OAuth (integrated)
-   - Session management with JWT
-
-### Navigation
-Full navbar with:
-- Feed, Search, Collection, Marketplace, Trades, Friends, Messages
-- Profile link and notifications
-- Mobile responsive menu
-
-### API Endpoints Created
-- `/api/auth/*` - Authentication
-- `/api/search` - Card search with set/number filters
-- `/api/collection/*` - Collection CRUD + bulk actions
-- `/api/marketplace` - Listings
-- `/api/trades/*` - Trading system
-- `/api/friends/*` - Friends system
-- `/api/messages/*` - Messaging
-- `/api/profile/*` - User profile
-- `/api/users/search` - User search
-
-## Current Status
+## API Endpoints
 
 ### Working
-- All frontend pages and components
-- MTG card search via Scryfall API
-- All API endpoints (tested locally)
-- Database schema and queries
+- `GET /api/search?game=mtg&q=[query]` - Card search (Scryfall)
+- `GET /api/marketplace` - List marketplace items
+- `POST /api/marketplace` - Create listing
+- `GET /api/auth/me` - Get current user
+- `POST /api/auth/login` - Email login
+- `POST /api/auth/signup` - Email signup
+- `POST /api/auth/session` - Google OAuth session exchange
+- `GET /api/messages` - List conversations
+- `GET /api/messages/[id]` - Get messages in conversation
+- `POST /api/messages` - Send message (supports media)
+- `GET /api/users/search` - Search all users (for messaging anyone)
+- `POST /api/upload` - File upload for media
+- `GET /api/friends` - List friends
+- `GET /api/feed` - Social feed
+- `GET /api/notifications` - User notifications
 
 ### Known Issues
-1. **Pokemon TCG API**: Times out from cloud environment (504 error)
-2. **Preview URL**: External preview shows "Unavailable" - platform routing issue
-   - Server runs correctly on localhost:3000
-   - All APIs respond correctly via curl
+- Pokemon TCG API: External timeout (504) - Not a code issue
+- External preview URL may show "Preview Unavailable" - Platform infrastructure issue
 
-### Database
-Using PostgreSQL (Neon) - requires migration to MongoDB for Emergent deployment
-
-## Tech Stack
-- **Framework**: Next.js 16.1.6 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Database**: PostgreSQL (Neon)
-- **Auth**: JWT + Google OAuth
-
-## Files Structure
+## File Structure (Key Files)
 ```
-/app
-├── app/
-│   ├── api/           # API routes
-│   ├── auth/          # Auth pages
-│   ├── collection/    # Collection page
-│   ├── feed/          # Social feed
-│   ├── friends/       # Friends page
-│   ├── marketplace/   # Marketplace
-│   ├── messages/      # Messaging
-│   ├── profile/       # User profile
-│   ├── search/        # Card search
-│   └── trades/        # Trading
-├── components/        # React components
-├── lib/              # Utilities (auth, db, config)
-└── db/               # SQL schema
+/app/
+├── app/                    # Next.js App Router
+│   ├── api/                # API routes
+│   │   ├── auth/           # Authentication
+│   │   ├── messages/       # Messaging
+│   │   ├── marketplace/    # Marketplace
+│   │   ├── upload/         # File uploads (NEW)
+│   │   └── users/search/   # User search
+│   ├── auth/               # Auth pages
+│   ├── feed/               # Social feed
+│   ├── marketplace/        # Marketplace page
+│   ├── messages/           # Messages page (ENHANCED)
+│   └── profile/            # User profiles
+├── backend/                # FastAPI proxy
+│   └── server.py           # Proxy server (routes all traffic to Next.js)
+├── components/             # Shared components
+│   ├── MessengerWidget.tsx # Chat widget (ENHANCED)
+│   ├── Navbar.tsx          # Navigation
+│   ├── AuthPromptModal.tsx # Auth prompt
+│   └── ThemeProvider.tsx   # Dark mode
+└── lib/                    # Utilities
+    ├── db.ts               # Database connection
+    ├── auth.ts             # Auth helpers
+    └── db-schema.sql       # Database schema
 ```
 
-## Next Steps (Priority Order)
+## P0 Issues - Resolved
+1. ✅ App renamed to "Hatake.Social"
+2. ✅ Google Auth session cookie properly set
+3. ✅ Messaging shift+enter, emojis, sounds implemented
+4. ✅ Message anyone (not just friends)
+5. ✅ Profile links on feed avatars
 
-### P0 - Critical
-1. Fix Pokemon TCG API connectivity or implement fallback
-2. Resolve preview URL routing issue
+## P1 Issues - Pending
+1. Marketplace client-side error (needs user testing to reproduce)
+2. Voice/Video calls (WebRTC implementation)
+3. Groups full implementation (currently placeholder)
+4. Pokemon API timeout (external issue)
 
-### P1 - High Priority
-3. Google login flow verification
-4. Card variation modal (foil, condition, quantity selector)
-5. Complete trade creation flow
+## P2/Future Tasks
+- Deck Builder feature
+- Advanced marketplace filtering
+- WebRTC voice/video with screensharing
+- Mobile application
+- Prisma ORM integration
 
-### P2 - Medium Priority
-6. Notifications system
-7. Groups/Communities
-8. Deck building feature
+## Environment Variables
+- `DATABASE_URL` - Neon PostgreSQL connection string
+- `REACT_APP_BACKEND_URL` - External preview URL
+- Google OAuth handled via Emergent Auth
 
-### P3 - Future
-9. Voice/Video calls (WebRTC)
-10. Mobile app (React Native/Expo)
-
-## Credentials
-- Pokemon TCG API Key: In .env.local
-- Database: Neon PostgreSQL connection string in .env.local
+## Deployment Notes
+- Preview may show "Unavailable" when pod is sleeping - this auto-resolves on activity
+- Local testing: `http://localhost:8001` for all requests
+- Backend proxy is essential for platform routing
