@@ -1276,7 +1276,9 @@ export default function CollectionPage() {
                 <div className="text-center py-12">
                   <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">
-                    {addCardSetCode ? 'No cards found. Try a different set code or collector number.' : 'Enter a set code to search for cards'}
+                    {(addCardName || addCardSetCode) 
+                      ? 'No cards found. Try a different search term or check spelling.' 
+                      : 'Enter a card name or set code to search'}
                   </p>
                 </div>
               ) : (
