@@ -107,7 +107,7 @@ export default function MarketplacePage() {
         credentials: 'include',
         body: JSON.stringify({
           recipientId: listing.user_id,
-          content: `Hi! I'm interested in your listing: ${listing.card_data.name} for $${listing.price.toFixed(2)}`
+          content: `Hi! I'm interested in your listing: ${listing.card_data.name} for $${Number(listing.price).toFixed(2)}`
         })
       });
       router.push('/messages');
@@ -124,8 +124,9 @@ export default function MarketplacePage() {
     }
     
     // Price filters
-    if (priceMin && listing.price < parseFloat(priceMin)) return false;
-    if (priceMax && listing.price > parseFloat(priceMax)) return false;
+    const listingPrice = Number(listing.price);
+    if (priceMin && listingPrice < parseFloat(priceMin)) return false;
+    if (priceMax && listingPrice > parseFloat(priceMax)) return false;
     
     // Condition filter
     if (conditionFilter !== 'All' && listing.condition !== conditionFilter) return false;
@@ -358,7 +359,7 @@ export default function MarketplacePage() {
                   <p className="text-xs text-gray-500 mb-2">{listing.condition}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-green-600">
-                      ${listing.price.toFixed(2)}
+                      ${Number(listing.price).toFixed(2)}
                     </span>
                     {listing.user_id !== currentUserId && (
                       <button
