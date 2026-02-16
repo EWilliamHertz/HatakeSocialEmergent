@@ -174,9 +174,9 @@ export default function DecksPage() {
                       </div>
                     </div>
                     {deck.is_public ? (
-                      <Globe className="w-5 h-5 text-green-500" title="Public" />
+                      <span title="Public"><Globe className="w-5 h-5 text-green-500" /></span>
                     ) : (
-                      <Lock className="w-5 h-5 text-gray-400" title="Private" />
+                      <span title="Private"><Lock className="w-5 h-5 text-gray-400" /></span>
                     )}
                   </div>
                   
