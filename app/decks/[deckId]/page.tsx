@@ -368,6 +368,13 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
             {isOwner && (
               <div className="flex gap-2">
                 <button
+                  onClick={() => setShowImportModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition"
+                >
+                  <Upload className="w-4 h-4" />
+                  Import
+                </button>
+                <button
                   onClick={() => setShowSettings(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
                 >
