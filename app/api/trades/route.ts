@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    // Get all trades where user is initiator or recipient
+    // Get all trades where user is initiator or receiver
+    // Note: DB schema uses 'receiver_id' and 'initiator_cards/receiver_cards'
     const trades = await sql`
       SELECT 
         t.trade_id,
@@ -23,17 +24,18 @@ export async function GET(request: NextRequest) {
         t.created_at,
         t.updated_at,
         t.initiator_id,
-        t.recipient_id,
-        t.initiator_items,
-        t.recipient_items,
+        t.receiver_id,
+        t.initiator_cards,
+        t.receiver_cards,
+        t.message,
         i.name as initiator_name,
         i.picture as initiator_picture,
         r.name as recipient_name,
         r.picture as recipient_picture
       FROM trades t
       JOIN users i ON t.initiator_id = i.user_id
-      JOIN users r ON t.recipient_id = r.user_id
-      WHERE t.initiator_id = ${user.user_id} OR t.recipient_id = ${user.user_id}
+      JOIN users r ON t.receiver_id = r.user_id
+      WHERE t.initiator_id = ${user.user_id} OR t.receiver_id = ${user.user_id}
       ORDER BY t.updated_at DESC
     `;
 
