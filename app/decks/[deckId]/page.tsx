@@ -521,22 +521,71 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
           {/* Deck List */}
           <div className={isOwner ? 'lg:col-span-2' : 'lg:col-span-3'}>
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-              {/* Category Tabs */}
+              {/* Category Tabs + Multi-Select Controls */}
               <div className="border-b border-gray-200 dark:border-gray-700 px-4">
-                <div className="flex gap-4">
-                  {['all', 'main', 'sideboard'].map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveCategory(cat)}
-                      className={`py-3 px-2 border-b-2 font-medium transition capitalize ${
-                        activeCategory === cat
-                          ? 'border-blue-600 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                      }`}
-                    >
-                      {cat} {cat === 'all' ? `(${totalCards})` : cat === 'main' ? `(${mainDeck.reduce((s, c) => s + c.quantity, 0)})` : `(${sideboard.reduce((s, c) => s + c.quantity, 0)})`}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-4">
+                    {['all', 'main', 'sideboard'].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className={`py-3 px-2 border-b-2 font-medium transition capitalize ${
+                          activeCategory === cat
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        {cat} {cat === 'all' ? `(${totalCards})` : cat === 'main' ? `(${mainDeck.reduce((s, c) => s + c.quantity, 0)})` : `(${sideboard.reduce((s, c) => s + c.quantity, 0)})`}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Multi-Select Controls */}
+                  {isOwner && filteredCards.length > 0 && (
+                    <div className="flex items-center gap-2 py-2">
+                      {selectMode ? (
+                        <>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {selectedCards.size} selected
+                          </span>
+                          <button
+                            onClick={selectAllCards}
+                            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
+                          >
+                            Select All
+                          </button>
+                          <button
+                            onClick={deselectAllCards}
+                            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
+                          >
+                            Deselect
+                          </button>
+                          <button
+                            onClick={deleteSelectedCards}
+                            disabled={selectedCards.size === 0}
+                            className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </button>
+                          <button
+                            onClick={() => { setSelectMode(false); setSelectedCards(new Set()); }}
+                            className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setSelectMode(true)}
+                          className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
+                          data-testid="multi-select-btn"
+                        >
+                          Select Multiple
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -552,7 +601,29 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {filteredCards.map((card) => (
-                      <div key={card.entry_id} className="relative group" data-testid={`deck-card-${card.card_id}`}>
+                      <div 
+                        key={card.entry_id} 
+                        className={`relative group cursor-pointer ${
+                          selectMode && selectedCards.has(card.card_id) 
+                            ? 'ring-2 ring-blue-500 ring-offset-2 rounded-lg' 
+                            : ''
+                        }`}
+                        onClick={selectMode ? () => toggleCardSelection(card.card_id) : undefined}
+                        data-testid={`deck-card-${card.card_id}`}
+                      >
+                        {/* Selection Checkbox */}
+                        {selectMode && (
+                          <div className="absolute top-2 left-2 z-10">
+                            <input
+                              type="checkbox"
+                              checked={selectedCards.has(card.card_id)}
+                              onChange={() => toggleCardSelection(card.card_id)}
+                              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        )}
+                        
                         <img
                           src={getCardImage(card)}
                           alt={card.card_data.name}
@@ -564,8 +635,15 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
                           x{card.quantity}
                         </div>
                         
+                        {/* Category Badge for Sideboard */}
+                        {card.category === 'sideboard' && (
+                          <div className="absolute bottom-2 left-2 bg-purple-600 text-white text-xs font-medium px-2 py-0.5 rounded">
+                            SB
+                          </div>
+                        )}
+                        
                         {/* Controls */}
-                        {isOwner && (
+                        {isOwner && !selectMode && (
                           <div className="absolute bottom-2 left-2 right-2 flex justify-between opacity-0 group-hover:opacity-100 transition">
                             <div className="flex gap-1">
                               <button
