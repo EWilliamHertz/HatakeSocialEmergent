@@ -247,6 +247,18 @@ export default function NewTradePage() {
   const filteredMyCollection = filterCollection(myCollection, mySearchQuery, myGameFilter);
   const filteredPartnerCollection = filterCollection(partnerCollection, partnerSearchQuery, partnerGameFilter);
 
+  // Calculate total value of offered/requested cards
+  const getCardValue = (item: CollectionItem): number => {
+    const prices = item.card_data?.prices;
+    if (prices?.usd) return parseFloat(prices.usd);
+    if (prices?.usd_foil && item.is_foil) return parseFloat(prices.usd_foil);
+    if (item.card_data?.tcgplayer?.prices?.normal?.market) return item.card_data.tcgplayer.prices.normal.market;
+    return 0;
+  };
+
+  const offeredValue = offeredCards.reduce((sum, o) => sum + (getCardValue(o.card) * o.quantity), 0);
+  const requestedValue = requestedCards.reduce((sum, o) => sum + (getCardValue(o.card) * o.quantity), 0);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
