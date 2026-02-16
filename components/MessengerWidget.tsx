@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { MessageCircle, X, Send, ChevronDown, Users, Smile, Image as ImageIcon, Volume2, VolumeX } from 'lucide-react';
+import { MessageCircle, X, Send, ChevronDown, Users, Smile, Image as ImageIcon, Volume2, VolumeX, Phone, Video } from 'lucide-react';
 import Image from 'next/image';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 
