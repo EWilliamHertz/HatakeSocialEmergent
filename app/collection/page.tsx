@@ -276,20 +276,53 @@ export default function CollectionPage() {
         let queryParts: string[] = [];
         
         if (addCardName.trim()) {
-          queryParts.push(`name:"${addCardName.trim()}*"`);
+          // Use wildcard for partial matching, no quotes needed
+          queryParts.push(`name:${addCardName.trim()}*`);
         }
         if (addCardSetCode.trim()) {
-          queryParts.push(`set.id:${addCardSetCode.toLowerCase()}*`);
+          // Set ID format for Pokemon TCG is usually lowercase letters
+          queryParts.push(`set.id:${addCardSetCode.toLowerCase()}`);
         }
         if (addCardCollectorNum.trim()) {
           queryParts.push(`number:${addCardCollectorNum}`);
         }
         
         const query = queryParts.join(' ');
-        const res = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(query)}&pageSize=30`);
+        console.log('Pokemon search query:', query);
+        
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add API key if available
+        const apiKey = process.env.NEXT_PUBLIC_POKEMON_API_KEY || 'card-hub-3';
+        if (apiKey) {
+          headers['X-Api-Key'] = apiKey;
+        }
+        
+        const res = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(query)}&pageSize=30`, {
+          headers,
+          signal: AbortSignal.timeout(15000) // 15 second timeout
+        });
+        
         if (res.ok) {
           const data = await res.json();
-          setAddCardSearchResults(data.data?.slice(0, 30) || []);
+          // Map Pokemon cards to consistent format
+          const cards = (data.data || []).map((card: any) => ({
+            ...card,
+            game: 'pokemon',
+            image_uris: {
+              small: card.images?.small,
+              normal: card.images?.large,
+              large: card.images?.large
+            },
+            set_name: card.set?.name,
+            set_code: card.set?.id,
+            collector_number: card.number
+          }));
+          setAddCardSearchResults(cards.slice(0, 30));
+        } else {
+          console.error('Pokemon API error:', res.status, await res.text());
         }
       }
     } catch (error) {
