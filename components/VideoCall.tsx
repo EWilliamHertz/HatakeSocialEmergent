@@ -255,12 +255,16 @@ export default function VideoCall({
       if (!isReceiver && !hasCreatedOffer.current) {
         hasCreatedOffer.current = true;
         setDebugInfo('Creating offer...');
+        setCallStatus('calling');
         
         // Send call notification to the other user
         await sendSignal('incoming_call', {
           call_type: callType,
           caller_name: currentUserName
         });
+        
+        // Small delay to ensure incoming_call is processed first
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         const offer = await pc.createOffer({
           offerToReceiveAudio: true,
@@ -270,12 +274,12 @@ export default function VideoCall({
         
         await sendSignal('offer', offer);
         setDebugInfo('Offer sent, waiting for answer...');
-        setCallStatus('calling');
       } else if (isReceiver) {
-        // If receiver, notify that we accepted the call and wait for offer
-        setDebugInfo('Call accepted, waiting for offer...');
+        // If receiver, notify that we accepted and start polling for offer
+        setDebugInfo('Accepting call...');
         setCallStatus('ringing');
         await sendSignal('call_accepted', {});
+        setDebugInfo('Waiting for offer from caller...');
       }
 
       return stream;
