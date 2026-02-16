@@ -506,6 +506,20 @@ export default function MessengerWidget() {
           )}
         </div>
       )}
+
+      {/* Video Call Modal */}
+      {showVideoCall && selectedConv && (
+        <VideoCall
+          isOpen={showVideoCall}
+          onClose={() => setShowVideoCall(false)}
+          callType={callType}
+          remoteUserId={getSelectedConversation()?.user_id || ''}
+          remoteUserName={getSelectedConversation()?.name || 'User'}
+          remoteUserPicture={getSelectedConversation()?.picture}
+          currentUserId={currentUserId}
+          currentUserName={currentUserName}
+        />
+      )}
     </>
   );
 }
