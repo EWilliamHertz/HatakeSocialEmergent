@@ -194,6 +194,45 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
     }
   };
 
+  const toggleCardSelection = (cardId: string) => {
+    const newSelected = new Set(selectedCards);
+    if (newSelected.has(cardId)) {
+      newSelected.delete(cardId);
+    } else {
+      newSelected.add(cardId);
+    }
+    setSelectedCards(newSelected);
+  };
+
+  const selectAllCards = () => {
+    const allCardIds = new Set(filteredCards.map(c => c.card_id));
+    setSelectedCards(allCardIds);
+  };
+
+  const deselectAllCards = () => {
+    setSelectedCards(new Set());
+  };
+
+  const deleteSelectedCards = async () => {
+    if (!isOwner || selectedCards.size === 0) return;
+    
+    if (!confirm(`Are you sure you want to delete ${selectedCards.size} selected card(s)?`)) return;
+    
+    try {
+      for (const cardId of selectedCards) {
+        await fetch(`/api/decks/${resolvedParams.deckId}/cards?cardId=${cardId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+      }
+      setSelectedCards(new Set());
+      setSelectMode(false);
+      loadDeck();
+    } catch (error) {
+      console.error('Delete selected cards error:', error);
+    }
+  };
+
   const saveSettings = async () => {
     if (!isOwner) return;
     setSaving(true);
