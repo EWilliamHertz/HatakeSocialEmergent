@@ -12,11 +12,14 @@ async function ensureTable() {
         target_user_id VARCHAR(255) NOT NULL,
         signal_type VARCHAR(50) NOT NULL,
         signal_data JSONB,
+        processed BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    // Add processed column if it doesn't exist
+    await sql`ALTER TABLE call_signals ADD COLUMN IF NOT EXISTS processed BOOLEAN DEFAULT false`;
   } catch (e) {
-    // Table might already exist
+    // Table/column might already exist
   }
 }
 
@@ -36,39 +39,20 @@ export async function GET(request: NextRequest) {
     await ensureTable();
     const userId = user.user_id;
 
-    // Get signals for this user (last 60 seconds - increased from 30)
+    // Get unprocessed signals for this user (last 2 minutes)
     const signals = await sql`
       SELECT id, from_user_id, signal_type, signal_data, created_at
       FROM call_signals 
       WHERE target_user_id = ${userId}
-      AND created_at > NOW() - INTERVAL '60 seconds'
+      AND processed = false
+      AND created_at > NOW() - INTERVAL '120 seconds'
       ORDER BY created_at ASC
     `;
 
     if (signals.length > 0) {
-      // Only delete signals that are NOT offers or answers (keep those for retransmission)
-      // Delete ice_candidates and other transient signals
-      const idsToDelete = signals
-        .filter(s => !['offer', 'answer'].includes(s.signal_type))
-        .map(s => s.id);
-      
-      if (idsToDelete.length > 0) {
-        await sql`DELETE FROM call_signals WHERE id = ANY(${idsToDelete})`;
-      }
-      
-      // Mark offers/answers as read by updating their timestamp (so they don't get re-fetched)
-      const offerAnswerIds = signals
-        .filter(s => ['offer', 'answer'].includes(s.signal_type))
-        .map(s => s.id);
-      
-      if (offerAnswerIds.length > 0) {
-        // Delete older duplicates, keep only the newest
-        await sql`
-          DELETE FROM call_signals 
-          WHERE id = ANY(${offerAnswerIds})
-          AND created_at < (SELECT MAX(created_at) FROM call_signals WHERE id = ANY(${offerAnswerIds}))
-        `;
-      }
+      // Mark signals as processed
+      const ids = signals.map(s => s.id);
+      await sql`UPDATE call_signals SET processed = true WHERE id = ANY(${ids})`;
       
       return NextResponse.json({ 
         success: true, 
@@ -79,6 +63,9 @@ export async function GET(request: NextRequest) {
         }))
       });
     }
+
+    // Clean up old signals (older than 2 minutes)
+    await sql`DELETE FROM call_signals WHERE created_at < NOW() - INTERVAL '120 seconds'`;
 
     return NextResponse.json({ success: true, signals: [] });
   } catch (error: any) {
