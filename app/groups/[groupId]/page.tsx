@@ -646,7 +646,147 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
               ))}
             </div>
           </div>
-        )}
+        ) : activeTab === 'chat' ? (
+          /* Chat Tab */
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm flex flex-col h-[600px]">
+            {/* Chat Messages */}
+            <div 
+              ref={chatContainerRef}
+              className="flex-1 overflow-y-auto p-4 space-y-4"
+            >
+              {loadingChat ? (
+                <div className="text-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+                </div>
+              ) : chatMessages.length === 0 ? (
+                <div className="text-center py-12">
+                  <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">No messages yet. Start the conversation!</p>
+                </div>
+              ) : (
+                chatMessages.map((msg) => (
+                  <div 
+                    key={msg.message_id} 
+                    className={`flex gap-3 ${msg.user_id === currentUserId ? 'flex-row-reverse' : ''}`}
+                  >
+                    {msg.user_id !== currentUserId && (
+                      <Link href={`/profile/${msg.user_id}`}>
+                        {msg.picture ? (
+                          <Image src={msg.picture} alt={msg.name} width={36} height={36} className="rounded-full" />
+                        ) : (
+                          <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                            {msg.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </Link>
+                    )}
+                    <div className={`max-w-[70%] ${msg.user_id === currentUserId ? 'text-right' : ''}`}>
+                      {msg.user_id !== currentUserId && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{msg.name}</p>
+                      )}
+                      <div className={`inline-block px-4 py-2 rounded-2xl ${
+                        msg.user_id === currentUserId 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white'
+                      }`}>
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">{formatTimeAgo(msg.created_at)}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            {/* Chat Input */}
+            <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={newChatMessage}
+                  onChange={(e) => setNewChatMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      sendChatMessage();
+                    }
+                  }}
+                  placeholder="Type a message..."
+                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 border-none rounded-full focus:ring-2 focus:ring-blue-500 dark:text-white"
+                  data-testid="chat-input"
+                />
+                <button
+                  onClick={sendChatMessage}
+                  disabled={!newChatMessage.trim() || sendingChat}
+                  className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition"
+                  data-testid="send-chat-btn"
+                >
+                  {sendingChat ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : activeTab === 'invite' ? (
+          /* Invite Tab */
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Invite Members</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Search for users to invite to this group.</p>
+            
+            {/* Search Input */}
+            <div className="relative mb-6">
+              <input
+                type="text"
+                value={inviteSearch}
+                onChange={(e) => {
+                  setInviteSearch(e.target.value);
+                  searchUsersForInvite(e.target.value);
+                }}
+                placeholder="Search users by name or email..."
+                className="w-full px-4 py-3 pl-10 bg-gray-100 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-blue-500 dark:text-white"
+                data-testid="invite-search-input"
+              />
+              <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              {searchingUsers && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 animate-spin" />}
+            </div>
+            
+            {/* Search Results */}
+            {inviteSearchResults.length > 0 && (
+              <div className="space-y-3">
+                {inviteSearchResults.map((user) => (
+                  <div key={user.user_id} className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                    {user.picture ? (
+                      <Image src={user.picture} alt={user.name} width={48} height={48} className="rounded-full" />
+                    ) : (
+                      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+                      <p className="text-sm text-gray-500">{user.email}</p>
+                    </div>
+                    <button
+                      onClick={() => inviteUser(user.user_id)}
+                      disabled={inviting}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition"
+                      data-testid={`invite-${user.user_id}`}
+                    >
+                      {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Invite'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {inviteSearch.length >= 2 && inviteSearchResults.length === 0 && !searchingUsers && (
+              <p className="text-center text-gray-500 py-8">No users found matching "{inviteSearch}"</p>
+            )}
+            
+            {inviteSearch.length < 2 && (
+              <p className="text-center text-gray-500 py-8">Type at least 2 characters to search</p>
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   );
