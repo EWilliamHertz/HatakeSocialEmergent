@@ -35,26 +35,23 @@ export async function GET(
       ORDER BY c.added_at DESC
     `;
 
-    // Transform to match expected format
-    const transformedItems = items.map(item => ({
-      id: item.id,
-      card_id: item.card_id,
-      game: item.game,
-      quantity: item.quantity,
-      condition: item.condition,
-      is_foil: item.is_foil,
-      card_data: {
-        name: item.card_name,
-        image_uris: {
-          small: item.card_image,
-          normal: item.card_image
-        },
-        set: item.set_code,
-        prices: {
-          usd: item.market_price?.toString()
-        }
-      }
-    }));
+    // Transform to match expected format - card_data is already stored as JSON
+    const transformedItems = items.map((item: any) => {
+      // Parse card_data if it's a string
+      const cardData = typeof item.card_data === 'string' 
+        ? JSON.parse(item.card_data) 
+        : item.card_data;
+      
+      return {
+        id: item.id,
+        card_id: item.card_id,
+        game: item.game,
+        quantity: item.quantity,
+        condition: item.condition,
+        is_foil: item.is_foil,
+        card_data: cardData
+      };
+    });
 
     return NextResponse.json({ success: true, items: transformedItems });
   } catch (error: any) {
