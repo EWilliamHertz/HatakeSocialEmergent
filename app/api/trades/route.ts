@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    const { recipientId, initiatorItems, recipientItems } = await request.json();
+    const { recipientId, initiatorItems, recipientItems, message } = await request.json();
 
     if (!recipientId) {
       return NextResponse.json(
@@ -72,13 +72,15 @@ export async function POST(request: NextRequest) {
 
     const tradeId = generateId('trade');
 
+    // Note: DB schema uses 'receiver_id' and 'initiator_cards/receiver_cards'
     await sql`
       INSERT INTO trades (
         trade_id,
         initiator_id,
-        recipient_id,
-        initiator_items,
-        recipient_items,
+        receiver_id,
+        initiator_cards,
+        receiver_cards,
+        message,
         status
       )
       VALUES (
@@ -87,6 +89,7 @@ export async function POST(request: NextRequest) {
         ${recipientId},
         ${JSON.stringify(initiatorItems || [])},
         ${JSON.stringify(recipientItems || [])},
+        ${message || null},
         'pending'
       )
     `;
