@@ -466,6 +466,14 @@ export default function CollectionPage() {
             </div>
             <div className="flex gap-2">
               <button
+                onClick={() => setShowAddCardModal(true)}
+                className="px-4 py-2 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+                data-testid="add-card-btn"
+              >
+                <Plus className="w-4 h-4" />
+                Add Card
+              </button>
+              <button
                 onClick={() => setShowImportModal(true)}
                 className="px-4 py-2 rounded-lg font-semibold transition bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
                 data-testid="import-btn"
