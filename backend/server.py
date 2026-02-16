@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import StreamingResponse
 import httpx
 import os
 
@@ -17,12 +18,11 @@ app.add_middleware(
 # Next.js server URL (internal)
 NEXTJS_URL = "http://localhost:3000"
 
-@app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-async def proxy_to_nextjs(path: str, request: Request):
-    """Proxy all /api/* requests to Next.js server"""
-    async with httpx.AsyncClient(timeout=30.0) as client:
+async def proxy_request(request: Request, path: str):
+    """Common proxy logic for all requests"""
+    async with httpx.AsyncClient(timeout=60.0) as client:
         # Build the target URL
-        url = f"{NEXTJS_URL}/api/{path}"
+        url = f"{NEXTJS_URL}/{path}"
         
         # Get query params
         query_params = str(request.query_params)
@@ -64,7 +64,7 @@ async def proxy_to_nextjs(path: str, request: Request):
                 content=response.content,
                 status_code=response.status_code,
                 headers=response_headers,
-                media_type=response.headers.get('content-type', 'application/json')
+                media_type=response.headers.get('content-type', 'text/html')
             )
         except httpx.TimeoutException:
             return Response(
@@ -82,3 +82,27 @@ async def proxy_to_nextjs(path: str, request: Request):
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+# Proxy all API requests
+@app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+async def proxy_api(path: str, request: Request):
+    """Proxy all /api/* requests to Next.js server"""
+    return await proxy_request(request, f"api/{path}")
+
+# Proxy Next.js static files
+@app.api_route("/_next/{path:path}", methods=["GET"])
+async def proxy_next_static(path: str, request: Request):
+    """Proxy Next.js static files"""
+    return await proxy_request(request, f"_next/{path}")
+
+# Proxy all other requests (pages)
+@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+async def proxy_pages(path: str, request: Request):
+    """Proxy all page requests to Next.js server"""
+    return await proxy_request(request, path)
+
+# Handle root path
+@app.get("/")
+async def proxy_root(request: Request):
+    """Proxy root path to Next.js server"""
+    return await proxy_request(request, "")
