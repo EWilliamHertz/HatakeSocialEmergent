@@ -213,6 +213,96 @@ export default function CollectionPage() {
     }
   };
 
+  // Search for card by set code and collector number
+  const searchCardManually = async () => {
+    if (!addCardSetCode.trim()) return;
+    
+    setAddCardSearching(true);
+    setAddCardSearchResults([]);
+    
+    try {
+      let query = '';
+      if (addCardGame === 'mtg') {
+        // Search Scryfall with set code and collector number
+        if (addCardCollectorNum) {
+          query = `set:${addCardSetCode.toLowerCase()} cn:${addCardCollectorNum}`;
+        } else {
+          query = `set:${addCardSetCode.toLowerCase()}`;
+        }
+        
+        const res = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints`);
+        if (res.ok) {
+          const data = await res.json();
+          setAddCardSearchResults(data.data?.slice(0, 20) || []);
+        } else {
+          // Try direct set/number lookup
+          if (addCardCollectorNum) {
+            const directRes = await fetch(`https://api.scryfall.com/cards/${addCardSetCode.toLowerCase()}/${addCardCollectorNum}`);
+            if (directRes.ok) {
+              const card = await directRes.json();
+              setAddCardSearchResults([card]);
+            }
+          }
+        }
+      } else {
+        // Pokemon TCG API
+        const params = new URLSearchParams();
+        if (addCardSetCode) params.append('q', `set.id:${addCardSetCode}*`);
+        if (addCardCollectorNum) params.append('q', `number:${addCardCollectorNum}`);
+        
+        const res = await fetch(`https://api.pokemontcg.io/v2/cards?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAddCardSearchResults(data.data?.slice(0, 20) || []);
+        }
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setAddCardSearching(false);
+    }
+  };
+
+  // Add selected card to collection
+  const addCardToCollection = async (card: any) => {
+    setAddingCard(true);
+    
+    try {
+      const res = await fetch('/api/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          card_id: card.id,
+          game: addCardGame,
+          card_data: card,
+          quantity: addCardQuantity,
+          condition: addCardCondition,
+          foil: addCardFoil
+        })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        alert(`Added ${card.name} to collection!`);
+        loadCollection();
+        // Reset form
+        setAddCardSetCode('');
+        setAddCardCollectorNum('');
+        setAddCardSearchResults([]);
+        setAddCardQuantity(1);
+        setAddCardFoil(false);
+      } else {
+        alert(data.error || 'Failed to add card');
+      }
+    } catch (error) {
+      console.error('Add card error:', error);
+      alert('Failed to add card');
+    } finally {
+      setAddingCard(false);
+    }
+  };
+
   const updateItem = async (itemId: number, updates: Partial<CollectionItem>) => {
     try {
       await fetch('/api/collection', {
