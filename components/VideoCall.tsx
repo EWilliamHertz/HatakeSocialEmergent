@@ -39,18 +39,17 @@ export default function VideoCall({
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const websocketRef = useRef<WebSocket | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasCreatedOffer = useRef(false);
 
-  // ICE servers for STUN/TURN
+  // ICE servers for STUN
   const iceServers = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun3.l.google.com:19302' },
-      { urls: 'stun:stun4.l.google.com:19302' },
     ],
   };
 
@@ -61,114 +60,87 @@ export default function VideoCall({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Get WebSocket URL
-  const getWebSocketUrl = () => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    return `${protocol}//${host}/ws/signaling/${currentUserId}`;
-  };
+  // Send signal via REST API
+  const sendSignal = useCallback(async (type: string, data?: any) => {
+    try {
+      await fetch('/api/calls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          type,
+          target: remoteUserId,
+          data
+        })
+      });
+    } catch (err) {
+      console.error('Send signal error:', err);
+    }
+  }, [remoteUserId]);
 
-  // Initialize WebSocket connection
-  const initWebSocket = useCallback(() => {
-    const ws = new WebSocket(getWebSocketUrl());
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      // Create room for the call (use sorted user IDs for consistent room ID)
-      const roomId = [currentUserId, remoteUserId].sort().join('_');
-      ws.send(JSON.stringify({
-        type: 'join_room',
-        room_id: roomId
-      }));
+  // Poll for incoming signals
+  const pollSignals = useCallback(async () => {
+    try {
+      const res = await fetch('/api/calls', {
+        credentials: 'include'
+      });
+      const data = await res.json();
       
-      // Send call request to remote user
-      ws.send(JSON.stringify({
-        type: 'call_user',
-        target: remoteUserId,
-        call_type: callType,
-        caller_name: currentUserName
-      }));
-    };
-    
-    ws.onmessage = async (event) => {
-      const message = JSON.parse(event.data);
-      console.log('WebSocket message:', message.type);
-      
-      switch (message.type) {
-        case 'room_joined':
-          console.log('Joined room:', message.room_id, 'Users:', message.users);
-          if (message.users.length > 0) {
-            // Other user is already in room, create offer
-            await createOffer();
-          }
-          break;
-        
-        case 'user_joined':
-          console.log('User joined room:', message.user_id);
-          // New user joined, create offer
-          await createOffer();
-          break;
-        
-        case 'offer':
-          console.log('Received offer from:', message.from);
-          await handleOffer(message.offer, message.from);
-          break;
-        
-        case 'answer':
-          console.log('Received answer from:', message.from);
-          await handleAnswer(message.answer);
-          break;
-        
-        case 'ice_candidate':
-          console.log('Received ICE candidate from:', message.from);
-          await handleIceCandidate(message.candidate);
-          break;
-        
-        case 'call_accepted':
-          setCallStatus('connected');
-          setIsConnecting(false);
-          setIsConnected(true);
-          break;
-        
-        case 'call_rejected':
-          setError('Call was declined');
-          setCallStatus('ended');
-          break;
-        
-        case 'call_ended':
-          handleEndCall();
-          break;
-        
-        case 'user_left':
-          console.log('User left:', message.user_id);
-          handleEndCall();
-          break;
+      if (data.success && data.signals && data.signals.length > 0) {
+        for (const signal of data.signals) {
+          await handleSignal(signal);
+        }
       }
-    };
+    } catch (err) {
+      console.error('Poll signals error:', err);
+    }
+  }, []);
+
+  // Handle incoming signal
+  const handleSignal = async (signal: { type: string; from: string; data?: any }) => {
+    console.log('Received signal:', signal.type, 'from:', signal.from);
     
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setError('Connection error. Please try again.');
-    };
-    
-    ws.onclose = () => {
-      console.log('WebSocket closed');
-    };
-    
-    websocketRef.current = ws;
-  }, [currentUserId, remoteUserId, callType, currentUserName]);
+    switch (signal.type) {
+      case 'offer':
+        await handleOffer(signal.data, signal.from);
+        break;
+      
+      case 'answer':
+        await handleAnswer(signal.data);
+        break;
+      
+      case 'ice_candidate':
+        await handleIceCandidate(signal.data);
+        break;
+      
+      case 'call_accepted':
+        setCallStatus('connected');
+        setIsConnecting(false);
+        setIsConnected(true);
+        break;
+      
+      case 'call_rejected':
+        setError('Call was declined');
+        setCallStatus('ended');
+        break;
+      
+      case 'call_ended':
+        handleEndCall(false);
+        break;
+    }
+  };
 
   // Create peer connection
   const createPeerConnection = useCallback(() => {
+    if (peerConnectionRef.current) {
+      return peerConnectionRef.current;
+    }
+    
     const pc = new RTCPeerConnection(iceServers);
     
-    pc.onicecandidate = (event) => {
-      if (event.candidate && websocketRef.current) {
-        websocketRef.current.send(JSON.stringify({
-          type: 'ice_candidate',
-          target: remoteUserId,
-          candidate: event.candidate
-        }));
+    pc.onicecandidate = async (event) => {
+      if (event.candidate) {
+        await sendSignal('ice_candidate', event.candidate);
       }
     };
     
@@ -192,13 +164,13 @@ export default function VideoCall({
           }, 1000);
         }
       } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-        handleEndCall();
+        handleEndCall(false);
       }
     };
     
     peerConnectionRef.current = pc;
     return pc;
-  }, [remoteUserId]);
+  }, [sendSignal]);
 
   // Initialize local media
   const initializeMedia = useCallback(async () => {
@@ -232,36 +204,39 @@ export default function VideoCall({
 
   // Create and send offer
   const createOffer = async () => {
-    if (!peerConnectionRef.current || !websocketRef.current) return;
+    if (!peerConnectionRef.current || hasCreatedOffer.current) return;
+    hasCreatedOffer.current = true;
     
     try {
+      // Send call notification first
+      await sendSignal('incoming_call', {
+        call_type: callType,
+        caller_name: currentUserName
+      });
+      
       const offer = await peerConnectionRef.current.createOffer();
       await peerConnectionRef.current.setLocalDescription(offer);
       
-      websocketRef.current.send(JSON.stringify({
-        type: 'offer',
-        target: remoteUserId,
-        offer: offer
-      }));
+      await sendSignal('offer', offer);
     } catch (err) {
       console.error('Create offer error:', err);
+      hasCreatedOffer.current = false;
     }
   };
 
   // Handle incoming offer
   const handleOffer = async (offer: RTCSessionDescriptionInit, fromUserId: string) => {
-    if (!peerConnectionRef.current || !websocketRef.current) return;
+    if (!peerConnectionRef.current) {
+      createPeerConnection();
+    }
     
     try {
-      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(offer));
-      const answer = await peerConnectionRef.current.createAnswer();
-      await peerConnectionRef.current.setLocalDescription(answer);
+      await peerConnectionRef.current!.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnectionRef.current!.createAnswer();
+      await peerConnectionRef.current!.setLocalDescription(answer);
       
-      websocketRef.current.send(JSON.stringify({
-        type: 'answer',
-        target: fromUserId,
-        answer: answer
-      }));
+      await sendSignal('answer', answer);
+      await sendSignal('call_accepted', {});
     } catch (err) {
       console.error('Handle offer error:', err);
     }
@@ -391,20 +366,25 @@ export default function VideoCall({
   }, []);
 
   // End call
-  const handleEndCall = useCallback(() => {
+  const handleEndCall = useCallback((notifyRemote: boolean = true) => {
     // Stop call timer
     if (callTimerRef.current) {
       clearInterval(callTimerRef.current);
       callTimerRef.current = null;
     }
+    
+    // Stop polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
 
-    // Notify remote user
-    if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
-      websocketRef.current.send(JSON.stringify({
-        type: 'call_ended',
-        target: remoteUserId
-      }));
-      websocketRef.current.close();
+    // Notify remote user via REST
+    if (notifyRemote) {
+      fetch(`/api/calls?target=${remoteUserId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      }).catch(() => {});
     }
 
     // Stop all streams
@@ -430,6 +410,7 @@ export default function VideoCall({
     }
 
     setCallStatus('ended');
+    hasCreatedOffer.current = false;
     onClose();
   }, [onClose, remoteUserId]);
 
@@ -438,13 +419,24 @@ export default function VideoCall({
     if (isOpen) {
       initializeMedia().then((stream) => {
         if (stream) {
-          initWebSocket();
+          // Start polling for signals
+          pollingIntervalRef.current = setInterval(pollSignals, 1000);
+          
+          // Create offer after short delay
+          setTimeout(() => {
+            createOffer();
+          }, 500);
         }
       });
     }
 
     return () => {
-      handleEndCall();
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current);
+      }
     };
   }, [isOpen]);
 
@@ -501,7 +493,7 @@ export default function VideoCall({
             )}
           </button>
           <button
-            onClick={handleEndCall}
+            onClick={() => handleEndCall(true)}
             className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
             title="Close"
           >
@@ -550,6 +542,7 @@ export default function VideoCall({
                 <p className="text-white text-lg">
                   {callStatus === 'calling' ? `Calling ${remoteUserName}...` : 'Connecting...'}
                 </p>
+                <p className="text-white/60 text-sm mt-2">Using REST-based signaling</p>
               </div>
             </div>
           )}
@@ -564,7 +557,7 @@ export default function VideoCall({
                 <p className="text-white text-lg mb-2">Connection Error</p>
                 <p className="text-white/60 mb-4">{error}</p>
                 <button
-                  onClick={handleEndCall}
+                  onClick={() => handleEndCall(true)}
                   className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   Close
@@ -656,7 +649,7 @@ export default function VideoCall({
 
           {/* End Call Button */}
           <button
-            onClick={handleEndCall}
+            onClick={() => handleEndCall(true)}
             className="p-4 bg-red-600 hover:bg-red-700 rounded-full transition"
             title="End call"
             data-testid="end-call-button"
