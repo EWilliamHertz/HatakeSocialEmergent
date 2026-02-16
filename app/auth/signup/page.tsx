@@ -62,7 +62,7 @@ export default function SignupPage() {
         </div>
 
         <h2 className="text-3xl font-bold text-center mb-2">Create Account</h2>
-        <p className="text-gray-600 text-center mb-8">Join the TCG Social Hub community</p>
+        <p className="text-gray-600 text-center mb-8">Join the Hatake.Social community</p>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">

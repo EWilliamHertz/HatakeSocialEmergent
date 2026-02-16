@@ -31,7 +31,7 @@ export default function AuthPromptModal({ isOpen, onClose, action = 'continue', 
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Join TCG Hub</h2>
+          <h2 className="text-2xl font-bold mb-2">Join Hatake.Social</h2>
           <p className="text-white/80 text-sm">
             Sign in to {action} {feature}
           </p>

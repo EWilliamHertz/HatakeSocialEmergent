@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TCG Hub - Trade & Collect",
+  title: "Hatake.Social - Trade & Collect",
   description: "Your ultimate TCG trading and collection platform",
 };
 
