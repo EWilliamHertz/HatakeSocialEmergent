@@ -102,6 +102,22 @@ export default function Navbar() {
             <ThemeToggle />
             <NotificationsDropdown />
             
+            {/* Admin Link - only show for admin users */}
+            {user && ADMIN_EMAILS.includes(user.email) && (
+              <Link
+                href="/admin"
+                className={`p-2 rounded-lg transition ${
+                  isActive('/admin')
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                title="Admin Panel"
+                data-testid="admin-link"
+              >
+                <Settings className="w-5 h-5" />
+              </Link>
+            )}
+            
             <Link 
               href="/profile"
               className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-2"
