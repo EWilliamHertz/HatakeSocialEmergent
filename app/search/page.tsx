@@ -322,38 +322,56 @@ function SearchContent() {
             <p className="text-gray-500 dark:text-gray-400">No results found. Try a different search term!</p>
           </div>
         ) : (
-          <div className={view === 'grid' ? 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4' : 'space-y-4'}>
+          <div className={view === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6' : 'space-y-4'}>
             {results.map((card) => (
-              <div key={card.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition" data-testid={`card-${card.id}`}>
-                <div className="relative aspect-[2/3]">
+              <div key={card.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition group" data-testid={`card-${card.id}`}>
+                {/* Full Card Image */}
+                <div className="relative aspect-[488/680] bg-gray-100 dark:bg-gray-700">
                   <Image
-                    src={getCardImage(card)}
+                    src={getCardImage(card, 'large')}
                     alt={card.name}
                     fill
-                    className="object-cover"
+                    className="object-contain p-1"
                     unoptimized
                   />
-                </div>
-                <div className="p-3">
-                  <h3 className="font-semibold text-sm mb-1 truncate text-gray-900 dark:text-white">{card.name}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    {card.set?.name || card.set_name || 'Unknown Set'}
-                  </p>
-                  {card.number && (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
-                      #{card.number} {card.set?.id && `(${card.set.id})`}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{getPrice(card)}</span>
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button
                       onClick={() => addToCollection(card)}
-                      className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"
                       data-testid={`add-collection-${card.id}`}
                     >
                       <Plus className="w-4 h-4" />
+                      Add to Collection
                     </button>
                   </div>
+                </div>
+                
+                {/* Card Info - Set Code & Collector Number */}
+                <div className="p-3 border-t border-gray-100 dark:border-gray-700">
+                  <h3 className="font-semibold text-sm mb-1 truncate text-gray-900 dark:text-white" title={card.name}>
+                    {card.name}
+                  </h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {getSetCode(card) && (
+                        <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded text-xs font-mono uppercase">
+                          {getSetCode(card)}
+                        </span>
+                      )}
+                      {getCollectorNumber(card) && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                          #{getCollectorNumber(card)}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{getPrice(card)}</span>
+                  </div>
+                  {(card.set?.name || card.set_name) && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate" title={card.set?.name || card.set_name}>
+                      {card.set?.name || card.set_name}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
