@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ShoppingCart, Package, Truck, Shield, Mail, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Package, Truck, Shield, Mail, Loader2 } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -15,68 +15,76 @@ interface Product {
   image: string;
   features: string[];
   category: string;
+  stock: number;
 }
 
-const products: Product[] = [
+// Default products if database is empty
+const DEFAULT_PRODUCTS: Product[] = [
   {
     id: 'toploader-35pt',
     name: '35pt Toploader *25',
     description: 'Hatake TCG 35pt Top-Loaders provide superior protection for your most valuable standard-sized trading cards.',
-    price: 22.50,
+    price: 30.00,
     currency: 'SEK',
     image: 'https://images.unsplash.com/photo-1612404730960-5c71577fca11?w=400',
     features: ['Clear SKU + product info', 'Bulk-import friendly', 'Shipped from Sweden'],
     category: 'Protection',
+    stock: 100
   },
   {
     id: 'playmat',
     name: 'Playmat',
     description: 'Premium quality playmat for comfortable gaming sessions. Designed with TCG players in mind.',
-    price: 96.75,
+    price: 129.00,
     currency: 'SEK',
     image: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400',
     features: ['Clear SKU + product info', 'Bulk-import friendly', 'Shipped from Sweden'],
     category: 'Accessories',
+    stock: 50
   },
   {
     id: 'duffel-bag',
     name: 'Duffel Bag',
     description: 'The Hatake TCG Duffel Bag is the ultimate tournament companion, designed specifically for TCG players who demand both functionality and style. With dimensions of 47*28*55cm, this spacious bag provides ample room for all your gaming essentials.',
-    price: 225.00,
+    price: 300.00,
     currency: 'SEK',
     image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
     features: ['Clear SKU + product info', 'Bulk-import friendly', 'Shipped from Sweden'],
     category: 'Bags',
+    stock: 25
   },
   {
     id: 'deckbox-susanoo',
     name: 'Deckbox, Susanoo',
     description: 'The Hatake TCG PU DeckBox combines elegant Nordic design with practical functionality. With a generous 160+ card capacity and secure magnetic closure, this premium deck box keeps your valuable cards protected in style.',
-    price: 225.00,
+    price: 300.00,
     currency: 'SEK',
     image: 'https://images.unsplash.com/photo-1627634777217-c864268db30c?w=400',
     features: ['Clear SKU + product info', 'Bulk-import friendly', 'Shipped from Sweden'],
     category: 'Storage',
+    stock: 40
   },
   {
     id: 'binder-480',
     name: '480 Slot Top-loader Binder',
     description: 'Premium binder with 480 slots designed specifically for top-loaded cards. Perfect for showcasing your collection.',
-    price: 270.00,
+    price: 360.00,
     currency: 'SEK',
     image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400',
     features: ['Clear SKU + product info', 'Bulk-import friendly', 'Shipped from Sweden'],
     category: 'Storage',
+    stock: 30
   },
   {
     id: 'toploader-130pt',
     name: '130pt Toploader *10',
     description: 'Heavy-duty 130pt toploaders for thicker cards, graded card protection, and patch cards.',
-    price: 26.25,
+    price: 35.00,
     currency: 'SEK',
     image: 'https://images.unsplash.com/photo-1612404730960-5c71577fca11?w=400',
     features: ['Clear SKU + product info', 'Bulk-import friendly', 'Shipped from Sweden'],
     category: 'Protection',
+    stock: 80
   },
 ];
 
@@ -86,6 +94,30 @@ export default function ShopPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<{ id: string; quantity: number }[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      const res = await fetch('/api/shop');
+      const data = await res.json();
+      if (data.success && data.products.length > 0) {
+        setProducts(data.products);
+      } else {
+        // Use default products if database is empty
+        setProducts(DEFAULT_PRODUCTS);
+      }
+    } catch (error) {
+      console.error('Load products error:', error);
+      setProducts(DEFAULT_PRODUCTS);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredProducts = selectedCategory === 'All' 
     ? products 
@@ -170,16 +202,6 @@ export default function ShopPage() {
         </div>
       </section>
 
-      {/* Pricing Note */}
-      <div className="bg-yellow-50 dark:bg-yellow-900/20 border-y border-yellow-200 dark:border-yellow-800 py-4 px-4">
-        <div className="container mx-auto max-w-4xl text-center">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Pricing Note:</strong> Prices shown reflect roughly <strong>75%</strong> of list price. 
-            Final pricing is negotiable upon contact (delivery address, quantities, and other details).
-          </p>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
         {/* Category Filter */}
@@ -200,70 +222,90 @@ export default function ShopPage() {
           ))}
         </div>
 
-        {/* Products Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProducts.map(product => (
-            <div 
-              key={product.id} 
-              className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
-              data-testid={`product-${product.id}`}
-            >
-              <div className="h-48 relative bg-gray-100 dark:bg-gray-700">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-bold text-lg text-gray-900 dark:text-white">{product.name}</h3>
-                  <span className="text-blue-600 dark:text-blue-400 font-bold">
-                    {product.currency} {product.price.toFixed(2)}
-                  </span>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
-                  {product.description}
-                </p>
-                <div className="space-y-2 mb-4">
-                  {product.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                      {feature}
+        {/* Loading State */}
+        {loading ? (
+          <div className="text-center py-12">
+            <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-500">Loading products...</p>
+          </div>
+        ) : (
+          /* Products Grid */
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredProducts.map(product => (
+              <div 
+                key={product.id} 
+                className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
+                data-testid={`product-${product.id}`}
+              >
+                <div className="h-48 relative bg-gray-100 dark:bg-gray-700">
+                  {product.image ? (
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-16 h-16 text-gray-300" />
                     </div>
-                  ))}
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => addToCart(product.id)}
-                    className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                    data-testid={`add-to-cart-${product.id}`}
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    Add to Cart
-                  </button>
-                  <a
-                    href="mailto:contact@hatake.social?subject=Wholesale Inquiry"
-                    className="py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                  >
-                    <Mail className="w-4 h-4" />
-                  </a>
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">{product.name}</h3>
+                    <span className="text-blue-600 dark:text-blue-400 font-bold whitespace-nowrap ml-2">
+                      {product.currency} {product.price.toFixed(2)}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                    {product.description}
+                  </p>
+                  <div className="space-y-2 mb-4">
+                    {product.features?.map((feature, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                  {product.stock !== undefined && (
+                    <p className={`text-xs mb-3 ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => addToCart(product.id)}
+                      disabled={product.stock === 0}
+                      className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid={`add-to-cart-${product.id}`}
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      Add to Cart
+                    </button>
+                    <a
+                      href="mailto:contact@hatake.social?subject=Product Inquiry"
+                      className="py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                    >
+                      <Mail className="w-4 h-4" />
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Wholesale Section */}
         <section className="mt-16 bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            Wholesale Catalogue
+            Wholesale Inquiries
           </h2>
           <p className="text-gray-600 dark:text-gray-300 text-center mb-8 max-w-2xl mx-auto">
-            If you're a store or distributor, you can pick products + quantities and send an inquiry. 
-            Pricing is flexible depending on delivery address and order size.
+            If you're a store or distributor, contact us for wholesale pricing (60-80% of retail). 
+            Final pricing depends on delivery address and order quantities.
           </p>
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <div className="text-center p-4">
@@ -271,21 +313,21 @@ export default function ShopPage() {
                 <span className="text-blue-600 dark:text-blue-400 font-bold">1</span>
               </div>
               <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Pick SKUs + quantities</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Build a short list inside the catalogue.</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Build a short list from our catalogue.</p>
             </div>
             <div className="text-center p-4">
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-purple-600 dark:text-purple-400 font-bold">2</span>
               </div>
               <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Send inquiry</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Add destination + timing details so we can quote accurately.</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Include destination + timing details.</p>
             </div>
             <div className="text-center p-4">
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-green-600 dark:text-green-400 font-bold">3</span>
               </div>
               <h4 className="font-semibold text-gray-900 dark:text-white mb-2">We confirm lead time</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">We reply by email with a quote + dispatch window.</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">We reply with a quote + dispatch window.</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-4 justify-center">
