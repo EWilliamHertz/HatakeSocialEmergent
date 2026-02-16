@@ -422,22 +422,48 @@ export default function AdminPage() {
           <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {[
-                { label: 'Users', value: stats?.users || 0, icon: Users, color: 'blue' },
-                { label: 'Posts', value: stats?.posts || 0, icon: FileText, color: 'purple' },
-                { label: 'Decks', value: stats?.decks || 0, icon: Layers, color: 'green' },
-                { label: 'Cards', value: stats?.collections || 0, icon: Package, color: 'orange' },
-                { label: 'Trades', value: stats?.trades || 0, icon: RefreshCw, color: 'pink' },
-                { label: 'Groups', value: stats?.groups || 0, icon: MessageCircle, color: 'teal' },
-              ].map(stat => (
-                <div key={stat.label} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-                  <div className={`w-10 h-10 bg-${stat.color}-100 dark:bg-${stat.color}-900/30 rounded-lg flex items-center justify-center mb-3`}>
-                    <stat.icon className={`w-5 h-5 text-${stat.color}-600 dark:text-${stat.color}-400`} />
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-3">
+                  <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
-              ))}
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.users || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Users</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-3">
+                  <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.posts || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Posts</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-3">
+                  <Layers className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.decks || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Decks</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-3">
+                  <Package className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.collections || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Cards</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-lg flex items-center justify-center mb-3">
+                  <RefreshCw className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.trades || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Trades</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center mb-3">
+                  <MessageCircle className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.groups || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Groups</p>
+              </div>
             </div>
 
             {/* Recent Activity */}
