@@ -89,10 +89,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing type or target' }, { status: 400 });
     }
 
+    // Enrich data with caller info for incoming_call signals
+    let enrichedData = data || {};
+    if (type === 'incoming_call') {
+      enrichedData = {
+        ...enrichedData,
+        caller_name: user.name || 'Unknown',
+        caller_picture: user.picture || null
+      };
+    }
+
     // Store signal in database
     await sql`
       INSERT INTO call_signals (from_user_id, target_user_id, signal_type, signal_data)
-      VALUES (${userId}, ${target}, ${type}, ${JSON.stringify(data || {})})
+      VALUES (${userId}, ${target}, ${type}, ${JSON.stringify(enrichedData)})
     `;
 
     // Clean up old signals (older than 1 minute)
