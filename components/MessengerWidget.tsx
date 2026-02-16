@@ -130,6 +130,50 @@ export default function MessengerWidget() {
     return () => clearInterval(interval);
   }, [isAuthenticated, selectedConv]);
 
+  // Poll for incoming calls
+  useEffect(() => {
+    if (!isAuthenticated || showVideoCall) return;
+    
+    const pollIncomingCalls = async () => {
+      try {
+        const res = await fetch('/api/calls', { credentials: 'include' });
+        const data = await res.json();
+        
+        if (data.success && data.signals) {
+          for (const signal of data.signals) {
+            if (signal.type === 'incoming_call' && !showVideoCall && !incomingCall) {
+              // Play ringtone
+              if (soundEnabled && ringtoneRef.current) {
+                ringtoneRef.current.currentTime = 0;
+                ringtoneRef.current.play().catch(() => {});
+              }
+              
+              setIncomingCall({
+                callerId: signal.from,
+                callerName: signal.data?.caller_name || 'Unknown',
+                callerPicture: signal.data?.caller_picture,
+                callType: signal.data?.call_type || 'video'
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Poll incoming calls error:', err);
+      }
+    };
+    
+    // Poll every 2 seconds for incoming calls
+    callPollingRef.current = setInterval(pollIncomingCalls, 2000);
+    pollIncomingCalls(); // Initial poll
+    
+    return () => {
+      if (callPollingRef.current) {
+        clearInterval(callPollingRef.current);
+      }
+    };
+  }, [isAuthenticated, showVideoCall, incomingCall, soundEnabled]);
+  }, [isAuthenticated, selectedConv]);
+
   useEffect(() => {
     // Calculate unread total and play sound
     const total = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
