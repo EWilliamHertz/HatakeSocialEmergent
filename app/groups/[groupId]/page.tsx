@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Users, Lock, Globe, Crown, Shield, Settings, LogOut, MessageCircle, Heart, Share2, Send, MoreHorizontal, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
