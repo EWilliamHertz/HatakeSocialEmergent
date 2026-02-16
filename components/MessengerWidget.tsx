@@ -90,6 +90,7 @@ export default function MessengerWidget() {
         if (data.user) {
           setIsAuthenticated(true);
           setCurrentUserId(data.user.user_id);
+          setCurrentUserName(data.user.name || 'User');
           loadConversations();
         }
       })
