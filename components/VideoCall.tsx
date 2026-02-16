@@ -7,11 +7,23 @@ interface VideoCallProps {
   isOpen: boolean;
   onClose: () => void;
   callType: 'audio' | 'video';
+  remoteUserId: string;
   remoteUserName: string;
   remoteUserPicture?: string;
+  currentUserId: string;
+  currentUserName: string;
 }
 
-export default function VideoCall({ isOpen, onClose, callType, remoteUserName, remoteUserPicture }: VideoCallProps) {
+export default function VideoCall({ 
+  isOpen, 
+  onClose, 
+  callType, 
+  remoteUserId,
+  remoteUserName, 
+  remoteUserPicture,
+  currentUserId,
+  currentUserName
+}: VideoCallProps) {
   const [isConnecting, setIsConnecting] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -20,21 +32,25 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [callStatus, setCallStatus] = useState<'calling' | 'ringing' | 'connected' | 'ended'>('calling');
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const websocketRef = useRef<WebSocket | null>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // ICE servers for STUN/TURN (using public Google STUN servers)
+  // ICE servers for STUN/TURN
   const iceServers = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' },
     ],
   };
 
@@ -45,12 +61,148 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Initialize local media stream
+  // Get WebSocket URL
+  const getWebSocketUrl = () => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    return `${protocol}//${host}/ws/signaling/${currentUserId}`;
+  };
+
+  // Initialize WebSocket connection
+  const initWebSocket = useCallback(() => {
+    const ws = new WebSocket(getWebSocketUrl());
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      // Create room for the call (use sorted user IDs for consistent room ID)
+      const roomId = [currentUserId, remoteUserId].sort().join('_');
+      ws.send(JSON.stringify({
+        type: 'join_room',
+        room_id: roomId
+      }));
+      
+      // Send call request to remote user
+      ws.send(JSON.stringify({
+        type: 'call_user',
+        target: remoteUserId,
+        call_type: callType,
+        caller_name: currentUserName
+      }));
+    };
+    
+    ws.onmessage = async (event) => {
+      const message = JSON.parse(event.data);
+      console.log('WebSocket message:', message.type);
+      
+      switch (message.type) {
+        case 'room_joined':
+          console.log('Joined room:', message.room_id, 'Users:', message.users);
+          if (message.users.length > 0) {
+            // Other user is already in room, create offer
+            await createOffer();
+          }
+          break;
+        
+        case 'user_joined':
+          console.log('User joined room:', message.user_id);
+          // New user joined, create offer
+          await createOffer();
+          break;
+        
+        case 'offer':
+          console.log('Received offer from:', message.from);
+          await handleOffer(message.offer, message.from);
+          break;
+        
+        case 'answer':
+          console.log('Received answer from:', message.from);
+          await handleAnswer(message.answer);
+          break;
+        
+        case 'ice_candidate':
+          console.log('Received ICE candidate from:', message.from);
+          await handleIceCandidate(message.candidate);
+          break;
+        
+        case 'call_accepted':
+          setCallStatus('connected');
+          setIsConnecting(false);
+          setIsConnected(true);
+          break;
+        
+        case 'call_rejected':
+          setError('Call was declined');
+          setCallStatus('ended');
+          break;
+        
+        case 'call_ended':
+          handleEndCall();
+          break;
+        
+        case 'user_left':
+          console.log('User left:', message.user_id);
+          handleEndCall();
+          break;
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setError('Connection error. Please try again.');
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket closed');
+    };
+    
+    websocketRef.current = ws;
+  }, [currentUserId, remoteUserId, callType, currentUserName]);
+
+  // Create peer connection
+  const createPeerConnection = useCallback(() => {
+    const pc = new RTCPeerConnection(iceServers);
+    
+    pc.onicecandidate = (event) => {
+      if (event.candidate && websocketRef.current) {
+        websocketRef.current.send(JSON.stringify({
+          type: 'ice_candidate',
+          target: remoteUserId,
+          candidate: event.candidate
+        }));
+      }
+    };
+    
+    pc.ontrack = (event) => {
+      console.log('Received remote track');
+      if (remoteVideoRef.current && event.streams[0]) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+      }
+    };
+    
+    pc.onconnectionstatechange = () => {
+      console.log('Connection state:', pc.connectionState);
+      if (pc.connectionState === 'connected') {
+        setIsConnected(true);
+        setIsConnecting(false);
+        setCallStatus('connected');
+        // Start call timer
+        if (!callTimerRef.current) {
+          callTimerRef.current = setInterval(() => {
+            setCallDuration((prev) => prev + 1);
+          }, 1000);
+        }
+      } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+        handleEndCall();
+      }
+    };
+    
+    peerConnectionRef.current = pc;
+    return pc;
+  }, [remoteUserId]);
+
+  // Initialize local media
   const initializeMedia = useCallback(async () => {
     try {
-      setIsConnecting(true);
-      setError(null);
-
       const constraints = {
         audio: true,
         video: callType === 'video' ? { width: 1280, height: 720 } : false,
@@ -63,61 +215,79 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
         localVideoRef.current.srcObject = stream;
       }
 
-      // Create peer connection
-      const pc = new RTCPeerConnection(iceServers);
-      peerConnectionRef.current = pc;
-
-      // Add local tracks to peer connection
+      // Create peer connection and add tracks
+      const pc = createPeerConnection();
       stream.getTracks().forEach((track) => {
         pc.addTrack(track, stream);
       });
 
-      // Handle incoming remote stream
-      pc.ontrack = (event) => {
-        if (remoteVideoRef.current && event.streams[0]) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-        }
-      };
-
-      // ICE candidate handling
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          // In a real app, send this to the signaling server
-          console.log('ICE candidate:', event.candidate);
-        }
-      };
-
-      // Connection state handling
-      pc.onconnectionstatechange = () => {
-        console.log('Connection state:', pc.connectionState);
-        if (pc.connectionState === 'connected') {
-          setIsConnected(true);
-          setIsConnecting(false);
-          // Start call timer
-          callTimerRef.current = setInterval(() => {
-            setCallDuration((prev) => prev + 1);
-          }, 1000);
-        } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-          handleEndCall();
-        }
-      };
-
-      // For demo purposes, simulate connection after 2 seconds
-      // In a real app, you'd exchange SDP offers/answers via a signaling server
-      setTimeout(() => {
-        setIsConnected(true);
-        setIsConnecting(false);
-        callTimerRef.current = setInterval(() => {
-          setCallDuration((prev) => prev + 1);
-        }, 1000);
-      }, 2000);
-
+      return stream;
     } catch (err: any) {
       console.error('Media initialization error:', err);
       setError(err.message || 'Failed to access camera/microphone');
       setIsConnecting(false);
+      return null;
     }
-  }, [callType]);
+  }, [callType, createPeerConnection]);
+
+  // Create and send offer
+  const createOffer = async () => {
+    if (!peerConnectionRef.current || !websocketRef.current) return;
+    
+    try {
+      const offer = await peerConnectionRef.current.createOffer();
+      await peerConnectionRef.current.setLocalDescription(offer);
+      
+      websocketRef.current.send(JSON.stringify({
+        type: 'offer',
+        target: remoteUserId,
+        offer: offer
+      }));
+    } catch (err) {
+      console.error('Create offer error:', err);
+    }
+  };
+
+  // Handle incoming offer
+  const handleOffer = async (offer: RTCSessionDescriptionInit, fromUserId: string) => {
+    if (!peerConnectionRef.current || !websocketRef.current) return;
+    
+    try {
+      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnectionRef.current.createAnswer();
+      await peerConnectionRef.current.setLocalDescription(answer);
+      
+      websocketRef.current.send(JSON.stringify({
+        type: 'answer',
+        target: fromUserId,
+        answer: answer
+      }));
+    } catch (err) {
+      console.error('Handle offer error:', err);
+    }
+  };
+
+  // Handle incoming answer
+  const handleAnswer = async (answer: RTCSessionDescriptionInit) => {
+    if (!peerConnectionRef.current) return;
+    
+    try {
+      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+    } catch (err) {
+      console.error('Handle answer error:', err);
+    }
+  };
+
+  // Handle incoming ICE candidate
+  const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
+    if (!peerConnectionRef.current) return;
+    
+    try {
+      await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+    } catch (err) {
+      console.error('Handle ICE candidate error:', err);
+    }
+  };
 
   // Toggle mute
   const toggleMute = useCallback(() => {
@@ -160,13 +330,11 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
           sender.replaceTrack(videoTrack);
         }
 
-        // Show screen share in local video
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = screenStream;
         }
       }
 
-      // Handle screen share stop
       screenStream.getVideoTracks()[0].onended = () => {
         stopScreenShare();
       };
@@ -184,7 +352,6 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
       screenStreamRef.current = null;
     }
 
-    // Restore camera video
     if (localStreamRef.current && peerConnectionRef.current) {
       const videoTrack = localStreamRef.current.getVideoTracks()[0];
       const sender = peerConnectionRef.current
@@ -231,6 +398,15 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
       callTimerRef.current = null;
     }
 
+    // Notify remote user
+    if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+      websocketRef.current.send(JSON.stringify({
+        type: 'call_ended',
+        target: remoteUserId
+      }));
+      websocketRef.current.close();
+    }
+
     // Stop all streams
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -253,19 +429,24 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
       document.exitFullscreen();
     }
 
+    setCallStatus('ended');
     onClose();
-  }, [onClose]);
+  }, [onClose, remoteUserId]);
 
   // Initialize on mount
   useEffect(() => {
     if (isOpen) {
-      initializeMedia();
+      initializeMedia().then((stream) => {
+        if (stream) {
+          initWebSocket();
+        }
+      });
     }
 
     return () => {
       handleEndCall();
     };
-  }, [isOpen, initializeMedia]);
+  }, [isOpen]);
 
   // Handle fullscreen change
   useEffect(() => {
@@ -300,7 +481,10 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
           <div>
             <p className="text-white font-semibold">{remoteUserName}</p>
             <p className="text-white/70 text-sm">
-              {isConnecting ? 'Connecting...' : isConnected ? formatDuration(callDuration) : 'Disconnected'}
+              {callStatus === 'calling' && 'Calling...'}
+              {callStatus === 'ringing' && 'Ringing...'}
+              {callStatus === 'connected' && formatDuration(callDuration)}
+              {callStatus === 'ended' && 'Call ended'}
             </p>
           </div>
         </div>
@@ -352,7 +536,9 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
                 </div>
               )}
               <p className="text-white text-xl">{remoteUserName}</p>
-              <p className="text-white/60">{isConnecting ? 'Connecting...' : 'Voice Call'}</p>
+              <p className="text-white/60">
+                {callStatus === 'calling' ? 'Calling...' : callStatus === 'connected' ? 'Voice Call' : ''}
+              </p>
             </div>
           )}
 
@@ -361,7 +547,9 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
             <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80">
               <div className="text-center">
                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-white text-lg">Connecting to {remoteUserName}...</p>
+                <p className="text-white text-lg">
+                  {callStatus === 'calling' ? `Calling ${remoteUserName}...` : 'Connecting...'}
+                </p>
               </div>
             </div>
           )}
@@ -432,7 +620,7 @@ export default function VideoCall({ isOpen, onClose, callType, remoteUserName, r
             )}
           </button>
 
-          {/* Video Toggle (only for video calls) */}
+          {/* Video Toggle */}
           {callType === 'video' && (
             <button
               onClick={toggleVideo}
