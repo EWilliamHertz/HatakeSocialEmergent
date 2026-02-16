@@ -151,6 +151,8 @@ CREATE TABLE IF NOT EXISTS messages (
   conversation_id VARCHAR(255) NOT NULL REFERENCES conversations(conversation_id) ON DELETE CASCADE,
   sender_id VARCHAR(255) NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   content TEXT NOT NULL,
+  message_type VARCHAR(50) DEFAULT 'text',
+  media_url TEXT,
   read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
