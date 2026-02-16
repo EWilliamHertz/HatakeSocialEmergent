@@ -54,6 +54,9 @@ export default function MessengerWidget() {
   const [unreadTotal, setUnreadTotal] = useState(0);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [callType, setCallType] = useState<'audio' | 'video'>('video');
+  const [currentUserName, setCurrentUserName] = useState('');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
