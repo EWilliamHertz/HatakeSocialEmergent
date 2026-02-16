@@ -136,12 +136,26 @@ function SearchContent() {
     }
   };
 
-  const getCardImage = (card: Card) => {
+  const getCardImage = (card: Card, size: 'small' | 'large' = 'small') => {
+    if (size === 'large') {
+      if (card.image_uris?.png) return card.image_uris.png;
+      if (card.image_uris?.large) return card.image_uris.large;
+      if (card.image_uris?.normal) return card.image_uris.normal;
+      if (card.images?.large) return card.images.large;
+    }
     if (card.images?.small) return card.images.small;
     if (card.image_uris?.small) return card.image_uris.small;
     if (card.images?.large) return card.images.large;
     if (card.image_uris?.normal) return card.image_uris.normal;
     return '/placeholder-card.png';
+  };
+
+  const getSetCode = (card: Card) => {
+    return card.set_code || card.set?.id || '';
+  };
+
+  const getCollectorNumber = (card: Card) => {
+    return card.collector_number || card.number || '';
   };
 
   const getPrice = (card: Card) => {
