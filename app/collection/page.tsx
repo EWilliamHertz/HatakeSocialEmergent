@@ -295,38 +295,57 @@ export default function CollectionPage() {
         };
         
         // Add API key if available
-        const apiKey = process.env.NEXT_PUBLIC_POKEMON_API_KEY || 'card-hub-3';
-        if (apiKey) {
-          headers['X-Api-Key'] = apiKey;
-        }
+        const apiKey = 'card-hub-3';
+        headers['X-Api-Key'] = apiKey;
         
-        const res = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(query)}&pageSize=30`, {
-          headers,
-          signal: AbortSignal.timeout(15000) // 15 second timeout
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          // Map Pokemon cards to consistent format
-          const cards = (data.data || []).map((card: any) => ({
-            ...card,
-            game: 'pokemon',
-            image_uris: {
-              small: card.images?.small,
-              normal: card.images?.large,
-              large: card.images?.large
-            },
-            set_name: card.set?.name,
-            set_code: card.set?.id,
-            collector_number: card.number
-          }));
-          setAddCardSearchResults(cards.slice(0, 30));
-        } else {
-          console.error('Pokemon API error:', res.status, await res.text());
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+          
+          const res = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(query)}&pageSize=30`, {
+            headers,
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (res.ok) {
+            const data = await res.json();
+            // Map Pokemon cards to consistent format
+            const cards = (data.data || []).map((card: any) => ({
+              ...card,
+              game: 'pokemon',
+              image_uris: {
+                small: card.images?.small,
+                normal: card.images?.large,
+                large: card.images?.large
+              },
+              set_name: card.set?.name,
+              set_code: card.set?.id,
+              collector_number: card.number
+            }));
+            setAddCardSearchResults(cards.slice(0, 30));
+            
+            if (cards.length === 0) {
+              console.log('No Pokemon cards found for query:', query);
+            }
+          } else {
+            console.error('Pokemon API error:', res.status);
+            // Set empty results to show "no cards found" message
+            setAddCardSearchResults([]);
+          }
+        } catch (fetchError: any) {
+          if (fetchError.name === 'AbortError') {
+            console.error('Pokemon API timeout - the API is slow, please try again');
+          } else {
+            console.error('Pokemon API fetch error:', fetchError);
+          }
+          setAddCardSearchResults([]);
         }
       }
     } catch (error) {
       console.error('Search error:', error);
+      setAddCardSearchResults([]);
     } finally {
       setAddCardSearching(false);
     }
