@@ -1287,7 +1287,7 @@ export default function CollectionPage() {
                     <div key={card.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition">
                       <div className="aspect-[488/680] relative mb-2">
                         <img
-                          src={card.image_uris?.small || card.images?.small || '/placeholder-card.png'}
+                          src={card.image_uris?.small || card.image_uris?.normal || card.images?.small || card.images?.large || '/placeholder-card.png'}
                           alt={card.name}
                           className="w-full h-full object-contain rounded"
                         />
@@ -1295,10 +1295,10 @@ export default function CollectionPage() {
                       <h4 className="font-medium text-sm truncate dark:text-white" title={card.name}>{card.name}</h4>
                       <div className="flex items-center gap-1 mb-2">
                         <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1 rounded font-mono uppercase">
-                          {card.set || card.set_name?.slice(0, 3)}
+                          {card.set_code || card.set?.id || card.set || card.set_name?.slice(0, 3) || '???'}
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          #{card.collector_number || card.number}
+                          #{card.collector_number || card.number || '?'}
                         </span>
                       </div>
                       
