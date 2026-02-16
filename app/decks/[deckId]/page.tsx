@@ -346,7 +346,7 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
                 cardId: exactMatch.id,
                 cardData: exactMatch,
                 quantity: card.quantity,
-                category: 'main'
+                category: card.category
               })
             });
             
