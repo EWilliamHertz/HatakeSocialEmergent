@@ -1141,7 +1141,7 @@ export default function CollectionPage() {
             <div className="p-6 border-b dark:border-gray-700 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold dark:text-white">Add Card Manually</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Search by set code and collector number</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Search by name or set code + collector number</p>
               </div>
               <button
                 onClick={() => {
@@ -1149,6 +1149,7 @@ export default function CollectionPage() {
                   setAddCardSearchResults([]);
                   setAddCardSetCode('');
                   setAddCardCollectorNum('');
+                  setAddCardName('');
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               >
@@ -1157,9 +1158,10 @@ export default function CollectionPage() {
             </div>
 
             {/* Search Form */}
-            <div className="p-6 border-b dark:border-gray-700">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
+            <div className="p-6 border-b dark:border-gray-700 space-y-4">
+              {/* Game Selection */}
+              <div className="flex gap-4">
+                <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Game</label>
                   <select
                     value={addCardGame}
@@ -1173,8 +1175,26 @@ export default function CollectionPage() {
                     <option value="pokemon">Pokemon TCG</option>
                   </select>
                 </div>
+              </div>
+              
+              {/* Card Name Search */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Card Name</label>
+                <input
+                  type="text"
+                  value={addCardName}
+                  onChange={(e) => setAddCardName(e.target.value)}
+                  placeholder="e.g., Black Lotus, Charizard, Lightning Bolt..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  data-testid="card-name-input"
+                  onKeyDown={(e) => e.key === 'Enter' && searchCardManually()}
+                />
+              </div>
+              
+              {/* Optional Set/Number Filter */}
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Set Code *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Set Code (optional)</label>
                   <input
                     type="text"
                     value={addCardSetCode}
@@ -1185,7 +1205,7 @@ export default function CollectionPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Collector #</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Collector # (optional)</label>
                   <input
                     type="text"
                     value={addCardCollectorNum}
@@ -1198,7 +1218,7 @@ export default function CollectionPage() {
                 <div className="flex items-end">
                   <button
                     onClick={searchCardManually}
-                    disabled={!addCardSetCode.trim() || addCardSearching}
+                    disabled={(!addCardName.trim() && !addCardSetCode.trim()) || addCardSearching}
                     className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
                     data-testid="search-card-btn"
                   >
@@ -1207,6 +1227,9 @@ export default function CollectionPage() {
                   </button>
                 </div>
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Tip: Search by card name, or use set code + collector number for exact matches
+              </p>
             </div>
 
             {/* Search Results */}
