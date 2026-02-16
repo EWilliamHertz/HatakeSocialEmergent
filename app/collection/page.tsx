@@ -323,10 +323,9 @@ export default function CollectionPage() {
             
             // If set code is provided, filter results
             if (addCardSetCode.trim()) {
-              const setLower = addCardSetCode.toLowerCase();
               cards = cards.filter((card: any) => 
-                card.id?.toLowerCase().includes(setLower) || 
-                card.set?.id?.toLowerCase().includes(setLower)
+                card.id?.toLowerCase().includes(resolvedSetCode) || 
+                card.set?.id?.toLowerCase() === resolvedSetCode
               );
             }
             
