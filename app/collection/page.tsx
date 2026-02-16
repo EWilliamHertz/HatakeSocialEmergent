@@ -430,9 +430,17 @@ export default function CollectionPage() {
 
   const getCardPrice = (item: CollectionItem) => {
     const card = item.card_data;
-    if (item.game === 'pokemon' && card.tcgplayer?.prices) {
-      const prices = card.tcgplayer.prices;
-      return prices.holofoil?.market || prices.normal?.market || 0;
+    if (item.game === 'pokemon') {
+      // Check for TCGdex pricing (from cardmarket)
+      if (card.pricing?.cardmarket) {
+        return card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0;
+      }
+      // Legacy TCGplayer format
+      if (card.tcgplayer?.prices) {
+        const prices = card.tcgplayer.prices;
+        return prices.holofoil?.market || prices.normal?.market || 0;
+      }
+      return 0;
     } else if (item.game === 'mtg' && card.prices?.usd) {
       return parseFloat(card.prices.usd);
     }
