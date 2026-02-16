@@ -101,18 +101,18 @@ export async function POST(request: NextRequest) {
     if (action === 'preview') {
       // Return parsed cards for preview
       const previewCards = cards.map(card => ({
-        name: card.Name,
-        setCode: card['Set code'],
-        setName: card['Set name'],
-        collectorNumber: card['Collector number'],
+        name: card.Name || 'Unknown Card',
+        setCode: card['Set code'] || '',
+        setName: card['Set name'] || '',
+        collectorNumber: card['Collector number'] || '',
         foil: card.Foil === 'foil',
-        rarity: card.Rarity,
+        rarity: card.Rarity || '',
         quantity: parseInt(card.Quantity) || 1,
-        scryfallId: card['Scryfall ID'],
+        scryfallId: card['Scryfall ID'] || '',
         purchasePrice: parseFloat(card['Purchase price']) || 0,
-        currency: card['Purchase price currency'],
+        currency: card['Purchase price currency'] || 'USD',
         condition: mapCondition(card.Condition),
-        language: card.Language,
+        language: card.Language || 'English',
         misprint: card.Misprint === 'true',
         altered: card.Altered === 'true',
       }));
