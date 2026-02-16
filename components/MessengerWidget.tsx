@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { MessageCircle, X, Send, ChevronDown, Users } from 'lucide-react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { MessageCircle, X, Send, ChevronDown, Users, Smile, Image as ImageIcon, Volume2, VolumeX } from 'lucide-react';
 import Image from 'next/image';
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 
 interface Conversation {
   conversation_id: string;
@@ -18,6 +20,8 @@ interface Message {
   message_id: string;
   sender_id: string;
   content: string;
+  message_type?: string;
+  media_url?: string;
   name: string;
   picture?: string;
   created_at: string;
@@ -30,6 +34,9 @@ interface User {
   picture?: string;
 }
 
+// Notification sound (base64 encoded short beep)
+const NOTIFICATION_SOUND = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQDgAAAAAAAAAGwsNIlHgAAAAAAAAAAAAAAAAD/4xjEAAKoGfJBQRgAMIAIRhSFIJB8H4fyhACAIB/y4Oefy4AQBAEAQBA/B+H/ygCAIBAEAQBD//5QCAIAgCAIH4P/+DkOQhCAAAAAADCMP/jGMQLA6wa9kZhGABsAGzBBEBsxgxYNKqIjMWYaGmZkCiYJmZmZmDMzMzM0AAAE//4xjEFAPAAsVvwAAAAAAD/+Mf/4xjEGAAAANIAAAAA/4xjEKAAAANIAAAAA';
+
 export default function MessengerWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -40,8 +47,35 @@ export default function MessengerWidget() {
   const [currentUserId, setCurrentUserId] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showNewConversation, setShowNewConversation] = useState(false);
-  const [friends, setFriends] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [unreadTotal, setUnreadTotal] = useState(0);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lastMessageCount = useRef(0);
+
+  // Initialize audio
+  useEffect(() => {
+    audioRef.current = new Audio(NOTIFICATION_SOUND);
+  }, []);
+
+  // Play notification sound
+  const playNotificationSound = useCallback(() => {
+    if (soundEnabled && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+  }, [soundEnabled]);
+
+  // Scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   useEffect(() => {
     // Check auth status
@@ -57,11 +91,28 @@ export default function MessengerWidget() {
       .catch(() => setIsAuthenticated(false));
   }, []);
 
+  // Poll for new messages
   useEffect(() => {
-    // Calculate unread total
+    if (!isAuthenticated) return;
+    
+    const interval = setInterval(() => {
+      loadConversations();
+      if (selectedConv) {
+        loadMessages(selectedConv);
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [isAuthenticated, selectedConv]);
+
+  useEffect(() => {
+    // Calculate unread total and play sound
     const total = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+    if (total > unreadTotal && unreadTotal > 0) {
+      playNotificationSound();
+    }
     setUnreadTotal(total);
-  }, [conversations]);
+  }, [conversations, playNotificationSound]);
 
   const loadConversations = async () => {
     try {
@@ -87,15 +138,15 @@ export default function MessengerWidget() {
     }
   };
 
-  const loadFriends = async () => {
+  const loadAllUsers = async () => {
     try {
-      const res = await fetch('/api/friends', { credentials: 'include' });
+      const res = await fetch('/api/users/search?q=', { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
-        setFriends(data.friends || []);
+        setAllUsers((data.users || []).filter((u: User) => u.user_id !== currentUserId));
       }
     } catch (error) {
-      console.error('Load friends error:', error);
+      console.error('Load users error:', error);
     }
   };
 
@@ -103,6 +154,7 @@ export default function MessengerWidget() {
     setSelectedConv(convId);
     loadMessages(convId);
     setShowNewConversation(false);
+    setShowEmojiPicker(false);
   };
 
   const startNewConversation = async (userId: string) => {
@@ -146,16 +198,51 @@ export default function MessengerWidget() {
         })
       });
       setNewMessage('');
+      setShowEmojiPicker(false);
       loadMessages(selectedConv);
     } catch (error) {
       console.error('Send message error:', error);
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const handleEmojiSelect = (emoji: any) => {
+    setNewMessage((prev) => prev + emoji.native);
+    textareaRef.current?.focus();
+  };
+
   const handleOpenNewConversation = () => {
     setShowNewConversation(true);
     setSelectedConv(null);
-    loadFriends();
+    setShowEmojiPicker(false);
+    loadAllUsers();
+  };
+
+  const filteredUsers = allUsers.filter(u =>
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const renderMessageContent = (msg: Message) => {
+    if (msg.message_type === 'image' && msg.media_url) {
+      return (
+        <div className="max-w-[180px]">
+          <img 
+            src={msg.media_url} 
+            alt="Shared image" 
+            className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90"
+            onClick={() => window.open(msg.media_url, '_blank')}
+          />
+        </div>
+      );
+    }
+    return <p className="text-sm whitespace-pre-wrap">{msg.content}</p>;
   };
 
   if (!isAuthenticated) return null;
@@ -180,7 +267,7 @@ export default function MessengerWidget() {
 
       {/* Widget */}
       {isOpen && (
-        <div className={`fixed bottom-6 right-6 bg-white rounded-xl shadow-2xl z-50 overflow-hidden transition-all ${isMinimized ? 'w-72 h-14' : 'w-96 h-[500px]'}`} data-testid="messenger-widget">
+        <div className={`fixed bottom-6 right-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl z-50 overflow-hidden transition-all ${isMinimized ? 'w-72 h-14' : 'w-96 h-[500px]'}`} data-testid="messenger-widget">
           {/* Header */}
           <div className="bg-blue-600 text-white p-3 flex items-center justify-between cursor-pointer" onClick={() => isMinimized && setIsMinimized(false)}>
             <div className="flex items-center gap-2">
@@ -193,6 +280,9 @@ export default function MessengerWidget() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <button onClick={(e) => { e.stopPropagation(); setSoundEnabled(!soundEnabled); }} className="hover:bg-blue-700 p-1 rounded" title={soundEnabled ? 'Sound On' : 'Sound Off'}>
+                {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              </button>
               <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} className="hover:bg-blue-700 p-1 rounded">
                 <ChevronDown className={`w-4 h-4 transition ${isMinimized ? 'rotate-180' : ''}`} />
               </button>
@@ -209,8 +299,8 @@ export default function MessengerWidget() {
                 // Chat View
                 <>
                   <button
-                    onClick={() => setSelectedConv(null)}
-                    className="p-2 text-sm text-blue-600 hover:bg-blue-50 text-left border-b"
+                    onClick={() => { setSelectedConv(null); setShowEmojiPicker(false); }}
+                    className="p-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 text-left border-b dark:border-gray-700"
                   >
                     ← Back to conversations
                   </button>
@@ -227,30 +317,58 @@ export default function MessengerWidget() {
                             {msg.name.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <div className={`max-w-[200px] ${msg.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-100'} rounded-xl px-3 py-2`}>
-                          <p className="text-sm">{msg.content}</p>
+                        <div className={`max-w-[200px] ${msg.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'} rounded-xl px-3 py-2`}>
+                          {renderMessageContent(msg)}
                         </div>
                       </div>
                     ))}
+                    <div ref={messagesEndRef} />
                   </div>
-                  <div className="border-t p-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                      placeholder="Type a message..."
-                      className="flex-1 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
-                      data-testid="widget-message-input"
-                    />
-                    <button
-                      onClick={sendMessage}
-                      disabled={!newMessage.trim()}
-                      className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                      data-testid="widget-send-button"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
+                  
+                  {/* Emoji Picker */}
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-16 left-2 z-50" data-testid="widget-emoji-picker">
+                      <Picker 
+                        data={data} 
+                        onEmojiSelect={handleEmojiSelect}
+                        theme="light"
+                        previewPosition="none"
+                        skinTonePosition="none"
+                        perLine={7}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="border-t dark:border-gray-700 p-2">
+                    <div className="flex gap-1 mb-2">
+                      <button
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                        title="Add Emoji"
+                      >
+                        <Smile className="w-4 h-4 text-gray-500" />
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <textarea
+                        ref={textareaRef}
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Type... (Shift+Enter for new line)"
+                        className="flex-1 px-3 py-2 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows={1}
+                        data-testid="widget-message-input"
+                      />
+                      <button
+                        onClick={sendMessage}
+                        disabled={!newMessage.trim()}
+                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        data-testid="widget-send-button"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : showNewConversation ? (
@@ -258,38 +376,44 @@ export default function MessengerWidget() {
                 <>
                   <button
                     onClick={() => setShowNewConversation(false)}
-                    className="p-2 text-sm text-blue-600 hover:bg-blue-50 text-left border-b"
+                    className="p-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 text-left border-b dark:border-gray-700"
                   >
                     ← Back to conversations
                   </button>
-                  <div className="p-3 border-b">
-                    <h3 className="font-semibold text-sm">Start a conversation</h3>
-                    <p className="text-xs text-gray-500">Select a friend to message</p>
+                  <div className="p-3 border-b dark:border-gray-700">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search users..."
+                      className="w-full px-3 py-2 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Message anyone on the platform</p>
                   </div>
                   <div className="flex-1 overflow-y-auto">
-                    {friends.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500 text-sm">
+                    {filteredUsers.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                         <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                        No friends yet. Add friends to start messaging!
+                        {allUsers.length === 0 ? 'Loading users...' : 'No users found'}
                       </div>
                     ) : (
-                      friends.map((friend) => (
+                      filteredUsers.map((user) => (
                         <button
-                          key={friend.user_id}
-                          onClick={() => startNewConversation(friend.user_id)}
-                          className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 text-left"
-                          data-testid={`friend-${friend.user_id}`}
+                          key={user.user_id}
+                          onClick={() => startNewConversation(user.user_id)}
+                          className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-left"
+                          data-testid={`widget-user-${user.user_id}`}
                         >
-                          {friend.picture ? (
-                            <Image src={friend.picture} alt={friend.name} width={36} height={36} className="rounded-full" />
+                          {user.picture ? (
+                            <Image src={user.picture} alt={user.name} width={36} height={36} className="rounded-full" />
                           ) : (
                             <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                              {friend.name.charAt(0).toUpperCase()}
+                              {user.name.charAt(0).toUpperCase()}
                             </div>
                           )}
                           <div>
-                            <p className="font-medium text-sm">{friend.name}</p>
-                            <p className="text-xs text-gray-500">{friend.email}</p>
+                            <p className="font-medium text-sm dark:text-white">{user.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
                           </div>
                         </button>
                       ))
@@ -309,7 +433,7 @@ export default function MessengerWidget() {
                   </button>
                   <div className="flex-1 overflow-y-auto">
                     {conversations.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500 text-sm">
+                      <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                         <MessageCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                         No conversations yet
                       </div>
@@ -318,8 +442,8 @@ export default function MessengerWidget() {
                         <button
                           key={conv.conversation_id}
                           onClick={() => selectConversation(conv.conversation_id)}
-                          className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 text-left border-b"
-                          data-testid={`conversation-${conv.conversation_id}`}
+                          className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-left border-b dark:border-gray-700"
+                          data-testid={`widget-conversation-${conv.conversation_id}`}
                         >
                           {conv.picture ? (
                             <Image src={conv.picture} alt={conv.name} width={36} height={36} className="rounded-full" />
@@ -330,14 +454,14 @@ export default function MessengerWidget() {
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <p className="font-medium text-sm truncate">{conv.name}</p>
+                              <p className="font-medium text-sm truncate dark:text-white">{conv.name}</p>
                               {conv.unread_count > 0 && (
                                 <span className="bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">
                                   {conv.unread_count}
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-gray-500 truncate">{conv.last_message || 'No messages'}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{conv.last_message || 'No messages'}</p>
                           </div>
                         </button>
                       ))
