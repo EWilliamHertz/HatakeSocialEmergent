@@ -48,7 +48,7 @@ export default function VideoCall({
   const hasCreatedOffer = useRef(false);
   const pendingCandidates = useRef<RTCIceCandidateInit[]>([]);
 
-  // ICE servers for STUN - using multiple reliable servers
+  // ICE servers with STUN and free TURN for better NAT traversal
   const iceServers: RTCConfiguration = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
@@ -56,8 +56,26 @@ export default function VideoCall({
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
+      { urls: 'stun:stun.stunprotocol.org:3478' },
+      // Free TURN servers from OpenRelay for NAT traversal
+      {
+        urls: 'turn:a.relay.metered.ca:80',
+        username: 'e8f8ca00c84f5e6bc43e5c07',
+        credential: 'MwJfqJMqZZzMRlbX',
+      },
+      {
+        urls: 'turn:a.relay.metered.ca:443',
+        username: 'e8f8ca00c84f5e6bc43e5c07',
+        credential: 'MwJfqJMqZZzMRlbX',
+      },
+      {
+        urls: 'turn:a.relay.metered.ca:443?transport=tcp',
+        username: 'e8f8ca00c84f5e6bc43e5c07',
+        credential: 'MwJfqJMqZZzMRlbX',
+      },
     ],
     iceCandidatePoolSize: 10,
+    iceTransportPolicy: 'all',
   };
 
   const formatDuration = (seconds: number) => {
