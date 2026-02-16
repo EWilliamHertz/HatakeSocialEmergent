@@ -64,12 +64,14 @@ export default function CollectionPage() {
   const [addCardGame, setAddCardGame] = useState<'mtg' | 'pokemon'>('mtg');
   const [addCardSetCode, setAddCardSetCode] = useState('');
   const [addCardCollectorNum, setAddCardCollectorNum] = useState('');
+  const [addCardName, setAddCardName] = useState('');
   const [addCardSearchResults, setAddCardSearchResults] = useState<any[]>([]);
   const [addCardSearching, setAddCardSearching] = useState(false);
   const [addCardQuantity, setAddCardQuantity] = useState(1);
   const [addCardCondition, setAddCardCondition] = useState('Near Mint');
   const [addCardFoil, setAddCardFoil] = useState(false);
   const [addingCard, setAddingCard] = useState(false);
+  const [addCardSearchMode, setAddCardSearchMode] = useState<'name' | 'set'>('name');
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
