@@ -97,6 +97,7 @@ export default function MessagesPage() {
       .then((data) => {
         if (data?.user) {
           setCurrentUserId(data.user.user_id);
+          setCurrentUserName(data.user.name || 'User');
           loadConversations();
         }
       })
