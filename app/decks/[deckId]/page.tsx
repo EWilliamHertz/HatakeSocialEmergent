@@ -220,6 +220,93 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
     }
   };
 
+  // Import decklist from text
+  const importDecklist = async () => {
+    if (!isOwner || !importText.trim() || !deck) return;
+    setImporting(true);
+    
+    try {
+      // Parse decklist format: "4 Lightning Bolt" or "4x Lightning Bolt"
+      const lines = importText.split('\n').filter(line => line.trim());
+      const cardsToAdd: { name: string; quantity: number }[] = [];
+      
+      for (const line of lines) {
+        const match = line.trim().match(/^(\d+)x?\s+(.+)$/i);
+        if (match) {
+          const quantity = parseInt(match[1]);
+          const name = match[2].trim();
+          if (quantity > 0 && name) {
+            cardsToAdd.push({ name, quantity });
+          }
+        } else if (line.trim() && !line.startsWith('//') && !line.startsWith('#')) {
+          // Single card without quantity
+          cardsToAdd.push({ name: line.trim(), quantity: 1 });
+        }
+      }
+      
+      // Search for each card and add it
+      let addedCount = 0;
+      let failedCards: string[] = [];
+      
+      for (const card of cardsToAdd) {
+        try {
+          // Search for the card
+          const searchRes = await fetch(`/api/search?game=${deck.game}&q=${encodeURIComponent(card.name)}`, {
+            credentials: 'include'
+          });
+          const searchData = await searchRes.json();
+          
+          if (searchData.success && searchData.results?.length > 0) {
+            // Find exact match or first result
+            const exactMatch = searchData.results.find((r: any) => 
+              r.name.toLowerCase() === card.name.toLowerCase()
+            ) || searchData.results[0];
+            
+            // Add to deck
+            const addRes = await fetch(`/api/decks/${resolvedParams.deckId}/cards`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                cardId: exactMatch.id,
+                cardData: exactMatch,
+                quantity: card.quantity,
+                category: 'main'
+              })
+            });
+            
+            if ((await addRes.json()).success) {
+              addedCount++;
+            } else {
+              failedCards.push(card.name);
+            }
+          } else {
+            failedCards.push(card.name);
+          }
+        } catch (e) {
+          failedCards.push(card.name);
+        }
+      }
+      
+      // Reload deck
+      await loadDeck();
+      setShowImportModal(false);
+      setImportText('');
+      
+      // Show results
+      if (failedCards.length > 0) {
+        alert(`Imported ${addedCount} cards.\nCouldn't find: ${failedCards.slice(0, 5).join(', ')}${failedCards.length > 5 ? ` and ${failedCards.length - 5} more` : ''}`);
+      } else {
+        alert(`Successfully imported ${addedCount} cards!`);
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Failed to import decklist');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   // Calculate deck stats
   const totalCards = cards.reduce((sum, c) => sum + c.quantity, 0);
   const uniqueCards = cards.length;
