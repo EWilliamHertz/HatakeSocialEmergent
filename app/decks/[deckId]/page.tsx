@@ -596,6 +596,70 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
           </div>
         </div>
       )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Import Decklist</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Paste your decklist in any common format
+              </p>
+            </div>
+            
+            <div className="p-6">
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder="4 Lightning Bolt
+4x Counterspell
+2 Island
+// Sideboard
+3x Negate
+
+Supports formats:
+- 4 Card Name
+- 4x Card Name
+- Card Name (adds 1)"
+                className="w-full h-64 px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-none font-mono text-sm"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Lines starting with // or # are ignored. Each card will be searched and added if found.
+              </p>
+            </div>
+            
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportText('');
+                }}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={importDecklist}
+                disabled={importing || !importText.trim()}
+                className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50"
+              >
+                {importing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    Import Decklist
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
