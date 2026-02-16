@@ -31,6 +31,8 @@ export default function CollectionPage() {
   const [showListModal, setShowListModal] = useState(false);
   const [listPrice, setListPrice] = useState('');
   const [listCondition, setListCondition] = useState('Near Mint');
+  const [listPriceMode, setListPriceMode] = useState<'fixed' | 'percent'>('percent');
+  const [listPercent, setListPercent] = useState('90');
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
