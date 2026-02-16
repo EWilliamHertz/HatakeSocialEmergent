@@ -811,14 +811,14 @@ export default function CollectionPage() {
                 <div className="p-3">
                   <h3 className="font-semibold text-sm mb-1 truncate" title={item.card_data.name}>{item.card_data.name}</h3>
                   <div className="flex items-center gap-1 mb-1">
-                    {(item.card_data.set || item.card_data.set_name) && (
+                    {(item.card_data.set?.id || item.card_data.set_code || item.card_data.set_name) && (
                       <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono uppercase text-gray-600">
-                        {item.card_data.set || item.card_data.set_name?.slice(0, 3)}
+                        {item.card_data.set?.id || item.card_data.set_code || (item.card_data.set_name ? item.card_data.set_name.slice(0, 3) : '')}
                       </span>
                     )}
-                    {(item.card_data.collector_number || item.card_data.number) && (
+                    {(item.card_data.collector_number || item.card_data.number || item.card_data.localId) && (
                       <span className="text-xs text-gray-500 font-mono">
-                        #{item.card_data.collector_number || item.card_data.number}
+                        #{item.card_data.collector_number || item.card_data.number || item.card_data.localId}
                       </span>
                     )}
                     {item.foil && (
