@@ -106,14 +106,21 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    // For offers and answers, delete any existing ones first to avoid duplicates
+    if (['offer', 'answer'].includes(type)) {
+      await sql`
+        DELETE FROM call_signals 
+        WHERE from_user_id = ${userId} 
+        AND target_user_id = ${target} 
+        AND signal_type = ${type}
+      `;
+    }
+
     // Store signal in database
     await sql`
-      INSERT INTO call_signals (from_user_id, target_user_id, signal_type, signal_data)
-      VALUES (${userId}, ${target}, ${type}, ${JSON.stringify(enrichedData)})
+      INSERT INTO call_signals (from_user_id, target_user_id, signal_type, signal_data, processed)
+      VALUES (${userId}, ${target}, ${type}, ${JSON.stringify(enrichedData)}, false)
     `;
-
-    // Clean up old signals (older than 1 minute)
-    await sql`DELETE FROM call_signals WHERE created_at < NOW() - INTERVAL '60 seconds'`;
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
