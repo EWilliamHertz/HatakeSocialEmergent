@@ -235,6 +235,15 @@ export default function MessengerWidget() {
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const startCall = (type: 'audio' | 'video') => {
+    setCallType(type);
+    setShowVideoCall(true);
+  };
+
+  const getSelectedConversation = () => {
+    return conversations.find(c => c.conversation_id === selectedConv);
+  };
+
   const renderMessageContent = (msg: Message) => {
     if (msg.message_type === 'image' && msg.media_url) {
       return (
