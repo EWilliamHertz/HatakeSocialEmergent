@@ -403,7 +403,10 @@ export default function NewTradePage() {
           {/* Left: Your Offer */}
           <div className="space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-              <h3 className="font-bold text-gray-900 dark:text-white mb-3">You Offer ({offeredCards.length} cards)</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900 dark:text-white">You Offer ({offeredCards.length} cards)</h3>
+                <span className="text-lg font-bold text-green-600">${offeredValue.toFixed(2)}</span>
+              </div>
               {offeredCards.length === 0 ? (
                 <p className="text-gray-500 text-sm text-center py-3">Select cards from your collection below</p>
               ) : (
