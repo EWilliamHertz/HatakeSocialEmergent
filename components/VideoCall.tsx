@@ -312,8 +312,17 @@ export default function VideoCall({
               await handleIceCandidate(signal.data);
               break;
             case 'call_accepted':
+              // Receiver accepted the call - caller should re-send offer
               setCallStatus('connected');
-              setDebugInfo('Call accepted');
+              setDebugInfo('Call accepted, sending offer...');
+              // Re-send the offer since the receiver just accepted
+              if (!isReceiver && peerConnectionRef.current) {
+                const pc = peerConnectionRef.current;
+                if (pc.localDescription) {
+                  await sendSignal('offer', pc.localDescription);
+                  setDebugInfo('Offer re-sent to receiver');
+                }
+              }
               break;
             case 'call_rejected':
               setError('Call was declined');
