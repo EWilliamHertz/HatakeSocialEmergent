@@ -313,12 +313,32 @@ export default function MessengerWidget() {
               {selectedConv ? (
                 // Chat View
                 <>
-                  <button
-                    onClick={() => { setSelectedConv(null); setShowEmojiPicker(false); }}
-                    className="p-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 text-left border-b dark:border-gray-700"
-                  >
-                    ← Back to conversations
-                  </button>
+                  <div className="flex items-center justify-between p-2 border-b dark:border-gray-700">
+                    <button
+                      onClick={() => { setSelectedConv(null); setShowEmojiPicker(false); }}
+                      className="text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 px-2 py-1 rounded"
+                    >
+                      ← Back
+                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => startCall('audio')}
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                        title="Voice Call"
+                        data-testid="widget-voice-call-btn"
+                      >
+                        <Phone className="w-4 h-4 text-green-600" />
+                      </button>
+                      <button
+                        onClick={() => startCall('video')}
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                        title="Video Call"
+                        data-testid="widget-video-call-btn"
+                      >
+                        <Video className="w-4 h-4 text-blue-600" />
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex-1 overflow-y-auto p-3 space-y-3">
                     {messages.map((msg) => (
                       <div
