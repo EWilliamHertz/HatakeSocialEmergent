@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Search, Plus, Minus, Trash2, Save, ArrowLeft, Layers, Globe, Lock, Loader2, Settings, Share2, Upload, FileText } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, Save, ArrowLeft, Layers, Globe, Lock, Loader2, Settings, Share2, Upload, FileText, CheckSquare } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
