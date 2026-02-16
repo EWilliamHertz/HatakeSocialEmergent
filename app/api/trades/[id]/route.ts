@@ -77,7 +77,7 @@ export async function PATCH(
     const trades = await sql`
       SELECT * FROM trades 
       WHERE trade_id = ${id}
-        AND (initiator_id = ${user.user_id} OR recipient_id = ${user.user_id})
+        AND (initiator_id = ${user.user_id} OR receiver_id = ${user.user_id})
     `;
 
     if (trades.length === 0) {
@@ -86,13 +86,13 @@ export async function PATCH(
 
     const trade = trades[0];
 
-    if (action === 'accept' && trade.recipient_id === user.user_id) {
+    if (action === 'accept' && trade.receiver_id === user.user_id) {
       await sql`
         UPDATE trades
         SET status = 'accepted', updated_at = NOW()
         WHERE trade_id = ${id}
       `;
-    } else if (action === 'reject' && trade.recipient_id === user.user_id) {
+    } else if (action === 'reject' && trade.receiver_id === user.user_id) {
       await sql`
         UPDATE trades
         SET status = 'rejected', updated_at = NOW()
