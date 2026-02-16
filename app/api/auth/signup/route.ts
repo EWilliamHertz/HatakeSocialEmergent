@@ -58,12 +58,12 @@ export async function POST(request: NextRequest) {
 
     // Set session cookie - secure:true for HTTPS (production/preview)
     const isSecure = process.env.NODE_ENV === 'production' || 
-                     process.env.VERCEL ||
+                     Boolean(process.env.VERCEL) ||
                      request.headers.get('x-forwarded-proto') === 'https';
     
     response.cookies.set('session_token', sessionToken, {
       httpOnly: true,
-      secure: isSecure,
+      secure: Boolean(isSecure),
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
