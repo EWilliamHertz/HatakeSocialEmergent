@@ -33,6 +33,7 @@ export default function VideoCall({
   const [callDuration, setCallDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [callStatus, setCallStatus] = useState<'calling' | 'ringing' | 'connected' | 'ended'>('calling');
+  const [debugInfo, setDebugInfo] = useState<string>('Initializing...');
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -43,17 +44,20 @@ export default function VideoCall({
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hasCreatedOffer = useRef(false);
+  const pendingCandidates = useRef<RTCIceCandidateInit[]>([]);
 
-  // ICE servers for STUN
-  const iceServers = {
+  // ICE servers for STUN - using multiple reliable servers
+  const iceServers: RTCConfiguration = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' },
     ],
+    iceCandidatePoolSize: 10,
   };
 
-  // Format call duration
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -61,9 +65,11 @@ export default function VideoCall({
   };
 
   // Send signal via REST API
-  const sendSignal = useCallback(async (type: string, data?: any) => {
+  const sendSignal = async (type: string, data?: any) => {
     try {
-      await fetch('/api/calls', {
+      console.log('Sending signal:', type, 'to:', remoteUserId);
+      setDebugInfo(`Sending ${type}...`);
+      const res = await fetch('/api/calls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -73,79 +79,121 @@ export default function VideoCall({
           data
         })
       });
+      const result = await res.json();
+      console.log('Signal sent:', type, result);
+      return result.success;
     } catch (err) {
       console.error('Send signal error:', err);
+      return false;
     }
-  }, [remoteUserId]);
+  };
 
-  // Poll for incoming signals
-  const pollSignals = useCallback(async () => {
+  // Handle incoming offer
+  const handleOffer = async (offer: RTCSessionDescriptionInit, fromUserId: string) => {
+    console.log('Handling offer from:', fromUserId);
+    setDebugInfo('Received offer, creating answer...');
+    
     try {
-      const res = await fetch('/api/calls', {
-        credentials: 'include'
-      });
-      const data = await res.json();
+      const pc = peerConnectionRef.current;
+      if (!pc) {
+        console.error('No peer connection');
+        return;
+      }
+
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
       
-      if (data.success && data.signals && data.signals.length > 0) {
-        for (const signal of data.signals) {
-          await handleSignal(signal);
+      // Add any pending ICE candidates
+      for (const candidate of pendingCandidates.current) {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+      pendingCandidates.current = [];
+      
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      
+      await sendSignal('answer', answer);
+      setDebugInfo('Answer sent, waiting for connection...');
+    } catch (err) {
+      console.error('Handle offer error:', err);
+      setError('Failed to handle offer');
+    }
+  };
+
+  // Handle incoming answer
+  const handleAnswer = async (answer: RTCSessionDescriptionInit) => {
+    console.log('Handling answer');
+    setDebugInfo('Received answer, establishing connection...');
+    
+    try {
+      const pc = peerConnectionRef.current;
+      if (!pc) {
+        console.error('No peer connection');
+        return;
+      }
+
+      if (pc.signalingState === 'have-local-offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        
+        // Add any pending ICE candidates
+        for (const candidate of pendingCandidates.current) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
         }
+        pendingCandidates.current = [];
       }
     } catch (err) {
-      console.error('Poll signals error:', err);
+      console.error('Handle answer error:', err);
+      setError('Failed to handle answer');
     }
-  }, []);
+  };
 
-  // Handle incoming signal
-  const handleSignal = async (signal: { type: string; from: string; data?: any }) => {
-    console.log('Received signal:', signal.type, 'from:', signal.from);
+  // Handle incoming ICE candidate
+  const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
+    console.log('Handling ICE candidate');
     
-    switch (signal.type) {
-      case 'offer':
-        await handleOffer(signal.data, signal.from);
-        break;
-      
-      case 'answer':
-        await handleAnswer(signal.data);
-        break;
-      
-      case 'ice_candidate':
-        await handleIceCandidate(signal.data);
-        break;
-      
-      case 'call_accepted':
-        setCallStatus('connected');
-        setIsConnecting(false);
-        setIsConnected(true);
-        break;
-      
-      case 'call_rejected':
-        setError('Call was declined');
-        setCallStatus('ended');
-        break;
-      
-      case 'call_ended':
-        handleEndCall(false);
-        break;
+    try {
+      const pc = peerConnectionRef.current;
+      if (!pc) {
+        console.error('No peer connection');
+        return;
+      }
+
+      if (pc.remoteDescription) {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } else {
+        // Queue the candidate if we don't have remote description yet
+        pendingCandidates.current.push(candidate);
+      }
+    } catch (err) {
+      console.error('Handle ICE candidate error:', err);
     }
   };
 
   // Create peer connection
-  const createPeerConnection = useCallback(() => {
+  const createPeerConnection = () => {
     if (peerConnectionRef.current) {
       return peerConnectionRef.current;
     }
     
+    console.log('Creating peer connection');
+    setDebugInfo('Creating peer connection...');
+    
     const pc = new RTCPeerConnection(iceServers);
     
-    pc.onicecandidate = async (event) => {
+    pc.onicecandidate = (event) => {
       if (event.candidate) {
-        await sendSignal('ice_candidate', event.candidate);
+        console.log('ICE candidate generated');
+        sendSignal('ice_candidate', event.candidate.toJSON());
       }
     };
     
+    pc.oniceconnectionstatechange = () => {
+      console.log('ICE connection state:', pc.iceConnectionState);
+      setDebugInfo(`ICE: ${pc.iceConnectionState}`);
+    };
+    
     pc.ontrack = (event) => {
-      console.log('Received remote track');
+      console.log('Received remote track:', event.track.kind);
+      setDebugInfo(`Received ${event.track.kind} track`);
       if (remoteVideoRef.current && event.streams[0]) {
         remoteVideoRef.current.srcObject = event.streams[0];
       }
@@ -153,28 +201,33 @@ export default function VideoCall({
     
     pc.onconnectionstatechange = () => {
       console.log('Connection state:', pc.connectionState);
+      setDebugInfo(`Connection: ${pc.connectionState}`);
+      
       if (pc.connectionState === 'connected') {
         setIsConnected(true);
         setIsConnecting(false);
         setCallStatus('connected');
-        // Start call timer
+        setDebugInfo('Connected!');
         if (!callTimerRef.current) {
           callTimerRef.current = setInterval(() => {
             setCallDuration((prev) => prev + 1);
           }, 1000);
         }
       } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-        handleEndCall(false);
+        setDebugInfo(`Call ${pc.connectionState}`);
+        cleanup(false);
       }
     };
     
     peerConnectionRef.current = pc;
     return pc;
-  }, [sendSignal]);
+  };
 
-  // Initialize local media
-  const initializeMedia = useCallback(async () => {
+  // Initialize local media and create offer
+  const initializeCall = async () => {
     try {
+      setDebugInfo('Requesting media access...');
+      
       const constraints = {
         audio: true,
         video: callType === 'video' ? { width: 1280, height: 720 } : false,
@@ -187,175 +240,170 @@ export default function VideoCall({
         localVideoRef.current.srcObject = stream;
       }
 
+      setDebugInfo('Media acquired, setting up connection...');
+
       // Create peer connection and add tracks
       const pc = createPeerConnection();
       stream.getTracks().forEach((track) => {
+        console.log('Adding track:', track.kind);
         pc.addTrack(track, stream);
       });
 
+      // Create and send offer
+      if (!hasCreatedOffer.current) {
+        hasCreatedOffer.current = true;
+        setDebugInfo('Creating offer...');
+        
+        // Send call notification
+        await sendSignal('incoming_call', {
+          call_type: callType,
+          caller_name: currentUserName
+        });
+        
+        const offer = await pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: callType === 'video',
+        });
+        await pc.setLocalDescription(offer);
+        
+        await sendSignal('offer', offer);
+        setDebugInfo('Offer sent, waiting for answer...');
+      }
+
       return stream;
     } catch (err: any) {
-      console.error('Media initialization error:', err);
+      console.error('Initialize call error:', err);
       setError(err.message || 'Failed to access camera/microphone');
       setIsConnecting(false);
+      setDebugInfo(`Error: ${err.message}`);
       return null;
     }
-  }, [callType, createPeerConnection]);
+  };
 
-  // Create and send offer
-  const createOffer = async () => {
-    if (!peerConnectionRef.current || hasCreatedOffer.current) return;
-    hasCreatedOffer.current = true;
-    
+  // Poll for incoming signals
+  const pollSignals = async () => {
     try {
-      // Send call notification first
-      await sendSignal('incoming_call', {
-        call_type: callType,
-        caller_name: currentUserName
+      const res = await fetch('/api/calls', {
+        credentials: 'include'
       });
+      const data = await res.json();
       
-      const offer = await peerConnectionRef.current.createOffer();
-      await peerConnectionRef.current.setLocalDescription(offer);
-      
-      await sendSignal('offer', offer);
+      if (data.success && data.signals && data.signals.length > 0) {
+        console.log('Received signals:', data.signals.length);
+        for (const signal of data.signals) {
+          console.log('Processing signal:', signal.type);
+          
+          switch (signal.type) {
+            case 'offer':
+              await handleOffer(signal.data, signal.from);
+              break;
+            case 'answer':
+              await handleAnswer(signal.data);
+              break;
+            case 'ice_candidate':
+              await handleIceCandidate(signal.data);
+              break;
+            case 'call_accepted':
+              setCallStatus('connected');
+              setDebugInfo('Call accepted');
+              break;
+            case 'call_rejected':
+              setError('Call was declined');
+              setCallStatus('ended');
+              break;
+            case 'call_ended':
+              cleanup(false);
+              break;
+          }
+        }
+      }
     } catch (err) {
-      console.error('Create offer error:', err);
-      hasCreatedOffer.current = false;
-    }
-  };
-
-  // Handle incoming offer
-  const handleOffer = async (offer: RTCSessionDescriptionInit, fromUserId: string) => {
-    if (!peerConnectionRef.current) {
-      createPeerConnection();
-    }
-    
-    try {
-      await peerConnectionRef.current!.setRemoteDescription(new RTCSessionDescription(offer));
-      const answer = await peerConnectionRef.current!.createAnswer();
-      await peerConnectionRef.current!.setLocalDescription(answer);
-      
-      await sendSignal('answer', answer);
-      await sendSignal('call_accepted', {});
-    } catch (err) {
-      console.error('Handle offer error:', err);
-    }
-  };
-
-  // Handle incoming answer
-  const handleAnswer = async (answer: RTCSessionDescriptionInit) => {
-    if (!peerConnectionRef.current) return;
-    
-    try {
-      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
-    } catch (err) {
-      console.error('Handle answer error:', err);
-    }
-  };
-
-  // Handle incoming ICE candidate
-  const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
-    if (!peerConnectionRef.current) return;
-    
-    try {
-      await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
-    } catch (err) {
-      console.error('Handle ICE candidate error:', err);
+      console.error('Poll signals error:', err);
     }
   };
 
   // Toggle mute
-  const toggleMute = useCallback(() => {
+  const toggleMute = () => {
     if (localStreamRef.current) {
       localStreamRef.current.getAudioTracks().forEach((track) => {
         track.enabled = !track.enabled;
       });
       setIsMuted((prev) => !prev);
     }
-  }, []);
+  };
 
   // Toggle video
-  const toggleVideo = useCallback(() => {
+  const toggleVideo = () => {
     if (localStreamRef.current) {
       localStreamRef.current.getVideoTracks().forEach((track) => {
         track.enabled = !track.enabled;
       });
       setIsVideoOff((prev) => !prev);
     }
-  }, []);
+  };
 
-  // Start screen sharing
-  const startScreenShare = useCallback(async () => {
-    try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: 'always' } as MediaTrackConstraints,
-        audio: true,
-      });
+  // Screen sharing
+  const toggleScreenShare = async () => {
+    if (isScreenSharing) {
+      // Stop screen sharing
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((track) => track.stop());
+        screenStreamRef.current = null;
+      }
 
-      screenStreamRef.current = screenStream;
-
-      // Replace video track in peer connection
-      if (peerConnectionRef.current && localStreamRef.current) {
-        const videoTrack = screenStream.getVideoTracks()[0];
+      if (localStreamRef.current && peerConnectionRef.current) {
+        const videoTrack = localStreamRef.current.getVideoTracks()[0];
         const sender = peerConnectionRef.current
           .getSenders()
           .find((s) => s.track?.kind === 'video');
 
-        if (sender) {
+        if (sender && videoTrack) {
           sender.replaceTrack(videoTrack);
         }
 
         if (localVideoRef.current) {
-          localVideoRef.current.srcObject = screenStream;
+          localVideoRef.current.srcObject = localStreamRef.current;
         }
       }
-
-      screenStream.getVideoTracks()[0].onended = () => {
-        stopScreenShare();
-      };
-
-      setIsScreenSharing(true);
-    } catch (err) {
-      console.error('Screen share error:', err);
-    }
-  }, []);
-
-  // Stop screen sharing
-  const stopScreenShare = useCallback(() => {
-    if (screenStreamRef.current) {
-      screenStreamRef.current.getTracks().forEach((track) => track.stop());
-      screenStreamRef.current = null;
-    }
-
-    if (localStreamRef.current && peerConnectionRef.current) {
-      const videoTrack = localStreamRef.current.getVideoTracks()[0];
-      const sender = peerConnectionRef.current
-        .getSenders()
-        .find((s) => s.track?.kind === 'video');
-
-      if (sender && videoTrack) {
-        sender.replaceTrack(videoTrack);
-      }
-
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = localStreamRef.current;
-      }
-    }
-
-    setIsScreenSharing(false);
-  }, []);
-
-  // Toggle screen share
-  const toggleScreenShare = useCallback(() => {
-    if (isScreenSharing) {
-      stopScreenShare();
+      setIsScreenSharing(false);
     } else {
-      startScreenShare();
+      // Start screen sharing
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { cursor: 'always' } as MediaTrackConstraints,
+          audio: true,
+        });
+
+        screenStreamRef.current = screenStream;
+
+        if (peerConnectionRef.current) {
+          const videoTrack = screenStream.getVideoTracks()[0];
+          const sender = peerConnectionRef.current
+            .getSenders()
+            .find((s) => s.track?.kind === 'video');
+
+          if (sender) {
+            sender.replaceTrack(videoTrack);
+          }
+
+          if (localVideoRef.current) {
+            localVideoRef.current.srcObject = screenStream;
+          }
+        }
+
+        screenStream.getVideoTracks()[0].onended = () => {
+          toggleScreenShare();
+        };
+
+        setIsScreenSharing(true);
+      } catch (err) {
+        console.error('Screen share error:', err);
+      }
     }
-  }, [isScreenSharing, startScreenShare, stopScreenShare]);
+  };
 
   // Toggle fullscreen
-  const toggleFullscreen = useCallback(() => {
+  const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen();
       setIsFullscreen(true);
@@ -363,23 +411,22 @@ export default function VideoCall({
       document.exitFullscreen();
       setIsFullscreen(false);
     }
-  }, []);
+  };
 
-  // End call
-  const handleEndCall = useCallback((notifyRemote: boolean = true) => {
-    // Stop call timer
+  // Cleanup function
+  const cleanup = (notifyRemote: boolean = true) => {
+    console.log('Cleaning up call');
+    
     if (callTimerRef.current) {
       clearInterval(callTimerRef.current);
       callTimerRef.current = null;
     }
     
-    // Stop polling
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
 
-    // Notify remote user via REST
     if (notifyRemote) {
       fetch(`/api/calls?target=${remoteUserId}`, {
         method: 'DELETE',
@@ -387,7 +434,6 @@ export default function VideoCall({
       }).catch(() => {});
     }
 
-    // Stop all streams
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
@@ -398,36 +444,28 @@ export default function VideoCall({
       screenStreamRef.current = null;
     }
 
-    // Close peer connection
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
 
-    // Exit fullscreen if active
     if (document.fullscreenElement) {
       document.exitFullscreen();
     }
 
     setCallStatus('ended');
     hasCreatedOffer.current = false;
+    pendingCandidates.current = [];
     onClose();
-  }, [onClose, remoteUserId]);
+  };
 
   // Initialize on mount
   useEffect(() => {
     if (isOpen) {
-      initializeMedia().then((stream) => {
-        if (stream) {
-          // Start polling for signals
-          pollingIntervalRef.current = setInterval(pollSignals, 1000);
-          
-          // Create offer after short delay
-          setTimeout(() => {
-            createOffer();
-          }, 500);
-        }
-      });
+      initializeCall();
+      
+      // Start polling for signals (faster polling for better responsiveness)
+      pollingIntervalRef.current = setInterval(pollSignals, 500);
     }
 
     return () => {
@@ -481,6 +519,8 @@ export default function VideoCall({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Debug info */}
+          <span className="text-white/50 text-xs mr-2">{debugInfo}</span>
           <button
             onClick={toggleFullscreen}
             className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
@@ -493,7 +533,7 @@ export default function VideoCall({
             )}
           </button>
           <button
-            onClick={() => handleEndCall(true)}
+            onClick={() => cleanup(true)}
             className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
             title="Close"
           >
@@ -542,7 +582,10 @@ export default function VideoCall({
                 <p className="text-white text-lg">
                   {callStatus === 'calling' ? `Calling ${remoteUserName}...` : 'Connecting...'}
                 </p>
-                <p className="text-white/60 text-sm mt-2">Using REST-based signaling</p>
+                <p className="text-white/60 text-sm mt-2">{debugInfo}</p>
+                <p className="text-white/40 text-xs mt-4">
+                  Note: Both users must be in a call for connection to establish
+                </p>
               </div>
             </div>
           )}
@@ -557,7 +600,7 @@ export default function VideoCall({
                 <p className="text-white text-lg mb-2">Connection Error</p>
                 <p className="text-white/60 mb-4">{error}</p>
                 <button
-                  onClick={() => handleEndCall(true)}
+                  onClick={() => cleanup(true)}
                   className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   Close
@@ -597,7 +640,6 @@ export default function VideoCall({
       {/* Controls */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
         <div className="flex items-center justify-center gap-4">
-          {/* Mute Button */}
           <button
             onClick={toggleMute}
             className={`p-4 rounded-full transition ${
@@ -613,7 +655,6 @@ export default function VideoCall({
             )}
           </button>
 
-          {/* Video Toggle */}
           {callType === 'video' && (
             <button
               onClick={toggleVideo}
@@ -631,7 +672,6 @@ export default function VideoCall({
             </button>
           )}
 
-          {/* Screen Share Button */}
           <button
             onClick={toggleScreenShare}
             className={`p-4 rounded-full transition ${
@@ -647,9 +687,8 @@ export default function VideoCall({
             )}
           </button>
 
-          {/* End Call Button */}
           <button
-            onClick={() => handleEndCall(true)}
+            onClick={() => cleanup(true)}
             className="p-4 bg-red-600 hover:bg-red-700 rounded-full transition"
             title="End call"
             data-testid="end-call-button"
