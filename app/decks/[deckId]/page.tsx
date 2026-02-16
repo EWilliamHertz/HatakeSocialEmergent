@@ -264,9 +264,9 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{deck.name}</h1>
                   {deck.is_public ? (
-                    <Globe className="w-5 h-5 text-green-500" title="Public" />
+                    <span title="Public"><Globe className="w-5 h-5 text-green-500" /></span>
                   ) : (
-                    <Lock className="w-5 h-5 text-gray-400" title="Private" />
+                    <span title="Private"><Lock className="w-5 h-5 text-gray-400" /></span>
                   )}
                 </div>
                 <p className="text-gray-500 dark:text-gray-400">
