@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
       let imported = 0;
       let errors: string[] = [];
 
-      console.log('[CSV Import] Starting import of', cards.length, 'cards, format:', format);
+      console.log('[CSV Import] Starting import of', cards.length, 'cards, format:', actualFormat, 'game:', targetGame);
 
       for (let idx = 0; idx < cards.length; idx++) {
         const card = cards[idx];
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
           let purchasePrice: number;
           let currency: string;
           
-          if (format === 'pokemon') {
+          if (actualFormat === 'pokemon') {
             // Pokemon export format
             game = 'pokemon';
             name = card['Name'] || '';
