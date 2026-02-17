@@ -110,7 +110,7 @@ export async function PATCH(
   }
 }
 
-// DELETE - Delete deck
+// DELETE - Delete deck (owners or admins)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ deckId: string }> }
@@ -127,6 +127,12 @@ export async function DELETE(
     }
 
     const { deckId } = await params;
+    const { searchParams } = new URL(request.url);
+    const isAdminRequest = searchParams.get('admin') === 'true';
+
+    // Check if user is admin
+    const ADMIN_EMAILS = ['zudran@gmail.com', 'ernst@hatake.eu'];
+    const userIsAdmin = ADMIN_EMAILS.includes(user.email) || user.is_admin;
 
     // Check ownership
     const decks = await sql`
@@ -137,7 +143,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
     }
 
-    if (decks[0].user_id !== user.user_id) {
+    // Allow deletion if user owns the deck OR is an admin
+    if (decks[0].user_id !== user.user_id && !(isAdminRequest && userIsAdmin)) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
