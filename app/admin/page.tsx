@@ -179,6 +179,51 @@ export default function AdminPage() {
     }
   };
 
+  const toggleAdmin = async (userId: string, userName: string, currentIsAdmin: boolean) => {
+    const action = currentIsAdmin ? 'remove admin privileges from' : 'make admin';
+    if (!confirm(`Are you sure you want to ${action} "${userName}"?`)) return;
+    
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ user_id: userId, is_admin: !currentIsAdmin })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        loadUsers();
+        alert(`${userName} ${currentIsAdmin ? 'is no longer an admin' : 'is now an admin'}`);
+      } else {
+        alert(data.error || 'Failed to update admin status');
+      }
+    } catch (error) {
+      console.error('Toggle admin error:', error);
+    }
+  };
+
+  const deletePost = async (postId: string) => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    
+    try {
+      const res = await fetch(`/api/admin/posts?post_id=${postId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        loadStats();
+        alert('Post deleted successfully');
+      } else {
+        alert(data.error || 'Failed to delete post');
+      }
+    } catch (error) {
+      console.error('Delete post error:', error);
+    }
+  };
+
   const openNewProduct = () => {
     setEditingProduct({
       product_id: `prod_${Date.now()}`,
