@@ -227,7 +227,7 @@ export default function CollectionPage() {
       
       // Calculate prices based on mode
       const listings = selectedCards.map(item => {
-        const marketPrice = getCardPrice(item);
+        const marketPrice = getCardPrice(item).value;
         let price: number;
         
         if (listPriceMode === 'percent') {
