@@ -78,6 +78,15 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
   const [inviteSearchResults, setInviteSearchResults] = useState<any[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [inviting, setInviting] = useState(false);
+  
+  // Settings/Admin state
+  const [showSettings, setShowSettings] = useState(false);
+  const [editGroupName, setEditGroupName] = useState('');
+  const [editGroupDesc, setEditGroupDesc] = useState('');
+  const [editGroupPrivacy, setEditGroupPrivacy] = useState<'public' | 'private'>('public');
+  const [editGroupBanner, setEditGroupBanner] = useState('');
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
