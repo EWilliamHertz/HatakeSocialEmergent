@@ -1476,55 +1476,79 @@ export default function CollectionPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {addCardSearchResults.map((card) => (
-                    <div key={card.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition">
-                      <div className="aspect-[488/680] relative mb-2">
-                        <img
-                          src={card.image_uris?.small || card.image_uris?.normal || card.images?.small || card.images?.large || '/placeholder-card.png'}
-                          alt={card.name}
-                          className="w-full h-full object-contain rounded"
-                        />
-                      </div>
-                      <h4 className="font-medium text-sm truncate dark:text-white" title={card.name}>{card.name}</h4>
-                      <div className="flex items-center gap-1 mb-2">
-                        <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1 rounded font-mono uppercase">
-                          {card.set_code || card.set?.id || card.set || card.set_name?.slice(0, 3) || '???'}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          #{card.collector_number || card.number || '?'}
-                        </span>
-                      </div>
-                      
-                      {/* Add options */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <input
-                          type="number"
-                          min="1"
-                          value={addCardQuantity}
-                          onChange={(e) => setAddCardQuantity(parseInt(e.target.value) || 1)}
-                          className="w-16 px-2 py-1 text-sm border rounded dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                        />
-                        <label className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                          <input
-                            type="checkbox"
-                            checked={addCardFoil}
-                            onChange={(e) => setAddCardFoil(e.target.checked)}
-                            className="rounded"
+                  {addCardSearchResults.map((card) => {
+                    // Calculate price display
+                    const getCardPriceDisplay = () => {
+                      if (addCardGame === 'pokemon') {
+                        const pricing = card.pricing?.cardmarket;
+                        if (pricing?.avg) return `€${pricing.avg.toFixed(2)}`;
+                        if (pricing?.trend) return `€${pricing.trend.toFixed(2)}`;
+                        return null;
+                      } else {
+                        // MTG - Scryfall prices
+                        const prices = card.prices;
+                        if (prices?.usd) return `$${prices.usd}`;
+                        if (prices?.usd_foil) return `$${prices.usd_foil} (Foil)`;
+                        if (prices?.eur) return `€${prices.eur}`;
+                        return null;
+                      }
+                    };
+                    
+                    const priceDisplay = getCardPriceDisplay();
+                    
+                    return (
+                      <div key={card.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                        <div className="aspect-[488/680] relative mb-2">
+                          <img
+                            src={card.image_uris?.small || card.image_uris?.normal || card.images?.small || card.images?.large || '/placeholder-card.png'}
+                            alt={card.name}
+                            className="w-full h-full object-contain rounded"
                           />
-                          Foil
-                        </label>
+                          {priceDisplay && (
+                            <div className="absolute top-1 right-1 bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                              {priceDisplay}
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="font-medium text-sm truncate dark:text-white" title={card.name}>{card.name}</h4>
+                        <div className="flex items-center gap-1 mb-2">
+                          <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1 rounded font-mono uppercase">
+                            {card.set_code || card.set?.id || card.set || card.set_name?.slice(0, 3) || '???'}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            #{card.collector_number || card.number || card.localId || '?'}
+                          </span>
+                        </div>
+                        
+                        <button
+                          onClick={() => {
+                            setSelectedCardToAdd(card);
+                            setCardFinish('Normal');
+                            setAddCardQuantity(1);
+                            setAddCardCondition('Near Mint');
+                            setIsGraded(false);
+                            // Fetch full card data with pricing if Pokemon
+                            if (addCardGame === 'pokemon' && card.id && !card.pricing) {
+                              setLoadingCardPrice(true);
+                              fetch(`https://api.tcgdex.net/v2/en/cards/${card.id}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                  setCardPriceData(data.pricing);
+                                  setLoadingCardPrice(false);
+                                })
+                                .catch(() => setLoadingCardPrice(false));
+                            } else {
+                              setCardPriceData(card.pricing || card.prices);
+                            }
+                          }}
+                          className="w-full px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center justify-center gap-1"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Add to collection
+                        </button>
                       </div>
-                      
-                      <button
-                        onClick={() => addCardToCollection(card)}
-                        disabled={addingCard}
-                        className="w-full px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-1"
-                      >
-                        {addingCard ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-                        Add
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
