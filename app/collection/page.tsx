@@ -1735,7 +1735,18 @@ export default function CollectionPage() {
               </div>
 
               {/* Graded Card Checkbox */}
-              <div className="mb-4">
+              <div className="mb-4 space-y-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={isSigned}
+                    onChange={(e) => setIsSigned(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Signed card
+                  </span>
+                </label>
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -1744,7 +1755,7 @@ export default function CollectionPage() {
                     className="rounded"
                   />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Add as graded card
+                    Graded card
                   </span>
                 </label>
               </div>
