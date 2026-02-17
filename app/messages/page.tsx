@@ -60,12 +60,74 @@ export default function MessagesPage() {
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [showAudioCall, setShowAudioCall] = useState(false);
+  const [messageSearch, setMessageSearch] = useState('');
+  const [showMediaGallery, setShowMediaGallery] = useState(false);
+  const [mediaGallery, setMediaGallery] = useState<Message[]>([]);
+  const [fullscreenMedia, setFullscreenMedia] = useState<Message | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastMessageCount = useRef(0);
+
+  // Format message timestamp
+  const formatMessageTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24 && date.getDate() === now.getDate()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    if (diffDays === 1) return 'Yesterday ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (diffDays < 7) return date.toLocaleDateString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Format date separator
+  const formatDateSeparator = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / 86400000);
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return date.toLocaleDateString([], { weekday: 'long' });
+    return date.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
+  // Check if we need a date separator between messages
+  const needsDateSeparator = (currentMsg: Message, prevMsg: Message | null) => {
+    if (!prevMsg) return true;
+    const currentDate = new Date(currentMsg.created_at).toDateString();
+    const prevDate = new Date(prevMsg.created_at).toDateString();
+    return currentDate !== prevDate;
+  };
+
+  // Filter messages by search
+  const filteredMessages = messageSearch.trim()
+    ? messages.filter(m => m.content.toLowerCase().includes(messageSearch.toLowerCase()))
+    : messages;
+
+  // Load media gallery for conversation
+  const loadMediaGallery = async (convId: string) => {
+    try {
+      const res = await fetch(`/api/messages/${convId}?media_only=true`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setMediaGallery(data.messages?.filter((m: Message) => m.message_type === 'image' || m.message_type === 'video') || []);
+        setShowMediaGallery(true);
+      }
+    } catch (e) {
+      console.error('Load media gallery error:', e);
+    }
+  };
 
   // Initialize audio
   useEffect(() => {
