@@ -47,6 +47,7 @@ export default function VideoCall({
   const containerRef = useRef<HTMLDivElement>(null);
   const hasCreatedOffer = useRef(false);
   const pendingCandidates = useRef<RTCIceCandidateInit[]>([]);
+  const hasReceivedOffer = useRef(false);
 
   // ICE servers with STUN and free TURN for better NAT traversal
   const iceServers: RTCConfiguration = {
