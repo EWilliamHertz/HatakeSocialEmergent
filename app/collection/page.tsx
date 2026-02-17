@@ -571,7 +571,17 @@ export default function CollectionPage() {
     }
   };
 
-  const updateItem = async (itemId: number, updates: Partial<CollectionItem>) => {
+  const updateItem = async (itemId: number, updates: {
+    quantity?: number;
+    condition?: string;
+    foil?: boolean;
+    finish?: string;
+    isSigned?: boolean;
+    isGraded?: boolean;
+    gradingCompany?: string | null;
+    gradeValue?: string | null;
+    notes?: string;
+  }) => {
     try {
       await fetch('/api/collection', {
         method: 'PATCH',
