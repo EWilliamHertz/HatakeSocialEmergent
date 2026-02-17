@@ -580,7 +580,12 @@ export default function CollectionPage() {
   };
 
   const getCardImage = (item: CollectionItem) => {
-    const card = item.card_data;
+    // Use custom image if available
+    if (item.custom_image_url) {
+      return item.custom_image_url;
+    }
+    
+    const card = item.card_data || {};
     if (card.images?.small) return card.images.small;
     if (card.image_uris?.small) return card.image_uris.small;
     if (card.images?.large) return card.images.large;
