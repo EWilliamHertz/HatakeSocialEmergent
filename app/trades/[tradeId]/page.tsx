@@ -313,13 +313,13 @@ export default function TradeDetailPage() {
         </div>
 
         {/* Notes */}
-        {trade.notes && (
+        {trade.message && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
             <h2 className="text-lg font-bold mb-3 dark:text-white flex items-center gap-2">
               <MessageCircle className="w-5 h-5 text-gray-500" />
               Notes
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{trade.notes}</p>
+            <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{trade.message}</p>
           </div>
         )}
 
