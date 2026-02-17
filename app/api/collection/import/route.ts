@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
     if (action === 'preview') {
       // Return parsed cards for preview
       const previewCards = cards.map(card => {
-        if (format === 'pokemon') {
+        if (actualFormat === 'pokemon') {
           // Pokemon export format
           return {
             name: card['Name'] || 'Unknown Card',
