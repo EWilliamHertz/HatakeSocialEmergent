@@ -744,7 +744,7 @@ export default function CollectionPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">My Collection</h1>
-              <p className="text-gray-600">{items.length} cards • Estimated value: ${calculateTotalValue()}</p>
+              <p className="text-gray-600">{items.length} cards • Estimated value: {calculateTotalValue()}</p>
             </div>
             <div className="flex gap-2">
               <button
