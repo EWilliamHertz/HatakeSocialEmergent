@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
       price_wholesale_max,
       currency = 'SEK',
       image_url,
+      gallery_images = [],
       category,
       stock_quantity = 0,
       sku,
@@ -96,8 +97,8 @@ export async function POST(request: NextRequest) {
     }
 
     await sql`
-      INSERT INTO shop_products (product_id, name, description, price_consumer, price_wholesale_min, price_wholesale_max, currency, image_url, category, stock_quantity, sku, features, active)
-      VALUES (${product_id}, ${name}, ${description}, ${price_consumer}, ${price_wholesale_min}, ${price_wholesale_max}, ${currency}, ${image_url}, ${category}, ${stock_quantity}, ${sku}, ${features}, ${active})
+      INSERT INTO shop_products (product_id, name, description, price_consumer, price_wholesale_min, price_wholesale_max, currency, image_url, gallery_images, category, stock_quantity, sku, features, active)
+      VALUES (${product_id}, ${name}, ${description}, ${price_consumer}, ${price_wholesale_min}, ${price_wholesale_max}, ${currency}, ${image_url}, ${gallery_images}, ${category}, ${stock_quantity}, ${sku}, ${features}, ${active})
       ON CONFLICT (product_id) DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
@@ -106,6 +107,7 @@ export async function POST(request: NextRequest) {
         price_wholesale_max = EXCLUDED.price_wholesale_max,
         currency = EXCLUDED.currency,
         image_url = EXCLUDED.image_url,
+        gallery_images = EXCLUDED.gallery_images,
         category = EXCLUDED.category,
         stock_quantity = EXCLUDED.stock_quantity,
         sku = EXCLUDED.sku,
