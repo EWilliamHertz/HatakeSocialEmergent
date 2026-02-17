@@ -26,6 +26,7 @@ async function ensureTable() {
         price_wholesale_max DECIMAL(10,2),
         currency VARCHAR(10) DEFAULT 'SEK',
         image_url TEXT,
+        gallery_images TEXT[],
         category VARCHAR(100),
         stock_quantity INT DEFAULT 0,
         sku VARCHAR(100),
@@ -35,8 +36,10 @@ async function ensureTable() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    // Add gallery_images column if it doesn't exist
+    await sql`ALTER TABLE shop_products ADD COLUMN IF NOT EXISTS gallery_images TEXT[]`;
   } catch (e) {
-    // Table might already exist
+    // Table might already exist or column already exists
   }
 }
 
