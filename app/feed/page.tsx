@@ -38,7 +38,7 @@ interface Post {
   reactions?: Reaction[];
 }
 
-const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '😡', '🔥', '💯'];
+const QUICK_REACTIONS = ['👍', '😂', '😮', '😢', '😡', '🔥', '💯'];
 
 export default function FeedPage() {
   const router = useRouter();
