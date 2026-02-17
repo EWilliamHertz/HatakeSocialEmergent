@@ -90,6 +90,37 @@ export default function MyProfilePage() {
     }
   };
 
+  const loadRecentCollection = async () => {
+    try {
+      const res = await fetch('/api/collection?limit=6', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setRecentCollection(data.items?.slice(0, 6) || []);
+      }
+    } catch (error) {
+      console.error('Load collection error:', error);
+    }
+  };
+
+  const loadMyListings = async () => {
+    try {
+      const res = await fetch('/api/marketplace/my-listings', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setMyListings(data.listings?.slice(0, 6) || []);
+      }
+    } catch (error) {
+      console.error('Load listings error:', error);
+    }
+  };
+
+  const getCardImage = (cardData: any) => {
+    if (cardData?.image_uris?.small) return cardData.image_uris.small;
+    if (cardData?.images?.small) return cardData.images.small;
+    if (cardData?.image) return `${cardData.image}/low.webp`;
+    return '/placeholder-card.png';
+  };
+
   const saveProfile = async () => {
     if (!editName.trim()) return;
     setSaving(true);
