@@ -96,10 +96,11 @@ function SearchContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    performSearch(query, setCode, cardNumber);
+    performSearch(query, setCode, cardNumber, game);
     
     const params = new URLSearchParams();
     if (query) params.append('q', query);
+    if (game && game !== 'all') params.append('game', game);
     if (setCode) params.append('set', setCode);
     if (cardNumber) params.append('number', cardNumber);
     router.push(`/search?${params.toString()}`);
