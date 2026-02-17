@@ -299,6 +299,76 @@ export default function AdminPage() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isGallery: boolean = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success && data.url) {
+        if (isGallery) {
+          setGalleryImages(prev => [...prev, data.url]);
+          setEditingProduct(prev => prev ? {
+            ...prev,
+            gallery_images: [...(prev.gallery_images || []), data.url]
+          } : null);
+        } else {
+          setEditingProduct(prev => prev ? { ...prev, image_url: data.url } : null);
+        }
+      } else {
+        alert('Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setGalleryImages(prev => prev.filter((_, i) => i !== index));
+    setEditingProduct(prev => prev ? {
+      ...prev,
+      gallery_images: (prev.gallery_images || []).filter((_, i) => i !== index)
+    } : null);
+  };
+
+  const openProductModal = (product?: Product) => {
+    if (product) {
+      setEditingProduct(product);
+      setGalleryImages(product.gallery_images || []);
+    } else {
+      setEditingProduct({
+        name: '',
+        description: '',
+        price_consumer: 0,
+        price_wholesale_min: 0,
+        price_wholesale_max: 0,
+        currency: 'SEK',
+        image_url: '',
+        gallery_images: [],
+        category: '',
+        stock_quantity: 0,
+        sku: '',
+        features: [],
+        active: true
+      });
+      setGalleryImages([]);
+    }
+    setShowProductModal(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
