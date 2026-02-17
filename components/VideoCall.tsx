@@ -366,6 +366,11 @@ export default function VideoCall({
 
   // Poll for incoming signals
   const pollSignals = async () => {
+    // Wait for peer connection to be ready
+    if (!peerConnectionRef.current) {
+      return;
+    }
+    
     try {
       const res = await fetch('/api/calls', {
         credentials: 'include'
