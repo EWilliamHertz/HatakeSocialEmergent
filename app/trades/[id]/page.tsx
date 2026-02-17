@@ -276,6 +276,9 @@ export default function TradeDetailPage() {
                         {item.quantity > 1 && <span>× {item.quantity}</span>}
                         {item.foil && <span className="text-purple-500">Foil</span>}
                         {item.condition && <span>{item.condition}</span>}
+                        {item.value && item.value > 0 && (
+                          <span className="text-green-600 font-medium">€{item.value.toFixed(2)}</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -310,6 +313,9 @@ export default function TradeDetailPage() {
                         {item.quantity > 1 && <span>× {item.quantity}</span>}
                         {item.foil && <span className="text-purple-500">Foil</span>}
                         {item.condition && <span>{item.condition}</span>}
+                        {item.value && item.value > 0 && (
+                          <span className="text-green-600 font-medium">€{item.value.toFixed(2)}</span>
+                        )}
                       </div>
                     </div>
                   </div>
