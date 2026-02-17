@@ -405,6 +405,111 @@ export default function MyProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b dark:border-gray-700">
+              <h2 className="text-xl font-bold dark:text-white flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Account Settings
+              </h2>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Banner Image */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <ImageIcon className="w-4 h-4" />
+                  Profile Banner URL
+                </label>
+                <input
+                  type="url"
+                  value={editBanner}
+                  onChange={(e) => setEditBanner(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  placeholder="https://example.com/banner.jpg"
+                />
+                <p className="text-xs text-gray-500 mt-1">Enter a URL for your profile banner image</p>
+              </div>
+
+              {/* Shipping Address */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <MapPin className="w-4 h-4" />
+                  Shipping Address
+                </label>
+                <textarea
+                  value={editShippingAddress}
+                  onChange={(e) => setEditShippingAddress(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-none"
+                  placeholder="Your shipping address for trades"
+                  rows={3}
+                />
+                <p className="text-xs text-gray-500 mt-1">This will be shared with trade partners</p>
+              </div>
+
+              {/* Payment Details */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <CreditCard className="w-4 h-4" />
+                  Payment Details
+                </label>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Swish Number</label>
+                    <input
+                      type="text"
+                      value={editPaymentSwish}
+                      onChange={(e) => setEditPaymentSwish(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                      placeholder="123-456 78 90"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Account Number (Kontonummer)</label>
+                    <input
+                      type="text"
+                      value={editPaymentAccount}
+                      onChange={(e) => setEditPaymentAccount(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                      placeholder="9999-123 45 67"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400">Bankgiro</label>
+                    <input
+                      type="text"
+                      value={editPaymentBankgiro}
+                      onChange={(e) => setEditPaymentBankgiro(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                      placeholder="1234-5678"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Payment details will be shown to your trade partners</p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t dark:border-gray-700 flex gap-3">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveProfile}
+                disabled={saving}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
