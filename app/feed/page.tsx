@@ -342,9 +342,61 @@ export default function FeedPage() {
                   {/* Post Content */}
                   <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">{post.content}</p>
 
-                  {/* Emoji Reactions Display */}
+                </div>
+
+                {/* Post Actions */}
+                <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-700">
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => toggleLike(post.post_id)}
+                      className={`flex items-center gap-2 ${post.liked ? 'text-red-600' : 'text-gray-600 dark:text-gray-400'} hover:text-red-600 transition`}
+                      data-testid={`like-btn-${post.post_id}`}
+                    >
+                      <Heart className={`w-5 h-5 ${post.liked ? 'fill-current' : ''}`} />
+                      <span>{post.like_count || 0}</span>
+                    </button>
+
+                    <button
+                      onClick={() => toggleComments(post.post_id)}
+                      className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition"
+                      data-testid={`comments-btn-${post.post_id}`}
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      <span>{post.comment_count || 0}</span>
+                      {expandedComments.has(post.post_id) ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+
+                    {/* Emoji Reaction Button */}
+                    <div className="relative ml-auto">
+                      <button
+                        onClick={() => setShowEmojiPicker(showEmojiPicker === post.post_id ? null : post.post_id)}
+                        className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                        data-testid={`emoji-btn-${post.post_id}`}
+                      >
+                        <Smile className="w-5 h-5" />
+                      </button>
+
+                      {/* Quick Emoji Picker */}
+                      {showEmojiPicker === post.post_id && (
+                        <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2 z-10 flex gap-1">
+                          {QUICK_REACTIONS.map(emoji => (
+                            <button
+                              key={emoji}
+                              onClick={() => togglePostReaction(post.post_id, emoji)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-xl transition"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Emoji Reactions Display - Combined in same section */}
                   {postReactions[post.post_id]?.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-50 dark:border-gray-700">
                       {postReactions[post.post_id].map(r => (
                         <button
                           key={r.emoji}
@@ -361,54 +413,6 @@ export default function FeedPage() {
                       ))}
                     </div>
                   )}
-                </div>
-
-                {/* Post Actions */}
-                <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-4">
-                  <button
-                    onClick={() => toggleLike(post.post_id)}
-                    className={`flex items-center gap-2 ${post.liked ? 'text-red-600' : 'text-gray-600 dark:text-gray-400'} hover:text-red-600 transition`}
-                    data-testid={`like-btn-${post.post_id}`}
-                  >
-                    <Heart className={`w-5 h-5 ${post.liked ? 'fill-current' : ''}`} />
-                    <span>{post.like_count || 0}</span>
-                  </button>
-
-                  <button
-                    onClick={() => toggleComments(post.post_id)}
-                    className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition"
-                    data-testid={`comments-btn-${post.post_id}`}
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    <span>{post.comment_count || 0}</span>
-                    {expandedComments.has(post.post_id) ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-
-                  {/* Emoji Reaction Button */}
-                  <div className="relative ml-auto">
-                    <button
-                      onClick={() => setShowEmojiPicker(showEmojiPicker === post.post_id ? null : post.post_id)}
-                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
-                      data-testid={`emoji-btn-${post.post_id}`}
-                    >
-                      <Smile className="w-5 h-5" />
-                    </button>
-
-                    {/* Quick Emoji Picker */}
-                    {showEmojiPicker === post.post_id && (
-                      <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2 z-10 flex gap-1">
-                        {QUICK_REACTIONS.map(emoji => (
-                          <button
-                            key={emoji}
-                            onClick={() => togglePostReaction(post.post_id, emoji)}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-xl transition"
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
 
                 {/* Comments Section */}
