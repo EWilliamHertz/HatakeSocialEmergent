@@ -184,7 +184,7 @@ export default function FriendsPage() {
           <button
             onClick={() => setTab('search')}
             className={`flex-1 py-3 px-4 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-              tab === 'search' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+              tab === 'search' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
             data-testid="search-tab"
           >
@@ -195,15 +195,15 @@ export default function FriendsPage() {
 
         {/* Friends List */}
         {tab === 'friends' && (
-          <div className="bg-white rounded-xl shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
             {loading ? (
               <div className="p-12 text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               </div>
             ) : friends.length === 0 ? (
               <div className="p-12 text-center">
-                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">You haven't added any friends yet</p>
+                <Users className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 mb-4">You haven't added any friends yet</p>
                 <button
                   onClick={() => setTab('search')}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
