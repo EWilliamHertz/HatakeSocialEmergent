@@ -305,10 +305,15 @@ export default function TradeDetailPage() {
 
           {/* Their Items */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
-              <User className="w-5 h-5 text-green-500" />
-              {isInitiator ? 'They Offer' : 'You Offer'}
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold dark:text-white flex items-center gap-2">
+                <User className="w-5 h-5 text-green-500" />
+                {isInitiator ? 'They Offer' : 'You Offer'}
+              </h2>
+              {theirTotal > 0 && (
+                <span className="text-lg font-bold text-blue-600">€{theirTotal.toFixed(2)}</span>
+              )}
+            </div>
             <div className="space-y-3">
               {(isInitiator ? trade.receiver_cards : trade.initiator_cards)?.length > 0 ? (
                 (isInitiator ? trade.receiver_cards : trade.initiator_cards).map((item, idx) => (
