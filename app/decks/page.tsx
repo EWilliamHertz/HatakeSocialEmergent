@@ -379,7 +379,8 @@ export default function DecksPage() {
                 key={deck.deck_id} 
                 deck={deck} 
                 showOwner={activeTab === 'community'}
-                canDelete={activeTab === 'my' || deck.user_id === currentUserId}
+                canDelete={activeTab === 'my' || deck.user_id === currentUserId || (activeTab === 'community' && isAdmin)}
+                isCommunityDeck={activeTab === 'community'}
               />
             ))}
           </div>
