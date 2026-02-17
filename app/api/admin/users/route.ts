@@ -8,7 +8,17 @@ async function isAdmin(sessionToken: string | undefined): Promise<boolean> {
   if (!sessionToken) return false;
   const user = await getSessionUser(sessionToken);
   if (!user) return false;
-  return ADMIN_EMAILS.includes(user.email);
+  
+  // Check if in admin emails list
+  if (ADMIN_EMAILS.includes(user.email)) return true;
+  
+  // Also check database is_admin field
+  try {
+    const result = await sql`SELECT is_admin FROM users WHERE user_id = ${user.user_id}`;
+    return result[0]?.is_admin === true;
+  } catch (e) {
+    return false;
+  }
 }
 
 // GET - List all users (admin only)
