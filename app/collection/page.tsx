@@ -774,7 +774,7 @@ export default function CollectionPage() {
               </button>
               <button
                 onClick={() => setFilter('mtg')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+                className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
                 data-testid="filter-mtg"
               >
                 Magic
