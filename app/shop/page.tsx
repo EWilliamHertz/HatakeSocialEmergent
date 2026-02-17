@@ -97,6 +97,8 @@ export default function ShopPage() {
   const [cart, setCart] = useState<{ id: string; quantity: number }[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   useEffect(() => {
     loadProducts();
