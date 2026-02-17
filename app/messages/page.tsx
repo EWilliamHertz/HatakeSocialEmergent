@@ -637,15 +637,23 @@ export default function MessagesPage() {
                               ) : (
                                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                               {msg.name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <div className={`max-w-sm ${
+                                  msg.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
+                                } rounded-2xl px-4 py-2`}>
+                                  {renderMessageContent(msg)}
+                                </div>
+                                {/* Timestamp */}
+                                <p className={`text-xs text-gray-400 mt-1 ${msg.sender_id === currentUserId ? 'text-right' : ''}`}>
+                                  {formatMessageTime(msg.created_at)}
+                                </p>
+                              </div>
                             </div>
-                          )}
-                          <div className={`max-w-sm ${
-                            msg.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
-                          } rounded-2xl px-4 py-2`}>
-                            {renderMessageContent(msg)}
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                     <div ref={messagesEndRef} />
                   </div>
