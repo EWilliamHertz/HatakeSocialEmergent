@@ -1008,49 +1008,197 @@ export default function CollectionPage() {
       {/* Edit Modal */}
       {showEditModal && editingItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-bold mb-4">Edit Card</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                <input
-                  type="number"
-                  min="1"
-                  defaultValue={editingItem.quantity}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  id="edit-quantity"
-                />
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 dark:text-white">Edit Card</h3>
+            
+            {/* Card Preview with Custom Image Upload */}
+            <div className="flex gap-4 mb-4">
+              <div className="w-24 flex-shrink-0">
+                <div className="relative aspect-[2/3] bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                  <img
+                    src={editingItem.custom_image_url || getCardImage(editingItem)}
+                    alt={editingItem.card_data?.name || 'Card'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
+              <div className="flex-1">
+                <p className="font-medium dark:text-white">{editingItem.card_data?.name || 'Unknown Card'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  {editingItem.card_data?.set?.id || editingItem.card_data?.set_code || editingItem.card_data?.set || ''} #{editingItem.card_data?.collector_number || editingItem.card_data?.number || editingItem.card_data?.localId || ''}
+                </p>
+                
+                {/* Custom Image Upload */}
+                <div className="mt-2">
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Custom Image</label>
+                  <div className="flex gap-2">
+                    <label className="cursor-pointer px-3 py-1 text-xs bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded text-gray-700 dark:text-gray-300">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          setUploadingImage(true);
+                          const formData = new FormData();
+                          formData.append('image', file);
+                          formData.append('itemId', editingItem.id.toString());
+                          
+                          try {
+                            const res = await fetch('/api/collection/upload-image', {
+                              method: 'POST',
+                              credentials: 'include',
+                              body: formData
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              setEditingItem({
+                                ...editingItem,
+                                custom_image_url: data.imageUrl
+                              });
+                              loadCollection();
+                            }
+                          } catch (err) {
+                            console.error('Upload error:', err);
+                          } finally {
+                            setUploadingImage(false);
+                          }
+                        }}
+                      />
+                      {uploadingImage ? 'Uploading...' : 'Upload Photo'}
+                    </label>
+                    {editingItem.custom_image_url && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await fetch(`/api/collection/upload-image?itemId=${editingItem.id}`, {
+                              method: 'DELETE',
+                              credentials: 'include'
+                            });
+                            setEditingItem({
+                              ...editingItem,
+                              custom_image_url: undefined
+                            });
+                            loadCollection();
+                          } catch (err) {
+                            console.error('Delete image error:', err);
+                          }
+                        }}
+                        className="px-3 py-1 text-xs bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 rounded text-red-700 dark:text-red-300"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    defaultValue={editingItem.quantity}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    id="edit-quantity"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Finish</label>
+                  <select 
+                    defaultValue={editingItem.finish || 'Normal'}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    id="edit-finish"
+                  >
+                    {(editingItem.game === 'pokemon' ? pokemonFinishOptions : mtgFinishOptions).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Condition</label>
                 <select 
                   defaultValue={editingItem.condition || 'Near Mint'}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                   id="edit-condition"
                 >
-                  <option>Mint</option>
-                  <option>Near Mint</option>
-                  <option>Lightly Played</option>
-                  <option>Moderately Played</option>
-                  <option>Heavily Played</option>
-                  <option>Damaged</option>
+                  {conditionOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  defaultChecked={editingItem.foil}
-                  id="edit-foil"
-                  className="w-4 h-4"
-                />
-                <label htmlFor="edit-foil" className="text-sm font-medium text-gray-700">Foil/Holo</label>
+
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    defaultChecked={editingItem.foil}
+                    id="edit-foil"
+                    className="w-4 h-4 rounded"
+                  />
+                  <label htmlFor="edit-foil" className="text-sm font-medium text-gray-700 dark:text-gray-300">Foil/Holo</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    defaultChecked={editingItem.is_signed}
+                    id="edit-signed"
+                    className="w-4 h-4 rounded"
+                  />
+                  <label htmlFor="edit-signed" className="text-sm font-medium text-gray-700 dark:text-gray-300">Signed</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    defaultChecked={editingItem.is_graded}
+                    id="edit-graded"
+                    className="w-4 h-4 rounded"
+                  />
+                  <label htmlFor="edit-graded" className="text-sm font-medium text-gray-700 dark:text-gray-300">Graded</label>
+                </div>
               </div>
+
+              {/* Grading Details (shown if graded) */}
+              <div className="grid grid-cols-2 gap-4" id="grading-details">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grading Company</label>
+                  <select 
+                    defaultValue={editingItem.grading_company || 'PSA'}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    id="edit-grading-company"
+                  >
+                    {gradingCompanies.map(company => (
+                      <option key={company} value={company}>{company}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grade</label>
+                  <select 
+                    defaultValue={editingItem.grade_value || '10'}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    id="edit-grade-value"
+                  >
+                    {gradeValues.map(grade => (
+                      <option key={grade} value={grade}>{grade}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
                 <textarea
                   defaultValue={editingItem.notes || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                  rows={2}
                   id="edit-notes"
                 />
               </div>
@@ -1061,7 +1209,7 @@ export default function CollectionPage() {
                   setShowEditModal(false);
                   setEditingItem(null);
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
               >
                 Cancel
               </button>
@@ -1069,9 +1217,19 @@ export default function CollectionPage() {
                 onClick={() => {
                   const quantity = parseInt((document.getElementById('edit-quantity') as HTMLInputElement).value);
                   const condition = (document.getElementById('edit-condition') as HTMLSelectElement).value;
+                  const finish = (document.getElementById('edit-finish') as HTMLSelectElement).value;
                   const foil = (document.getElementById('edit-foil') as HTMLInputElement).checked;
+                  const isSigned = (document.getElementById('edit-signed') as HTMLInputElement).checked;
+                  const isGraded = (document.getElementById('edit-graded') as HTMLInputElement).checked;
+                  const gradingCompany = (document.getElementById('edit-grading-company') as HTMLSelectElement).value;
+                  const gradeValue = (document.getElementById('edit-grade-value') as HTMLSelectElement).value;
                   const notes = (document.getElementById('edit-notes') as HTMLTextAreaElement).value;
-                  updateItem(editingItem.id, { quantity, condition, foil, notes });
+                  updateItem(editingItem.id, { 
+                    quantity, condition, foil, notes, finish,
+                    isSigned, isGraded, 
+                    gradingCompany: isGraded ? gradingCompany : null,
+                    gradeValue: isGraded ? gradeValue : null
+                  });
                 }}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
