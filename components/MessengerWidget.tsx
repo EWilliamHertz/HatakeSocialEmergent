@@ -861,6 +861,27 @@ export default function MessengerWidget() {
           onReject={rejectIncomingCall}
         />
       )}
+
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <button 
+            className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-lg"
+            onClick={() => setFullscreenImage(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={fullscreenImage} 
+            alt="Fullscreen" 
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </>
   );
 }
