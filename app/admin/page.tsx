@@ -830,7 +830,7 @@ export default function AdminPage() {
               <h3 className="text-lg font-bold dark:text-white">
                 {editingProduct.id ? 'Edit Product' : 'Add New Product'}
               </h3>
-              <button onClick={() => { setShowProductModal(false); setEditingProduct(null); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <button onClick={() => { setShowProductModal(false); setEditingProduct(null); setGalleryImages([]); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -842,8 +842,9 @@ export default function AdminPage() {
                   <input type="text" value={editingProduct.name || ''} onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg" placeholder="e.g., 35pt Toploader *25" />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                  <textarea value={editingProduct.description || ''} onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg" placeholder="Product description..." />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (use **bold** for emphasis)</label>
+                  <textarea value={editingProduct.description || ''} onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono text-sm" placeholder="Product description... Use **bold** for important text" />
+                  <p className="text-xs text-gray-500 mt-1">Wrap text in **double asterisks** for bold formatting</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Consumer Price (100%) *</label>
@@ -877,10 +878,55 @@ export default function AdminPage() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">SKU</label>
                   <input type="text" value={editingProduct.sku || ''} onChange={(e) => setEditingProduct({ ...editingProduct, sku: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg" placeholder="e.g., TL-35-25" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
-                  <input type="url" value={editingProduct.image_url || ''} onChange={(e) => setEditingProduct({ ...editingProduct, image_url: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg" placeholder="https://..." />
+                
+                {/* Main Image Upload */}
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Main Product Image</label>
+                  <div className="flex items-start gap-4">
+                    {editingProduct.image_url ? (
+                      <div className="relative">
+                        <img src={editingProduct.image_url} alt="Product" className="w-24 h-24 object-cover rounded-lg" />
+                        <button onClick={() => setEditingProduct({ ...editingProduct, image_url: '' })} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <input type="url" value={editingProduct.image_url || ''} onChange={(e) => setEditingProduct({ ...editingProduct, image_url: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg mb-2" placeholder="Image URL or upload below" />
+                      <label className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600">
+                        <Upload className="w-4 h-4" />
+                        <span className="text-sm">{uploadingImage ? 'Uploading...' : 'Upload Image'}</span>
+                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, false)} className="hidden" disabled={uploadingImage} />
+                      </label>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Gallery Images */}
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gallery Images</label>
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {galleryImages.map((img, idx) => (
+                      <div key={idx} className="relative">
+                        <img src={img} alt={`Gallery ${idx + 1}`} className="w-20 h-20 object-cover rounded-lg" />
+                        <button onClick={() => removeGalleryImage(idx)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="w-20 h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                      <Plus className="w-6 h-6 text-gray-400" />
+                      <span className="text-xs text-gray-500">Add</span>
+                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} className="hidden" disabled={uploadingImage} />
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500">Add additional images for the product gallery</p>
+                </div>
+
                 <div className="col-span-2">
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={editingProduct.active} onChange={(e) => setEditingProduct({ ...editingProduct, active: e.target.checked })} className="rounded" />
@@ -891,7 +937,7 @@ export default function AdminPage() {
             </div>
 
             <div className="p-6 border-t dark:border-gray-700 flex justify-end gap-3">
-              <button onClick={() => { setShowProductModal(false); setEditingProduct(null); }} className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+              <button onClick={() => { setShowProductModal(false); setEditingProduct(null); setGalleryImages([]); }} className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
               <button onClick={saveProduct} disabled={saving || !editingProduct.name || !editingProduct.price_consumer} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
                 {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                 Save Product
