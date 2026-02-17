@@ -239,6 +239,29 @@ export default function CollectionPage() {
     return total;
   };
 
+  // Recalculate all individual prices based on new percent
+  const recalculateAllPrices = (percent: string) => {
+    const selectedCards = items.filter(item => selectedItems.has(item.id));
+    const newPrices: Record<number, string> = {};
+    selectedCards.forEach(item => {
+      const marketPrice = getCardPrice(item).value;
+      const calculatedPrice = marketPrice * (parseFloat(percent) / 100);
+      newPrices[item.id] = calculatedPrice.toFixed(2);
+    });
+    setIndividualPrices(newPrices);
+  };
+
+  // Calculate total listing value from individual prices
+  const calculateListingTotal = () => {
+    let total = 0;
+    items.forEach(item => {
+      if (selectedItems.has(item.id) && individualPrices[item.id]) {
+        total += parseFloat(individualPrices[item.id]) * item.quantity;
+      }
+    });
+    return total;
+  };
+
   const submitBulkList = async () => {
     setListingInProgress(true);
     try {
