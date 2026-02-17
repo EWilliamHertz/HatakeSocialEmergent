@@ -331,59 +331,42 @@ export async function POST(request: NextRequest) {
             
             console.log(`[CSV Import] Processing MTG card ${idx + 1}:`, { name, setCode, collectorNum, scryfallId });
 
-            // Fetch card data from Scryfall using the Scryfall ID
+            // Fetch card data from Scryfall using the Scryfall ID (with caching)
+            let scryfallData = null;
             if (scryfallId) {
-              try {
-                console.log('[CSV Import] Fetching from Scryfall by ID:', scryfallId);
-                const scryfallRes = await fetch(`https://api.scryfall.com/cards/${scryfallId}`, {
-                  signal: AbortSignal.timeout(8000)
-                });
-                if (scryfallRes.ok) {
-                  cardData = await scryfallRes.json();
-                  console.log('[CSV Import] Scryfall fetch success for', name);
-                } else {
-                  console.log('[CSV Import] Scryfall fetch failed, status:', scryfallRes.status);
-                }
-              } catch (e: any) {
-                console.log('[CSV Import] Scryfall fetch error for', name, ':', e.message);
+              console.log('[CSV Import] Fetching from Scryfall by ID:', scryfallId);
+              scryfallData = await fetchScryfallCached(`https://api.scryfall.com/cards/${scryfallId}`);
+              if (scryfallData) {
+                console.log('[CSV Import] Scryfall fetch success for', name);
               }
             }
 
             // If no Scryfall data, search by name and set
-            if (!cardData && name && setCode) {
-              try {
-                const searchQuery = encodeURIComponent(`!"${name}" set:${setCode}`);
-                console.log('[CSV Import] Searching Scryfall by name/set');
-                const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${searchQuery}`, {
-                  signal: AbortSignal.timeout(8000)
-                });
-                if (searchRes.ok) {
-                  const searchData = await searchRes.json();
-                  if (searchData.data && searchData.data.length > 0) {
-                    cardData = searchData.data[0];
-                    console.log('[CSV Import] Scryfall search success for', name);
-                  }
-                }
-              } catch (e: any) {
-                console.log('[CSV Import] Scryfall search error for', name, ':', e.message);
+            if (!scryfallData && name && setCode) {
+              const searchQuery = encodeURIComponent(`!"${name}" set:${setCode}`);
+              console.log('[CSV Import] Searching Scryfall by name/set');
+              const searchResult = await fetchScryfallCached(`https://api.scryfall.com/cards/search?q=${searchQuery}`);
+              if (searchResult?.data?.length > 0) {
+                scryfallData = searchResult.data[0];
+                console.log('[CSV Import] Scryfall search success for', name);
               }
             }
 
             // Build card_data object to store in JSONB
             cardData = {
               id: cardId,
-              name: name || cardData?.name || 'Unknown Card',
+              name: name || scryfallData?.name || 'Unknown Card',
               set: setCode,
-              set_name: card['Set name'] || cardData?.set_name || '',
+              set_name: card['Set name'] || scryfallData?.set_name || '',
               collector_number: collectorNum,
-              rarity: card['Rarity'] || cardData?.rarity || '',
+              rarity: card['Rarity'] || scryfallData?.rarity || '',
               language: card['Language'] || 'English',
-              image_uris: cardData?.image_uris || {
-                small: cardData?.card_faces?.[0]?.image_uris?.small || null,
-                normal: cardData?.card_faces?.[0]?.image_uris?.normal || null,
-                large: cardData?.card_faces?.[0]?.image_uris?.large || null,
+              image_uris: scryfallData?.image_uris || {
+                small: scryfallData?.card_faces?.[0]?.image_uris?.small || null,
+                normal: scryfallData?.card_faces?.[0]?.image_uris?.normal || null,
+                large: scryfallData?.card_faces?.[0]?.image_uris?.large || null,
               },
-              prices: cardData?.prices || null,
+              prices: scryfallData?.prices || null,
               purchase_price: purchasePrice,
               purchase_currency: currency,
               misprint: card['Misprint'] === 'true',
