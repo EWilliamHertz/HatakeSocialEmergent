@@ -901,6 +901,93 @@ export default function MessagesPage() {
           currentUserName={currentUserName}
         />
       )}
+
+      {/* Media Gallery Modal */}
+      {showMediaGallery && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" data-testid="media-gallery-modal">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-lg font-bold dark:text-white">Shared Media</h3>
+              <button 
+                onClick={() => setShowMediaGallery(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                <X className="w-5 h-5 dark:text-gray-300" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              {mediaGallery.length === 0 ? (
+                <div className="text-center py-12">
+                  <ImageIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">No shared media yet</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {mediaGallery.map((media) => (
+                    <div 
+                      key={media.message_id}
+                      onClick={() => setFullscreenMedia(media)}
+                      className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition relative group"
+                    >
+                      {media.message_type === 'video' ? (
+                        <>
+                          <video src={media.content} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                              <VideoIcon className="w-6 h-6 text-gray-800" />
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <img src={media.content} alt="" className="w-full h-full object-cover" />
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition">
+                        <p className="text-white text-xs">{formatMessageTime(media.created_at)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Media Viewer */}
+      {fullscreenMedia && (
+        <div 
+          className="fixed inset-0 bg-black z-50 flex items-center justify-center"
+          onClick={() => setFullscreenMedia(null)}
+          data-testid="fullscreen-media"
+        >
+          <button 
+            className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-lg"
+            onClick={() => setFullscreenMedia(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          {fullscreenMedia.message_type === 'video' ? (
+            <video 
+              src={fullscreenMedia.content} 
+              controls 
+              autoPlay 
+              className="max-w-full max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <img 
+              src={fullscreenMedia.content} 
+              alt="" 
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+          <div className="absolute bottom-4 left-0 right-0 text-center">
+            <p className="text-white/80 text-sm">{formatMessageTime(fullscreenMedia.created_at)}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
