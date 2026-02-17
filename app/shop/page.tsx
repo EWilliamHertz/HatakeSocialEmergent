@@ -286,7 +286,7 @@ export default function ShopPage() {
                       Add to Cart
                     </button>
                     <a
-                      href="mailto:contact@hatake.social?subject=Product Inquiry"
+                      href="mailto:ernst@hatake.eu?subject=Product Inquiry"
                       className="py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
                     >
                       <Mail className="w-4 h-4" />
