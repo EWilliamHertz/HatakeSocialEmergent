@@ -464,13 +464,10 @@ function SearchContent() {
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           </div>
-        ) : results.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
-            <Search className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No results found. Try a different search term!</p>
-          </div>
         ) : (
-          <div className={view === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6' : 'space-y-4'}>
+          <>
+            {/* Users Section */}
+            {users.length > 0 && (
             {results.map((card) => (
               <div key={card.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition group" data-testid={`card-${card.id}`}>
                 {/* Full Card Image */}
