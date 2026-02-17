@@ -56,7 +56,13 @@ export default function MyProfilePage() {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
+  const [editBanner, setEditBanner] = useState('');
+  const [editShippingAddress, setEditShippingAddress] = useState('');
+  const [editPaymentSwish, setEditPaymentSwish] = useState('');
+  const [editPaymentBankgiro, setEditPaymentBankgiro] = useState('');
+  const [editPaymentAccount, setEditPaymentAccount] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [recentCollection, setRecentCollection] = useState<CollectionItem[]>([]);
   const [myListings, setMyListings] = useState<Listing[]>([]);
 
