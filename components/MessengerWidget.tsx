@@ -313,6 +313,8 @@ export default function MessengerWidget() {
       ringtoneRef.current.currentTime = 0;
     }
     
+    // Store call data before clearing incoming call
+    setActiveCallData(incomingCall);
     setCallType(incomingCall.callType);
     setIsReceivingCall(true);
     setShowVideoCall(true);
