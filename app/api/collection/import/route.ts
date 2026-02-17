@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import sql from '@/lib/db';
 
+// ManaBox format (MTG)
 interface ManaBoxCard {
   Name: string;
   'Set code': string;
@@ -20,7 +21,42 @@ interface ManaBoxCard {
   'Purchase price currency': string;
 }
 
-function parseCSV(csvText: string): ManaBoxCard[] {
+// Pokemon Export format
+interface PokemonExportCard {
+  Name: string;
+  'Set Code': string;
+  'Edition Name': string;
+  'Collector Number': string;
+  'Release Date': string;
+  Price: string;
+  Condition: string;
+  Quantity: string;
+}
+
+type ParsedCard = ManaBoxCard | PokemonExportCard;
+
+function detectFormat(headers: string[]): 'manabox' | 'pokemon' | 'unknown' {
+  const headerSet = new Set(headers.map(h => h.toLowerCase().trim()));
+  
+  // ManaBox has specific headers
+  if (headerSet.has('scryfall id') || headerSet.has('manabox id') || headerSet.has('purchase price currency')) {
+    return 'manabox';
+  }
+  
+  // Pokemon export has "Edition Name" and "Release Date"
+  if (headerSet.has('edition name') || headerSet.has('release date')) {
+    return 'pokemon';
+  }
+  
+  // Fallback: if has "Set code" without Scryfall ID, might be custom
+  if (headerSet.has('set code') && !headerSet.has('scryfall id')) {
+    return 'pokemon';
+  }
+  
+  return 'manabox'; // default
+}
+
+function parseCSV(csvText: string): { cards: any[], format: 'manabox' | 'pokemon' | 'unknown' } {
   console.log('[CSV Import] Starting CSV parse, length:', csvText.length);
   
   const lines = csvText.split('\n').filter(line => line.trim());
@@ -28,19 +64,39 @@ function parseCSV(csvText: string): ManaBoxCard[] {
   
   if (lines.length < 2) {
     console.log('[CSV Import] Not enough lines, returning empty');
-    return [];
+    return { cards: [], format: 'unknown' };
   }
   
   // Parse headers - handle both quoted and unquoted headers
   const headerLine = lines[0];
-  const headers = headerLine.split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const headers: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (const char of headerLine) {
+    if (char === '"' && !inQuotes) {
+      inQuotes = true;
+    } else if (char === '"' && inQuotes) {
+      inQuotes = false;
+    } else if (char === ',' && !inQuotes) {
+      headers.push(current.trim().replace(/^"|"$/g, ''));
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  headers.push(current.trim().replace(/^"|"$/g, ''));
+  
   console.log('[CSV Import] Parsed headers:', headers);
   
-  const cards: ManaBoxCard[] = [];
+  const format = detectFormat(headers);
+  console.log('[CSV Import] Detected format:', format);
+  
+  const cards: any[] = [];
   
   for (let i = 1; i < lines.length; i++) {
     const values: string[] = [];
-    let current = '';
+    let val = '';
     let inQuotes = false;
     
     for (const char of lines[i]) {
@@ -49,13 +105,13 @@ function parseCSV(csvText: string): ManaBoxCard[] {
       } else if (char === '"' && inQuotes) {
         inQuotes = false;
       } else if (char === ',' && !inQuotes) {
-        values.push(current.trim());
-        current = '';
+        values.push(val.trim().replace(/^"|"$/g, ''));
+        val = '';
       } else {
-        current += char;
+        val += char;
       }
     }
-    values.push(current.trim());
+    values.push(val.trim().replace(/^"|"$/g, ''));
     
     const card: any = {};
     headers.forEach((header, index) => {
@@ -67,20 +123,24 @@ function parseCSV(csvText: string): ManaBoxCard[] {
       console.log('[CSV Import] First card parsed:', JSON.stringify(card));
     }
     
-    cards.push(card as ManaBoxCard);
+    cards.push(card);
   }
   
   console.log('[CSV Import] Parsed', cards.length, 'cards');
-  return cards;
+  return { cards, format };
 }
 
 function mapCondition(condition: string | undefined): string {
   if (!condition) return 'Near Mint';
   const conditionMap: { [key: string]: string } = {
     'near_mint': 'Near Mint',
+    'near mint': 'Near Mint',
     'lightly_played': 'Lightly Played', 
+    'lightly played': 'Lightly Played', 
     'moderately_played': 'Moderately Played',
+    'moderately played': 'Moderately Played',
     'heavily_played': 'Heavily Played',
+    'heavily played': 'Heavily Played',
     'damaged': 'Damaged',
     'mint': 'Mint',
     'nm': 'Near Mint',
@@ -126,27 +186,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No CSV content provided' }, { status: 400 });
     }
 
-    const cards = parseCSV(csvContent);
-    console.log('[CSV Import] Total cards parsed:', cards.length);
+    const { cards, format } = parseCSV(csvContent);
+    console.log('[CSV Import] Total cards parsed:', cards.length, 'Format:', format);
 
     if (action === 'preview') {
       // Return parsed cards for preview
-      const previewCards = cards.map(card => ({
-        name: card.Name || 'Unknown Card',
-        setCode: card['Set code'] || '',
-        setName: card['Set name'] || '',
-        collectorNumber: card['Collector number'] || '',
-        foil: card.Foil === 'foil',
-        rarity: card.Rarity || '',
-        quantity: parseInt(card.Quantity) || 1,
-        scryfallId: card['Scryfall ID'] || '',
-        purchasePrice: parseFloat(card['Purchase price']) || 0,
-        currency: card['Purchase price currency'] || 'USD',
-        condition: mapCondition(card.Condition),
-        language: card.Language || 'English',
-        misprint: card.Misprint === 'true',
-        altered: card.Altered === 'true',
-      }));
+      const previewCards = cards.map(card => {
+        if (format === 'pokemon') {
+          // Pokemon export format
+          return {
+            name: card['Name'] || 'Unknown Card',
+            setCode: card['Set Code'] || '',
+            setName: card['Edition Name'] || '',
+            collectorNumber: card['Collector Number'] || '',
+            foil: false,
+            rarity: '',
+            quantity: parseInt(card['Quantity']) || 1,
+            scryfallId: '',
+            purchasePrice: parseFloat(card['Price']) || 0,
+            currency: 'USD', // Pokemon prices are typically USD from TCGPlayer
+            condition: mapCondition(card['Condition']),
+            language: 'English',
+            misprint: false,
+            altered: false,
+            game: 'pokemon'
+          };
+        } else {
+          // ManaBox format (MTG)
+          return {
+            name: card['Name'] || 'Unknown Card',
+            setCode: card['Set code'] || '',
+            setName: card['Set name'] || '',
+            collectorNumber: card['Collector number'] || '',
+            foil: card['Foil'] === 'foil',
+            rarity: card['Rarity'] || '',
+            quantity: parseInt(card['Quantity']) || 1,
+            scryfallId: card['Scryfall ID'] || '',
+            purchasePrice: parseFloat(card['Purchase price']) || 0,
+            currency: card['Purchase price currency'] || 'USD',
+            condition: mapCondition(card['Condition']),
+            language: card['Language'] || 'English',
+            misprint: card['Misprint'] === 'true',
+            altered: card['Altered'] === 'true',
+            game: 'mtg'
+          };
+        }
+      });
 
       console.log('[CSV Import] Preview ready, first card:', previewCards[0]);
 
@@ -154,7 +239,8 @@ export async function POST(request: NextRequest) {
         success: true, 
         cards: previewCards,
         totalCards: previewCards.length,
-        totalQuantity: previewCards.reduce((sum, c) => sum + c.quantity, 0)
+        totalQuantity: previewCards.reduce((sum, c) => sum + c.quantity, 0),
+        format
       });
     }
 
@@ -163,113 +249,158 @@ export async function POST(request: NextRequest) {
       let imported = 0;
       let errors: string[] = [];
 
-      console.log('[CSV Import] Starting import of', cards.length, 'cards');
+      console.log('[CSV Import] Starting import of', cards.length, 'cards, format:', format);
 
       for (let idx = 0; idx < cards.length; idx++) {
         const card = cards[idx];
         
         try {
-          // Log key fields for debugging
-          console.log(`[CSV Import] Processing card ${idx + 1}:`, {
-            name: card.Name,
-            setCode: card['Set code'],
-            collectorNumber: card['Collector number'],
-            scryfallId: card['Scryfall ID']
-          });
-
-          // Fetch card data from Scryfall using the Scryfall ID
           let cardData: any = null;
-          
-          if (card['Scryfall ID']) {
-            try {
-              console.log('[CSV Import] Fetching from Scryfall by ID:', card['Scryfall ID']);
-              const scryfallRes = await fetch(`https://api.scryfall.com/cards/${card['Scryfall ID']}`, {
-                signal: AbortSignal.timeout(10000)
-              });
-              if (scryfallRes.ok) {
-                cardData = await scryfallRes.json();
-                console.log('[CSV Import] Scryfall fetch success for', card.Name);
-              } else {
-                console.log('[CSV Import] Scryfall fetch failed, status:', scryfallRes.status);
-              }
-            } catch (e: any) {
-              console.log('[CSV Import] Scryfall fetch error for', card.Name, ':', e.message);
-            }
-          }
-
-          // If no Scryfall data, search by name and set
-          if (!cardData && card.Name && card['Set code']) {
-            try {
-              const searchQuery = encodeURIComponent(`!"${card.Name}" set:${card['Set code']}`);
-              console.log('[CSV Import] Searching Scryfall by name/set:', searchQuery);
-              const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${searchQuery}`, {
-                signal: AbortSignal.timeout(10000)
-              });
-              if (searchRes.ok) {
-                const searchData = await searchRes.json();
-                if (searchData.data && searchData.data.length > 0) {
-                  cardData = searchData.data[0];
-                  console.log('[CSV Import] Scryfall search success for', card.Name);
-                }
-              } else {
-                console.log('[CSV Import] Scryfall search failed, status:', searchRes.status);
-              }
-            } catch (e: any) {
-              console.log('[CSV Import] Scryfall search error for', card.Name, ':', e.message);
-            }
-          }
-
-          const quantity = parseInt(card.Quantity) || 1;
-          const isFoil = card.Foil === 'foil';
-          const condition = mapCondition(card.Condition);
-          const purchasePrice = parseFloat(card['Purchase price']) || 0;
-          const currency = card['Purchase price currency'] || 'USD';
-
-          // Build card_id - ensure we have valid values
-          const scryfallId = card['Scryfall ID']?.trim();
-          const setCode = card['Set code']?.trim();
-          const collectorNum = card['Collector number']?.trim();
-          
           let cardId: string;
-          if (scryfallId) {
-            cardId = scryfallId;
-          } else if (setCode && collectorNum) {
-            cardId = `${setCode}-${collectorNum}`;
-          } else {
-            // Fallback to name-based ID if nothing else works
-            cardId = `manual-${Date.now()}-${idx}`;
-            console.log('[CSV Import] Using fallback ID for card:', card.Name);
-          }
+          let game: string;
+          let name: string;
+          let setCode: string;
+          let collectorNum: string;
+          let quantity: number;
+          let isFoil: boolean;
+          let condition: string;
+          let purchasePrice: number;
+          let currency: string;
           
-          console.log('[CSV Import] Card ID resolved to:', cardId);
+          if (format === 'pokemon') {
+            // Pokemon export format
+            game = 'pokemon';
+            name = card['Name'] || '';
+            setCode = card['Set Code'] || '';
+            collectorNum = card['Collector Number'] || '';
+            quantity = parseInt(card['Quantity']) || 1;
+            isFoil = false;
+            condition = mapCondition(card['Condition']);
+            purchasePrice = parseFloat(card['Price']) || 0;
+            currency = 'USD';
+            
+            // Build card ID for Pokemon
+            cardId = setCode && collectorNum ? `${setCode.toLowerCase()}-${collectorNum}` : `pokemon-${Date.now()}-${idx}`;
+            
+            // Log key fields for debugging
+            console.log(`[CSV Import] Processing Pokemon card ${idx + 1}:`, { name, setCode, collectorNum });
+            
+            // Try to fetch from TCGdex
+            if (setCode && collectorNum) {
+              try {
+                const tcgdexRes = await fetch(`https://api.tcgdex.net/v2/en/cards/${setCode.toLowerCase()}-${collectorNum}`, {
+                  signal: AbortSignal.timeout(5000)
+                });
+                if (tcgdexRes.ok) {
+                  cardData = await tcgdexRes.json();
+                  console.log('[CSV Import] TCGdex fetch success for', name);
+                }
+              } catch (e: any) {
+                console.log('[CSV Import] TCGdex fetch error:', e.message);
+              }
+            }
+            
+            // Build card data
+            cardData = {
+              id: cardId,
+              name: name || cardData?.name || 'Unknown Card',
+              set: { id: setCode, name: card['Edition Name'] || '' },
+              localId: collectorNum,
+              image: cardData?.image ? `${cardData.image}/high.webp` : null,
+              prices: cardData?.prices || { firstEdition: { mid: purchasePrice } },
+              purchase_price: purchasePrice,
+              purchase_currency: currency
+            };
+          } else {
+            // ManaBox format (MTG)
+            game = 'mtg';
+            name = card['Name'] || '';
+            setCode = card['Set code'] || '';
+            collectorNum = card['Collector number'] || '';
+            quantity = parseInt(card['Quantity']) || 1;
+            isFoil = card['Foil'] === 'foil';
+            condition = mapCondition(card['Condition']);
+            purchasePrice = parseFloat(card['Purchase price']) || 0;
+            currency = card['Purchase price currency'] || 'USD';
+            
+            const scryfallId = card['Scryfall ID']?.trim();
+            
+            // Build card_id
+            if (scryfallId) {
+              cardId = scryfallId;
+            } else if (setCode && collectorNum) {
+              cardId = `${setCode}-${collectorNum}`;
+            } else {
+              cardId = `mtg-${Date.now()}-${idx}`;
+            }
+            
+            console.log(`[CSV Import] Processing MTG card ${idx + 1}:`, { name, setCode, collectorNum, scryfallId });
 
-          // Build card_data object to store in JSONB - ensure name is always present
-          const cardDataToStore = {
-            id: cardId,
-            name: card.Name || 'Unknown Card',
-            set: setCode || '',
-            set_name: card['Set name'] || '',
-            collector_number: collectorNum || '',
-            rarity: card.Rarity || '',
-            language: card.Language || 'English',
-            // From Scryfall if available
-            image_uris: cardData?.image_uris || {
-              small: cardData?.card_faces?.[0]?.image_uris?.small || null,
-              normal: cardData?.card_faces?.[0]?.image_uris?.normal || null,
-              large: cardData?.card_faces?.[0]?.image_uris?.large || null,
-            },
-            prices: cardData?.prices || null,
-            // Additional metadata
-            purchase_price: purchasePrice,
-            purchase_currency: currency,
-            misprint: card.Misprint === 'true',
-            altered: card.Altered === 'true',
-          };
+            // Fetch card data from Scryfall using the Scryfall ID
+            if (scryfallId) {
+              try {
+                console.log('[CSV Import] Fetching from Scryfall by ID:', scryfallId);
+                const scryfallRes = await fetch(`https://api.scryfall.com/cards/${scryfallId}`, {
+                  signal: AbortSignal.timeout(8000)
+                });
+                if (scryfallRes.ok) {
+                  cardData = await scryfallRes.json();
+                  console.log('[CSV Import] Scryfall fetch success for', name);
+                } else {
+                  console.log('[CSV Import] Scryfall fetch failed, status:', scryfallRes.status);
+                }
+              } catch (e: any) {
+                console.log('[CSV Import] Scryfall fetch error for', name, ':', e.message);
+              }
+            }
+
+            // If no Scryfall data, search by name and set
+            if (!cardData && name && setCode) {
+              try {
+                const searchQuery = encodeURIComponent(`!"${name}" set:${setCode}`);
+                console.log('[CSV Import] Searching Scryfall by name/set');
+                const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${searchQuery}`, {
+                  signal: AbortSignal.timeout(8000)
+                });
+                if (searchRes.ok) {
+                  const searchData = await searchRes.json();
+                  if (searchData.data && searchData.data.length > 0) {
+                    cardData = searchData.data[0];
+                    console.log('[CSV Import] Scryfall search success for', name);
+                  }
+                }
+              } catch (e: any) {
+                console.log('[CSV Import] Scryfall search error for', name, ':', e.message);
+              }
+            }
+
+            // Build card_data object to store in JSONB
+            cardData = {
+              id: cardId,
+              name: name || cardData?.name || 'Unknown Card',
+              set: setCode,
+              set_name: card['Set name'] || cardData?.set_name || '',
+              collector_number: collectorNum,
+              rarity: card['Rarity'] || cardData?.rarity || '',
+              language: card['Language'] || 'English',
+              image_uris: cardData?.image_uris || {
+                small: cardData?.card_faces?.[0]?.image_uris?.small || null,
+                normal: cardData?.card_faces?.[0]?.image_uris?.normal || null,
+                large: cardData?.card_faces?.[0]?.image_uris?.large || null,
+              },
+              prices: cardData?.prices || null,
+              purchase_price: purchasePrice,
+              purchase_currency: currency,
+              misprint: card['Misprint'] === 'true',
+              altered: card['Altered'] === 'true',
+            };
+          }
 
           console.log('[CSV Import] Inserting card with data:', {
             cardId,
-            name: cardDataToStore.name,
-            hasImageUris: !!cardDataToStore.image_uris?.normal
+            game,
+            name: cardData.name,
+            hasImage: format === 'pokemon' ? !!cardData.image : !!cardData.image_uris?.normal
           });
 
           // Insert into collection_items table
@@ -279,26 +410,26 @@ export async function POST(request: NextRequest) {
             ) VALUES (
               ${user.user_id},
               ${cardId},
-              'mtg',
-              ${JSON.stringify(cardDataToStore)},
+              ${game},
+              ${JSON.stringify(cardData)},
               ${quantity},
               ${condition},
               ${isFoil},
-              ${card.Altered === 'true' ? 'Altered card' : (card.Misprint === 'true' ? 'Misprint' : null)}
+              ${card['Altered'] === 'true' ? 'Altered card' : (card['Misprint'] === 'true' ? 'Misprint' : null)}
             )
           `;
 
           imported++;
-          console.log('[CSV Import] Successfully imported card', imported, ':', card.Name);
+          console.log('[CSV Import] Successfully imported card', imported, ':', name);
           
-          // Add small delay to avoid rate limiting from Scryfall
+          // Add small delay to avoid rate limiting
           if (imported % 10 === 0) {
             console.log('[CSV Import] Rate limit pause at card', imported);
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
         } catch (err: any) {
-          console.error('[CSV Import] Import error for card:', card.Name, err.message, err.stack);
-          errors.push(`Failed to import ${card.Name || 'Unknown'}: ${err.message}`);
+          console.error('[CSV Import] Import error for card:', card['Name'] || card['name'], err.message);
+          errors.push(`Failed to import ${card['Name'] || card['name'] || 'Unknown'}: ${err.message}`);
         }
       }
 
