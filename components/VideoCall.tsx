@@ -118,26 +118,43 @@ export default function VideoCall({
     try {
       const pc = peerConnectionRef.current;
       if (!pc) {
-        console.error('No peer connection');
+        console.error('No peer connection - waiting...');
+        // Wait a bit and retry
+        await new Promise(resolve => setTimeout(resolve, 500));
+        if (!peerConnectionRef.current) {
+          console.error('Still no peer connection after waiting');
+          return;
+        }
+      }
+
+      const connection = peerConnectionRef.current!;
+      
+      // Only set remote description if we're in a valid state
+      if (connection.signalingState !== 'stable' && connection.signalingState !== 'have-remote-offer') {
+        console.log('Skipping offer, signaling state:', connection.signalingState);
         return;
       }
 
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      await connection.setRemoteDescription(new RTCSessionDescription(offer));
       
       // Add any pending ICE candidates
       for (const candidate of pendingCandidates.current) {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        try {
+          await connection.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.warn('Failed to add ICE candidate:', e);
+        }
       }
       pendingCandidates.current = [];
       
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
+      const answer = await connection.createAnswer();
+      await connection.setLocalDescription(answer);
       
       await sendSignal('answer', answer);
       setDebugInfo('Answer sent, waiting for connection...');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Handle offer error:', err);
-      setError('Failed to handle offer');
+      setError(`Failed to handle offer: ${err.message}`);
     }
   };
 
