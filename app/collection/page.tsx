@@ -585,21 +585,30 @@ export default function CollectionPage() {
   const getCardPrice = (item: CollectionItem) => {
     const card = item.card_data;
     if (item.game === 'pokemon') {
-      // Check for TCGdex pricing (from cardmarket)
+      // Check for TCGdex pricing (from cardmarket) - prices are in EUR
       if (card.pricing?.cardmarket) {
-        return card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0;
+        return { value: card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0, currency: 'EUR' };
       }
-      // Legacy TCGplayer format
+      // Legacy TCGplayer format - prices are in USD
       if (card.tcgplayer?.prices) {
         const prices = card.tcgplayer.prices;
-        return prices.holofoil?.market || prices.normal?.market || 0;
+        return { value: prices.holofoil?.market || prices.normal?.market || 0, currency: 'USD' };
       }
-      return 0;
-    } else if (item.game === 'mtg' && card.prices?.usd) {
-      return parseFloat(card.prices.usd);
+      return { value: 0, currency: 'EUR' };
+    } else if (item.game === 'mtg') {
+      // Scryfall prices
+      if (card.prices?.usd) {
+        return { value: parseFloat(card.prices.usd), currency: 'USD' };
+      }
+      if (card.prices?.eur) {
+        return { value: parseFloat(card.prices.eur), currency: 'EUR' };
+      }
     }
-    return 0;
+    return { value: 0, currency: 'USD' };
   };
+  
+  // Helper to get just the numeric value
+  const getCardPriceValue = (item: CollectionItem) => getCardPrice(item).value;
 
   const calculateTotalValue = () => {
     let total = 0;
