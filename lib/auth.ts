@@ -72,7 +72,7 @@ export async function getSessionUser(
   sessionToken: string
 ): Promise<User | null> {
   const result = await sql`
-    SELECT u.user_id, u.email, u.name, u.picture, u.email_verified, u.is_admin
+    SELECT u.user_id, u.email, u.name, u.picture, u.email_verified, u.is_admin, u.created_at
     FROM users u
     JOIN user_sessions s ON u.user_id = s.user_id
     WHERE s.session_token = ${sessionToken}
