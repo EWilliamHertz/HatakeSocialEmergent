@@ -146,12 +146,30 @@ export default function MyProfilePage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ name: editName, bio: editBio })
+        body: JSON.stringify({ 
+          name: editName, 
+          bio: editBio,
+          banner_url: editBanner,
+          shipping_address: editShippingAddress,
+          payment_swish: editPaymentSwish,
+          payment_bankgiro: editPaymentBankgiro,
+          payment_account: editPaymentAccount
+        })
       });
       const data = await res.json();
       if (data.success) {
-        setUser(prev => prev ? { ...prev, name: editName, bio: editBio } : null);
+        setUser(prev => prev ? { 
+          ...prev, 
+          name: editName, 
+          bio: editBio,
+          banner_url: editBanner,
+          shipping_address: editShippingAddress,
+          payment_swish: editPaymentSwish,
+          payment_bankgiro: editPaymentBankgiro,
+          payment_account: editPaymentAccount
+        } : null);
         setEditing(false);
+        setShowSettings(false);
       }
     } catch (error) {
       console.error('Save profile error:', error);
