@@ -1688,7 +1688,7 @@ export default function CollectionPage() {
                     value={addCardCondition}
                     onChange={(e) => setAddCardCondition(e.target.value)}
                     className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  />
+                  >
                     {conditionOptions.map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
