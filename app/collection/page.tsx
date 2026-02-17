@@ -323,11 +323,17 @@ export default function CollectionPage() {
         try {
           // Try search API first
           console.log('Scryfall search query:', query);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          
           const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`, {
             headers: {
               'Accept': 'application/json',
-            }
+            },
+            signal: controller.signal
           });
+          
+          clearTimeout(timeoutId);
           
           if (searchRes.ok) {
             const data = await searchRes.json();
