@@ -63,6 +63,8 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   // Analytics state
   const [stats, setStats] = useState<Stats | null>(null);
