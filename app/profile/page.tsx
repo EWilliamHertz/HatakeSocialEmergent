@@ -70,6 +70,8 @@ export default function MyProfilePage() {
           setEditName(data.user.name);
           setEditBio(data.user.bio || '');
           loadStats();
+          loadRecentCollection();
+          loadMyListings();
         }
       })
       .catch(() => router.push('/auth/login'))
