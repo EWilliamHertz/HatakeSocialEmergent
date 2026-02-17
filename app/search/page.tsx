@@ -26,6 +26,36 @@ interface Card {
   prices?: any;
 }
 
+interface UserResult {
+  user_id: string;
+  name: string;
+  email: string;
+  picture?: string;
+  type: 'user';
+}
+
+interface PostResult {
+  post_id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  name: string;
+  picture?: string;
+  type: 'post';
+}
+
+interface DeckResult {
+  deck_id: string;
+  name: string;
+  description?: string;
+  format?: string;
+  created_at: string;
+  user_id: string;
+  creator_name: string;
+  creator_picture?: string;
+  type: 'deck';
+}
+
 function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,6 +64,9 @@ function SearchContent() {
   const [setCode, setSetCode] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [results, setResults] = useState<Card[]>([]);
+  const [users, setUsers] = useState<UserResult[]>([]);
+  const [posts, setPosts] = useState<PostResult[]>([]);
+  const [decks, setDecks] = useState<DeckResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [showAdvanced, setShowAdvanced] = useState(false);
