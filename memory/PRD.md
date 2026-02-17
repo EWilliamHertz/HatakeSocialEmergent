@@ -15,24 +15,30 @@ Hatake.Social is a full-stack TCG (Trading Card Game) social platform built with
 - Personal collection management with manual add and CSV import
 - **Supported CSV formats:** ManaBox (MTG), Pokemon export_2026
 - Collection value calculation with multi-currency support (EUR, USD, SEK)
-- Support for card conditions, finish variants (Holofoil, Reverse Holofoil, etc.)
+- Support for card conditions, finish variants
 - Graded card tracking (PSA, BGS, CGC, SGC)
 
 ### Social Features  
 - Social Feed with posts, comments, nested replies
 - Emoji reactions on posts and comments
-- **Community page** - Combined Friends + Groups with tabs
+- Community page - Combined Friends + Groups with tabs
 - User profiles with stats
 
 ### Search
-- **Universal search** - Cards, Users, Posts, Decks all in one place
-- Game filter (All, Pokemon, MTG) for card results
+- Universal search - Cards, Users, Posts, Decks all in one place
+- Game filter (All, Pokemon, MTG) - correctly segregates results
 - Users/Posts/Decks always displayed when searching
 
 ### Messaging & Calls
 - Real-time messaging via MessengerWidget
+- **Message timestamps** - "Just now", "5m ago", "Yesterday 3:45 PM", etc.
+- **Date separators** - "Today", "Yesterday", "Monday", "January 15, 2026"
+- **Message search** - Filter messages in conversation
+- **Media gallery** - View all shared images/videos in conversation
+- **Fullscreen media viewer** - Click to view media full screen
+- **Send pictures/videos** - Media upload support
 - WebRTC voice/video calls with incoming call notifications
-- Proper JSON error handling for API responses
+- **Audio-only fallback** - Works on devices without cameras
 
 ### Commerce
 - Marketplace for buying/selling cards
@@ -51,7 +57,7 @@ Hatake.Social is a full-stack TCG (Trading Card Game) social platform built with
 - Cleaner navbar with reduced icons
 
 ### Performance
-- **Server-side API caching** for Scryfall and TCGdex API calls
+- Server-side API caching for Scryfall and TCGdex API calls
 - Cache stored in PostgreSQL `api_cache` table with TTL
 
 ## Tech Stack
@@ -65,53 +71,56 @@ Hatake.Social is a full-stack TCG (Trading Card Game) social platform built with
 
 ### February 17, 2026 - Session 4 (Latest)
 
-**Bug Fixes:**
-1. ✅ **Video calls - "No peer connection" error** - Fixed by assigning `peerConnectionRef.current` immediately in `createPeerConnection()` instead of only returning it
-2. ✅ **CSV import fails after preview** - Fixed by including proper headers when reconstructing CSV from parsed cards
-3. ✅ **CSV import currency showing $** - Now displays original currency from CSV (EUR/SEK/USD)
-4. ✅ **MTG search showing Pokemon results** - Fixed search API game filter to properly segregate results
-5. ✅ **Messenger JSON parse errors** - Added proper try/catch with text-first parsing to handle non-JSON responses
+**Video Call Fixes:**
+- ✅ `peerConnectionRef.current` now assigned immediately in `createPeerConnection()` (line 221)
+- ✅ `initializeCall()` creates peer connection FIRST, before getting media
+- ✅ Media has fallback - if video fails, tries audio-only
+- ✅ Polling only starts AFTER peer connection exists
+- ✅ `handleOffer` and `handleIceCandidate` queue operations if peer connection not ready
+- ✅ Proper signaling state checks before setting remote description
 
-**New Features:**
-- **Search includes Users/Posts/Decks** - Search API and UI updated to display all entity types
-- **Community Page** - Combined Friends+Groups with tabs
-- **Settings Page** - Profile, Password, Notifications, Privacy settings
-- **Avatar Dropdown Menu** - Profile, Settings, Admin Panel, Logout
-- **Admin Tools** - Make/Remove Admin buttons, Delete Post functionality
-- **Pokemon CSV format** - Support for export_2026 format
-- **Server-side API caching** - PostgreSQL-backed cache
+**Messenger Features Added:**
+- ✅ `formatMessageTime()` - "Just now", "5m ago", "3:45 PM", "Yesterday", etc.
+- ✅ `formatDateSeparator()` - Date headers between message groups
+- ✅ `messageSearch` - Filter messages in conversation
+- ✅ `loadMediaGallery()` - View all shared media
+- ✅ `fullscreenMedia` - Click media to view full screen
+- ✅ Conversation timestamps in sidebar
+- ✅ Media gallery modal with grid view
 
-**Testing:** 20/20 backend tests passed (iteration_5.json)
+**Previous Fixes (This Session):**
+- Search API game filter (game=mtg only returns MTG cards)
+- CSV import currency display (shows original currency)
+- Universal search (cards, users, posts, decks)
+- Community page, Settings page, Admin tools
 
-## Key API Endpoints
-- `/api/collection/import` - CSV import (ManaBox + Pokemon formats)
-- `/api/cards/mtg` - MTG search proxy with caching
-- `/api/search?type=all` - Universal search (cards, users, posts, decks)
-- `/api/calls?mode=preview|active` - WebRTC signaling
+**Testing:** 9/9 backend tests passed (iteration_6.json)
 
 ## Key Files
-- `/app/components/VideoCall.tsx` - **Line 205**: `peerConnectionRef.current = pc;`
-- `/app/components/MessengerWidget.tsx` - **Lines 145-155, 200-213**: JSON error handling
-- `/app/app/api/search/route.ts` - Universal search with game filter
-- `/app/app/api/collection/import/route.ts` - Multi-format CSV import
+- `/app/components/VideoCall.tsx` - Line 221: `peerConnectionRef.current = pc;`
+- `/app/app/messages/page.tsx` - Lines 75-129: timestamp functions, search, gallery
 
-## Known Issues (Updated Status)
-1. ✅ **Video calls "No peer connection"** - Fixed (code reviewed)
-2. ✅ **CSV import fails** - Fixed and tested
-3. ✅ **CSV currency display** - Fixed
-4. ✅ **MTG/Pokemon search mixing** - Fixed
-5. ✅ **Messenger JSON errors** - Fixed (code reviewed)
-6. 🔧 **Video calls real-world test** - Needs two-user testing
+## Known Issues
+- 🔧 **Video calls** - Code reviewed and fixed, needs real two-user WebRTC test
+- ✅ All other reported issues fixed and tested
 
 ## Test Accounts
 - **Regular:** test@test.com / password
 - **Admin:** zudran@gmail.com, ernst@hatake.eu
 
-## Upcoming Tasks
-1. Real-world two-user video call test (P1)
+## Ready for Mobile App
+All requested features are now implemented:
+- ✅ Video/voice calls with camera fallback
+- ✅ Message timestamps and dates
+- ✅ Message search
+- ✅ Media gallery/history
+- ✅ Send pictures/videos
+- ✅ Universal search
+- ✅ Admin tools
 
-## Future Backlog
+## Future/Backlog
 - Payment gateway integration (Stripe)
 - Card deck sharing functionality
 - Find duplicates feature in collection
 - Sealed product management
+- **Mobile App Development**
