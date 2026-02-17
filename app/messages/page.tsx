@@ -602,23 +602,40 @@ export default function MessagesPage() {
                   
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    {messages.length === 0 ? (
+                    {filteredMessages.length === 0 ? (
                       <div className="text-center py-8">
                         <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">No messages yet. Say hi!</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                          {messageSearch ? 'No messages match your search' : 'No messages yet. Say hi!'}
+                        </p>
                       </div>
                     ) : (
-                      messages.map((msg) => (
-                        <div
-                          key={msg.message_id}
-                          className={`flex gap-3 ${
-                            msg.sender_id === currentUserId ? 'flex-row-reverse' : ''
-                          }`}
-                        >
-                          {msg.picture ? (
-                            <Image src={msg.picture} alt={msg.name} width={32} height={32} className="rounded-full" />
-                          ) : (
-                            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                      filteredMessages.map((msg, index) => {
+                        const prevMsg = index > 0 ? filteredMessages[index - 1] : null;
+                        const showDateSeparator = needsDateSeparator(msg, prevMsg);
+                        
+                        return (
+                          <div key={msg.message_id}>
+                            {/* Date Separator */}
+                            {showDateSeparator && (
+                              <div className="flex items-center justify-center my-6">
+                                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                                <span className="px-4 text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                  {formatDateSeparator(msg.created_at)}
+                                </span>
+                                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                              </div>
+                            )}
+                            
+                            <div
+                              className={`flex gap-3 ${
+                                msg.sender_id === currentUserId ? 'flex-row-reverse' : ''
+                              }`}
+                            >
+                              {msg.picture ? (
+                                <Image src={msg.picture} alt={msg.name} width={32} height={32} className="rounded-full" />
+                              ) : (
+                                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                               {msg.name.charAt(0).toUpperCase()}
                             </div>
                           )}
