@@ -113,6 +113,7 @@ export default function VideoCall({
   const handleOffer = async (offer: RTCSessionDescriptionInit, fromUserId: string) => {
     console.log('Handling offer from:', fromUserId);
     setDebugInfo('Received offer, creating answer...');
+    hasReceivedOffer.current = true;
     
     try {
       const pc = peerConnectionRef.current;
