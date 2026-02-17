@@ -98,7 +98,7 @@ export default function AdminPage() {
       const data = await res.json();
       setUserEmail(data.user.email);
       
-      if (ADMIN_EMAILS.includes(data.user.email)) {
+      if (ADMIN_EMAILS.includes(data.user.email) || data.user.is_admin) {
         setIsAdmin(true);
         loadProducts();
       } else {
