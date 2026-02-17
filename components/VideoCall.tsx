@@ -366,6 +366,17 @@ export default function VideoCall({
                 }
               }
               break;
+            case 'request_offer':
+              // Receiver is requesting the offer again
+              if (!isReceiver && peerConnectionRef.current) {
+                const pc = peerConnectionRef.current;
+                if (pc.localDescription) {
+                  console.log('Resending offer on request');
+                  await sendSignal('offer', pc.localDescription);
+                  setDebugInfo('Offer sent on request');
+                }
+              }
+              break;
             case 'call_rejected':
               setError('Call was declined');
               setCallStatus('ended');
