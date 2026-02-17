@@ -617,17 +617,18 @@ export default function MessengerWidget() {
       )}
 
       {/* Video Call Modal */}
-      {showVideoCall && (selectedConv || incomingCall) && (
+      {showVideoCall && (selectedConv || activeCallData) && (
         <VideoCall
           isOpen={showVideoCall}
           onClose={() => {
             setShowVideoCall(false);
             setIsReceivingCall(false);
+            setActiveCallData(null);
           }}
           callType={callType}
-          remoteUserId={isReceivingCall && incomingCall ? incomingCall.callerId : (getSelectedConversation()?.user_id || '')}
-          remoteUserName={isReceivingCall && incomingCall ? incomingCall.callerName : (getSelectedConversation()?.name || 'User')}
-          remoteUserPicture={isReceivingCall && incomingCall ? incomingCall.callerPicture : getSelectedConversation()?.picture}
+          remoteUserId={isReceivingCall && activeCallData ? activeCallData.callerId : (getSelectedConversation()?.user_id || '')}
+          remoteUserName={isReceivingCall && activeCallData ? activeCallData.callerName : (getSelectedConversation()?.name || 'User')}
+          remoteUserPicture={isReceivingCall && activeCallData ? activeCallData.callerPicture : getSelectedConversation()?.picture}
           currentUserId={currentUserId}
           currentUserName={currentUserName}
           isReceiver={isReceivingCall}
