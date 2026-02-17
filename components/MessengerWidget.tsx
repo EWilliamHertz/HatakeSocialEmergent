@@ -630,13 +630,6 @@ export default function MessengerWidget() {
                       );
                     })}
                     <div ref={messagesEndRef} />
-                        )}
-                        <div className={`max-w-[200px] ${msg.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'} rounded-xl px-3 py-2`}>
-                          {renderMessageContent(msg)}
-                        </div>
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
                   </div>
                   
                   {/* Emoji Picker */}
@@ -651,6 +644,32 @@ export default function MessengerWidget() {
                     </div>
                   )}
                   
+                  {/* Media Preview */}
+                  {mediaPreview && (
+                    <div className="border-t dark:border-gray-700 p-2 bg-gray-50 dark:bg-gray-700">
+                      <div className="relative inline-block">
+                        {selectedMedia?.type.startsWith('video/') ? (
+                          <video src={mediaPreview} className="w-20 h-20 object-cover rounded-lg" />
+                        ) : (
+                          <img src={mediaPreview} alt="Preview" className="w-20 h-20 object-cover rounded-lg" />
+                        )}
+                        <button
+                          onClick={cancelMedia}
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <button
+                        onClick={uploadAndSendMedia}
+                        disabled={uploading}
+                        className="ml-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {uploading ? 'Sending...' : 'Send'}
+                      </button>
+                    </div>
+                  )}
+                  
                   <div className="border-t dark:border-gray-700 p-2">
                     <div className="flex gap-1 mb-2">
                       <button
@@ -660,6 +679,20 @@ export default function MessengerWidget() {
                       >
                         <Smile className="w-4 h-4 text-gray-500" />
                       </button>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                        title="Send Image/Video"
+                      >
+                        <ImageIcon className="w-4 h-4 text-gray-500" />
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={handleMediaSelect}
+                        className="hidden"
+                      />
                     </div>
                     <div className="flex gap-2">
                       <textarea
