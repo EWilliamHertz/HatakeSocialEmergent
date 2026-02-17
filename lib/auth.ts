@@ -10,6 +10,7 @@ export interface User {
   picture?: string;
   email_verified: boolean;
   is_admin?: boolean;
+  created_at?: string;
 }
 
 export async function hashPassword(password: string): Promise<string> {
