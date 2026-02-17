@@ -1613,6 +1613,7 @@ export default function CollectionPage() {
                     placeholder="e.g., MH3, NEO"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg uppercase"
                     data-testid="set-code-input"
+                    onKeyDown={(e) => e.key === 'Enter' && searchCardManually()}
                   />
                 </div>
                 <div>
@@ -1624,6 +1625,7 @@ export default function CollectionPage() {
                     placeholder="e.g., 141, 23"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
                     data-testid="collector-num-input"
+                    onKeyDown={(e) => e.key === 'Enter' && searchCardManually()}
                   />
                 </div>
                 <div className="flex items-end">
