@@ -1512,7 +1512,7 @@ export default function CollectionPage() {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {addCardSearchResults.map((card) => {
-                    // Calculate price display
+                    // Calculate price display - prefer EUR
                     const getCardPriceDisplay = () => {
                       if (addCardGame === 'pokemon') {
                         const pricing = card.pricing?.cardmarket;
@@ -1520,11 +1520,13 @@ export default function CollectionPage() {
                         if (pricing?.trend) return `€${pricing.trend.toFixed(2)}`;
                         return null;
                       } else {
-                        // MTG - Scryfall prices
+                        // MTG - Scryfall prices, prefer EUR
                         const prices = card.prices;
+                        if (prices?.eur) return `€${prices.eur}`;
+                        if (prices?.eur_foil) return `€${prices.eur_foil} (Foil)`;
+                        // Fallback to USD
                         if (prices?.usd) return `$${prices.usd}`;
                         if (prices?.usd_foil) return `$${prices.usd_foil} (Foil)`;
-                        if (prices?.eur) return `€${prices.eur}`;
                         return null;
                       }
                     };
