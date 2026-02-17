@@ -139,17 +139,26 @@ export default function DecksPage() {
     }
   };
 
-  const deleteDeck = async (deckId: string) => {
-    if (!confirm('Are you sure you want to delete this deck?')) return;
+  const deleteDeck = async (deckId: string, isCommunityDeck: boolean = false) => {
+    const confirmMsg = isCommunityDeck 
+      ? 'Are you sure you want to delete this community deck? This action cannot be undone.'
+      : 'Are you sure you want to delete this deck?';
+    if (!confirm(confirmMsg)) return;
     
     try {
-      const res = await fetch(`/api/decks/${deckId}`, {
+      const res = await fetch(`/api/decks/${deckId}${isAdmin ? '?admin=true' : ''}`, {
         method: 'DELETE',
         credentials: 'include'
       });
       const data = await res.json();
       if (data.success) {
-        loadDecks();
+        if (isCommunityDeck) {
+          loadCommunityDecks();
+        } else {
+          loadDecks();
+        }
+      } else {
+        alert(data.error || 'Failed to delete deck');
       }
     } catch (error) {
       console.error('Delete deck error:', error);
