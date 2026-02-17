@@ -374,35 +374,32 @@ export default function CollectionPage() {
           }
           
           clearTimeout(timeoutId);
-            
-            // Map TCGdex cards to consistent format
-            const mappedCards = cards.slice(0, 30).map((card: any) => ({
-              id: card.id,
-              name: card.name,
-              game: 'pokemon',
-              image_uris: {
-                small: card.image ? card.image + '/low.webp' : null,
-                normal: card.image ? card.image + '/high.webp' : null,
-                large: card.image ? card.image + '/high.webp' : null
-              },
-              images: {
-                small: card.image ? card.image + '/low.webp' : null,
-                large: card.image ? card.image + '/high.webp' : null
-              },
-              set_name: card.set?.name || '',
-              set_code: card.set?.id || card.id?.split('-')[0] || '',
-              collector_number: card.localId || card.id?.split('-').pop() || '',
-              set: { id: card.set?.id, name: card.set?.name }
-            }));
-            
-            setAddCardSearchResults(mappedCards);
-            
-            if (mappedCards.length === 0) {
-              console.log('No Pokemon cards found for search');
-            }
-          } else {
-            console.error('TCGdex API error:', res.status);
-            setAddCardSearchResults([]);
+          
+          // Map TCGdex cards to consistent format
+          const mappedCards = cards.slice(0, 30).map((card: any) => ({
+            id: card.id,
+            name: card.name,
+            game: 'pokemon',
+            image_uris: {
+              small: card.image ? card.image + '/low.webp' : null,
+              normal: card.image ? card.image + '/high.webp' : null,
+              large: card.image ? card.image + '/high.webp' : null
+            },
+            images: {
+              small: card.image ? card.image + '/low.webp' : null,
+              large: card.image ? card.image + '/high.webp' : null
+            },
+            set_name: card.set?.name || '',
+            set_code: card.set?.id || card.id?.split('-')[0] || '',
+            collector_number: card.localId || card.id?.split('-').pop() || '',
+            set: { id: card.set?.id, name: card.set?.name },
+            pricing: card.pricing  // Include pricing if available
+          }));
+          
+          setAddCardSearchResults(mappedCards);
+          
+          if (mappedCards.length === 0) {
+            console.log('No Pokemon cards found for search');
           }
         } catch (fetchError: any) {
           if (fetchError.name === 'AbortError') {
