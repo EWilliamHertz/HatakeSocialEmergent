@@ -602,15 +602,22 @@ export default function CollectionPage() {
       }
       return { value: 0, currency: 'EUR' };
     } else if (item.game === 'mtg') {
-      // Scryfall prices
-      if (card.prices?.usd) {
-        return { value: parseFloat(card.prices.usd), currency: 'USD' };
-      }
+      // Scryfall prices - prefer EUR for consistency with Pokemon/Cardmarket
       if (card.prices?.eur) {
         return { value: parseFloat(card.prices.eur), currency: 'EUR' };
       }
+      if (card.prices?.eur_foil && item.foil) {
+        return { value: parseFloat(card.prices.eur_foil), currency: 'EUR' };
+      }
+      // Fallback to USD if EUR not available
+      if (card.prices?.usd) {
+        return { value: parseFloat(card.prices.usd), currency: 'USD' };
+      }
+      if (card.prices?.usd_foil && item.foil) {
+        return { value: parseFloat(card.prices.usd_foil), currency: 'USD' };
+      }
     }
-    return { value: 0, currency: 'USD' };
+    return { value: 0, currency: 'EUR' };
   };
   
   // Helper to get just the numeric value
