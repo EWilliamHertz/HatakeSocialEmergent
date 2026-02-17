@@ -198,8 +198,33 @@ export default function MyProfilePage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Profile Header */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden mb-6">
-          {/* Cover */}
-          <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+          {/* Cover/Banner */}
+          <div className="h-32 relative group">
+            {user.banner_url ? (
+              <Image 
+                src={user.banner_url} 
+                alt="Profile banner" 
+                fill 
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600" />
+            )}
+            {/* Banner edit overlay */}
+            <label className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors cursor-pointer">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 text-white">
+                <Camera className="w-5 h-5" />
+                <span className="text-sm font-medium">Change Banner</span>
+              </div>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleBannerUpload}
+                className="hidden"
+              />
+            </label>
+          </div>
           
           {/* Profile Info */}
           <div className="px-6 pb-6">
