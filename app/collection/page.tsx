@@ -611,11 +611,22 @@ export default function CollectionPage() {
   const getCardPriceValue = (item: CollectionItem) => getCardPrice(item).value;
 
   const calculateTotalValue = () => {
-    let total = 0;
+    let totalEUR = 0;
+    let totalUSD = 0;
     items.forEach(item => {
-      total += getCardPrice(item) * item.quantity;
+      const price = getCardPrice(item);
+      if (price.currency === 'EUR') {
+        totalEUR += price.value * item.quantity;
+      } else {
+        totalUSD += price.value * item.quantity;
+      }
     });
-    return total.toFixed(2);
+    
+    // Return formatted string with both currencies if applicable
+    const parts = [];
+    if (totalUSD > 0) parts.push(`$${totalUSD.toFixed(2)}`);
+    if (totalEUR > 0) parts.push(`€${totalEUR.toFixed(2)}`);
+    return parts.length > 0 ? parts.join(' + ') : '$0.00';
   };
 
   const filteredItems = items.filter(item => {
