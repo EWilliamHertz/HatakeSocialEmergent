@@ -458,16 +458,7 @@ function SearchContent() {
               <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
               Cards
             </h2>
-
-        {/* Results */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          </div>
-        ) : (
-          <>
-            {/* Users Section */}
-            {users.length > 0 && (
+            <div className={view === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6' : 'space-y-4'}>
             {results.map((card) => (
               <div key={card.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition group" data-testid={`card-${card.id}`}>
                 {/* Full Card Image */}
