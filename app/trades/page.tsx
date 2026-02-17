@@ -184,7 +184,7 @@ export default function TradesPage() {
                 tab === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}
             >
-              Completed
+              Completed ({tradeStats.completed})
             </button>
             <button
               onClick={() => setTab('all')}
