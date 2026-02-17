@@ -214,7 +214,7 @@ export default function CollectionPage() {
     let total = 0;
     items.forEach(item => {
       if (selectedItems.has(item.id)) {
-        total += getCardPrice(item) * item.quantity;
+        total += getCardPrice(item).value * item.quantity;
       }
     });
     return total;
