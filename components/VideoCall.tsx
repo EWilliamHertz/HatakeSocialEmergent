@@ -262,28 +262,57 @@ export default function VideoCall({
   // Initialize local media and create offer (for caller) or wait for offer (for receiver)
   const initializeCall = async () => {
     try {
+      // FIRST: Create peer connection immediately so it's ready for signals
+      const pc = createPeerConnection();
+      
       setDebugInfo('Requesting media access...');
       
-      const constraints = {
-        audio: true,
-        video: callType === 'video' ? { width: 1280, height: 720 } : false,
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      localStreamRef.current = stream;
-
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
+      // Try to get media with fallbacks
+      let stream: MediaStream | null = null;
+      
+      try {
+        if (callType === 'video') {
+          // Try video first
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: { width: 1280, height: 720 }
+          });
+        } else {
+          // Audio only
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false
+          });
+        }
+      } catch (mediaErr: any) {
+        console.warn('Full media failed, trying audio only:', mediaErr.message);
+        // Fall back to audio only if video fails
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false
+          });
+          setDebugInfo('Camera unavailable, using audio only');
+        } catch (audioErr: any) {
+          console.error('Audio also failed:', audioErr.message);
+          throw new Error('Cannot access microphone. Please check permissions.');
+        }
+      }
+      
+      if (stream) {
+        localStreamRef.current = stream;
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+        
+        // Add tracks to peer connection
+        stream.getTracks().forEach((track) => {
+          console.log('Adding track:', track.kind);
+          pc.addTrack(track, stream!);
+        });
       }
 
       setDebugInfo('Media acquired, setting up connection...');
-
-      // Create peer connection and add tracks
-      const pc = createPeerConnection();
-      stream.getTracks().forEach((track) => {
-        console.log('Adding track:', track.kind);
-        pc.addTrack(track, stream);
-      });
 
       // If caller, create and send offer
       if (!isReceiver && !hasCreatedOffer.current) {
@@ -298,7 +327,7 @@ export default function VideoCall({
         });
         
         // Small delay to ensure incoming_call is processed first
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         const offer = await pc.createOffer({
           offerToReceiveAudio: true,
@@ -309,7 +338,7 @@ export default function VideoCall({
         await sendSignal('offer', offer);
         setDebugInfo('Offer sent, waiting for answer...');
       } else if (isReceiver) {
-        // If receiver, notify that we accepted and start polling for offer
+        // If receiver, notify that we accepted
         setDebugInfo('Accepting call...');
         setCallStatus('ringing');
         await sendSignal('call_accepted', {});
@@ -317,7 +346,7 @@ export default function VideoCall({
         
         // After 5 seconds, request offer again if still waiting
         setTimeout(async () => {
-          if (!hasReceivedOffer.current && !peerConnectionRef.current?.remoteDescription) {
+          if (!hasReceivedOffer.current && peerConnectionRef.current && !peerConnectionRef.current.remoteDescription) {
             console.log('No offer received after 5s, requesting again...');
             await sendSignal('request_offer', {});
             setDebugInfo('Requested offer from caller...');
