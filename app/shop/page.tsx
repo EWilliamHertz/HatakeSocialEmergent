@@ -344,7 +344,7 @@ export default function ShopPage() {
 
       {/* Cart Summary (Fixed) */}
       {cartCount > 0 && (
-        <div className="fixed bottom-6 right-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-72 border border-gray-200 dark:border-gray-700">
+        <div className="fixed bottom-6 right-6 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-80 border border-gray-200 dark:border-gray-700">
           <h3 className="font-bold text-gray-900 dark:text-white mb-4">Cart Summary</h3>
           <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
             {cart.map(item => {
@@ -363,11 +363,22 @@ export default function ShopPage() {
               <span className="text-gray-900 dark:text-white">Total</span>
               <span className="text-blue-600">SEK {cartTotal.toFixed(2)}</span>
             </div>
+            
+            {/* Payment Information */}
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4 text-xs">
+              <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment Options:</p>
+              <div className="space-y-1 text-gray-600 dark:text-gray-400">
+                <p><span className="font-medium">Swish:</span> 123-587 57 37</p>
+                <p><span className="font-medium">Kontonummer:</span> 9660-357 25 85</p>
+                <p><span className="font-medium">Bankgiro:</span> 5051-0031</p>
+              </div>
+            </div>
+            
             <a
-              href={`mailto:contact@hatake.social?subject=Order Inquiry&body=I would like to order:%0A%0A${cart.map(item => {
+              href={`mailto:ernst@hatake.eu?subject=Order from Hatake.Social Shop&body=I would like to order:%0A%0A${cart.map(item => {
                 const product = products.find(p => p.id === item.id);
                 return `${product?.name} x${item.quantity}`;
-              }).join('%0A')}%0A%0ATotal: SEK ${cartTotal.toFixed(2)}`}
+              }).join('%0A')}%0A%0ATotal: SEK ${cartTotal.toFixed(2)}%0A%0A---%0APayment Options:%0ASwish: 123-587 57 37%0AKontonummer: 9660-357 25 85%0ABankgiro: 5051-0031%0A%0APlease include your payment method and delivery address.`}
               className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
             >
               <Mail className="w-4 h-4" />
