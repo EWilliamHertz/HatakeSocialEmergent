@@ -139,7 +139,20 @@ export default function MessengerWidget() {
       try {
         // Use preview mode - this won't mark 'offer' signals as processed
         const res = await fetch('/api/calls?mode=preview', { credentials: 'include' });
-        const data = await res.json();
+        
+        // Check if response is OK and JSON
+        if (!res.ok) return;
+        
+        const text = await res.text();
+        if (!text) return;
+        
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          console.warn('Invalid JSON response from /api/calls');
+          return;
+        }
         
         if (data.success && data.signals) {
           for (const signal of data.signals) {
@@ -160,7 +173,7 @@ export default function MessengerWidget() {
           }
         }
       } catch (err) {
-        console.error('Poll incoming calls error:', err);
+        // Silently ignore polling errors to avoid console spam
       }
     };
     
