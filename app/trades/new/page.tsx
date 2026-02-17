@@ -430,12 +430,12 @@ export default function NewTradePage() {
               <div className="flex items-center gap-6">
                 <div className="text-center">
                   <p className="text-sm text-gray-600 dark:text-gray-400">You Offer</p>
-                  <p className="text-2xl font-bold text-green-600">${offeredValue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-green-600">€{offeredValue.toFixed(2)}</p>
                 </div>
                 <ArrowRightLeft className="w-6 h-6 text-gray-400" />
                 <div className="text-center">
                   <p className="text-sm text-gray-600 dark:text-gray-400">You Request</p>
-                  <p className="text-2xl font-bold text-blue-600">${requestedValue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-blue-600">€{requestedValue.toFixed(2)}</p>
                 </div>
               </div>
               <div className="text-right">
@@ -445,7 +445,7 @@ export default function NewTradePage() {
                   offeredValue < requestedValue ? 'text-green-600' : 'text-gray-600'
                 }`}>
                   {offeredValue > requestedValue ? '-' : offeredValue < requestedValue ? '+' : ''}
-                  ${Math.abs(offeredValue - requestedValue).toFixed(2)}
+                  €{Math.abs(offeredValue - requestedValue).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -455,7 +455,7 @@ export default function NewTradePage() {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-gray-900 dark:text-white">You Offer ({offeredCards.length} cards)</h3>
-                <span className="text-lg font-bold text-green-600">${offeredValue.toFixed(2)}</span>
+                <span className="text-lg font-bold text-green-600">€{offeredValue.toFixed(2)}</span>
               </div>
               {offeredCards.length === 0 ? (
                 <p className="text-gray-500 text-sm text-center py-3">Select cards from your collection below</p>
@@ -519,7 +519,7 @@ export default function NewTradePage() {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-gray-900 dark:text-white">You Request ({requestedCards.length} cards)</h3>
-                <span className="text-lg font-bold text-blue-600">${requestedValue.toFixed(2)}</span>
+                <span className="text-lg font-bold text-blue-600">€{requestedValue.toFixed(2)}</span>
               </div>
               {requestedCards.length === 0 ? (
                 <p className="text-gray-500 text-sm text-center py-3">
