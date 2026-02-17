@@ -695,7 +695,7 @@ export default function CollectionPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ csvContent: text, action: 'preview' })
+        body: JSON.stringify({ csvContent: text, action: 'preview', gameType: importGameType })
       });
 
       const data = await res.json();
