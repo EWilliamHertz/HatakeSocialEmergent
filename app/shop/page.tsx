@@ -248,8 +248,9 @@ export default function ShopPage() {
             {filteredProducts.map(product => (
               <div 
                 key={product.id} 
-                className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
+                className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
                 data-testid={`product-${product.id}`}
+                onClick={() => { setSelectedProduct(product); setGalleryIndex(0); }}
               >
                 <div className="h-48 relative bg-gray-100 dark:bg-gray-700">
                   {product.image ? (
@@ -274,7 +275,7 @@ export default function ShopPage() {
                     </span>
                   </div>
                   <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
-                    {product.description}
+                    {renderDescription(product.description)}
                   </p>
                   <div className="space-y-2 mb-4">
                     {product.features?.map((feature, idx) => (
