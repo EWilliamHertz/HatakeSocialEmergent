@@ -46,6 +46,8 @@ export default function DecksPage() {
   const pokemonFormats = ['Standard', 'Expanded', 'Legacy', 'Unlimited'];
   const allFormats = [...new Set([...mtgFormats, ...pokemonFormats])];
 
+  const ADMIN_EMAILS = ['zudran@gmail.com', 'ernst@hatake.eu'];
+
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
@@ -58,6 +60,7 @@ export default function DecksPage() {
       .then((data) => {
         if (data?.user) {
           setCurrentUserId(data.user.user_id);
+          setIsAdmin(ADMIN_EMAILS.includes(data.user.email) || data.user.is_admin);
           loadDecks();
           loadCommunityDecks();
         }
