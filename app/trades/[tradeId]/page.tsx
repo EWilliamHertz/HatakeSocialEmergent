@@ -284,8 +284,8 @@ export default function TradeDetailPage() {
               {isInitiator ? 'They Offer' : 'You Offer'}
             </h2>
             <div className="space-y-3">
-              {(isInitiator ? trade.recipient_items : trade.initiator_items)?.length > 0 ? (
-                (isInitiator ? trade.recipient_items : trade.initiator_items).map((item, idx) => (
+              {(isInitiator ? trade.receiver_cards : trade.initiator_cards)?.length > 0 ? (
+                (isInitiator ? trade.receiver_cards : trade.initiator_cards).map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                     {item.card_image ? (
                       <Image src={item.card_image} alt={item.card_name} width={48} height={68} className="rounded object-cover" />
