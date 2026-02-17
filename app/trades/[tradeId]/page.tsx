@@ -163,11 +163,11 @@ export default function TradeDetailPage() {
 
   const isInitiator = trade.initiator_id === currentUserId;
   const otherParty = isInitiator 
-    ? { id: trade.recipient_id, name: trade.recipient_name, picture: trade.recipient_picture }
+    ? { id: trade.receiver_id, name: trade.recipient_name, picture: trade.recipient_picture }
     : { id: trade.initiator_id, name: trade.initiator_name, picture: trade.initiator_picture };
 
-  const myItems = isInitiator ? trade.initiator_items : trade.recipient_items;
-  const theirItems = isInitiator ? trade.recipient_items : trade.initiator_items;
+  const myItems = isInitiator ? trade.initiator_cards : trade.receiver_cards;
+  const theirItems = isInitiator ? trade.receiver_cards : trade.initiator_cards;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
