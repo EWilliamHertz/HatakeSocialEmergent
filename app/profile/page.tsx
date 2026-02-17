@@ -276,13 +276,22 @@ export default function MyProfilePage() {
                     </button>
                   </>
                 ) : (
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Edit Profile
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditing(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={() => setShowSettings(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Settings
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
