@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
         cards: previewCards,
         totalCards: previewCards.length,
         totalQuantity: previewCards.reduce((sum, c) => sum + c.quantity, 0),
-        format
+        format: detectedFormat
       });
     }
 
