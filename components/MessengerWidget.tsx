@@ -70,6 +70,7 @@ export default function MessengerWidget() {
   const [currentUserName, setCurrentUserName] = useState('');
   const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>(null);
   const [isReceivingCall, setIsReceivingCall] = useState(false);
+  const [activeCallData, setActiveCallData] = useState<IncomingCallData | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
