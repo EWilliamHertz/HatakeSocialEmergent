@@ -4,72 +4,74 @@
 Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 - Card collection management (MTG and Pokémon)
 - Marketplace for buying/selling
-- Trading system
+- Trading system with value tracking
 - Social features (feed, messaging, groups)
-- Real-time video/voice calls
+- Real-time video/voice calls (WebRTC)
 
 ## Core Requirements
 1. **Authentication**: Google Sign-In and Email/Password
-2. **Card Management**: Search, collect, CSV import, pricing
+2. **Card Management**: Search, collect, CSV import (MTG/Pokemon), pricing
 3. **Social**: Feed with posts/comments/reactions, Friends, Groups
-4. **Messaging**: Real-time with media sharing
-5. **Commerce**: Marketplace, trades, shop
-6. **Admin Panel**: User management, content moderation
+4. **Messaging**: Real-time with media sharing and fullscreen image view
+5. **Commerce**: Marketplace, trades with value summary, shop with product gallery
+6. **Admin Panel**: User management, content moderation, shop management with photo uploads
 
 ## What's Been Implemented
 
-### February 17, 2026 - Session Updates
-- ✅ Bulk list for sale - Backend API and frontend modal with individual pricing
-- ✅ CSV Import game type selector - MTG/Pokemon dropdown added
-- ✅ Dark mode on Trades page - CSS classes updated
-- ✅ Trade detail page - Shows card names, values, and info
-- ✅ Trade creation sends card names/prices - Fixed data structure
-- ✅ Trade values in EUR - Changed from $ to €
-- ✅ Admin delete community decks - Added functionality
-- ✅ Payment info (Swish/bank) - Added to shop checkout (123-587 57 37, 9660-357 25 85, 5051-0031)
+### February 17, 2026 - Evening Session
+- ✅ Removed heart emoji from feed reactions (redundant with like button)
+- ✅ Messenger widget image expand - Click opens fullscreen modal
+- ✅ Admin panel shop photo uploads - Main image + gallery images
+- ✅ Shop product detail modal with photo gallery system
+- ✅ Product descriptions support **BOLD** markdown formatting
+- ✅ Groups UX improved - Click to expand info, Enter button on right
+- ✅ Trade overview dashboard - Stats showing active/completed/total value
+- ✅ Trade tabs show counts (Active, Completed)
+
+### February 17, 2026 - Earlier Session
+- ✅ Bulk list for sale with individual pricing
+- ✅ CSV Import game selector (MTG/Pokemon dropdown)
+- ✅ Dark mode on Trades page
+- ✅ Trade detail page with card names, values, totals
+- ✅ Profile settings with payment details and shipping address
+- ✅ Trade detail shows payment/shipping info when accepted
+- ✅ Feed emoji reactions in single section
+- ✅ Messages photo expand to fullscreen modal
+- ✅ Admin can delete community decks
+- ✅ Shop payment info (Swish, Bankgiro, Account)
 - ✅ Email updated to ernst@hatake.eu
-- ✅ Feed emoji/comment rows - Combined into single section
-- ✅ Messenger photo expand - Changed to fullscreen modal
-- ✅ "Member since Invalid Date" - Fixed with fallback
-- ✅ Profile Quick Actions → Collection + Items for Sale sections
-- ✅ Profile Settings modal - Added payment details, shipping address, banner URL
-- ✅ Trade detail shows payment/shipping info - Displayed when trade accepted
+- ✅ "Member since Invalid Date" fixed
+- ✅ Profile shows Collection + Items for Sale sections
 
 ### Previous Sessions
 - CSV Import for MTG (ManaBox) and Pokémon formats
-- MTG Search via backend proxy (CORS fix)
+- MTG Search via backend proxy
 - Unified Search page
 - Dark mode consistency
 - Admin tools (promote/demote users, delete posts)
 - Avatar dropdown menu
-- Combined Community page (Friends + Groups)
+- Combined Community page
 - Server-side API caching
-- Messenger enhancements (timestamps, search, media gallery)
+- Messenger enhancements
 
-## Database Schema Updates
-New columns added to `users` table:
-- `banner_url TEXT`
-- `shipping_address TEXT`
-- `payment_swish TEXT`
-- `payment_bankgiro TEXT`
-- `payment_account TEXT`
+## Database Updates
+- `users` table: banner_url, shipping_address, payment_swish, payment_bankgiro, payment_account
+- `shop_products` table: gallery_images TEXT[]
 
 ## Known Issues / Remaining Work
 
 ### P0 - Critical
-- WebRTC video calls - Still needs WebSocket refactor (partner suggestion provided)
+- WebRTC video calls - Still needs WebSocket refactor testing
 
 ### P1 - Important
-- Banner interchange on profiles/groups - UI for changing banner images
-- Groups expand info then enter - UX improvement
-- Trade overview dashboard - Summary of ongoing/completed trades with values
+- Profile/group banner image upload UI
+- Pokemon CSV import full end-to-end testing with real file
 
 ### P2 - Future
-- Mobile app development (user ready when web stable)
+- Mobile app development
 - Payment gateway (Stripe)
 - Find duplicates in collection
 - Sealed product management
-- Advanced marketplace filters
 - Admin Panel analytics tab
 
 ## Tech Stack
