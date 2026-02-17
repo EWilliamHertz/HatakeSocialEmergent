@@ -223,7 +223,7 @@ export default function TradesPage() {
                         {isInitiator ? 'You offer' : 'They offer'}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {(isInitiator ? trade.initiator_items : trade.recipient_items)?.map((item: any, idx: number) => (
+                        {(isInitiator ? trade.initiator_cards : trade.receiver_cards)?.map((item: any, idx: number) => (
                           <div key={idx} className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded px-2 py-1 text-sm dark:text-white">
                             <Package className="w-4 h-4 text-gray-400" />
                             {item.card_name || 'Card'}
@@ -236,7 +236,7 @@ export default function TradesPage() {
                         {isInitiator ? 'They offer' : 'You offer'}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {(isInitiator ? trade.recipient_items : trade.initiator_items)?.map((item: any, idx: number) => (
+                        {(isInitiator ? trade.receiver_cards : trade.initiator_cards)?.map((item: any, idx: number) => (
                           <div key={idx} className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded px-2 py-1 text-sm dark:text-white">
                             <Package className="w-4 h-4 text-gray-400" />
                             {item.card_name || 'Card'}
