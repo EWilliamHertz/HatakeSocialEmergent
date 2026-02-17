@@ -14,6 +14,12 @@ interface CollectionItem {
   quantity: number;
   condition?: string;
   foil?: boolean;
+  finish?: string;
+  is_signed?: boolean;
+  is_graded?: boolean;
+  grading_company?: string;
+  grade_value?: string;
+  custom_image_url?: string;
   notes?: string;
   added_at: string;
 }
