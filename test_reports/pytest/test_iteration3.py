@@ -60,7 +60,7 @@ class TestMTGProxyEndpoint:
     
     def test_mtg_search_by_scryfall_id(self):
         """Test MTG search by Scryfall ID"""
-        response = requests.get(f"{BASE_URL}/api/cards/mtg?id=5bd6353f-d119-40e6-895c-030a11a7a2fe")
+        response = requests.get(f"{BASE_URL}/api/cards/mtg?id=hatake-preview")
         assert response.status_code == 200
         
         data = response.json()
