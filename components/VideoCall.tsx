@@ -309,6 +309,15 @@ export default function VideoCall({
         setCallStatus('ringing');
         await sendSignal('call_accepted', {});
         setDebugInfo('Waiting for offer from caller...');
+        
+        // After 5 seconds, request offer again if still waiting
+        setTimeout(async () => {
+          if (callStatus === 'ringing' && !peerConnectionRef.current?.remoteDescription) {
+            console.log('No offer received after 5s, requesting again...');
+            await sendSignal('request_offer', {});
+            setDebugInfo('Requested offer from caller...');
+          }
+        }, 5000);
       }
 
       return stream;
