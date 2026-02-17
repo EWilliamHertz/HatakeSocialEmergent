@@ -38,6 +38,10 @@ export async function GET(request: NextRequest) {
 
     await ensureTable();
     const userId = user.user_id;
+    
+    // Check if this is preview mode (MessengerWidget) or active mode (VideoCall)
+    const { searchParams } = new URL(request.url);
+    const mode = searchParams.get('mode') || 'active';
 
     // Get unprocessed signals for this user (last 2 minutes)
     const signals = await sql`
@@ -50,9 +54,19 @@ export async function GET(request: NextRequest) {
     `;
 
     if (signals.length > 0) {
-      // Mark signals as processed
-      const ids = signals.map(s => s.id);
-      await sql`UPDATE call_signals SET processed = true WHERE id = ANY(${ids})`;
+      // In preview mode, only mark non-essential signals as processed
+      // Keep 'offer' signals unprocessed so VideoCall can receive them later
+      if (mode === 'preview') {
+        // Only process 'incoming_call' signals - leave 'offer', 'answer', 'ice-candidate' for VideoCall
+        const previewIds = signals.filter(s => s.signal_type === 'incoming_call').map(s => s.id);
+        if (previewIds.length > 0) {
+          await sql`UPDATE call_signals SET processed = true WHERE id = ANY(${previewIds})`;
+        }
+      } else {
+        // In active mode, mark all signals as processed
+        const ids = signals.map(s => s.id);
+        await sql`UPDATE call_signals SET processed = true WHERE id = ANY(${ids})`;
+      }
       
       return NextResponse.json({ 
         success: true, 
