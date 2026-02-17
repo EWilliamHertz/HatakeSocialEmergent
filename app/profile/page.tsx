@@ -137,6 +137,40 @@ export default function MyProfilePage() {
     return '/placeholder-card.png';
   };
 
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success && data.url) {
+        // Update banner in DB
+        await fetch('/api/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ banner_url: data.url })
+        });
+        setUser(prev => prev ? { ...prev, banner_url: data.url } : null);
+        setEditBanner(data.url);
+      } else {
+        alert('Failed to upload banner');
+      }
+    } catch (error) {
+      console.error('Banner upload error:', error);
+      alert('Failed to upload banner');
+    }
+  };
+
   const saveProfile = async () => {
     if (!editName.trim()) return;
     setSaving(true);
