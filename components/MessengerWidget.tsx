@@ -74,6 +74,7 @@ export default function MessengerWidget() {
   const [uploading, setUploading] = useState(false);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
