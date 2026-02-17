@@ -24,9 +24,17 @@ interface Trade {
   initiator_id: string;
   initiator_name: string;
   initiator_picture?: string;
+  initiator_shipping_address?: string;
+  initiator_payment_swish?: string;
+  initiator_payment_account?: string;
+  initiator_payment_bankgiro?: string;
   receiver_id: string;
   recipient_name: string;
   recipient_picture?: string;
+  recipient_shipping_address?: string;
+  recipient_payment_swish?: string;
+  recipient_payment_account?: string;
+  recipient_payment_bankgiro?: string;
   initiator_cards: TradeItem[];
   receiver_cards: TradeItem[];
   message?: string;
