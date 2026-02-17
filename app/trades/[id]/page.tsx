@@ -263,10 +263,15 @@ export default function TradeDetailPage() {
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           {/* Your Items */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
-              <User className="w-5 h-5 text-blue-500" />
-              {isInitiator ? 'You Offer' : 'They Offer'}
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold dark:text-white flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-500" />
+                {isInitiator ? 'You Offer' : 'They Offer'}
+              </h2>
+              {myTotal > 0 && (
+                <span className="text-lg font-bold text-green-600">€{myTotal.toFixed(2)}</span>
+              )}
+            </div>
             <div className="space-y-3">
               {(isInitiator ? trade.initiator_cards : trade.receiver_cards)?.length > 0 ? (
                 (isInitiator ? trade.initiator_cards : trade.receiver_cards).map((item, idx) => (
