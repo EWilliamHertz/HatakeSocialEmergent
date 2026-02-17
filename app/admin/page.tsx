@@ -15,6 +15,7 @@ interface Product {
   price_wholesale_max: number;
   currency: string;
   image_url: string;
+  gallery_images: string[];
   category: string;
   stock_quantity: number;
   sku: string;
