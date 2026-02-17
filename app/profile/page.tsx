@@ -52,6 +52,8 @@ export default function MyProfilePage() {
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [saving, setSaving] = useState(false);
+  const [recentCollection, setRecentCollection] = useState<CollectionItem[]>([]);
+  const [myListings, setMyListings] = useState<Listing[]>([]);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
