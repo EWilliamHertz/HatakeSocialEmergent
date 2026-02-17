@@ -5,209 +5,236 @@ The user's goal is to create a new, full-stack TCG (Trading Card Game) social pl
 1.  **Application:** A modern, full-stack Next.js web application.
 2.  **Core Features:**
     *   **Authentication:** Comprehensive system with Google Sign-In and Email/Password.
-    *   **Card Management:** Search cards, manage a personal collection (with manual add and CSV import), view collection pricing.
+    *   **Card Management:** Search cards, manage a personal collection (with manual add and CSV import), view collection pricing. An enhanced Add Card modal with options for quantity, finish (holo/foil), condition, graded status, custom image uploads, and signed status.
     *   **Social:** Social Feed with posts, comments, replies, and emoji reactions. Friends system, Groups/Communities with group chat and member invites.
     *   **Messaging:** Real-time Messaging with an incoming call notification system. WebRTC voice/video calls.
     *   **Commerce:** A Marketplace for buying/selling cards. A trade creation page. A Shop page for official merchandise.
     *   **Profiles & Decks:** User profiles and a Deck Builder.
     *   **Admin Panel:** A dashboard for site administration, including shop inventory management, user stats, and user management.
 3.  **Integrations:** Connect to Scryfall API for MTG cards and TCGdex API for Pokemon cards. Use a user-provided Neon PostgreSQL database.
-4.  **UI/UX:** A functional Dark Mode, in-app notifications, an 'About Us' page, and a landing page that showcases features.
+4.  **UI/UX:** A functional Dark Mode, in-app notifications, an 'About Us' page, and a landing page that showcases features. Currency consistency (EUR).
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a functional Next.js monolith with a FastAPI proxy backend. In this session, the agent implemented a large number of new features, including a complete commenting system (with replies and emoji reactions), new 'About Us' and 'Shop' pages, and an Admin panel for shop inventory management. The problematic Pokemon TCG API was successfully replaced with the TCGdex API, and the card search functionality was improved. The video call system was significantly reworked to include an incoming call notification and is now able to establish a connection, although it remains unstable.
+The application is a Next.js monolith with a FastAPI proxy. In the last session, the agent focused on a large number of user-reported bugs and feature enhancements based on scouting the original  website. This included a completely new Add to Collection modal, fixes for Pokemon card search (including price display), and a switch to EUR currency for all cards. However, a critical bug emerged where the CSV import works locally but fails in production (Vercel/preview), creating blank Unknown Card entries. This, along with regressions in video calls and MTG search, and incomplete Dark Mode, has left the application in an unstable state. The user is highly frustrated by the discrepancy between local previews and the non-functional production deployment.
 
 **Last working item**:
-    - Last item agent was working: The agent was implementing the remaining tabs (Analytics, Users, Settings) in the Admin panel. It had created the backend APIs to fetch user data and stats and was about to implement the frontend UI for these sections.
+    - Last item agent was working: Investigating a critical production bug where the CSV import feature creates database entries with  and empty . This causes imported cards to render as Unknown Card on the deployed servers, despite working correctly in the agent's local environment.
     - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? both. The frontend needs to be tested for the new admin UI components and data display. The backend needs testing for the new  and  endpoints.
-    - User Testing Done: N
+    - Which testing method agent to use? backend testing agent. The agent needs to specifically test the  endpoint, but with a focus on replicating the production environment's failure. Adding extensive logging to the deployed API is the most crucial next step.
+    - User Testing Done: Y
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Video calls are unstable (P0)
-  - Issue 2: Admin Panel is incomplete (P1)
-  - Issue 3: Verify fix for Pokémon card search (P1)
-  - Issue 4: User testing pending for multiple features (P2)
+  - Issue 1: CSV import is broken in production (P0)
+  - Issue 2: Video calls are broken and stuck at Connecting... (P0)
+  - Issue 3: Magic: The Gathering (MTG) card search fails in production (P1)
+  - Issue 4: Dark mode is inconsistent across pages (P1)
+  - Issue 5: Pokemon card search results don't show prices when searching by name only (P2)
+  - Issue 6: User is concerned about API call usage and wants to minimize costs (P2)
   
   **Issues Detail:**
-  - **Issue 1:** 
-     - **Description:** After the latest fixes, users can connect to a video call, but they are kicked out shortly after. The connection is unstable.
-     - **Attempted fixes:** The agent identified that brief  states during ICE negotiation were causing the call to terminate prematurely. A fix was implemented in  to be more tolerant of this state. Additional STUN/TURN servers were also added to improve NAT traversal.
+  - **Issue 1: CSV import is broken in production**
+     - **Description:** When the user imports a CSV file on the deployed application (Vercel/preview), it reports success, but the cards show up as Unknown Card with broken images. The agent confirmed the database contains entries with  and empty . This is the user's biggest frustration.
+     - **Attempted fixes:** The agent rewrote the  API to use the correct  table. It also added  to the GET API, suspecting a data-type issue. These fixes worked locally but did not solve the production problem.
      - **Next debug checklist:**
-        1.  Have the user re-test the video call functionality with another user.
-        2.  If the issue persists, inspect browser console logs from both participants at the moment of disconnection to look for WebRTC errors.
-        3.  Review the  logic in  to ensure it correctly handles all connection states (, , , , , ).
-     - **Why fix this issue and what will be achieved with the fix?** This is a critical, high-priority feature that has been a recurring problem. Fixing it is essential for the social platform's core functionality.
+        1.  Heavily instrument the  file with logs, especially within the  function and around the database insertion logic. Deploy and inspect the live server logs to see why  is empty or malformed in that environment.
+        2.  The error  was previously mentioned by the user. Perform a global codebase search for the string  to eliminate any legacy code referencing the old table name.
+        3.  The issue is likely that the card lookup (to Scryfall/TCGdex) within the import function is failing silently in the production environment (due to env vars, timeouts, or network policy), resulting in an empty object being saved.
+     - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker preventing the user from using a core feature. Fixing it is essential to restore usability and user trust.
+     - **Status:** IN PROGRESS
+     - **Is recurring issue?** Y
+     - **Should Test frontend/backend/both after fix?** backend
+     - **Blocked on other issue:** None
+
+  - **Issue 2: Video calls are broken**
+     - **Description:** The video call feature has regressed and is again non-functional. It gets stuck on Connecting... or Waiting for offer from caller....
+     - **Attempted fixes:** None in this session. This is a regression from a previously unstable but working state.
+     - **Next debug checklist:**
+        1.  Re-examine , , and the signaling API at .
+        2.  Use browser developer tools on the deployed app to inspect WebSocket messages and WebRTC negotiation logs for errors during a call attempt.
+     - **Why fix this issue and what will be achieved with the fix?** It's a core social feature of the platform.
      - **Status:** IN PROGRESS
      - **Is recurring issue?** Y
      - **Should Test frontend/backend/both after fix?** both
      - **Blocked on other issue:** None
 
-  - **Issue 2:**
-     - **Description:** The user requested a full-featured admin panel. The agent implemented the Shop Inventory tab, but the Analytics, Users, and Settings tabs are still placeholders.
-     - **Attempted fixes:** The agent created API endpoints (, ) and started scaffolding the UI in .
+  - **Issue 3: Magic: The Gathering (MTG) card search fails in production**
+     - **Description:** Searching for MTG cards fails with a Load failed console error on the deployed app. It works locally for the agent.
+     - **Attempted fixes:** The agent added a timeout controller to the client-side  call in .
      - **Next debug checklist:**
-         1.  Complete the UI for the Analytics tab, fetching and displaying data from the  endpoint.
-         2.  Implement the Users tab with a table of users from , including functionality to view details or take administrative actions.
-         3.  Clarify requirements for the Settings tab and implement it.
-     - **Why fix this issue and what will be achieved with the fix?** Provides essential management capabilities for the site owner.
+        1.  The client-side Scryfall API call is likely being blocked by CORS or another browser security policy in production.
+        2.  Refactor the search logic. Create a new backend API route (e.g., ) that takes the search query, calls the Scryfall API from the server, and returns the results to the client. This bypasses all client-side fetching issues.
+     - **Why fix this issue and what will be achieved with the fix?** Makes the app usable for MTG players.
      - **Status:** IN PROGRESS
-     - **Is recurring issue?** N
-     - **Should Test frontend/backend/both after fix?** both
-     - **Blocked on other issue:** None
-
-  - **Issue 3:**
-     - **Description:** The user reported being unable to search for Pokémon cards by name only and that specific set+number searches were failing (e.g., JTG + 24).
-     - **Attempted fixes:** The agent replaced the unreliable Pokemon TCG API with the faster TCGdex API. The search logic in  and the corresponding backend API () were updated to allow name-only searches and handle the new API format.
-     - **Next debug checklist:**
-         1.  Prompt the user to test the Add Card Manually feature again for Pokémon cards.
-         2.  Specifically ask them to try searching by name only (e.g., Blaziken) and by a valid set + number combination.
-     - **Why fix this issue and what will be achieved with the fix?** It makes a core feature (collection management) usable for Pokémon TCG players.
-     - **Status:** USER VERIFICATION PENDING
      - **Is recurring issue?** Y
      - **Should Test frontend/backend/both after fix?** both
      - **Blocked on other issue:** None
 
-  - **Issue 4:**
-     - **Description:** Several features implemented in the previous session (CSV import, Dark Mode, Trade Value Summaries) and this session (Group Chat, Group Invites) are pending user verification.
-     - **Attempted fixes:** NA
+  - **Issue 4: Dark mode is inconsistent**
+     - **Description:** Dark mode does not apply to the Collection, Marketplace, Trades, and Friends pages.
+     - **Attempted fixes:** The agent added  classes to the root layout file.
      - **Next debug checklist:**
-         1.  Remind the user that these features are implemented and awaiting their testing. The user specifically mentioned they would test the group features themselves.
-     - **Why fix this issue and what will be achieved with the fix?** Ensures that completed work meets user expectations before moving on.
-     - **Status:** USER VERIFICATION PENDING
+        1.  Inspect the root component of each affected page (e.g., ).
+        2.  Apply appropriate  background and text color utility classes (e.g., ) to the main container of each page to ensure consistency.
+     - **Why fix this issue and what will be achieved with the fix?** Provides a polished and consistent user experience.
+     - **Status:** IN PROGRESS
      - **Is recurring issue?** N
-     - **Should Test frontend/backend/both after fix?** both
+     - **Should Test frontend/backend/both after fix?** frontend
+     - **Blocked on other issue:** None
+
+  - **Issue 5: Pokemon card search results don't show prices by name**
+     - **Description:** When searching for a Pokémon by name (e.g., Blaziken), the search results list doesn't show prices. Prices only appear when searching by set+number, or after clicking to add the card to the collection. The user wants to see prices in the initial name search results.
+     - **Attempted fixes:** The agent fetched price data within the Add Card modal flow.
+     - **Next debug checklist:**
+        1.  The TCGdex list endpoint () does not return price. To implement this, the  function in  must be modified.
+        2.  After getting the initial list of results, iterate through them and make parallel secondary  calls to the specific TCGdex card endpoint () for each card to retrieve its pricing data.
+        3.  Update the UI state with the enriched results. This will increase API calls.
+     - **Why fix this issue and what will be achieved with the fix?** Improves search UX, making it consistent with the original .
+     - **Status:** IN PROGRESS
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** frontend
+     - **Blocked on other issue:** Issue 6 (API Usage).
+
+  - **Issue 6: User concerned about API call usage**
+     - **Description:** The user is asking about the number of API calls being made and how to minimize them, likely for cost reasons.
+     - **Attempted fixes:** None.
+     - **Next debug checklist:**
+        1.  The fix for Issue 5 will significantly increase API calls. The best solution is server-side caching.
+        2.  Propose and implement a caching layer (e.g., using Redis or a simple DB table) on the backend. All external API calls (to Scryfall and TCGdex) should be routed through a backend proxy that checks the cache before making a live request.
+     - **Why fix this issue and what will be achieved with the fix?** Manages operational costs and improves performance.
+     - **Status:** NOT STARTED
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** backend
      - **Blocked on other issue:** None
 
 **In progress Task List**:
-  - **Task 1: Complete Admin Panel**
-     - **Where to resume:** . The API endpoints are ready. The task is to build out the React components for the Analytics, Users, and Settings tabs to consume the data.
-     - **What will be achieved with this?** A fully functional admin dashboard for site management.
+  - **Task 1: Stabilize Production and Fix Critical Bugs**
+     - **Where to resume:** . Start by adding extensive logging to diagnose the production-only CSV import failure.
+     - **What will be achieved with this?** A stable, functional application deployed on the preview/Vercel server that matches the behavior observed locally. This involves fixing the CSV import, video calls, MTG search, and dark mode.
      - **Status:** IN PROGRESS
      - **Should Test frontend/backend/both after fix?** both
      - **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
+    *   **P1:** Complete Admin Panel (Analytics, Users, Settings tabs).
     *   **P1:** Advanced marketplace filters.
-    *   **P2:** User verification of group chat/messaging and member invites.
 *   **Future Tasks:**
-    *   Implement a payment gateway for the Shop (user asked for a recommendation).
-    *   Implement card deck sharing functionality.
-    *   Develop a mobile Android application (user agreed to postpone this).
+    *   Implement a payment gateway (Stripe recommended).
+    *   Implement card deck sharing.
+    -   'Find duplicates' feature in collection.
+    -   Sealed product management.
+    *   Develop a mobile Android application (postponed).
 
 **Completed work in this session**
-- **Social Feed:** Implemented a complete commenting system with nested replies and emoji reactions on posts and comments.
-- **Video Call Rework:** Re-architected the signaling flow with an incoming call notification system in . Connection is now established before dropping. Added more robust STUN/TURN server configuration.
-- **New Pages:** Created the 'About Us' () and 'Shop' () pages.
-- **Admin Panel:** Created the initial admin panel at  and fully implemented the Shop Inventory management tab (CRUD for products).
-- **Pokémon API Integration:** Replaced the faulty  with the  API for all Pokémon card searches, fixing search and performance issues.
-- **Card Search Fix:** Updated the Add Card Manually modal to allow searching by card name in addition to set/collector number.
-- **Landing Page:** Updated the landing page to reflect the newly added features.
+- **Enhanced Add Card Flow:** Implemented a new, multi-step modal for adding cards to the collection, featuring options for quantity, condition, finish (foil/holo), and graded status. This was based on the user's request to match .
+- **Custom Card Attributes:** Added backend and frontend support for  and  properties on collection items.
+- **Currency Unification:** Updated all card search and collection display logic to use EUR (€) as the primary currency, fetching EUR prices from both Scryfall (for MTG) and TCGdex (for Pokemon). The collection value now correctly calculates a mixed-currency total.
+- **Pokemon Search Improvements:** Fixed Pokemon search to correctly handle set code aliases (e.g., JTG -> sv09) and allow searching by set + number.
+- **Build & Deployment Fixes:** Resolved several critical build errors that were preventing deployment, including type errors related to the new currency object and issues with server-side JSON parsing.
+- **CSV Import Rework (Local):** Rewrote the CSV import API to use the correct database schema. This works locally but is the source of the main production bug.
 
 **Earlier issues found/mentioned but not fixed**
-   - **Issue 1: Video call instability.** While the connection is now established, it is not stable. This is the main remaining issue from the recurring video call problem.
+   - All known issues are captured in the All Pending/In progress Issue list section. The session was focused on fixing a backlog of user-reported issues.
 
 **Known issue recurrence from previous fork**
-  - **Issue recurrence in previous fork**: Video calls were non-functional.
-  - **Recurrence count**: 2+
-  - **Status**: IN PROGRESS (The issue has evolved from no connection to unstable connection).
+  - **Issue recurrence in previous fork**: Video calls were non-functional or unstable.
+  - **Recurrence count**: 3+
+  - **Status**: IN PROGRESS (The feature has regressed to fully non-functional).
 
 **Code Architecture**
-*   **Framework:** Next.js 15+ with App Router
+*   **Framework:** Next.js 14+ with App Router
 *   **Structure:** Monolithic Next.js app in .
-*   **Backend:** FastAPI proxy for some routes.
+*   **Backend:** Next.js Route Handlers (previously a FastAPI proxy).
 *   **Language:** TypeScript
 *   **Styling:** Tailwind CSS, shadcn/ui
 *   **Database:** PostgreSQL (Neon) via  library.
 
 **key DB schema**
-  - **signaling:** Modified to use a boolean  flag for signals instead of deleting them, to improve WebRTC race condition handling.
-  - **comments:** 
-  - **reactions:** 
-  - **products:** 
+  - **collection_items:** Updated to include  and .
+  - **marketplace_listings:** Updated to include  and .
 
 **changes in tech stack**
-  - Replaced  library with direct  calls to the  API () for all Pokémon card data.
+  - The backend is now fully reliant on Next.js Route Handlers. The FastAPI proxy mentioned in the previous summary appears to be phased out or unused for the features worked on.
 
 **All files of reference**
-*   : **UPDATED** with tolerant connection state handling and more STUN/TURN servers.
-*   : **UPDATED** with an incoming call polling and notification system.
-*   : **UPDATED** to use a  flag for signals.
-*   : **REWRITTEN** to support comments, replies, and reactions.
-*   : **CREATED** for site administration, with a functional shop inventory tab.
-*   : **CREATED** and linked to the new products DB table.
-*   : **CREATED**.
-*   : **UPDATED** the Add Card modal search logic.
-*   : **REWRITTEN** to use the TCGdex API.
-*   : **CREATED** for CRUD operations on shop products.
-*   : **CREATED** to provide data for the admin dashboard.
-*   : **CREATED** to provide data for the admin dashboard.
-*   : **CREATED** for managing comments and replies.
-*   : **CREATED** for managing post reactions.
-*   : **CREATED** for managing comment reactions.
+*   : **HEAVILY MODIFIED**. The primary file for card search, collection display, CSV import UI, and the new Add Card modals. **This file is over 2000 lines long and needs refactoring.**
+*   : **REWRITTEN**. Handles the CSV import logic. **This is the likely source of the critical production bug.**
+*   : **UPDATED**. API for managing the collection. Updated to handle new  and  fields and parse JSON data from the database.
+*   : **UPDATED**. The  and  functions were modified to handle the  object structure and ensure EUR display.
+*   : **UPDATED**. Contains logic for Pokemon card searches, including set code aliasing.
+*   : **UPDATED**. Schema definition file; updated with new columns for custom images and signed status.
+*   : **CREATED**. Endpoint for handling custom card image uploads.
+*   : A key file for the broken video call feature.
+*   : **UPDATED** to add root dark mode classes.
 
 **Areas that need refactoring**:
-*   The  file contains logic for multiple tabs. It should be broken down into separate components for each administrative section (e.g., , ).
-*    and  are very large and complex. The WebRTC and signaling logic could be extracted into custom hooks (e.g., , ) to simplify the components.
+*    is critically oversized and complex. It should be immediately broken down into smaller, manageable components for:
+    *   The Add Card search modal.
+    *   The Confirm Add options modal.
+    *   The collection grid/view.
+    *   The various filters and action buttons.
+    *   State management should be refactored from the large number of  hooks into  or a dedicated state management solution.
+*   All external API fetching logic (Scryfall, TCGdex) should be moved from the client-side  into dedicated backend API routes. This will solve the MTG search CORS issue, centralize logic, and enable server-side caching to address API usage concerns.
 
 **key api endpoints**
-*    (GET, POST): Handles WebRTC signaling.
-*    (POST): Creates a comment or reply.
-*    (POST): Adds a reaction to a post.
-*    (POST): Adds a reaction to a comment.
-*    (GET, POST, PUT, DELETE): Manages shop inventory.
-*    (GET): Retrieves site statistics for the admin panel.
-*    (GET): Retrieves user list for the admin panel.
-*    (GET): Fetches shop products for the public-facing page.
+*    (POST): Imports a card collection from a CSV file. **CRITICALLY BROKEN IN PRODUCTION.**
+*    (GET, POST, PUT, DELETE): Manages individual cards in the collection.
+*    (POST): Handles file uploads for custom card images.
+*    (GET, POST): Handles WebRTC signaling for video calls. **FEATURE IS BROKEN.**
 
 **Critical Info for New Agent**
-*   **Video Calls are P0:** This is the absolute top priority. The user confirmed the last fix allows a connection, but it's unstable and drops. The next step is to verify if the very last agent change (tolerating  state) solved the instability. This needs immediate user testing.
-*   **Admin Panel Completion is P1:** The user explicitly asked for the other tabs in the admin panel to be fixed/completed. The backend APIs are done; the task is now primarily frontend work in .
-*   **Verify Pokémon Search Fix:** The user's complaint about Pokémon card search was addressed by switching to a new API (TCGdex) and enabling name-only search. This needs to be confirmed as fixed by the user.
-*   **Payment Gateway Decision Pending:** The user asked for a payment gateway recommendation. The agent provided options. This topic will likely come up again when the user wants to make the shop functional. Be prepared to integrate a service like Stripe.
+*   **PRODUCTION IS BROKEN.** Do not trust local tests. The user is extremely frustrated that the deployed app does not work. Your absolute first priority is to fix the CSV import bug ( cards) by debugging on the live preview server (e.g., adding logs and re-deploying).
+*   **Tackle Regressions Head-On:** The video call feature and MTG search are broken again. These are core features that need to be stabilized. For MTG search, move the logic to a backend route to avoid client-side issues.
+*   **Address User Concerns Directly:** The user is frustrated about wasted credits and API usage. Acknowledge this and propose a concrete plan (server-side caching) to manage costs, especially after implementing the fix for showing prices in Pokemon search results.
+*   **Refactor as you go:** The  file is unmaintainable. When you touch it to fix a bug, take the opportunity to extract the relevant part into a separate component.
 
 **documents and test reports created in this job**
 *   None.
 
-**Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Agreed to integrate a new Pokémon API, test video calls, and complete the admin panel. (PENDING)
-2.  **Agent:** Proposed integrating TCGdex as the new Pokémon API and outlined next steps for testing calls and fixing the admin panel.
-3.  **User:** Reported video calls disconnect after connecting, asked for a new Pokémon API, and asked for the agent's opinion on the website's quality. (ADDRESSED)
-4.  **Agent:** Provided instructions on how to test the video call fix with two users.
-5.  **User:** Confirmed they will focus on the website before a mobile app and detailed the Pokémon search issue: can't search by name, and set+number search fails. (ADDRESSED)
-6.  **Agent:** Asked for clarification on priorities: video calls, Pokémon cards, or mobile app.
-7.  **User:** Reported video calls are stuck at Connecting..., and asked to look at Pokémon cards and a mobile app. (ADDRESSED)
-8.  **Agent:** Provided payment gateway recommendations (Stripe, PayPal, etc.).
-9.  **User:** Reported multiple issues: card search is broken, requested a landing page update, asked for a payment gateway recommendation, and asked for shop inventory management in the admin panel. (ADDRESSED)
-10. **Agent:** Began calling the testing agent but was interrupted by the user's message.
+**Last 10 User Messages and any pending HUMAN messages** 
+1.  **User (LATEST):** Reports 5 major issues: 1) CSV import is bullshit and fails in production. 2) Dark mode is broken on several pages. 3) Video calls don't work. 4) MTG search is broken. 5) Pokemon search doesn't show prices by name, and asks about API usage/cost. (ALL PENDING)
+2.  **Agent:** Provides a summary confirming the successful CSV import and currency fixes (based on local tests). (INCORRECT - FAILED IN PROD)
+3.  **User:** Reports the build is failing on Vercel/preview and that CSV import and dark mode are broken there, providing a screenshot of Unknown Card. (ADDRESSED - BUILD FIXED, BUT ROOT CAUSE REMAINS)
+4.  **Agent:** Fixes a build error related to the new currency object structure and marks the task as ready for deployment. (INCOMPLETE FIX)
+5.  **User:** Reports that after the switch to EUR, the CSV import no longer brings over any card data (prices, names, etc.). (ADDRESSED - WAS A LOCAL RENDER ISSUE)
+6.  **Agent:** Updates the code to use EUR prices from Scryfall for MTG cards. (COMPLETED)
+7.  **User:** Asks for Scryfall prices to be in EUR for consistency with Pokemon/Cardmarket. (ADDRESSED)
+8.  **Agent:** Confirms the CSV import is now working and shows a screenshot of the populated collection. (INCORRECT - FAILED IN PROD)
+9.  **User:** Reports an error with CSV import: . (ADDRESSED - API REWRITTEN)
+10. **Agent:** Confirms all search/add/currency fixes are working based on local tests and provides a summary. (INCORRECT - FAILED IN PROD)
 
 **Project Health Check:**
 *   **Broken:**
-    *   **Video/Voice Calls:** The connection is unstable and drops shortly after being established.
+    *   **CSV Import (in Production):** Core feature is non-functional on deployed servers.
+    *   **Video/Voice Calls:** Feature has regressed and is completely broken.
+    *   **MTG Card Search (in Production):** Fails with a Load failed error.
+    *   **Dark Mode:** Inconsistent and not applied to several key pages.
 *   **Mocked:**
-    *   **Admin Panel:** The Analytics, Users, and Settings tabs are non-functional UI placeholders.
-    *   **Group Chat/Messaging & Invites:** These features are implemented but remain untested by the user.
+    *   **Admin Panel:** The Analytics, Users, and Settings tabs are unimplemented and pending.
+    *   **Advanced Marketplace Filters:** Task has not been started.
 
 **3rd Party Integrations**
 *   **Scryfall API:** For Magic: The Gathering card data.
-*   **TCGdex API:** For Pokémon TCG card data (replaces the old Pokemon TCG SDK).
+*   **TCGdex API:** For Pokémon TCG card data.
 *   **Emergent-managed Google Auth:** For user sign-in.
-*   **PostgreSQL (Neon):** The primary database.
+*   **PostgreSQL (Neon):** The user-provided primary database.
 
 **Testing status**
   - Testing agent used after significant changes: NO
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
-  - Known regressions: None, but the video call feature remains unstable.
+  - Known regressions: Video Calls and MTG Search are confirmed regressions. The CSV import functionality has severely regressed in the production environment.
 
 **Credentials to test flow:**
-*   **User:**  / 
-*   **Admin Users:** ,  (logging in with these emails will show the Admin link in the user menu).
+*   **App User:**  / 
+*   **Admin Users:** ,  (for accessing  panel).
+*   **Reference Site Scout:**  /  on 
 
 **What agent forgot to execute**
-*   The agent did not run the  after implementing a very large batch of new features (comments, reactions, admin panel, new pages, API replacement). This should be done to ensure no regressions were introduced.
-*   The agent did not implement the Advanced marketplace filters task, which was a P1 priority from the previous handoff and was requested again by the user in this session.</analysis>
+*   The agent consistently failed to diagnose the discrepancy between local success and production failure. It did not use logging on the deployed server to debug production-specific issues, instead opting to re-apply local fixes that were ineffective.
+*   The agent did not use the  at any point, which could have helped identify build errors or regressions systematically.
+*   The original task of completing the Admin Panel was completely abandoned and forgotten amidst the bug-fixing attempts.
+*   The agent did not create a plan to address the user's concern about API call costs, even while implementing features that would increase them.</analysis>
