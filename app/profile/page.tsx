@@ -279,39 +279,87 @@ export default function MyProfilePage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* My Collection */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">My Collection</h2>
             <button
               onClick={() => router.push('/collection')}
-              className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition text-center"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
-              <Package className="w-6 h-6 mx-auto mb-2" />
-              <span className="text-sm font-semibold">My Collection</span>
-            </button>
-            <button
-              onClick={() => router.push('/marketplace')}
-              className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 transition text-center"
-            >
-              <ShoppingBag className="w-6 h-6 mx-auto mb-2" />
-              <span className="text-sm font-semibold">Marketplace</span>
-            </button>
-            <button
-              onClick={() => router.push('/friends')}
-              className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition text-center"
-            >
-              <Users className="w-6 h-6 mx-auto mb-2" />
-              <span className="text-sm font-semibold">Friends</span>
-            </button>
-            <button
-              onClick={() => router.push('/search')}
-              className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition text-center"
-            >
-              <Package className="w-6 h-6 mx-auto mb-2" />
-              <span className="text-sm font-semibold">Search Cards</span>
+              View All
             </button>
           </div>
+          {recentCollection.length > 0 ? (
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+              {recentCollection.map((item) => (
+                <div 
+                  key={item.id}
+                  className="cursor-pointer hover:opacity-80 transition"
+                  onClick={() => router.push('/collection')}
+                >
+                  <img 
+                    src={getCardImage(item.card_data)} 
+                    alt={item.card_data?.name || 'Card'} 
+                    className="w-full h-auto rounded-lg shadow-sm"
+                  />
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate text-center">
+                    {item.card_data?.name}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              No cards in collection yet
+            </p>
+          )}
+        </div>
+
+        {/* Items for Sale */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Items for Sale</h2>
+            <button
+              onClick={() => router.push('/marketplace')}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              View Marketplace
+            </button>
+          </div>
+          {myListings.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {myListings.map((listing) => (
+                <div 
+                  key={listing.listing_id}
+                  className="cursor-pointer hover:opacity-80 transition"
+                  onClick={() => router.push('/marketplace')}
+                >
+                  <img 
+                    src={getCardImage(listing.card_data)} 
+                    alt={listing.card_data?.name || 'Card'} 
+                    className="w-full h-auto rounded-lg shadow-sm"
+                  />
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
+                    {listing.card_data?.name}
+                  </p>
+                  <p className="text-sm font-bold text-green-600">
+                    {listing.currency === 'EUR' ? '€' : listing.currency === 'SEK' ? 'kr' : '$'}{listing.price}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400 mb-3">No items listed for sale</p>
+              <button
+                onClick={() => router.push('/collection')}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                List cards from your collection
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
