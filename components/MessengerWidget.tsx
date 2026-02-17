@@ -71,6 +71,9 @@ export default function MessengerWidget() {
   const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>(null);
   const [isReceivingCall, setIsReceivingCall] = useState(false);
   const [activeCallData, setActiveCallData] = useState<IncomingCallData | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -78,6 +81,116 @@ export default function MessengerWidget() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
   const lastMessageCount = useRef(0);
+
+  // Format message timestamp
+  const formatMessageTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24 && date.getDate() === now.getDate()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return date.toLocaleDateString([], { weekday: 'short' });
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
+  // Check if we need a date separator between messages
+  const needsDateSeparator = (currentMsg: Message, prevMsg: Message | null) => {
+    if (!prevMsg) return true;
+    const currentDate = new Date(currentMsg.created_at).toDateString();
+    const prevDate = new Date(prevMsg.created_at).toDateString();
+    return currentDate !== prevDate;
+  };
+
+  // Get date label for separator
+  const getDateLabel = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / 86400000);
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return date.toLocaleDateString([], { weekday: 'long' });
+    return date.toLocaleDateString([], { month: 'long', day: 'numeric' });
+  };
+
+  // Handle media file selection
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setSelectedMedia(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setMediaPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Cancel media upload
+  const cancelMedia = () => {
+    setSelectedMedia(null);
+    setMediaPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Upload media and send message
+  const uploadAndSendMedia = async () => {
+    if (!selectedMedia || !selectedConv) return;
+    
+    const conv = conversations.find(c => c.conversation_id === selectedConv);
+    if (!conv) return;
+    
+    setUploading(true);
+    try {
+      // Upload media first
+      const formData = new FormData();
+      formData.append('file', selectedMedia);
+      
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+      
+      if (!uploadRes.ok) throw new Error('Upload failed');
+      
+      const uploadData = await uploadRes.json();
+      const mediaUrl = uploadData.url;
+      
+      // Determine message type
+      const isVideo = selectedMedia.type.startsWith('video/');
+      const messageType = isVideo ? 'video' : 'image';
+      
+      // Send message with media
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          recipientId: conv.user_id,
+          content: mediaUrl,
+          message_type: messageType
+        })
+      });
+      
+      cancelMedia();
+      loadMessages(selectedConv);
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload media');
+    }
+    setUploading(false);
+  };
   const callPollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize audio
