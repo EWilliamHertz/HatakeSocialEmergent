@@ -823,7 +823,7 @@ export default function CollectionPage() {
                     </button>
                     
                     {showBulkMenu && (
-                      <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border z-10 min-w-48">
+                      <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-10 min-w-48">
                         <button
                           onClick={bulkList}
                           className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2"
