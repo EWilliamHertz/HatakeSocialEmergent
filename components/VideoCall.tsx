@@ -36,18 +36,20 @@ export default function VideoCall({
   const [error, setError] = useState<string | null>(null);
   const [callStatus, setCallStatus] = useState<'calling' | 'ringing' | 'connected' | 'ended'>('calling');
   const [debugInfo, setDebugInfo] = useState<string>('Initializing...');
+  const [wsConnected, setWsConnected] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hasCreatedOffer = useRef(false);
   const pendingCandidates = useRef<RTCIceCandidateInit[]>([]);
   const hasReceivedOffer = useRef(false);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ICE servers with STUN and free TURN for better NAT traversal
   const iceServers: RTCConfiguration = {
@@ -57,8 +59,6 @@ export default function VideoCall({
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
-      { urls: 'stun:stun.stunprotocol.org:3478' },
-      // Free TURN servers from OpenRelay for NAT traversal
       {
         urls: 'turn:a.relay.metered.ca:80',
         username: 'e8f8ca00c84f5e6bc43e5c07',
@@ -85,32 +85,20 @@ export default function VideoCall({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Send signal via REST API
-  const sendSignal = async (type: string, data?: any) => {
-    try {
-      console.log('Sending signal:', type, 'to:', remoteUserId);
-      setDebugInfo(`Sending ${type}...`);
-      const res = await fetch('/api/calls', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          type,
-          target: remoteUserId,
-          data
-        })
-      });
-      const result = await res.json();
-      console.log('Signal sent:', type, result);
-      return result.success;
-    } catch (err) {
-      console.error('Send signal error:', err);
+  // Send message via WebSocket
+  const sendWsMessage = useCallback((message: object) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log('WS Send:', message);
+      wsRef.current.send(JSON.stringify(message));
+      return true;
+    } else {
+      console.warn('WebSocket not connected, cannot send:', message);
       return false;
     }
-  };
+  }, []);
 
   // Handle incoming offer
-  const handleOffer = async (offer: RTCSessionDescriptionInit, fromUserId: string) => {
+  const handleOffer = useCallback(async (offer: RTCSessionDescriptionInit, fromUserId: string) => {
     console.log('Handling offer from:', fromUserId);
     setDebugInfo('Received offer, creating answer...');
     hasReceivedOffer.current = true;
@@ -118,48 +106,46 @@ export default function VideoCall({
     try {
       const pc = peerConnectionRef.current;
       if (!pc) {
-        console.error('No peer connection - waiting...');
-        // Wait a bit and retry
-        await new Promise(resolve => setTimeout(resolve, 500));
-        if (!peerConnectionRef.current) {
-          console.error('Still no peer connection after waiting');
-          return;
-        }
-      }
-
-      const connection = peerConnectionRef.current!;
-      
-      // Only set remote description if we're in a valid state
-      if (connection.signalingState !== 'stable' && connection.signalingState !== 'have-remote-offer') {
-        console.log('Skipping offer, signaling state:', connection.signalingState);
+        console.error('No peer connection');
         return;
       }
 
-      await connection.setRemoteDescription(new RTCSessionDescription(offer));
+      // Only set remote description if we're in a valid state
+      if (pc.signalingState !== 'stable' && pc.signalingState !== 'have-remote-offer') {
+        console.log('Skipping offer, signaling state:', pc.signalingState);
+        return;
+      }
+
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
       
       // Add any pending ICE candidates
       for (const candidate of pendingCandidates.current) {
         try {
-          await connection.addIceCandidate(new RTCIceCandidate(candidate));
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (e) {
           console.warn('Failed to add ICE candidate:', e);
         }
       }
       pendingCandidates.current = [];
       
-      const answer = await connection.createAnswer();
-      await connection.setLocalDescription(answer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
       
-      await sendSignal('answer', answer);
+      // Send answer via WebSocket
+      sendWsMessage({
+        type: 'answer',
+        target: fromUserId,
+        answer: answer
+      });
       setDebugInfo('Answer sent, waiting for connection...');
     } catch (err: any) {
       console.error('Handle offer error:', err);
       setError(`Failed to handle offer: ${err.message}`);
     }
-  };
+  }, [sendWsMessage]);
 
   // Handle incoming answer
-  const handleAnswer = async (answer: RTCSessionDescriptionInit) => {
+  const handleAnswer = useCallback(async (answer: RTCSessionDescriptionInit) => {
     console.log('Handling answer');
     setDebugInfo('Received answer, establishing connection...');
     
@@ -178,19 +164,20 @@ export default function VideoCall({
           await pc.addIceCandidate(new RTCIceCandidate(candidate));
         }
         pendingCandidates.current = [];
+      } else {
+        console.warn('Unexpected signaling state for answer:', pc.signalingState);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Handle answer error:', err);
-      setError('Failed to handle answer');
+      setError('Failed to handle answer: ' + err.message);
     }
-  };
+  }, []);
 
   // Handle incoming ICE candidate
-  const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
+  const handleIceCandidate = useCallback(async (candidate: RTCIceCandidateInit) => {
     try {
       const pc = peerConnectionRef.current;
       if (!pc) {
-        // Queue the candidate for later
         console.log('Queuing ICE candidate (no peer connection yet)');
         pendingCandidates.current.push(candidate);
         return;
@@ -203,17 +190,16 @@ export default function VideoCall({
           console.warn('Failed to add ICE candidate:', e);
         }
       } else {
-        // Queue the candidate if we don't have remote description yet
         console.log('Queuing ICE candidate (no remote description)');
         pendingCandidates.current.push(candidate);
       }
     } catch (err) {
       console.error('Handle ICE candidate error:', err);
     }
-  };
+  }, []);
 
   // Create peer connection
-  const createPeerConnection = () => {
+  const createPeerConnection = useCallback(() => {
     if (peerConnectionRef.current) {
       return peerConnectionRef.current;
     }
@@ -222,14 +208,16 @@ export default function VideoCall({
     setDebugInfo('Creating peer connection...');
     
     const pc = new RTCPeerConnection(iceServers);
-    
-    // IMPORTANT: Store reference immediately
     peerConnectionRef.current = pc;
     
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         console.log('ICE candidate generated');
-        sendSignal('ice_candidate', event.candidate.toJSON());
+        sendWsMessage({
+          type: 'ice_candidate',
+          target: remoteUserId,
+          candidate: event.candidate.toJSON()
+        });
       }
     };
     
@@ -256,51 +244,197 @@ export default function VideoCall({
           }, 1000);
         }
       } else if (pc.connectionState === 'failed') {
-        // Only end call on complete failure, not on disconnected (which can recover)
         setDebugInfo('Call failed - connection error');
         cleanup(false);
       } else if (pc.connectionState === 'disconnected') {
-        // Disconnected can recover - wait before cleanup
         setDebugInfo('Connection interrupted, attempting to reconnect...');
-        // Don't cleanup immediately - WebRTC often recovers from disconnected state
       }
     };
     
-    // Handle ICE connection state separately for better reliability
     pc.oniceconnectionstatechange = () => {
       console.log('ICE connection state:', pc.iceConnectionState);
       setDebugInfo(`ICE: ${pc.iceConnectionState}`);
       
-      // ICE failed is more serious than disconnected
       if (pc.iceConnectionState === 'failed') {
-        // Try to restart ICE
         console.log('Attempting ICE restart...');
         pc.restartIce();
       }
     };
+    
     return pc;
+  }, [remoteUserId, sendWsMessage]);
+
+  // Connect to WebSocket signaling server
+  const connectWebSocket = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      return;
+    }
+
+    // Use the backend WebSocket endpoint
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.host;
+    const wsUrl = `${wsProtocol}//${wsHost}/ws/signaling/${currentUserId}`;
+    
+    console.log('Connecting to WebSocket:', wsUrl);
+    setDebugInfo('Connecting to signaling server...');
+    
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      setWsConnected(true);
+      setDebugInfo('Signaling connected');
+      
+      // Join a room for this call
+      const roomId = [currentUserId, remoteUserId].sort().join('-');
+      sendWsMessage({ type: 'join_room', room_id: roomId });
+    };
+    
+    ws.onmessage = async (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log('WS Received:', message.type, message);
+        
+        switch (message.type) {
+          case 'room_joined':
+            console.log('Joined room:', message.room_id, 'Users:', message.users);
+            setDebugInfo(`In room with ${message.users?.length || 0} users`);
+            // If there are other users and we're the caller, create offer
+            if (!isReceiver && message.users && message.users.length > 0 && !hasCreatedOffer.current) {
+              await createAndSendOffer();
+            }
+            break;
+            
+          case 'user_joined':
+            console.log('User joined:', message.user_id);
+            // If someone joins and we're the caller, send offer
+            if (!isReceiver && !hasCreatedOffer.current) {
+              await createAndSendOffer();
+            }
+            break;
+            
+          case 'offer':
+            await handleOffer(message.offer, message.from);
+            break;
+            
+          case 'answer':
+            await handleAnswer(message.answer);
+            break;
+            
+          case 'ice_candidate':
+            await handleIceCandidate(message.candidate);
+            break;
+            
+          case 'incoming_call':
+            // This is handled by the parent component (MessengerWidget)
+            console.log('Incoming call from:', message.from);
+            break;
+            
+          case 'call_accepted':
+            setCallStatus('connected');
+            setDebugInfo('Call accepted, sending offer...');
+            if (!isReceiver && peerConnectionRef.current?.localDescription) {
+              sendWsMessage({
+                type: 'offer',
+                target: remoteUserId,
+                offer: peerConnectionRef.current.localDescription
+              });
+            }
+            break;
+            
+          case 'call_rejected':
+            setError('Call was declined');
+            setCallStatus('ended');
+            break;
+            
+          case 'call_ended':
+            cleanup(false);
+            break;
+            
+          case 'user_left':
+            console.log('User left:', message.user_id);
+            if (message.user_id === remoteUserId) {
+              cleanup(false);
+            }
+            break;
+            
+          case 'pong':
+            // Heartbeat response
+            break;
+        }
+      } catch (err) {
+        console.error('WS message parse error:', err);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setWsConnected(false);
+      setDebugInfo('Signaling connection error');
+    };
+    
+    ws.onclose = (event) => {
+      console.log('WebSocket closed:', event.code, event.reason);
+      setWsConnected(false);
+      
+      // Attempt to reconnect if call is still active
+      if (isOpen && !error) {
+        setDebugInfo('Reconnecting to signaling...');
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectWebSocket();
+        }, 2000);
+      }
+    };
+  }, [currentUserId, remoteUserId, isReceiver, isOpen, error, handleOffer, handleAnswer, handleIceCandidate, sendWsMessage]);
+
+  // Create and send WebRTC offer
+  const createAndSendOffer = async () => {
+    if (hasCreatedOffer.current) return;
+    
+    const pc = peerConnectionRef.current;
+    if (!pc) {
+      console.error('No peer connection for offer');
+      return;
+    }
+    
+    try {
+      hasCreatedOffer.current = true;
+      setDebugInfo('Creating offer...');
+      
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: callType === 'video',
+      });
+      await pc.setLocalDescription(offer);
+      
+      sendWsMessage({
+        type: 'offer',
+        target: remoteUserId,
+        offer: offer
+      });
+      setDebugInfo('Offer sent, waiting for answer...');
+    } catch (err: any) {
+      console.error('Create offer error:', err);
+      hasCreatedOffer.current = false;
+      setError('Failed to create offer: ' + err.message);
+    }
   };
 
-  // Initialize local media and create offer (for caller) or wait for offer (for receiver)
-  const initializeCall = async () => {
+  // Initialize local media
+  const initializeMedia = async () => {
     try {
-      // FIRST: Create peer connection immediately so it's ready for signals
-      const pc = createPeerConnection();
-      
       setDebugInfo('Requesting media access...');
       
-      // Try to get media with fallbacks
       let stream: MediaStream | null = null;
       
       try {
         if (callType === 'video') {
-          // Try video first
           stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
             video: { width: 1280, height: 720 }
           });
         } else {
-          // Audio only
           stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
             video: false
@@ -308,7 +442,6 @@ export default function VideoCall({
         }
       } catch (mediaErr: any) {
         console.warn('Full media failed, trying audio only:', mediaErr.message);
-        // Fall back to audio only if video fails
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
@@ -327,58 +460,18 @@ export default function VideoCall({
           localVideoRef.current.srcObject = stream;
         }
         
-        // Add tracks to peer connection
+        // Create peer connection and add tracks
+        const pc = createPeerConnection();
         stream.getTracks().forEach((track) => {
           console.log('Adding track:', track.kind);
           pc.addTrack(track, stream!);
         });
       }
-
-      setDebugInfo('Media acquired, setting up connection...');
-
-      // If caller, create and send offer
-      if (!isReceiver && !hasCreatedOffer.current) {
-        hasCreatedOffer.current = true;
-        setDebugInfo('Creating offer...');
-        setCallStatus('calling');
-        
-        // Send call notification to the other user
-        await sendSignal('incoming_call', {
-          call_type: callType,
-          caller_name: currentUserName
-        });
-        
-        // Small delay to ensure incoming_call is processed first
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        const offer = await pc.createOffer({
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: callType === 'video',
-        });
-        await pc.setLocalDescription(offer);
-        
-        await sendSignal('offer', offer);
-        setDebugInfo('Offer sent, waiting for answer...');
-      } else if (isReceiver) {
-        // If receiver, notify that we accepted
-        setDebugInfo('Accepting call...');
-        setCallStatus('ringing');
-        await sendSignal('call_accepted', {});
-        setDebugInfo('Waiting for offer from caller...');
-        
-        // After 5 seconds, request offer again if still waiting
-        setTimeout(async () => {
-          if (!hasReceivedOffer.current && peerConnectionRef.current && !peerConnectionRef.current.remoteDescription) {
-            console.log('No offer received after 5s, requesting again...');
-            await sendSignal('request_offer', {});
-            setDebugInfo('Requested offer from caller...');
-          }
-        }, 5000);
-      }
-
+      
+      setDebugInfo('Media acquired');
       return stream;
     } catch (err: any) {
-      console.error('Initialize call error:', err);
+      console.error('Initialize media error:', err);
       setError(err.message || 'Failed to access camera/microphone');
       setIsConnecting(false);
       setDebugInfo(`Error: ${err.message}`);
@@ -386,70 +479,33 @@ export default function VideoCall({
     }
   };
 
-  // Poll for incoming signals
-  const pollSignals = async () => {
-    // Wait for peer connection to be ready
-    if (!peerConnectionRef.current) {
-      return;
-    }
-    
+  // Initialize call
+  const initializeCall = async () => {
     try {
-      const res = await fetch('/api/calls', {
-        credentials: 'include'
-      });
-      const data = await res.json();
+      // First, get media and create peer connection
+      const stream = await initializeMedia();
+      if (!stream) return;
       
-      if (data.success && data.signals && data.signals.length > 0) {
-        console.log('Received signals:', data.signals.length);
-        for (const signal of data.signals) {
-          console.log('Processing signal:', signal.type);
-          
-          switch (signal.type) {
-            case 'offer':
-              await handleOffer(signal.data, signal.from);
-              break;
-            case 'answer':
-              await handleAnswer(signal.data);
-              break;
-            case 'ice_candidate':
-              await handleIceCandidate(signal.data);
-              break;
-            case 'call_accepted':
-              // Receiver accepted the call - caller should re-send offer
-              setCallStatus('connected');
-              setDebugInfo('Call accepted, sending offer...');
-              // Re-send the offer since the receiver just accepted
-              if (!isReceiver && peerConnectionRef.current) {
-                const pc = peerConnectionRef.current;
-                if (pc.localDescription) {
-                  await sendSignal('offer', pc.localDescription);
-                  setDebugInfo('Offer re-sent to receiver');
-                }
-              }
-              break;
-            case 'request_offer':
-              // Receiver is requesting the offer again
-              if (!isReceiver && peerConnectionRef.current) {
-                const pc = peerConnectionRef.current;
-                if (pc.localDescription) {
-                  console.log('Resending offer on request');
-                  await sendSignal('offer', pc.localDescription);
-                  setDebugInfo('Offer sent on request');
-                }
-              }
-              break;
-            case 'call_rejected':
-              setError('Call was declined');
-              setCallStatus('ended');
-              break;
-            case 'call_ended':
-              cleanup(false);
-              break;
-          }
-        }
+      // Then connect to WebSocket signaling server
+      connectWebSocket();
+      
+      // If caller, notify remote user
+      if (!isReceiver) {
+        setCallStatus('calling');
+        // The offer will be sent when WebSocket connects and joins room
+      } else {
+        setCallStatus('ringing');
+        // Send call_accepted when receiver joins
+        setTimeout(() => {
+          sendWsMessage({
+            type: 'call_accepted',
+            target: remoteUserId
+          });
+        }, 500);
       }
-    } catch (err) {
-      console.error('Poll signals error:', err);
+    } catch (err: any) {
+      console.error('Initialize call error:', err);
+      setError(err.message);
     }
   };
 
@@ -476,7 +532,6 @@ export default function VideoCall({
   // Screen sharing
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
-      // Stop screen sharing
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach((track) => track.stop());
         screenStreamRef.current = null;
@@ -498,7 +553,6 @@ export default function VideoCall({
       }
       setIsScreenSharing(false);
     } else {
-      // Start screen sharing
       try {
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: { cursor: 'always' } as MediaTrackConstraints,
@@ -553,16 +607,24 @@ export default function VideoCall({
       callTimerRef.current = null;
     }
     
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
     }
 
-    if (notifyRemote) {
-      fetch(`/api/calls?target=${remoteUserId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      }).catch(() => {});
+    // Notify via WebSocket before closing
+    if (notifyRemote && wsRef.current?.readyState === WebSocket.OPEN) {
+      sendWsMessage({
+        type: 'call_ended',
+        target: remoteUserId
+      });
+      sendWsMessage({ type: 'leave_room' });
+    }
+
+    // Close WebSocket
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
     }
 
     if (localStreamRef.current) {
@@ -585,6 +647,7 @@ export default function VideoCall({
     }
 
     setCallStatus('ended');
+    setWsConnected(false);
     hasCreatedOffer.current = false;
     hasReceivedOffer.current = false;
     pendingCandidates.current = [];
@@ -594,26 +657,29 @@ export default function VideoCall({
   // Initialize on mount
   useEffect(() => {
     if (isOpen) {
-      // Initialize call first, then start polling after peer connection is ready
-      const startCall = async () => {
-        await initializeCall();
-        // Only start polling AFTER peer connection is created
-        if (peerConnectionRef.current) {
-          pollingIntervalRef.current = setInterval(pollSignals, 500);
-        }
-      };
-      startCall();
+      initializeCall();
     }
 
     return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
       }
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current);
       }
     };
   }, [isOpen]);
+
+  // Heartbeat to keep WebSocket alive
+  useEffect(() => {
+    if (!wsConnected) return;
+    
+    const heartbeat = setInterval(() => {
+      sendWsMessage({ type: 'ping' });
+    }, 30000);
+    
+    return () => clearInterval(heartbeat);
+  }, [wsConnected, sendWsMessage]);
 
   // Handle fullscreen change
   useEffect(() => {
@@ -656,7 +722,8 @@ export default function VideoCall({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Debug info */}
+          {/* Connection status */}
+          <span className={`w-2 h-2 rounded-full mr-2 ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
           <span className="text-white/50 text-xs mr-2">{debugInfo}</span>
           <button
             onClick={toggleFullscreen}
@@ -721,7 +788,7 @@ export default function VideoCall({
                 </p>
                 <p className="text-white/60 text-sm mt-2">{debugInfo}</p>
                 <p className="text-white/40 text-xs mt-4">
-                  Note: Both users must be in a call for connection to establish
+                  Both users must be in a call for connection to establish
                 </p>
               </div>
             </div>
