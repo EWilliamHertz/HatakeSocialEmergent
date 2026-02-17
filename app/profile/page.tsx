@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { User, Package, ShoppingBag, Users, Settings, Camera, Save, X } from 'lucide-react';
+import { User, Package, ShoppingBag, Users, Settings, Camera, Save, X, Edit, CreditCard, MapPin, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 
 interface UserProfile {
