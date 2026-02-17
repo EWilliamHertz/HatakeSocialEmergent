@@ -1649,9 +1649,9 @@ export default function CollectionPage() {
                         )}
                         {addCardGame === 'mtg' && (
                           <>
-                            {cardPriceData.usd && <p className="text-lg font-bold text-green-600">${cardPriceData.usd}</p>}
-                            {cardPriceData.usd_foil && <p className="text-xs text-gray-500">Foil: ${cardPriceData.usd_foil}</p>}
-                            {cardPriceData.eur && <p className="text-xs text-gray-500">EUR: €{cardPriceData.eur}</p>}
+                            {cardPriceData.eur && <p className="text-lg font-bold text-green-600">€{cardPriceData.eur}</p>}
+                            {cardPriceData.eur_foil && <p className="text-xs text-gray-500">Foil: €{cardPriceData.eur_foil}</p>}
+                            {!cardPriceData.eur && cardPriceData.usd && <p className="text-lg font-bold text-green-600">${cardPriceData.usd}</p>}
                           </>
                         )}
                       </div>
