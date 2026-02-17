@@ -501,7 +501,18 @@ export default function MessengerWidget() {
             src={msg.media_url} 
             alt="Shared image" 
             className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90"
-            onClick={() => window.open(msg.media_url, '_blank')}
+            onClick={() => setFullscreenImage(msg.media_url || null)}
+          />
+        </div>
+      );
+    }
+    if (msg.message_type === 'video' && msg.media_url) {
+      return (
+        <div className="max-w-[180px]">
+          <video 
+            src={msg.media_url} 
+            controls 
+            className="rounded-lg max-w-full h-auto"
           />
         </div>
       );
