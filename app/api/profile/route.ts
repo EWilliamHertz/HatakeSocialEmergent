@@ -36,19 +36,34 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    const { name, bio, picture } = await request.json();
+    const { 
+      name, 
+      bio, 
+      picture, 
+      banner_url,
+      shipping_address,
+      payment_swish,
+      payment_bankgiro,
+      payment_account 
+    } = await request.json();
 
     await sql`
       UPDATE users
       SET 
         name = COALESCE(${name}, name),
         bio = COALESCE(${bio}, bio),
-        picture = COALESCE(${picture}, picture)
+        picture = COALESCE(${picture}, picture),
+        banner_url = COALESCE(${banner_url}, banner_url),
+        shipping_address = COALESCE(${shipping_address}, shipping_address),
+        payment_swish = COALESCE(${payment_swish}, payment_swish),
+        payment_bankgiro = COALESCE(${payment_bankgiro}, payment_bankgiro),
+        payment_account = COALESCE(${payment_account}, payment_account)
       WHERE user_id = ${user.user_id}
     `;
 
     const updatedUser = await sql`
-      SELECT user_id, name, email, picture, bio, created_at
+      SELECT user_id, name, email, picture, bio, created_at, banner_url,
+             shipping_address, payment_swish, payment_bankgiro, payment_account
       FROM users
       WHERE user_id = ${user.user_id}
     `;
