@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
-import { generateId } from '@/lib/utils';
 import sql from '@/lib/db';
 
 interface ManaBoxCard {
@@ -65,18 +64,22 @@ function mapCondition(condition: string | undefined): string {
     'moderately_played': 'Moderately Played',
     'heavily_played': 'Heavily Played',
     'damaged': 'Damaged',
-    'mint': 'Near Mint',
+    'mint': 'Mint',
     'nm': 'Near Mint',
     'lp': 'Lightly Played',
     'mp': 'Moderately Played',
     'hp': 'Heavily Played',
     'dmg': 'Damaged',
+    'excellent': 'Excellent',
+    'good': 'Good',
+    'played': 'Played',
+    'poor': 'Poor',
   };
   const normalizedCondition = condition.toLowerCase().trim();
   return conditionMap[normalizedCondition] || condition || 'Near Mint';
 }
 
-// POST - Preview CSV import
+// POST - Preview or Import CSV
 export async function POST(request: NextRequest) {
   try {
     const sessionToken = request.cookies.get('session_token')?.value;
@@ -137,7 +140,9 @@ export async function POST(request: NextRequest) {
           
           if (card['Scryfall ID']) {
             try {
-              const scryfallRes = await fetch(`https://api.scryfall.com/cards/${card['Scryfall ID']}`);
+              const scryfallRes = await fetch(`https://api.scryfall.com/cards/${card['Scryfall ID']}`, {
+                signal: AbortSignal.timeout(10000)
+              });
               if (scryfallRes.ok) {
                 cardData = await scryfallRes.json();
               }
@@ -150,7 +155,9 @@ export async function POST(request: NextRequest) {
           if (!cardData && card.Name) {
             try {
               const searchQuery = encodeURIComponent(`!"${card.Name}" set:${card['Set code']}`);
-              const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${searchQuery}`);
+              const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${searchQuery}`, {
+                signal: AbortSignal.timeout(10000)
+              });
               if (searchRes.ok) {
                 const searchData = await searchRes.json();
                 if (searchData.data && searchData.data.length > 0) {
@@ -162,40 +169,60 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Insert into collection
-          const collectionId = generateId('collection');
           const quantity = parseInt(card.Quantity) || 1;
           const isFoil = card.Foil === 'foil';
           const condition = mapCondition(card.Condition);
-          const purchasePrice = parseFloat(card['Purchase price']) || null;
+          const purchasePrice = parseFloat(card['Purchase price']) || 0;
+          const currency = card['Purchase price currency'] || 'USD';
 
-          // Get card image and price from Scryfall data
-          const imageUrl = cardData?.image_uris?.normal || cardData?.card_faces?.[0]?.image_uris?.normal || null;
-          const marketPrice = cardData?.prices?.usd || cardData?.prices?.usd_foil || null;
+          // Build card_data object to store in JSONB
+          const cardDataToStore = {
+            id: card['Scryfall ID'] || `${card['Set code']}-${card['Collector number']}`,
+            name: card.Name,
+            set: card['Set code'],
+            set_name: card['Set name'],
+            collector_number: card['Collector number'],
+            rarity: card.Rarity,
+            language: card.Language,
+            // From Scryfall if available
+            image_uris: cardData?.image_uris || {
+              small: cardData?.card_faces?.[0]?.image_uris?.small || null,
+              normal: cardData?.card_faces?.[0]?.image_uris?.normal || null,
+              large: cardData?.card_faces?.[0]?.image_uris?.large || null,
+            },
+            prices: cardData?.prices || null,
+            // Additional metadata
+            purchase_price: purchasePrice,
+            purchase_currency: currency,
+            misprint: card.Misprint === 'true',
+            altered: card.Altered === 'true',
+          };
 
+          // Insert into collection_items table
           await sql`
-            INSERT INTO collections (
-              collection_id, user_id, card_id, card_name, card_image,
-              set_code, set_name, collector_number, quantity, condition,
-              is_foil, purchase_price, market_price, notes, game
+            INSERT INTO collection_items (
+              user_id, card_id, game, card_data, quantity, condition, foil, notes
             ) VALUES (
-              ${collectionId}, ${user.user_id}, ${card['Scryfall ID'] || generateId('card')},
-              ${card.Name}, ${imageUrl}, ${card['Set code']}, ${card['Set name']},
-              ${card['Collector number']}, ${quantity}, ${condition},
-              ${isFoil}, ${purchasePrice}, ${marketPrice ? parseFloat(marketPrice) : null},
-              ${card.Altered === 'true' ? 'Altered' : (card.Misprint === 'true' ? 'Misprint' : null)},
-              'mtg'
+              ${user.user_id},
+              ${card['Scryfall ID'] || `${card['Set code']}-${card['Collector number']}`},
+              'mtg',
+              ${JSON.stringify(cardDataToStore)},
+              ${quantity},
+              ${condition},
+              ${isFoil},
+              ${card.Altered === 'true' ? 'Altered card' : (card.Misprint === 'true' ? 'Misprint' : null)}
             )
           `;
 
           imported++;
           
-          // Add small delay to avoid rate limiting
+          // Add small delay to avoid rate limiting from Scryfall
           if (imported % 10 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 200));
           }
         } catch (err: any) {
-          errors.push(`Failed to import ${card.Name}: ${err.message}`);
+          console.error('Import error for card:', card.Name, err);
+          errors.push(`Failed to import ${card.Name || 'Unknown'}: ${err.message}`);
         }
       }
 
