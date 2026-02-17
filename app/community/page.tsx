@@ -304,24 +304,64 @@ export default function CommunityPage() {
                       {groups.map((group) => (
                         <div 
                           key={group.group_id} 
-                          onClick={() => router.push(`/groups/${group.group_id}`)}
-                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                          className="group"
                           data-testid={`group-${group.group_id}`}
                         >
-                          <div className="flex items-center gap-4">
-                            {group.picture ? (
-                              <Image src={group.picture} alt={group.name} width={48} height={48} className="rounded-xl" />
-                            ) : (
-                              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-white text-lg font-bold">
-                                {group.name.charAt(0).toUpperCase()}
+                          {/* Main Row - Click to expand */}
+                          <div 
+                            className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            onClick={() => setExpandedGroup(expandedGroup === group.group_id ? null : group.group_id)}
+                          >
+                            <div className="flex items-center gap-4">
+                              {group.picture ? (
+                                <Image src={group.picture} alt={group.name} width={48} height={48} className="rounded-xl" />
+                              ) : (
+                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-white text-lg font-bold">
+                                  {group.name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-semibold dark:text-white">{group.name}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{group.member_count} members</p>
                               </div>
-                            )}
-                            <div>
-                              <p className="font-semibold dark:text-white">{group.name}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{group.member_count} members</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/groups/${group.group_id}`);
+                                }}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition opacity-0 group-hover:opacity-100"
+                              >
+                                Enter
+                              </button>
+                              <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${expandedGroup === group.group_id ? 'rotate-90' : ''}`} />
                             </div>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                          
+                          {/* Expanded Info */}
+                          {expandedGroup === group.group_id && (
+                            <div className="px-4 pb-4 bg-gray-50 dark:bg-gray-700/30">
+                              <div className="pl-16 pt-2">
+                                {group.description ? (
+                                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">{group.description}</p>
+                                ) : (
+                                  <p className="text-gray-400 dark:text-gray-500 text-sm italic mb-3">No description</p>
+                                )}
+                                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                  <span>Created {new Date(group.created_at).toLocaleDateString()}</span>
+                                  {group.is_owner && <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full">Owner</span>}
+                                  {group.is_member && !group.is_owner && <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full">Member</span>}
+                                </div>
+                                <button
+                                  onClick={() => router.push(`/groups/${group.group_id}`)}
+                                  className="mt-3 px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                                >
+                                  Enter Group
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
