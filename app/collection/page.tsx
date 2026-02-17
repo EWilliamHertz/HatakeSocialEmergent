@@ -72,6 +72,53 @@ export default function CollectionPage() {
   const [addCardFoil, setAddCardFoil] = useState(false);
   const [addingCard, setAddingCard] = useState(false);
   const [addCardSearchMode, setAddCardSearchMode] = useState<'name' | 'set'>('name');
+  
+  // Enhanced add card modal state
+  const [selectedCardToAdd, setSelectedCardToAdd] = useState<any>(null);
+  const [cardFinish, setCardFinish] = useState('Normal');
+  const [isGraded, setIsGraded] = useState(false);
+  const [gradingCompany, setGradingCompany] = useState('PSA');
+  const [gradeValue, setGradeValue] = useState('10');
+  const [loadingCardPrice, setLoadingCardPrice] = useState(false);
+  const [cardPriceData, setCardPriceData] = useState<any>(null);
+
+  // Pokemon finish options
+  const pokemonFinishOptions = [
+    'Normal',
+    'Holofoil',
+    'Reverse Holofoil', 
+    'Pokeball Holofoil',
+    'Masterball Holofoil',
+    'Full Art',
+    'Special Art Rare',
+    'Illustration Rare'
+  ];
+
+  // MTG finish options
+  const mtgFinishOptions = [
+    'Normal',
+    'Foil',
+    'Etched Foil',
+    'Gilded Foil',
+    'Surge Foil',
+    'Galaxy Foil',
+    'Textured Foil'
+  ];
+
+  // Condition options
+  const conditionOptions = [
+    'Mint',
+    'Near Mint',
+    'Excellent',
+    'Good',
+    'Light Played',
+    'Played',
+    'Poor'
+  ];
+
+  // Grading companies
+  const gradingCompanies = ['PSA', 'BGS', 'CGC', 'SGC'];
+  const gradeValues = ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5.5', '5', '4', '3', '2', '1'];
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
