@@ -14,11 +14,11 @@ interface Trade {
   initiator_id: string;
   initiator_name: string;
   initiator_picture?: string;
-  recipient_id: string;
+  receiver_id: string;
   recipient_name: string;
   recipient_picture?: string;
-  initiator_items: any[];
-  recipient_items: any[];
+  initiator_cards: any[];
+  receiver_cards: any[];
 }
 
 export default function TradesPage() {
