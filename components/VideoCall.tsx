@@ -187,19 +187,24 @@ export default function VideoCall({
 
   // Handle incoming ICE candidate
   const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
-    console.log('Handling ICE candidate');
-    
     try {
       const pc = peerConnectionRef.current;
       if (!pc) {
-        console.error('No peer connection');
+        // Queue the candidate for later
+        console.log('Queuing ICE candidate (no peer connection yet)');
+        pendingCandidates.current.push(candidate);
         return;
       }
 
       if (pc.remoteDescription) {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.warn('Failed to add ICE candidate:', e);
+        }
       } else {
         // Queue the candidate if we don't have remote description yet
+        console.log('Queuing ICE candidate (no remote description)');
         pendingCandidates.current.push(candidate);
       }
     } catch (err) {
