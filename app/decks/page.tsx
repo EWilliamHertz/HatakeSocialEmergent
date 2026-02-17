@@ -228,7 +228,7 @@ export default function DecksPage() {
           <button
             onClick={(e) => {
               e.preventDefault();
-              deleteDeck(deck.deck_id);
+              deleteDeck(deck.deck_id, isCommunityDeck);
             }}
             className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
             title="Delete Deck"
