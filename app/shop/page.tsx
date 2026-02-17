@@ -427,6 +427,139 @@ export default function ShopPage() {
           </div>
         </div>
       </footer>
+
+      {/* Product Detail Modal */}
+      {selectedProduct && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedProduct(null)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="grid md:grid-cols-2">
+              {/* Image Gallery */}
+              <div className="bg-gray-100 dark:bg-gray-700 p-6">
+                <div className="aspect-square relative rounded-xl overflow-hidden mb-4">
+                  {(() => {
+                    const allImages = [selectedProduct.image, ...(selectedProduct.gallery_images || [])].filter(Boolean);
+                    const currentImage = allImages[galleryIndex] || selectedProduct.image;
+                    return currentImage ? (
+                      <Image
+                        src={currentImage}
+                        alt={selectedProduct.name}
+                        fill
+                        className="object-contain"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-24 h-24 text-gray-300" />
+                      </div>
+                    );
+                  })()}
+                </div>
+                
+                {/* Thumbnail Gallery */}
+                {(() => {
+                  const allImages = [selectedProduct.image, ...(selectedProduct.gallery_images || [])].filter(Boolean);
+                  return allImages.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {allImages.map((img, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setGalleryIndex(idx)}
+                          className={`w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition ${
+                            galleryIndex === idx 
+                              ? 'border-blue-500' 
+                              : 'border-transparent hover:border-gray-300 dark:hover:border-gray-500'
+                          }`}
+                        >
+                          <Image
+                            src={img}
+                            alt={`Gallery ${idx + 1}`}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover"
+                            unoptimized
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+              
+              {/* Product Info */}
+              <div className="p-6 flex flex-col">
+                <button 
+                  onClick={() => setSelectedProduct(null)}
+                  className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+
+                <span className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-2">
+                  {selectedProduct.category}
+                </span>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  {selectedProduct.name}
+                </h2>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-4">
+                  {selectedProduct.currency} {selectedProduct.price.toFixed(2)}
+                </p>
+                
+                <div className="text-gray-600 dark:text-gray-300 mb-6 flex-1">
+                  <p className="whitespace-pre-line">{renderDescription(selectedProduct.description)}</p>
+                </div>
+
+                {selectedProduct.features && selectedProduct.features.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Features</h3>
+                    <div className="space-y-2">
+                      {selectedProduct.features.map((feature, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          {feature}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="border-t dark:border-gray-700 pt-4">
+                  {selectedProduct.stock !== undefined && (
+                    <p className={`text-sm mb-4 ${selectedProduct.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {selectedProduct.stock > 0 ? `${selectedProduct.stock} in stock` : 'Out of stock'}
+                    </p>
+                  )}
+                  
+                  <div className="flex gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(selectedProduct.id);
+                      }}
+                      disabled={selectedProduct.stock === 0}
+                      className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart className="w-5 h-5" />
+                      Add to Cart
+                    </button>
+                    <a
+                      href={`mailto:ernst@hatake.eu?subject=Product Inquiry: ${selectedProduct.name}`}
+                      className="py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                    >
+                      <Mail className="w-5 h-5" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
