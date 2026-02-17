@@ -157,11 +157,11 @@ export default function FriendsPage() {
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-sm mb-6 p-2 flex gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-6 p-2 flex gap-2">
           <button
             onClick={() => setTab('friends')}
             className={`flex-1 py-3 px-4 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-              tab === 'friends' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+              tab === 'friends' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
             data-testid="friends-tab"
           >
@@ -171,7 +171,7 @@ export default function FriendsPage() {
           <button
             onClick={() => setTab('requests')}
             className={`flex-1 py-3 px-4 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-              tab === 'requests' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+              tab === 'requests' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
             data-testid="requests-tab"
           >
