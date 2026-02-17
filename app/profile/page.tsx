@@ -22,6 +22,22 @@ interface Stats {
   trades_count: number;
 }
 
+interface CollectionItem {
+  id: number;
+  card_id: string;
+  game: string;
+  card_data: any;
+  quantity: number;
+}
+
+interface Listing {
+  listing_id: string;
+  card_data: any;
+  price: number;
+  currency: string;
+  game: string;
+}
+
 export default function MyProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
