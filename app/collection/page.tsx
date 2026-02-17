@@ -913,7 +913,7 @@ export default function CollectionPage() {
                 <div className="relative aspect-[2/3]">
                   <Image
                     src={getCardImage(item)}
-                    alt={item.card_data.name}
+                    alt={item.card_data?.name || 'Card image'}
                     fill
                     className="object-cover"
                     unoptimized
