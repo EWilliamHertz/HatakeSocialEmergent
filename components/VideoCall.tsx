@@ -527,6 +527,7 @@ export default function VideoCall({
 
     setCallStatus('ended');
     hasCreatedOffer.current = false;
+    hasReceivedOffer.current = false;
     pendingCandidates.current = [];
     onClose();
   };
