@@ -227,7 +227,7 @@ export default function TradeDetailPage() {
               <div className="text-right">
                 <p className="font-semibold dark:text-white">{trade.recipient_name}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {trade.recipient_id === currentUserId ? '(You) ' : ''}Recipient
+                  {trade.receiver_id === currentUserId ? '(You) ' : ''}Recipient
                 </p>
               </div>
               {trade.recipient_picture ? (
