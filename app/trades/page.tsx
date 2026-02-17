@@ -28,6 +28,29 @@ export default function TradesPage() {
   const [currentUserId, setCurrentUserId] = useState('');
   const [tab, setTab] = useState<'active' | 'completed' | 'all'>('active');
 
+  // Calculate trade stats
+  const tradeStats = {
+    active: trades.filter(t => ['pending', 'accepted'].includes(t.status)).length,
+    completed: trades.filter(t => t.status === 'completed').length,
+    rejected: trades.filter(t => ['rejected', 'cancelled'].includes(t.status)).length,
+    totalValue: trades.reduce((sum, trade) => {
+      const isInitiator = trade.initiator_id === currentUserId;
+      const myItems = isInitiator ? trade.initiator_cards : trade.receiver_cards;
+      const itemValue = myItems?.reduce((itemSum: number, item: any) => {
+        return itemSum + ((item.value || 0) * (item.quantity || 1));
+      }, 0) || 0;
+      return sum + itemValue;
+    }, 0),
+    completedValue: trades.filter(t => t.status === 'completed').reduce((sum, trade) => {
+      const isInitiator = trade.initiator_id === currentUserId;
+      const myItems = isInitiator ? trade.initiator_cards : trade.receiver_cards;
+      const itemValue = myItems?.reduce((itemSum: number, item: any) => {
+        return itemSum + ((item.value || 0) * (item.quantity || 1));
+      }, 0) || 0;
+      return sum + itemValue;
+    }, 0)
+  };
+
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
