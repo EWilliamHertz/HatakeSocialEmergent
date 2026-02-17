@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import sql from '@/lib/db';
+import { fetchScryfallCached, fetchTCGdexCached } from '@/lib/api-cache';
 
 // ManaBox format (MTG)
 interface ManaBoxCard {
