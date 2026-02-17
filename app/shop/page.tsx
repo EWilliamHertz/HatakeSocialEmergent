@@ -13,6 +13,7 @@ interface Product {
   price: number;
   currency: string;
   image: string;
+  gallery_images?: string[];
   features: string[];
   category: string;
   stock: number;
