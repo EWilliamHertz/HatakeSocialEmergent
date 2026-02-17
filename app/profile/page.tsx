@@ -13,6 +13,11 @@ interface UserProfile {
   picture?: string;
   bio?: string;
   created_at: string;
+  banner_url?: string;
+  shipping_address?: string;
+  payment_swish?: string;
+  payment_bankgiro?: string;
+  payment_account?: string;
 }
 
 interface Stats {
