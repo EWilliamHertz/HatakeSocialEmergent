@@ -14,116 +14,104 @@ Hatake.Social is a full-stack TCG (Trading Card Game) social platform built with
 - Search cards from Scryfall (MTG) and TCGdex (Pokemon) 
 - Personal collection management with manual add and CSV import
 - **Supported CSV formats:** ManaBox (MTG), Pokemon export_2026
-- **JTG/official set code aliases** supported (JTG -> sv09, etc.)
 - Collection value calculation with multi-currency support (EUR, USD, SEK)
 - Support for card conditions, finish variants (Holofoil, Reverse Holofoil, etc.)
 - Graded card tracking (PSA, BGS, CGC, SGC)
-- Custom card image uploads and signed card tracking
 
 ### Social Features  
 - Social Feed with posts, comments, nested replies
 - Emoji reactions on posts and comments
-- **Community page** - Combined Friends + Groups with tabs (Friends, Groups, Requests, Find)
+- **Community page** - Combined Friends + Groups with tabs
 - User profiles with stats
+
+### Search
+- **Universal search** - Cards, Users, Posts, Decks all in one place
+- Game filter (All, Pokemon, MTG) for card results
+- Users/Posts/Decks always displayed when searching
 
 ### Messaging & Calls
 - Real-time messaging via MessengerWidget
 - WebRTC voice/video calls with incoming call notifications
-- In-app notifications
+- Proper JSON error handling for API responses
 
 ### Commerce
 - Marketplace for buying/selling cards
 - Trade creation system
 - Shop page for official merchandise
-- Admin panel for shop inventory management
 
 ### Admin Panel
 - Shop Inventory management (CRUD for products)
 - Analytics dashboard with site statistics
-- **User management** with Make Admin/Remove Admin functionality
-- **Post moderation** with Delete Post capability
-- Platform settings
+- User management with Make Admin/Remove Admin
+- Post moderation with Delete Post capability
 
 ### Navigation & Settings
-- **Avatar dropdown menu** with Profile, Settings, Admin Panel (for admins), Logout
-- **Settings page** with Profile, Password, Notifications, Privacy sections
-- Cleaner navbar with reduced icons (Community combines Friends+Groups)
+- Avatar dropdown menu with Profile, Settings, Admin Panel (for admins), Logout
+- Settings page with Profile, Password, Notifications, Privacy sections
+- Cleaner navbar with reduced icons
 
 ### Performance
 - **Server-side API caching** for Scryfall and TCGdex API calls
 - Cache stored in PostgreSQL `api_cache` table with TTL
-- 24-hour cache for individual cards, 1-hour for search results
 
 ## Tech Stack
 - **Framework:** Next.js 15+ with App Router
 - **Database:** PostgreSQL (Neon)
 - **Styling:** Tailwind CSS, shadcn/ui
-- **Card APIs:** Scryfall (MTG), TCGdex (Pokemon with Cardmarket pricing)
+- **Card APIs:** Scryfall (MTG), TCGdex (Pokemon)
 - **Auth:** Emergent-managed Google OAuth, JWT sessions
 
 ## What's Been Implemented
 
-### February 17, 2026 - Session 4 (Current)
-**New Features:**
-- **Community Page** - Combined Friends+Groups with tabs (Friends, Groups, Requests, Find)
-- **Settings Page** - Profile, Change Password, Notifications, Privacy, Delete Account
-- **Avatar Dropdown Menu** - My Profile, Settings, Admin Panel (for admins), Sign Out
-- **Admin Tools** - Make Admin/Remove Admin buttons, Delete Post buttons
-- **Server-side API Caching** - PostgreSQL-backed cache for Scryfall/TCGdex
+### February 17, 2026 - Session 4 (Latest)
 
 **Bug Fixes:**
-- **CSV Import currency** - Now displays original currency from CSV (EUR/SEK), not hardcoded $
-- **Pokemon CSV format** - Added support for export_2026 format with different headers
-- **Enter key search** - Both Pokemon and MTG search fields now support Enter to submit
-- **MTG Search CORS** - Backend proxy `/api/cards/mtg` avoids client-side issues
-- **Video calls signaling** - Added preview/active polling modes to preserve offers
-- **Dark Mode** - Applied to Collection, Marketplace, Friends, Trades pages
+1. ✅ **Video calls - "No peer connection" error** - Fixed by assigning `peerConnectionRef.current` immediately in `createPeerConnection()` instead of only returning it
+2. ✅ **CSV import fails after preview** - Fixed by including proper headers when reconstructing CSV from parsed cards
+3. ✅ **CSV import currency showing $** - Now displays original currency from CSV (EUR/SEK/USD)
+4. ✅ **MTG search showing Pokemon results** - Fixed search API game filter to properly segregate results
+5. ✅ **Messenger JSON parse errors** - Added proper try/catch with text-first parsing to handle non-JSON responses
 
-**Testing:** 14/14 tests passed (iteration_4.json)
+**New Features:**
+- **Search includes Users/Posts/Decks** - Search API and UI updated to display all entity types
+- **Community Page** - Combined Friends+Groups with tabs
+- **Settings Page** - Profile, Password, Notifications, Privacy settings
+- **Avatar Dropdown Menu** - Profile, Settings, Admin Panel, Logout
+- **Admin Tools** - Make/Remove Admin buttons, Delete Post functionality
+- **Pokemon CSV format** - Support for export_2026 format
+- **Server-side API caching** - PostgreSQL-backed cache
 
-### Previous Sessions
-- Social Feed with comments, replies, emoji reactions
-- Video call rework with incoming call notifications  
-- About Us and Shop pages
-- Admin panel with shop inventory management
-- Card search with prices, multi-currency, enhanced Add Card modal
-
-## Known Issues (Updated Status)
-1. ✅ **CSV Import broken in production** - Fixed with caching and format detection
-2. 🔧 **Video calls** - Improved signaling, needs real-world 2-user testing
-3. ✅ **MTG Search CORS** - Fixed with backend proxy + caching
-4. ✅ **Dark Mode** - Fixed on main pages
-5. ⏳ **Pokemon search prices** - Prices show in modal (OK per user)
-6. ✅ **API caching** - Implemented with PostgreSQL
+**Testing:** 20/20 backend tests passed (iteration_5.json)
 
 ## Key API Endpoints
 - `/api/collection/import` - CSV import (ManaBox + Pokemon formats)
 - `/api/cards/mtg` - MTG search proxy with caching
+- `/api/search?type=all` - Universal search (cards, users, posts, decks)
 - `/api/calls?mode=preview|active` - WebRTC signaling
-- `/api/admin/users` - User management (GET, PUT for admin toggle, DELETE)
-- `/api/admin/posts` - Post moderation (DELETE)
 
 ## Key Files
-- `/app/app/community/page.tsx` - Combined Friends+Groups page
-- `/app/app/settings/page.tsx` - User settings
-- `/app/components/Navbar.tsx` - Navigation with avatar dropdown
-- `/app/lib/api-cache.ts` - Server-side caching layer
+- `/app/components/VideoCall.tsx` - **Line 205**: `peerConnectionRef.current = pc;`
+- `/app/components/MessengerWidget.tsx` - **Lines 145-155, 200-213**: JSON error handling
+- `/app/app/api/search/route.ts` - Universal search with game filter
 - `/app/app/api/collection/import/route.ts` - Multi-format CSV import
 
-## Admin Accounts
-- zudran@gmail.com
-- ernst@hatake.eu
+## Known Issues (Updated Status)
+1. ✅ **Video calls "No peer connection"** - Fixed (code reviewed)
+2. ✅ **CSV import fails** - Fixed and tested
+3. ✅ **CSV currency display** - Fixed
+4. ✅ **MTG/Pokemon search mixing** - Fixed
+5. ✅ **Messenger JSON errors** - Fixed (code reviewed)
+6. 🔧 **Video calls real-world test** - Needs two-user testing
 
-## Test Account
-- test@test.com / password
+## Test Accounts
+- **Regular:** test@test.com / password
+- **Admin:** zudran@gmail.com, ernst@hatake.eu
 
 ## Upcoming Tasks
-1. Verify video calls with real 2-user test (P1)
-2. Complete Admin Panel Settings tab (P2)
+1. Real-world two-user video call test (P1)
 
 ## Future Backlog
 - Payment gateway integration (Stripe)
 - Card deck sharing functionality
 - Find duplicates feature in collection
 - Sealed product management
-- Mobile Android application
