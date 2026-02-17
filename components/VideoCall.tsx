@@ -572,10 +572,15 @@ export default function VideoCall({
   // Initialize on mount
   useEffect(() => {
     if (isOpen) {
-      initializeCall();
-      
-      // Start polling for signals (faster polling for better responsiveness)
-      pollingIntervalRef.current = setInterval(pollSignals, 500);
+      // Initialize call first, then start polling after peer connection is ready
+      const startCall = async () => {
+        await initializeCall();
+        // Only start polling AFTER peer connection is created
+        if (peerConnectionRef.current) {
+          pollingIntervalRef.current = setInterval(pollSignals, 500);
+        }
+      };
+      startCall();
     }
 
     return () => {
