@@ -1452,7 +1452,38 @@ export default function CollectionPage() {
             {/* Content */}
             <div className="flex-1 overflow-hidden flex flex-col">
               {importStatus === 'idle' && (
-                <div className="p-6 flex-1 flex items-center justify-center">
+                <div className="p-6 flex-1 flex flex-col items-center justify-center">
+                  {/* Game Type Selector */}
+                  <div className="mb-6 w-full max-w-md">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-center">
+                      Select Card Game Type
+                    </label>
+                    <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                      <button
+                        onClick={() => setImportGameType('mtg')}
+                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
+                          importGameType === 'mtg' 
+                            ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                        }`}
+                        data-testid="import-game-mtg"
+                      >
+                        🃏 Magic: The Gathering
+                      </button>
+                      <button
+                        onClick={() => setImportGameType('pokemon')}
+                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
+                          importGameType === 'pokemon' 
+                            ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                        }`}
+                        data-testid="import-game-pokemon"
+                      >
+                        ⚡ Pokémon TCG
+                      </button>
+                    </div>
+                  </div>
+                  
                   <div className="text-center">
                     <input
                       type="file"
@@ -1469,11 +1500,15 @@ export default function CollectionPage() {
                       <Upload className="w-12 h-12 text-gray-400" />
                       <div>
                         <p className="font-semibold text-gray-700 dark:text-gray-300">Click to upload CSV</p>
-                        <p className="text-sm text-gray-500">ManaBox export format supported</p>
+                        <p className="text-sm text-gray-500">
+                          {importGameType === 'mtg' ? 'ManaBox export format' : 'Pokémon TCG export format'}
+                        </p>
                       </div>
                     </label>
                     <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                      Export your collection from ManaBox and upload the CSV file here
+                      {importGameType === 'mtg' 
+                        ? 'Export your collection from ManaBox and upload the CSV file here'
+                        : 'Export your Pokémon collection and upload the CSV file here'}
                     </p>
                   </div>
                 </div>
