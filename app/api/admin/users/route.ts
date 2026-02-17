@@ -121,3 +121,37 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// PUT - Update user (toggle admin status)
+export async function PUT(request: NextRequest) {
+  try {
+    const sessionToken = request.cookies.get('session_token')?.value;
+    if (!await isAdmin(sessionToken)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { user_id, is_admin } = body;
+
+    if (!user_id) {
+      return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
+    }
+
+    // Ensure is_admin column exists
+    try {
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false`;
+    } catch (e) {}
+
+    // Update admin status
+    await sql`
+      UPDATE users 
+      SET is_admin = ${is_admin}
+      WHERE user_id = ${user_id}
+    `;
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Update user error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
