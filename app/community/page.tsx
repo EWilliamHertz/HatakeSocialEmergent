@@ -60,6 +60,7 @@ export default function CommunityPage() {
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
   const [creating, setCreating] = useState(false);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
