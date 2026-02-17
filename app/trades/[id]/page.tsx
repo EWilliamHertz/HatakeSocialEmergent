@@ -331,6 +331,105 @@ export default function TradeDetailPage() {
           </div>
         )}
 
+        {/* Shipping & Payment Info - Show when trade is accepted or completed */}
+        {(trade.status === 'accepted' || trade.status === 'completed') && (
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            {/* Their Info */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-500" />
+                {otherParty.name}&apos;s Details
+              </h2>
+              
+              {/* Shipping Address */}
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+                  <MapPin className="w-4 h-4" /> Shipping Address
+                </h3>
+                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg text-sm">
+                  {(isInitiator ? trade.recipient_shipping_address : trade.initiator_shipping_address) || 'Not provided'}
+                </p>
+              </div>
+              
+              {/* Payment Details */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+                  <CreditCard className="w-4 h-4" /> Payment Details
+                </h3>
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg space-y-2 text-sm">
+                  {(isInitiator ? trade.recipient_payment_swish : trade.initiator_payment_swish) && (
+                    <p className="dark:text-gray-200">
+                      <span className="text-gray-500 dark:text-gray-400">Swish:</span> {isInitiator ? trade.recipient_payment_swish : trade.initiator_payment_swish}
+                    </p>
+                  )}
+                  {(isInitiator ? trade.recipient_payment_account : trade.initiator_payment_account) && (
+                    <p className="dark:text-gray-200">
+                      <span className="text-gray-500 dark:text-gray-400">Account:</span> {isInitiator ? trade.recipient_payment_account : trade.initiator_payment_account}
+                    </p>
+                  )}
+                  {(isInitiator ? trade.recipient_payment_bankgiro : trade.initiator_payment_bankgiro) && (
+                    <p className="dark:text-gray-200">
+                      <span className="text-gray-500 dark:text-gray-400">Bankgiro:</span> {isInitiator ? trade.recipient_payment_bankgiro : trade.initiator_payment_bankgiro}
+                    </p>
+                  )}
+                  {!(isInitiator ? trade.recipient_payment_swish : trade.initiator_payment_swish) && 
+                   !(isInitiator ? trade.recipient_payment_account : trade.initiator_payment_account) && 
+                   !(isInitiator ? trade.recipient_payment_bankgiro : trade.initiator_payment_bankgiro) && (
+                    <p className="text-gray-500">Not provided</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Your Info */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+                <User className="w-5 h-5 text-green-500" />
+                Your Details (shared with them)
+              </h2>
+              
+              {/* Shipping Address */}
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+                  <MapPin className="w-4 h-4" /> Your Shipping Address
+                </h3>
+                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg text-sm">
+                  {(isInitiator ? trade.initiator_shipping_address : trade.recipient_shipping_address) || 'Not provided - update in Settings'}
+                </p>
+              </div>
+              
+              {/* Payment Details */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+                  <CreditCard className="w-4 h-4" /> Your Payment Details
+                </h3>
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg space-y-2 text-sm">
+                  {(isInitiator ? trade.initiator_payment_swish : trade.recipient_payment_swish) && (
+                    <p className="dark:text-gray-200">
+                      <span className="text-gray-500 dark:text-gray-400">Swish:</span> {isInitiator ? trade.initiator_payment_swish : trade.recipient_payment_swish}
+                    </p>
+                  )}
+                  {(isInitiator ? trade.initiator_payment_account : trade.recipient_payment_account) && (
+                    <p className="dark:text-gray-200">
+                      <span className="text-gray-500 dark:text-gray-400">Account:</span> {isInitiator ? trade.initiator_payment_account : trade.recipient_payment_account}
+                    </p>
+                  )}
+                  {(isInitiator ? trade.initiator_payment_bankgiro : trade.recipient_payment_bankgiro) && (
+                    <p className="dark:text-gray-200">
+                      <span className="text-gray-500 dark:text-gray-400">Bankgiro:</span> {isInitiator ? trade.initiator_payment_bankgiro : trade.recipient_payment_bankgiro}
+                    </p>
+                  )}
+                  {!(isInitiator ? trade.initiator_payment_swish : trade.recipient_payment_swish) && 
+                   !(isInitiator ? trade.initiator_payment_account : trade.recipient_payment_account) && 
+                   !(isInitiator ? trade.initiator_payment_bankgiro : trade.recipient_payment_bankgiro) && (
+                    <p className="text-gray-500">Not provided - update in Settings</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-bold mb-4 dark:text-white">Actions</h2>
