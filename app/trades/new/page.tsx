@@ -203,13 +203,23 @@ export default function NewTradePage() {
           recipientId: selectedPartner.user_id,
           initiatorItems: offeredCards.map(o => ({
             card_id: o.card.card_id,
-            card_data: o.card.card_data,
-            quantity: o.quantity
+            card_name: o.card.card_data?.name || 'Unknown Card',
+            card_image: getCardImage(o.card),
+            game: o.card.game,
+            quantity: o.quantity,
+            condition: o.card.condition,
+            foil: o.card.is_foil,
+            value: getCardValue(o.card)
           })),
           recipientItems: requestedCards.map(o => ({
             card_id: o.card.card_id,
-            card_data: o.card.card_data,
-            quantity: o.quantity
+            card_name: o.card.card_data?.name || 'Unknown Card',
+            card_image: getCardImage(o.card),
+            game: o.card.game,
+            quantity: o.quantity,
+            condition: o.card.condition,
+            foil: o.card.is_foil,
+            value: getCardValue(o.card)
           })),
           message: notes
         })
