@@ -178,6 +178,15 @@ export default function TradeDetailPage() {
   const myItems = isInitiator ? trade.initiator_cards : trade.receiver_cards;
   const theirItems = isInitiator ? trade.receiver_cards : trade.initiator_cards;
 
+  // Calculate total values
+  const calculateTotal = (items: TradeItem[] | undefined) => {
+    if (!items) return 0;
+    return items.reduce((sum, item) => sum + ((item.value || 0) * (item.quantity || 1)), 0);
+  };
+  
+  const myTotal = calculateTotal(myItems);
+  const theirTotal = calculateTotal(theirItems);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
