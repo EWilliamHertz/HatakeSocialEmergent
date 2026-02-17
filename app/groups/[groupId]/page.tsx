@@ -549,7 +549,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                     <Lock className="w-5 h-5 text-gray-400" />
                   ) : (
                     <Globe className="w-5 h-5 text-gray-400" />
-                  )}}
+                  )}
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 mb-2">{group.description || 'No description'}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-500">
