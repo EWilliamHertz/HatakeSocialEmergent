@@ -212,7 +212,7 @@ export default function FriendsPage() {
                 </button>
               </div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y dark:divide-gray-700">
                 {friends.map((friend) => (
                   <div key={friend.user_id} className="p-4 flex items-center justify-between" data-testid={`friend-${friend.user_id}`}>
                     <div className="flex items-center gap-4">
@@ -224,8 +224,8 @@ export default function FriendsPage() {
                         </div>
                       )}
                       <div>
-                        <p className="font-semibold">{friend.name}</p>
-                        <p className="text-sm text-gray-500">Friend</p>
+                        <p className="font-semibold dark:text-white">{friend.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Friend</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
