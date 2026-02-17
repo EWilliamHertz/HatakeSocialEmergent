@@ -260,9 +260,23 @@ export default function NewTradePage() {
   // Calculate total value of offered/requested cards
   const getCardValue = (item: CollectionItem): number => {
     const prices = item.card_data?.prices;
+    // Try USD prices first (Scryfall MTG)
     if (prices?.usd) return parseFloat(prices.usd);
     if (prices?.usd_foil && item.is_foil) return parseFloat(prices.usd_foil);
+    if (prices?.eur) return parseFloat(prices.eur);
+    if (prices?.eur_foil && item.is_foil) return parseFloat(prices.eur_foil);
+    
+    // TCGPlayer prices (Pokemon)
     if (item.card_data?.tcgplayer?.prices?.normal?.market) return item.card_data.tcgplayer.prices.normal.market;
+    if (item.card_data?.tcgplayer?.prices?.holofoil?.market) return item.card_data.tcgplayer.prices.holofoil.market;
+    
+    // TCGdex prices
+    if (item.card_data?.prices?.firstEdition?.mid) return item.card_data.prices.firstEdition.mid;
+    if (item.card_data?.prices?.normal?.mid) return item.card_data.prices.normal.mid;
+    
+    // Custom purchase price
+    if (item.card_data?.purchase_price) return parseFloat(item.card_data.purchase_price);
+    
     return 0;
   };
 
