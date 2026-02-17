@@ -547,15 +547,24 @@ export default function AdminPage() {
                 <div className="space-y-3">
                   {recentPosts.length > 0 ? recentPosts.map((post: any) => (
                     <div key={post.post_id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        {post.picture ? (
-                          <img src={post.picture} alt={post.name} className="w-6 h-6 rounded-full" />
-                        ) : (
-                          <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 dark:text-blue-400 text-xs font-medium">{post.name?.charAt(0)}</span>
-                          </div>
-                        )}
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{post.name}</span>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {post.picture ? (
+                            <img src={post.picture} alt={post.name} className="w-6 h-6 rounded-full" />
+                          ) : (
+                            <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                              <span className="text-blue-600 dark:text-blue-400 text-xs font-medium">{post.name?.charAt(0)}</span>
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{post.name}</span>
+                        </div>
+                        <button
+                          onClick={() => deletePost(post.post_id)}
+                          className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                          title="Delete post"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{post.content}</p>
                     </div>
