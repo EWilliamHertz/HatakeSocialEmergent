@@ -207,7 +207,7 @@ export default function MarketplacePage() {
             
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${showFilters ? 'border-blue-600 text-blue-600' : 'border-gray-300'}`}
+              className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${showFilters ? 'border-blue-600 text-blue-600' : 'border-gray-300 dark:border-gray-600 dark:text-gray-300'}`}
               data-testid="toggle-filters-btn"
             >
               <SlidersHorizontal className="w-4 h-4" />
