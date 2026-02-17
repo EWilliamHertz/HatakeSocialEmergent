@@ -329,7 +329,7 @@ function SearchContent() {
         {/* View Toggle */}
         <div className="flex justify-between items-center mb-6">
           <p className="text-gray-600 dark:text-gray-400" data-testid="results-count">
-            {loading ? 'Searching...' : `${results.length} results found`}
+            {loading ? 'Searching...' : `${results.length} cards, ${users.length} users, ${decks.length} decks, ${posts.length} posts found`}
           </p>
           <div className="flex gap-2">
             <button
@@ -348,6 +348,116 @@ function SearchContent() {
             </button>
           </div>
         </div>
+
+        {/* Users Section */}
+        {users.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+              Users
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {users.map((user) => (
+                <div 
+                  key={user.user_id}
+                  onClick={() => router.push(`/profile/${user.user_id}`)}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-4 hover:shadow-lg transition cursor-pointer"
+                >
+                  {user.picture ? (
+                    <Image src={user.picture} alt={user.name} width={48} height={48} className="rounded-full" />
+                  ) : (
+                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white text-lg font-bold">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold dark:text-white">{user.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Decks Section */}
+        {decks.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              Decks
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {decks.map((deck) => (
+                <div 
+                  key={deck.deck_id}
+                  onClick={() => router.push(`/decks/${deck.deck_id}`)}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 hover:shadow-lg transition cursor-pointer"
+                >
+                  <h3 className="font-semibold dark:text-white mb-1">{deck.name}</h3>
+                  {deck.format && (
+                    <span className="inline-block px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs rounded mb-2">
+                      {deck.format}
+                    </span>
+                  )}
+                  {deck.description && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{deck.description}</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                    {deck.creator_picture ? (
+                      <Image src={deck.creator_picture} alt={deck.creator_name} width={20} height={20} className="rounded-full" />
+                    ) : (
+                      <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+                    )}
+                    <span>by {deck.creator_name}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Posts Section */}
+        {posts.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              Posts
+            </h2>
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <div 
+                  key={post.post_id}
+                  onClick={() => router.push(`/feed?post=${post.post_id}`)}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 hover:shadow-lg transition cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    {post.picture ? (
+                      <Image src={post.picture} alt={post.name} width={32} height={32} className="rounded-full" />
+                    ) : (
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                        {post.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="font-medium dark:text-white">{post.name}</span>
+                    <span className="text-sm text-gray-400">
+                      {new Date(post.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-300 line-clamp-3">{post.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Cards Section */}
+        {results.length > 0 && (
+          <div>
+            <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+              Cards
+            </h2>
 
         {/* Results */}
         {loading ? (
