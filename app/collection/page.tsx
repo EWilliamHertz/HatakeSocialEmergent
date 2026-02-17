@@ -83,10 +83,12 @@ export default function CollectionPage() {
   const [selectedCardToAdd, setSelectedCardToAdd] = useState<any>(null);
   const [cardFinish, setCardFinish] = useState('Normal');
   const [isGraded, setIsGraded] = useState(false);
+  const [isSigned, setIsSigned] = useState(false);
   const [gradingCompany, setGradingCompany] = useState('PSA');
   const [gradeValue, setGradeValue] = useState('10');
   const [loadingCardPrice, setLoadingCardPrice] = useState(false);
   const [cardPriceData, setCardPriceData] = useState<any>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Pokemon finish options
   const pokemonFinishOptions = [
