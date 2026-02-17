@@ -160,9 +160,9 @@ export default function TradesPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           </div>
         ) : filteredTrades.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <ArrowRightLeft className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+            <ArrowRightLeft className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
               {tab === 'active' ? 'No active trades' : tab === 'completed' ? 'No completed trades' : 'No trades yet'}
             </p>
             <button
@@ -183,7 +183,7 @@ export default function TradesPage() {
               return (
                 <div 
                   key={trade.trade_id} 
-                  className="bg-white rounded-xl shadow-sm p-6"
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
                   data-testid={`trade-${trade.trade_id}`}
                 >
                   {/* Trade Header */}
@@ -197,8 +197,8 @@ export default function TradesPage() {
                         </div>
                       )}
                       <div>
-                        <p className="font-semibold">Trade with {otherParty.name}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-semibold dark:text-white">Trade with {otherParty.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {isInitiator ? 'You initiated' : 'They initiated'} • {new Date(trade.created_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -206,10 +206,10 @@ export default function TradesPage() {
                     <div className="flex items-center gap-2">
                       {getStatusIcon(trade.status)}
                       <span className={`text-sm font-semibold ${
-                        trade.status === 'pending' ? 'text-yellow-600' :
-                        trade.status === 'accepted' ? 'text-green-600' :
-                        trade.status === 'completed' ? 'text-blue-600' :
-                        'text-red-600'
+                        trade.status === 'pending' ? 'text-yellow-600 dark:text-yellow-400' :
+                        trade.status === 'accepted' ? 'text-green-600 dark:text-green-400' :
+                        trade.status === 'completed' ? 'text-blue-600 dark:text-blue-400' :
+                        'text-red-600 dark:text-red-400'
                       }`}>
                         {getStatusLabel(trade.status)}
                       </span>
@@ -218,26 +218,26 @@ export default function TradesPage() {
 
                   {/* Trade Items */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-sm font-semibold text-gray-600 mb-2">
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                      <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">
                         {isInitiator ? 'You offer' : 'They offer'}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {(isInitiator ? trade.initiator_items : trade.recipient_items)?.map((item: any, idx: number) => (
-                          <div key={idx} className="flex items-center gap-2 bg-white rounded px-2 py-1 text-sm">
+                          <div key={idx} className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded px-2 py-1 text-sm dark:text-white">
                             <Package className="w-4 h-4 text-gray-400" />
                             {item.card_name || 'Card'}
                           </div>
                         )) || <span className="text-gray-400 text-sm">No items</span>}
                       </div>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-sm font-semibold text-gray-600 mb-2">
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                      <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">
                         {isInitiator ? 'They offer' : 'You offer'}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {(isInitiator ? trade.recipient_items : trade.initiator_items)?.map((item: any, idx: number) => (
-                          <div key={idx} className="flex items-center gap-2 bg-white rounded px-2 py-1 text-sm">
+                          <div key={idx} className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded px-2 py-1 text-sm dark:text-white">
                             <Package className="w-4 h-4 text-gray-400" />
                             {item.card_name || 'Card'}
                           </div>
@@ -259,7 +259,7 @@ export default function TradesPage() {
                         </button>
                         <button
                           onClick={() => respondToTrade(trade.trade_id, 'reject')}
-                          className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 flex items-center gap-2"
+                          className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center gap-2"
                         >
                           <XCircle className="w-4 h-4" />
                           Decline
@@ -268,7 +268,7 @@ export default function TradesPage() {
                     )}
                     <button
                       onClick={() => router.push(`/trades/${trade.trade_id}`)}
-                      className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 flex items-center gap-2"
+                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2"
                     >
                       <Eye className="w-4 h-4" />
                       View Details
