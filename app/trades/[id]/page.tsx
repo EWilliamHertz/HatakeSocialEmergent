@@ -14,6 +14,7 @@ interface TradeItem {
   quantity: number;
   condition?: string;
   foil?: boolean;
+  value?: number;
 }
 
 interface Trade {
