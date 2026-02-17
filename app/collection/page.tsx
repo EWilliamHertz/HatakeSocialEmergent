@@ -766,11 +766,11 @@ export default function CollectionPage() {
       
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2">My Collection</h1>
-              <p className="text-gray-600">{items.length} cards • Estimated value: {calculateTotalValue()}</p>
+              <h1 className="text-3xl font-bold mb-2 dark:text-white">My Collection</h1>
+              <p className="text-gray-600 dark:text-gray-400">{items.length} cards • Estimated value: {calculateTotalValue()}</p>
             </div>
             <div className="flex gap-2">
               <button
