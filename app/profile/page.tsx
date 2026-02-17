@@ -163,7 +163,7 @@ export default function MyProfilePage() {
                   </>
                 )}
                 <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                  Member since {new Date(user.created_at).toLocaleDateString()}
+                  Member since {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
                 </p>
               </div>
 
