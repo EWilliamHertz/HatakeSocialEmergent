@@ -131,6 +131,26 @@ export default function TradesPage() {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Trade Overview Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Trades</p>
+            <p className="text-2xl font-bold text-yellow-600">{tradeStats.active}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Completed</p>
+            <p className="text-2xl font-bold text-green-600">{tradeStats.completed}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Trade Value</p>
+            <p className="text-2xl font-bold text-blue-600">€{tradeStats.totalValue.toFixed(2)}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Completed Value</p>
+            <p className="text-2xl font-bold text-purple-600">€{tradeStats.completedValue.toFixed(2)}</p>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -156,7 +176,7 @@ export default function TradesPage() {
                 tab === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}
             >
-              Active
+              Active ({tradeStats.active})
             </button>
             <button
               onClick={() => setTab('completed')}
