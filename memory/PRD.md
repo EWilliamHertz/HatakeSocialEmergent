@@ -13,8 +13,10 @@ Hatake.Social is a full-stack TCG (Trading Card Game) social platform built with
 ### Card Management
 - Search cards from Scryfall (MTG) and TCGdex (Pokemon)
 - Personal collection management with manual add and CSV import
-- Collection value calculation with pricing from Cardmarket
-- Support for card conditions, foil status, quantity tracking
+- **JTG/official set code aliases** supported (JTG -> sv09, etc.)
+- Collection value calculation with multi-currency support (EUR + USD)
+- Support for card conditions, finish variants (Holofoil, Reverse Holofoil, etc.)
+- Graded card tracking (PSA, BGS, CGC, SGC)
 
 ### Social Features
 - Social Feed with posts, comments, nested replies
@@ -44,21 +46,28 @@ Hatake.Social is a full-stack TCG (Trading Card Game) social platform built with
 - **Framework:** Next.js 15+ with App Router
 - **Database:** PostgreSQL (Neon)
 - **Styling:** Tailwind CSS, shadcn/ui
-- **Card APIs:** Scryfall (MTG), TCGdex (Pokemon)
+- **Card APIs:** Scryfall (MTG), TCGdex (Pokemon with Cardmarket pricing)
 - **Auth:** Emergent-managed Google OAuth, JWT sessions
 
 ## What's Been Implemented
 
-### February 2026 - Session 2
-- Fixed "Missing required fields" bug when adding Pokemon cards
-- Fixed collection page crash (React child object error)
-- Added Pokemon card pricing support (via TCGdex/Cardmarket)
-- Added set code aliases for Pokemon (JTG -> sv09, etc.)
-- Fixed admin panel analytics stats cards (Tailwind JIT issue)
-- Fixed admin APIs using wrong table name (collection -> collection_items)
-- Verified Messenger Widget is working (requires login)
+### February 17, 2026 - Session 3
+**Bug Fixes & Features:**
+- Fixed MTG card search (was timing out, added AbortController)
+- Fixed "Missing required fields" error when adding Pokemon cards
+- Fixed JTG + 24 search (Journey Together set code alias sv09)
+- Added price display in search results modal (green badges)
+- Fixed multi-currency support (EUR € for Pokemon, USD $ for MTG)
+- Created enhanced "Add to Collection" modal with:
+  - Card preview with price info
+  - Quantity input
+  - Finish dropdown (Normal, Holofoil, Reverse Holofoil, Pokeball Holofoil, Masterball Holofoil, etc. for Pokemon)
+  - Condition dropdown (Mint to Poor)
+  - "Add as graded card" checkbox with grading company and grade selection
+- Fixed collection page display showing correct currency per card type
+- Fixed admin panel stats (using correct table names)
 
-### Previous Session
+### Previous Sessions
 - Social Feed with comments, replies, emoji reactions
 - Video call rework with incoming call notifications
 - About Us and Shop pages
@@ -67,12 +76,13 @@ Hatake.Social is a full-stack TCG (Trading Card Game) social platform built with
 - Card search by name feature
 
 ## Known Issues
-1. **Video calls unstable** - Connections drop shortly after establishing (P0)
-2. **Pokemon cards added before fix have no pricing** - Need to re-add or fetch pricing
+1. **Video calls unstable** - Connections may drop shortly after establishing (P0)
 
 ## Upcoming Tasks
 1. Advanced marketplace filters (P1)
-2. User verification of group chat/messaging and member invites (P2)
+2. Image upload for custom card photos
+3. Signed card tracking option
+4. User verification of group chat/messaging and member invites (P2)
 
 ## Future Backlog
 - Payment gateway integration for Shop (Stripe recommended)
@@ -84,6 +94,16 @@ Hatake.Social is a full-stack TCG (Trading Card Game) social platform built with
 - ernst@hatake.eu
 
 ## API Integrations
-- **Scryfall:** Magic: The Gathering card data
-- **TCGdex:** Pokemon TCG card data with Cardmarket pricing
+- **Scryfall:** Magic: The Gathering card data with USD pricing
+- **TCGdex:** Pokemon TCG card data with Cardmarket (EUR) pricing
 - **Emergent Google Auth:** User sign-in
+
+## Set Code Aliases Supported (Pokemon)
+| User Input | Resolves To | Set Name |
+|------------|-------------|----------|
+| jtg, journey, journeytogether | sv09 | Journey Together |
+| tef, temporal | sv05 | Temporal Forces |
+| par | sv04 | Paradox Rift |
+| obsidian | sv03 | Obsidian Flames |
+| paldea | sv02 | Paldea Evolved |
+| scarlet, violet, svbase | sv01 | Scarlet & Violet Base |
