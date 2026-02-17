@@ -511,8 +511,10 @@ function SearchContent() {
                 </div>
               </div>
             ))}
+            </div>
           </div>
-        </div>
+        )}
+          </>
         )}
 
         {/* Empty State */}
