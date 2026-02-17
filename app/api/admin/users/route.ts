@@ -64,15 +64,16 @@ export async function GET(request: NextRequest) {
 
     // Get additional info for each user
     const usersWithInfo = await Promise.all(users.map(async (user: any) => {
-      const [postCount, deckCount, collectionCount] = await Promise.all([
+      const [postCount, deckCount, collectionCount, isAdminResult] = await Promise.all([
         sql`SELECT COUNT(*) as count FROM posts WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
         sql`SELECT COUNT(*) as count FROM decks WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
-        sql`SELECT COUNT(*) as count FROM collection_items WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0)
+        sql`SELECT COUNT(*) as count FROM collection_items WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
+        sql`SELECT is_admin FROM users WHERE user_id = ${user.user_id}`.then(r => r[0]?.is_admin === true).catch(() => false)
       ]);
 
       return {
         ...user,
-        isAdmin: ADMIN_EMAILS.includes(user.email),
+        isAdmin: ADMIN_EMAILS.includes(user.email) || isAdminResult,
         stats: {
           posts: postCount,
           decks: deckCount,
