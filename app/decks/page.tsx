@@ -167,7 +167,7 @@ export default function DecksPage() {
 
   const displayedDecks = activeTab === 'my' ? myDecks : communityDecks;
 
-  const DeckCard = ({ deck, showOwner = false, canDelete = false }: { deck: Deck; showOwner?: boolean; canDelete?: boolean }) => (
+  const DeckCard = ({ deck, showOwner = false, canDelete = false, isCommunityDeck = false }: { deck: Deck; showOwner?: boolean; canDelete?: boolean; isCommunityDeck?: boolean }) => (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition group">
       <Link href={`/decks/${deck.deck_id}`} className="block p-6" data-testid={`deck-${deck.deck_id}`}>
         <div className="flex items-start justify-between mb-4">
