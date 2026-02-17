@@ -976,7 +976,7 @@ export default function MessagesPage() {
           </button>
           {fullscreenMedia.message_type === 'video' ? (
             <video 
-              src={fullscreenMedia.content} 
+              src={fullscreenMedia.media_url || fullscreenMedia.content} 
               controls 
               autoPlay 
               className="max-w-full max-h-full"
@@ -984,7 +984,7 @@ export default function MessagesPage() {
             />
           ) : (
             <img 
-              src={fullscreenMedia.content} 
+              src={fullscreenMedia.media_url || fullscreenMedia.content} 
               alt="" 
               className="max-w-full max-h-full object-contain"
               onClick={(e) => e.stopPropagation()}
