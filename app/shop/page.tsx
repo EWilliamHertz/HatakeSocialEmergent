@@ -332,7 +332,7 @@ export default function ShopPage() {
           </div>
           <div className="flex flex-wrap gap-4 justify-center">
             <a
-              href="mailto:contact@hatake.social?subject=Wholesale Inquiry"
+              href="mailto:ernst@hatake.eu?subject=Wholesale Inquiry"
               className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition flex items-center gap-2"
             >
               <Mail className="w-5 h-5" />
