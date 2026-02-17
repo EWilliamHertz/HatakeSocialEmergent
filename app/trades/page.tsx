@@ -109,11 +109,11 @@ export default function TradesPage() {
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2">My Trades</h1>
-              <p className="text-gray-600">Manage your card trades with other collectors</p>
+              <h1 className="text-3xl font-bold mb-2 dark:text-white">My Trades</h1>
+              <p className="text-gray-600 dark:text-gray-400">Manage your card trades with other collectors</p>
             </div>
             <button
               onClick={() => router.push('/trades/new')}
@@ -130,7 +130,7 @@ export default function TradesPage() {
             <button
               onClick={() => setTab('active')}
               className={`px-4 py-2 rounded-lg font-semibold transition ${
-                tab === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                tab === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}
             >
               Active
@@ -138,7 +138,7 @@ export default function TradesPage() {
             <button
               onClick={() => setTab('completed')}
               className={`px-4 py-2 rounded-lg font-semibold transition ${
-                tab === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                tab === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}
             >
               Completed
@@ -146,7 +146,7 @@ export default function TradesPage() {
             <button
               onClick={() => setTab('all')}
               className={`px-4 py-2 rounded-lg font-semibold transition ${
-                tab === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                tab === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}
             >
               All
