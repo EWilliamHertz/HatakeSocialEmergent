@@ -557,6 +557,27 @@ export default function MessagesPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            {/* Message Search */}
+                            <div className="relative">
+                              <input
+                                type="text"
+                                placeholder="Search messages..."
+                                value={messageSearch}
+                                onChange={(e) => setMessageSearch(e.target.value)}
+                                className="pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white w-40 focus:w-52 transition-all"
+                                data-testid="message-search-input"
+                              />
+                              <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            </div>
+                            {/* Media Gallery */}
+                            <button
+                              onClick={() => loadMediaGallery(selectedConv!)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                              title="View shared media"
+                              data-testid="media-gallery-btn"
+                            >
+                              <ImageIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                            </button>
                             <button
                               onClick={() => setShowAudioCall(true)}
                               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
