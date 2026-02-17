@@ -154,11 +154,11 @@ export default function MarketplacePage() {
       
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Marketplace</h1>
-              <p className="text-gray-600">Buy and sell cards with the community</p>
+              <h1 className="text-3xl font-bold mb-2 dark:text-white">Marketplace</h1>
+              <p className="text-gray-600 dark:text-gray-400">Buy and sell cards with the community</p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
