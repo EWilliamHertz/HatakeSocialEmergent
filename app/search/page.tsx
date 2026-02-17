@@ -108,6 +108,7 @@ function SearchContent() {
       const params = new URLSearchParams();
       if (searchQuery) params.append('q', searchQuery);
       params.append('game', gameType || game);
+      params.append('type', 'all'); // Search everything
       if (set) params.append('set', set);
       if (num) params.append('number', num);
       
@@ -117,6 +118,9 @@ function SearchContent() {
       const data = await res.json();
       if (data.success) {
         setResults(data.results || []);
+        setUsers(data.users || []);
+        setPosts(data.posts || []);
+        setDecks(data.decks || []);
       } else {
         console.error('Search failed:', data.error);
       }
