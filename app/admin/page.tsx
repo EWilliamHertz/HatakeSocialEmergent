@@ -639,15 +639,28 @@ export default function AdminPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            {!user.isAdmin && (
+                            <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => deleteUser(user.user_id, user.name)}
-                                className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
-                                title="Delete user"
+                                onClick={() => toggleAdmin(user.user_id, user.name, user.isAdmin)}
+                                className={`px-3 py-1 rounded text-xs font-medium ${
+                                  user.isAdmin 
+                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 hover:bg-yellow-200' 
+                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 hover:bg-purple-200'
+                                }`}
+                                title={user.isAdmin ? 'Remove admin' : 'Make admin'}
                               >
-                                <Trash2 className="w-4 h-4 text-red-600" />
+                                {user.isAdmin ? 'Remove Admin' : 'Make Admin'}
                               </button>
-                            )}
+                              {!ADMIN_EMAILS.includes(user.email) && (
+                                <button
+                                  onClick={() => deleteUser(user.user_id, user.name)}
+                                  className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
+                                  title="Delete user"
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-600" />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
