@@ -875,7 +875,7 @@ export default function CollectionPage() {
             {filteredItems.map((item) => (
               <div 
                 key={item.id} 
-                className={`bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition relative group ${
+                className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition relative group ${
                   selectedItems.has(item.id) ? 'ring-2 ring-blue-600' : ''
                 }`}
                 data-testid={`collection-item-${item.id}`}
@@ -883,7 +883,7 @@ export default function CollectionPage() {
                 {/* Selection Checkbox */}
                 <button
                   onClick={() => toggleItemSelection(item.id)}
-                  className="absolute top-2 left-2 z-10 bg-white rounded p-1 shadow"
+                  className="absolute top-2 left-2 z-10 bg-white dark:bg-gray-700 rounded p-1 shadow"
                 >
                   {selectedItems.has(item.id) ? (
                     <CheckSquare className="w-5 h-5 text-blue-600" />
