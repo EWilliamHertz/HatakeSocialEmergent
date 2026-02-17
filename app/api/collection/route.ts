@@ -36,10 +36,16 @@ export async function GET(request: NextRequest) {
 
     const items = await query;
 
+    // Ensure card_data is parsed as JSON (in case it's stored as string)
+    const parsedItems = items.map((item: any) => ({
+      ...item,
+      card_data: typeof item.card_data === 'string' ? JSON.parse(item.card_data) : item.card_data
+    }));
+
     return NextResponse.json({
       success: true,
-      items: items.slice(offset, offset + limit),
-      total: items.length,
+      items: parsedItems.slice(offset, offset + limit),
+      total: parsedItems.length,
     });
   } catch (error) {
     console.error('Get collection error:', error);
