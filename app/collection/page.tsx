@@ -1824,7 +1824,12 @@ export default function CollectionPage() {
                           cardData: cardData,
                           quantity: addCardQuantity,
                           condition: addCardCondition,
-                          foil: cardFinish !== 'Normal'
+                          foil: cardFinish !== 'Normal',
+                          finish: cardFinish,
+                          isSigned: isSigned,
+                          isGraded: isGraded,
+                          gradingCompany: isGraded ? gradingCompany : null,
+                          gradeValue: isGraded ? gradeValue : null
                         })
                       });
                       
