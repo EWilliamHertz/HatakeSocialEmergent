@@ -35,7 +35,7 @@ interface Trade {
 export default function TradeDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const tradeId = params.tradeId as string;
+  const tradeId = params.id as string;
   
   const [trade, setTrade] = useState<Trade | null>(null);
   const [loading, setLoading] = useState(true);
