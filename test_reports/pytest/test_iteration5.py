@@ -346,14 +346,15 @@ class TestCollectionMTGSearch:
         assert "cards" in data
         print(f"✓ MTG cards API working, returned {len(data.get('cards',[]))} cards")
     
-    def test_pokemon_cards_api_exists(self):
-        """Test /api/cards/pokemon endpoint exists and works"""
-        resp = requests.get(f"{BASE_URL}/api/cards/pokemon?q=Pikachu")
+    def test_pokemon_search_via_main_search_api(self):
+        """Test Pokemon search works via main search API (no separate /api/cards/pokemon endpoint)"""
+        # Pokemon cards are searched via /api/search?game=pokemon, not /api/cards/pokemon
+        resp = requests.get(f"{BASE_URL}/api/search?q=Pikachu&game=pokemon&type=cards")
         assert resp.status_code == 200
         data = resp.json()
         assert data["success"] is True
-        assert "cards" in data
-        print(f"✓ Pokemon cards API working, returned {len(data.get('cards',[]))} cards")
+        assert "results" in data
+        print(f"✓ Pokemon search via main API returned {len(data.get('results',[]))} cards")
 
 
 class TestCleanup:
