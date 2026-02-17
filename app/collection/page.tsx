@@ -331,10 +331,17 @@ export default function CollectionPage() {
             
             // If collector number is provided, filter results
             if (addCardCollectorNum.trim()) {
-              cards = cards.filter((card: any) => 
-                card.localId === addCardCollectorNum || 
-                card.id?.endsWith('-' + addCardCollectorNum)
-              );
+              const collNum = addCardCollectorNum.trim();
+              // Pad to 3 digits for comparison (e.g., "24" -> "024")
+              const paddedCollNum = collNum.padStart(3, '0');
+              cards = cards.filter((card: any) => {
+                const cardLocalId = card.localId?.toString() || '';
+                const cardIdNum = card.id?.split('-').pop() || '';
+                return cardLocalId === collNum || 
+                       cardLocalId === paddedCollNum ||
+                       cardIdNum === collNum ||
+                       cardIdNum === paddedCollNum;
+              });
             }
             
             // Map TCGdex cards to consistent format
