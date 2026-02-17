@@ -56,6 +56,8 @@ export default function CollectionPage() {
   const [listCondition, setListCondition] = useState('Near Mint');
   const [listPriceMode, setListPriceMode] = useState<'fixed' | 'percent'>('percent');
   const [listPercent, setListPercent] = useState('90');
+  const [individualPrices, setIndividualPrices] = useState<Record<number, string>>({});
+  const [listingInProgress, setListingInProgress] = useState(false);
   
   // Import state
   const [showImportModal, setShowImportModal] = useState(false);
