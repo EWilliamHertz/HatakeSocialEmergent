@@ -137,7 +137,8 @@ export default function MessengerWidget() {
     
     const pollIncomingCalls = async () => {
       try {
-        const res = await fetch('/api/calls', { credentials: 'include' });
+        // Use preview mode - this won't mark 'offer' signals as processed
+        const res = await fetch('/api/calls?mode=preview', { credentials: 'include' });
         const data = await res.json();
         
         if (data.success && data.signals) {
