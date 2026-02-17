@@ -933,37 +933,37 @@ export default function CollectionPage() {
                   </div>
                 </div>
                 <div className="p-3">
-                  <h3 className="font-semibold text-sm mb-1 truncate" title={item.card_data?.name || 'Unknown'}>{item.card_data?.name || 'Unknown Card'}</h3>
+                  <h3 className="font-semibold text-sm mb-1 truncate dark:text-white" title={item.card_data?.name || 'Unknown'}>{item.card_data?.name || 'Unknown Card'}</h3>
                   <div className="flex items-center gap-1 mb-1">
                     {(item.card_data?.set?.id || item.card_data?.set_code || item.card_data?.set_name || item.card_data?.set) && (
-                      <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono uppercase text-gray-600">
+                      <span className="text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded font-mono uppercase text-gray-600 dark:text-gray-300">
                         {item.card_data?.set?.id || item.card_data?.set_code || (typeof item.card_data?.set === 'string' ? item.card_data.set : '') || (item.card_data?.set_name ? item.card_data.set_name.slice(0, 3) : '')}
                       </span>
                     )}
                     {(item.card_data?.collector_number || item.card_data?.number || item.card_data?.localId) && (
-                      <span className="text-xs text-gray-500 font-mono">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
                         #{item.card_data?.collector_number || item.card_data?.number || item.card_data?.localId}
                       </span>
                     )}
                     {item.foil && (
-                      <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">
+                      <span className="text-xs bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded font-medium">
                         Foil
                       </span>
                     )}
                     {item.is_signed && (
-                      <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-medium">
+                      <span className="text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded font-medium">
                         Signed
                       </span>
                     )}
                     {item.is_graded && (
-                      <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">
+                      <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-medium">
                         {item.grading_company} {item.grade_value}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">{item.condition || 'Near Mint'}</span>
-                    <span className="text-sm font-bold text-blue-600">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{item.condition || 'Near Mint'}</span>
+                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
                       {getCardPrice(item).currency === 'EUR' ? '€' : '$'}{getCardPrice(item).value.toFixed(2)}
                     </span>
                   </div>
