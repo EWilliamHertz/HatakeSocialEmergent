@@ -32,8 +32,16 @@ export async function GET(
         t.message,
         i.name as initiator_name,
         i.picture as initiator_picture,
+        i.shipping_address as initiator_shipping_address,
+        i.payment_swish as initiator_payment_swish,
+        i.payment_account as initiator_payment_account,
+        i.payment_bankgiro as initiator_payment_bankgiro,
         r.name as recipient_name,
-        r.picture as recipient_picture
+        r.picture as recipient_picture,
+        r.shipping_address as recipient_shipping_address,
+        r.payment_swish as recipient_payment_swish,
+        r.payment_account as recipient_payment_account,
+        r.payment_bankgiro as recipient_payment_bankgiro
       FROM trades t
       JOIN users i ON t.initiator_id = i.user_id
       JOIN users r ON t.receiver_id = r.user_id
