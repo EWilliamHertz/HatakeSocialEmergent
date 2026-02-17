@@ -1555,6 +1555,246 @@ export default function CollectionPage() {
           </div>
         </div>
       )}
+
+      {/* Add Card Confirmation Modal */}
+      {selectedCardToAdd && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-xl font-bold dark:text-white">Add to Collection</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedCardToAdd.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                    {selectedCardToAdd.set_code || selectedCardToAdd.set?.id || ''} #{selectedCardToAdd.collector_number || selectedCardToAdd.localId || selectedCardToAdd.number || ''}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedCardToAdd(null)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex gap-4 mb-6">
+                {/* Card Preview */}
+                <div className="w-32 flex-shrink-0">
+                  <img
+                    src={selectedCardToAdd.image_uris?.normal || selectedCardToAdd.image_uris?.small || selectedCardToAdd.images?.large || selectedCardToAdd.images?.small || '/placeholder-card.png'}
+                    alt={selectedCardToAdd.name}
+                    className="w-full rounded-lg shadow"
+                  />
+                </div>
+
+                {/* Price Info */}
+                <div className="flex-1">
+                  <div className="mb-3">
+                    {loadingCardPrice ? (
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">Fetching price...</span>
+                      </div>
+                    ) : cardPriceData ? (
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Market Price:</p>
+                        {addCardGame === 'pokemon' && cardPriceData.cardmarket && (
+                          <>
+                            {cardPriceData.cardmarket.avg && (
+                              <p className="text-lg font-bold text-green-600">€{cardPriceData.cardmarket.avg.toFixed(2)}</p>
+                            )}
+                            {cardPriceData.cardmarket.trend && (
+                              <p className="text-xs text-gray-500">Trend: €{cardPriceData.cardmarket.trend.toFixed(2)}</p>
+                            )}
+                          </>
+                        )}
+                        {addCardGame === 'mtg' && (
+                          <>
+                            {cardPriceData.usd && <p className="text-lg font-bold text-green-600">${cardPriceData.usd}</p>}
+                            {cardPriceData.usd_foil && <p className="text-xs text-gray-500">Foil: ${cardPriceData.usd_foil}</p>}
+                            {cardPriceData.eur && <p className="text-xs text-gray-500">EUR: €{cardPriceData.eur}</p>}
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Price not available</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Options Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {/* Quantity */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={addCardQuantity}
+                    onChange={(e) => setAddCardQuantity(parseInt(e.target.value) || 1)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+
+                {/* Finish */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Finish
+                  </label>
+                  <select
+                    value={cardFinish}
+                    onChange={(e) => setCardFinish(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  >
+                    {(addCardGame === 'pokemon' ? pokemonFinishOptions : mtgFinishOptions).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Condition */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Condition
+                  </label>
+                  <select
+                    value={addCardCondition}
+                    onChange={(e) => setAddCardCondition(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                    {conditionOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Graded Card Checkbox */}
+              <div className="mb-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={isGraded}
+                    onChange={(e) => setIsGraded(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Add as graded card
+                  </span>
+                </label>
+              </div>
+
+              {/* Grading Options (shown if graded) */}
+              {isGraded && (
+                <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Grading Company
+                    </label>
+                    <select
+                      value={gradingCompany}
+                      onChange={(e) => setGradingCompany(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                    >
+                      {gradingCompanies.map(company => (
+                        <option key={company} value={company}>{company}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Grade
+                    </label>
+                    <select
+                      value={gradeValue}
+                      onChange={(e) => setGradeValue(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                    >
+                      {gradeValues.map(grade => (
+                        <option key={grade} value={grade}>{grade}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setSelectedCardToAdd(null)}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setAddingCard(true);
+                    try {
+                      // Prepare card data with all options
+                      const cardData = {
+                        ...selectedCardToAdd,
+                        pricing: cardPriceData,
+                        finish: cardFinish,
+                        graded: isGraded ? { company: gradingCompany, grade: gradeValue } : null
+                      };
+                      
+                      const res = await fetch('/api/collection', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                          cardId: selectedCardToAdd.id,
+                          game: addCardGame,
+                          cardData: cardData,
+                          quantity: addCardQuantity,
+                          condition: addCardCondition,
+                          foil: cardFinish !== 'Normal'
+                        })
+                      });
+                      
+                      const data = await res.json();
+                      if (data.success) {
+                        alert(`Added ${selectedCardToAdd.name} to collection!`);
+                        loadCollection();
+                        setSelectedCardToAdd(null);
+                        setAddCardQuantity(1);
+                        setCardFinish('Normal');
+                        setIsGraded(false);
+                      } else {
+                        alert(data.error || 'Failed to add card');
+                      }
+                    } catch (error) {
+                      console.error('Add card error:', error);
+                      alert('Failed to add card');
+                    } finally {
+                      setAddingCard(false);
+                    }
+                  }}
+                  disabled={addingCard}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {addingCard ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Add to Collection
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
