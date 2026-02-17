@@ -586,18 +586,50 @@ export default function MessengerWidget() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.message_id}
-                        className={`flex gap-2 ${msg.sender_id === currentUserId ? 'flex-row-reverse' : ''}`}
-                      >
-                        {msg.picture ? (
-                          <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full flex-shrink-0" />
-                        ) : (
-                          <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                            {msg.name.charAt(0).toUpperCase()}
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {messages.map((msg, index) => {
+                      const prevMsg = index > 0 ? messages[index - 1] : null;
+                      const showDateSeparator = needsDateSeparator(msg, prevMsg);
+                      
+                      return (
+                        <div key={msg.message_id}>
+                          {/* Date Separator */}
+                          {showDateSeparator && (
+                            <div className="flex items-center justify-center my-3">
+                              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                              <span className="px-2 text-[10px] text-gray-400 font-medium">
+                                {getDateLabel(msg.created_at)}
+                              </span>
+                              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                            </div>
+                          )}
+                          
+                          <div className={`flex gap-2 ${msg.sender_id === currentUserId ? 'flex-row-reverse' : ''}`}>
+                            {msg.picture ? (
+                              <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full flex-shrink-0" />
+                            ) : (
+                              <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                                {msg.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <div className={`max-w-[200px] rounded-xl px-3 py-1.5 ${
+                                msg.sender_id === currentUserId 
+                                  ? 'bg-blue-600 text-white' 
+                                  : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
+                              }`}>
+                                {renderMessageContent(msg)}
+                              </div>
+                              {/* Timestamp */}
+                              <p className={`text-[10px] text-gray-400 mt-0.5 ${msg.sender_id === currentUserId ? 'text-right' : ''}`}>
+                                {formatMessageTime(msg.created_at)}
+                              </p>
+                            </div>
                           </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
                         )}
                         <div className={`max-w-[200px] ${msg.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'} rounded-xl px-3 py-2`}>
                           {renderMessageContent(msg)}
