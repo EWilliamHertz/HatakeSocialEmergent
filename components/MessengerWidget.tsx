@@ -178,8 +178,9 @@ export default function MessengerWidget() {
         credentials: 'include',
         body: JSON.stringify({
           recipientId: conv.user_id,
-          content: mediaUrl,
-          message_type: messageType
+          content: '',
+          messageType: messageType,
+          mediaUrl: mediaUrl
         })
       });
       
