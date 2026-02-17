@@ -524,6 +524,15 @@ function SearchContent() {
               </div>
             ))}
           </div>
+        </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && results.length === 0 && users.length === 0 && decks.length === 0 && posts.length === 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+            <Search className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No results found. Try a different search term!</p>
+          </div>
         )}
       </div>
 
