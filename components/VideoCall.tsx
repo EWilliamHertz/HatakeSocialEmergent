@@ -201,6 +201,9 @@ export default function VideoCall({
     
     const pc = new RTCPeerConnection(iceServers);
     
+    // IMPORTANT: Store reference immediately
+    peerConnectionRef.current = pc;
+    
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         console.log('ICE candidate generated');
