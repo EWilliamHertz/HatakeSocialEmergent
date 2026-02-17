@@ -188,9 +188,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { cards, format: detectedFormat } = parseCSV(csvContent);
-    // Use explicit gameType if provided, otherwise use detected format
-    const format = gameType || detectedFormat;
-    console.log('[CSV Import] Total cards parsed:', cards.length, 'Detected format:', detectedFormat, 'Using format:', format);
+    // IMPORTANT: For actual data parsing, use the detected format from CSV headers
+    // The gameType is only for determining the game (pokemon vs mtg) when importing
+    // If user says "pokemon" but CSV is manabox format, we import as MTG because that's what the data is
+    const actualFormat = detectedFormat; // Use detected format for column access
+    const targetGame = gameType || (detectedFormat === 'pokemon' ? 'pokemon' : 'mtg');
+    console.log('[CSV Import] Total cards parsed:', cards.length, 'Detected format:', detectedFormat, 'Target game:', targetGame);
 
     if (action === 'preview') {
       // Return parsed cards for preview
