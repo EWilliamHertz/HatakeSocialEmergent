@@ -514,22 +514,34 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Group Header */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden mb-6">
-          <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+          {/* Banner */}
+          <div className="h-40 relative group">
+            {group.image ? (
+              <Image
+                src={group.image}
+                alt={group.name}
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600"></div>
+            )}
+            {/* Settings button for owner/admin */}
+            {(role === 'owner' || role === 'admin') && (
+              <button
+                onClick={openSettings}
+                className="absolute top-4 right-4 p-2 bg-black/30 hover:bg-black/50 rounded-lg transition"
+              >
+                <Settings className="w-5 h-5 text-white" />
+              </button>
+            )}
+          </div>
           <div className="px-6 pb-6">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12">
-              {group.image ? (
-                <Image
-                  src={group.image}
-                  alt={group.name}
-                  width={96}
-                  height={96}
-                  className="w-24 h-24 rounded-xl border-4 border-white dark:border-gray-800 object-cover"
-                />
-              ) : (
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl border-4 border-white dark:border-gray-800 flex items-center justify-center">
-                  <Users className="w-10 h-10 text-white" />
-                </div>
-              )}
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl border-4 border-white dark:border-gray-800 flex items-center justify-center">
+                <Users className="w-10 h-10 text-white" />
+              </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{group.name}</h1>
@@ -537,7 +549,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
                     <Lock className="w-5 h-5 text-gray-400" />
                   ) : (
                     <Globe className="w-5 h-5 text-gray-400" />
-                  )}
+                  )}}
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 mb-2">{group.description || 'No description'}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-500">
