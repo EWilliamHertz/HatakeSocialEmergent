@@ -80,6 +80,11 @@ export default function MyProfilePage() {
           setUser(data.user);
           setEditName(data.user.name);
           setEditBio(data.user.bio || '');
+          setEditBanner(data.user.banner_url || '');
+          setEditShippingAddress(data.user.shipping_address || '');
+          setEditPaymentSwish(data.user.payment_swish || '');
+          setEditPaymentBankgiro(data.user.payment_bankgiro || '');
+          setEditPaymentAccount(data.user.payment_account || '');
           loadStats();
           loadRecentCollection();
           loadMyListings();
