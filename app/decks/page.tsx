@@ -35,6 +35,7 @@ export default function DecksPage() {
   const [newDeckPublic, setNewDeckPublic] = useState(false);
   const [creating, setCreating] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Filters for community decks
   const [filterGame, setFilterGame] = useState('all');
