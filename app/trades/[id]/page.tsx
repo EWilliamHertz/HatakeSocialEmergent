@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { ArrowRightLeft, ArrowLeft, Clock, CheckCircle, XCircle, Package, MessageCircle, User } from 'lucide-react';
+import { ArrowRightLeft, ArrowLeft, Clock, CheckCircle, XCircle, Package, MessageCircle, User, MapPin, CreditCard } from 'lucide-react';
 import Image from 'next/image';
 
 interface TradeItem {
