@@ -383,7 +383,7 @@ export async function POST(request: NextRequest) {
             cardId,
             game,
             name: cardData.name,
-            hasImage: format === 'pokemon' ? !!cardData.image : !!cardData.image_uris?.normal
+            hasImage: actualFormat === 'pokemon' ? !!cardData.image : !!cardData.image_uris?.normal
           });
 
           // Insert into collection_items table
