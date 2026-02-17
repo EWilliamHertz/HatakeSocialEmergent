@@ -200,12 +200,23 @@ export default function MessengerWidget() {
   const loadConversations = async () => {
     try {
       const res = await fetch('/api/messages', { credentials: 'include' });
-      const data = await res.json();
+      if (!res.ok) return;
+      
+      const text = await res.text();
+      if (!text) return;
+      
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return;
+      }
+      
       if (data.success) {
         setConversations(data.conversations || []);
       }
     } catch (error) {
-      console.error('Load conversations error:', error);
+      // Silently ignore - will retry on next poll
     }
   };
 
