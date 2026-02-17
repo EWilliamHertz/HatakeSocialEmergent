@@ -84,7 +84,7 @@ export async function setToCache(key: string, data: any, ttlSeconds: number): Pr
 export async function cleanExpiredCache(): Promise<number> {
   try {
     const result = await sql`DELETE FROM api_cache WHERE expires_at < NOW()`;
-    const count = result.count || 0;
+    const count = (result as any).count || 0;
     if (count > 0) {
       console.log('[Cache] Cleaned', count, 'expired entries');
     }
