@@ -1392,7 +1392,7 @@ export default function CollectionPage() {
                     <p className="text-sm text-blue-700 dark:text-blue-300">
                       <strong>{importCards.length}</strong> cards found • 
                       <strong> {importCards.reduce((sum, c) => sum + c.quantity, 0)}</strong> total quantity • 
-                      <strong> ${importCards.reduce((sum, c) => sum + c.purchasePrice * c.quantity, 0).toFixed(2)}</strong> total purchase value
+                      <strong> {importCards.reduce((sum, c) => sum + c.purchasePrice * c.quantity, 0).toFixed(2)} {importCards[0]?.currency || 'USD'}</strong> total purchase value
                     </p>
                   </div>
                   
