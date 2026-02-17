@@ -336,6 +336,135 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
     }
   };
 
+  // Open settings modal
+  const openSettings = () => {
+    if (group) {
+      setEditGroupName(group.name);
+      setEditGroupDesc(group.description || '');
+      setEditGroupPrivacy(group.privacy);
+      setEditGroupBanner(group.image || '');
+      setShowSettings(true);
+    }
+  };
+
+  // Save group settings
+  const saveGroupSettings = async () => {
+    setSavingSettings(true);
+    try {
+      const res = await fetch(`/api/groups/${resolvedParams.groupId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: editGroupName,
+          description: editGroupDesc,
+          privacy: editGroupPrivacy,
+          image: editGroupBanner
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowSettings(false);
+        loadGroup();
+      } else {
+        alert(data.error || 'Failed to update group');
+      }
+    } catch (error) {
+      console.error('Save settings error:', error);
+      alert('Failed to update group');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  // Upload banner
+  const handleGroupBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBanner(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success && data.url) {
+        setEditGroupBanner(data.url);
+      } else {
+        alert('Failed to upload banner');
+      }
+    } catch (error) {
+      console.error('Banner upload error:', error);
+      alert('Failed to upload banner');
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  // Promote/demote member
+  const changeMemberRole = async (userId: string, newRole: 'admin' | 'member') => {
+    try {
+      const res = await fetch(`/api/groups/${resolvedParams.groupId}/members`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ userId, role: newRole })
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadGroup();
+      } else {
+        alert(data.error || 'Failed to update member role');
+      }
+    } catch (error) {
+      console.error('Change role error:', error);
+    }
+  };
+
+  // Remove member
+  const removeMember = async (userId: string) => {
+    if (!confirm('Remove this member from the group?')) return;
+    try {
+      const res = await fetch(`/api/groups/${resolvedParams.groupId}/members?userId=${userId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadGroup();
+      } else {
+        alert(data.error || 'Failed to remove member');
+      }
+    } catch (error) {
+      console.error('Remove member error:', error);
+    }
+  };
+
+  // Delete group
+  const deleteGroup = async () => {
+    if (!confirm('Are you sure you want to delete this group? This action cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/groups/${resolvedParams.groupId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success) {
+        router.push('/community?tab=groups');
+      } else {
+        alert(data.error || 'Failed to delete group');
+      }
+    } catch (error) {
+      console.error('Delete group error:', error);
+    }
+  };
+
   // Load chat when tab changes
   useEffect(() => {
     if (activeTab === 'chat' && isMember) {
