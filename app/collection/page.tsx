@@ -303,81 +303,40 @@ export default function CollectionPage() {
     
     try {
       if (addCardGame === 'mtg') {
-        let query = '';
-        
-        // Build Scryfall query
-        if (addCardName.trim()) {
-          // Name search (with optional set filter)
-          query = addCardName.trim();
-          if (addCardSetCode.trim()) {
-            query += ` set:${addCardSetCode.toLowerCase()}`;
-          }
-          if (addCardCollectorNum.trim()) {
-            query += ` cn:${addCardCollectorNum}`;
-          }
-        } else if (addCardSetCode.trim()) {
-          // Set + collector number search
-          query = `set:${addCardSetCode.toLowerCase()}`;
-          if (addCardCollectorNum.trim()) {
-            query += ` cn:${addCardCollectorNum}`;
-          }
-        }
-        
-        if (!query) {
-          setAddCardSearchResults([]);
-          return;
-        }
-        
+        // Use backend proxy to avoid CORS issues in production
         try {
-          // Try search API first
-          console.log('Scryfall search query:', query);
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const params = new URLSearchParams();
+          if (addCardName.trim()) {
+            params.append('q', addCardName.trim());
+          }
+          if (addCardSetCode.trim()) {
+            params.append('set', addCardSetCode.trim());
+          }
+          if (addCardCollectorNum.trim()) {
+            params.append('number', addCardCollectorNum.trim());
+          }
           
-          const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`, {
-            headers: {
-              'Accept': 'application/json',
-            },
-            signal: controller.signal
+          if (!params.toString()) {
+            setAddCardSearchResults([]);
+            return;
+          }
+          
+          console.log('MTG search via proxy:', params.toString());
+          
+          const searchRes = await fetch(`/api/cards/mtg?${params.toString()}`, {
+            credentials: 'include',
+            signal: AbortSignal.timeout(15000)
           });
-          
-          clearTimeout(timeoutId);
           
           if (searchRes.ok) {
             const data = await searchRes.json();
-            setAddCardSearchResults(data.data?.slice(0, 30) || []);
+            setAddCardSearchResults(data.cards || []);
           } else {
-            // If search fails, check error response
-            const errorData = await searchRes.json().catch(() => ({}));
-            console.log('Scryfall search error:', errorData);
-            
-            // If search fails and we have set+number, try direct lookup
-            if (addCardSetCode.trim() && addCardCollectorNum.trim()) {
-              const directRes = await fetch(`https://api.scryfall.com/cards/${addCardSetCode.toLowerCase()}/${addCardCollectorNum}`, {
-                headers: { 'Accept': 'application/json' }
-              });
-              if (directRes.ok) {
-                const card = await directRes.json();
-                setAddCardSearchResults([card]);
-              } else {
-                // Try with padded collector number (some sets need leading zeros)
-                const paddedNum = addCardCollectorNum.padStart(3, '0');
-                const paddedRes = await fetch(`https://api.scryfall.com/cards/${addCardSetCode.toLowerCase()}/${paddedNum}`, {
-                  headers: { 'Accept': 'application/json' }
-                });
-                if (paddedRes.ok) {
-                  const card = await paddedRes.json();
-                  setAddCardSearchResults([card]);
-                } else {
-                  setAddCardSearchResults([]);
-                }
-              }
-            } else {
-              setAddCardSearchResults([]);
-            }
+            console.log('MTG proxy search failed');
+            setAddCardSearchResults([]);
           }
-        } catch (scryfallError) {
-          console.error('Scryfall API error:', scryfallError);
+        } catch (mtgError) {
+          console.error('MTG API error:', mtgError);
           setAddCardSearchResults([]);
         }
       } else {
