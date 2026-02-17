@@ -424,9 +424,9 @@ export default function MessagesPage() {
             src={msg.media_url} 
             alt="Shared image" 
             className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90"
-            onClick={() => window.open(msg.media_url, '_blank')}
+            onClick={() => setFullscreenMedia(msg)}
           />
-          {msg.content && msg.content !== '📷 Image' && (
+          {msg.content && msg.content !== '📷 Image' && msg.content !== msg.media_url && (
             <p className="text-sm mt-1">{msg.content}</p>
           )}
         </div>
@@ -441,7 +441,7 @@ export default function MessagesPage() {
             controls 
             className="rounded-lg max-w-full h-auto"
           />
-          {msg.content && msg.content !== '🎥 Video' && (
+          {msg.content && msg.content !== '🎥 Video' && msg.content !== msg.media_url && (
             <p className="text-sm mt-1">{msg.content}</p>
           )}
         </div>
