@@ -739,7 +739,7 @@ export default function CollectionPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ csvContent, action: 'import' })
+          body: JSON.stringify({ csvContent, action: 'import', gameType: importGameType })
         });
 
         const data = await res.json();
@@ -755,7 +755,7 @@ export default function CollectionPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ csvContent: text, action: 'import' })
+        body: JSON.stringify({ csvContent: text, action: 'import', gameType: importGameType })
       });
 
       const data = await res.json();
