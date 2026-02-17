@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // Get trades count
     const tradesResult = await sql`
       SELECT COUNT(*) as count FROM trades 
-      WHERE initiator_id = ${user.user_id} OR recipient_id = ${user.user_id}
+      WHERE initiator_id = ${user.user_id} OR receiver_id = ${user.user_id}
     `;
 
     return NextResponse.json({
