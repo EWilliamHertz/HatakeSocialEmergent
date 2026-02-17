@@ -677,17 +677,18 @@ export default function CollectionPage() {
       // Re-read the file for import
       const file = fileInputRef.current?.files?.[0];
       if (!file) {
-        // Use the already parsed cards
+        // Use the already parsed cards - reconstruct CSV with headers
+        const headers = 'Name,Set code,Set name,Collector number,Foil,Rarity,Quantity,ManaBox ID,Scryfall ID,Purchase price,Misprint,Altered,Condition,Language,Purchase price currency';
+        const csvLines = importCards.map(c => 
+          `"${c.name}",${c.setCode},"${c.setName}",${c.collectorNumber},${c.foil ? 'foil' : 'normal'},${c.rarity},${c.quantity},,${c.scryfallId},${c.purchasePrice},false,${c.altered || false},${c.condition},${c.language || 'English'},${c.currency}`
+        );
+        const csvContent = [headers, ...csvLines].join('\n');
+        
         const res = await fetch('/api/collection/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ 
-            csvContent: importCards.map(c => 
-              `"${c.name}",${c.setCode},"${c.setName}",${c.collectorNumber},${c.foil ? 'foil' : 'normal'},${c.rarity},${c.quantity},,${c.scryfallId},${c.purchasePrice},false,${c.altered},${c.condition},${c.language},${c.currency}`
-            ).join('\n'),
-            action: 'import' 
-          })
+          body: JSON.stringify({ csvContent, action: 'import' })
         });
 
         const data = await res.json();
