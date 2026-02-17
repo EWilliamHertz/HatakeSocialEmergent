@@ -136,9 +136,9 @@ export default function AboutPage() {
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mb-4">
                 <Database className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Clean catalog data</h3>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Offering line of credits</h3>
               <p className="text-gray-600 dark:text-gray-300">
-                The products you manage in Admin → Shop are what customers see — images, pricing, and details.
+                Are you a bit short on cash? Registered businesses are allowed to purchase on credit.
               </p>
             </div>
           </div>
