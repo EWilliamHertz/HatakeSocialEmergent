@@ -178,17 +178,19 @@ export async function POST(request: NextRequest) {
     console.log('[CSV Import] User authenticated:', user.user_id);
 
     const body = await request.json();
-    const { csvContent, action } = body;
+    const { csvContent, action, gameType } = body;
 
-    console.log('[CSV Import] Action:', action);
+    console.log('[CSV Import] Action:', action, 'GameType:', gameType);
     console.log('[CSV Import] CSV content length:', csvContent?.length || 0);
 
     if (!csvContent) {
       return NextResponse.json({ error: 'No CSV content provided' }, { status: 400 });
     }
 
-    const { cards, format } = parseCSV(csvContent);
-    console.log('[CSV Import] Total cards parsed:', cards.length, 'Format:', format);
+    const { cards, format: detectedFormat } = parseCSV(csvContent);
+    // Use explicit gameType if provided, otherwise use detected format
+    const format = gameType || detectedFormat;
+    console.log('[CSV Import] Total cards parsed:', cards.length, 'Detected format:', detectedFormat, 'Using format:', format);
 
     if (action === 'preview') {
       // Return parsed cards for preview
