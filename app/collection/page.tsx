@@ -217,6 +217,15 @@ export default function CollectionPage() {
 
   const bulkList = async () => {
     if (selectedItems.size === 0) return;
+    // Initialize individual prices based on market price and default percent
+    const selectedCards = items.filter(item => selectedItems.has(item.id));
+    const initialPrices: Record<number, string> = {};
+    selectedCards.forEach(item => {
+      const marketPrice = getCardPrice(item).value;
+      const calculatedPrice = marketPrice * (parseFloat(listPercent) / 100);
+      initialPrices[item.id] = calculatedPrice.toFixed(2);
+    });
+    setIndividualPrices(initialPrices);
     setShowListModal(true);
   };
 
