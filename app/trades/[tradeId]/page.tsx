@@ -24,12 +24,12 @@ interface Trade {
   initiator_id: string;
   initiator_name: string;
   initiator_picture?: string;
-  recipient_id: string;
+  receiver_id: string;
   recipient_name: string;
   recipient_picture?: string;
-  initiator_items: TradeItem[];
-  recipient_items: TradeItem[];
-  notes?: string;
+  initiator_cards: TradeItem[];
+  receiver_cards: TradeItem[];
+  message?: string;
 }
 
 export default function TradeDetailPage() {
