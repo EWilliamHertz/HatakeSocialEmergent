@@ -240,19 +240,23 @@ export default function CollectionPage() {
   };
 
   const submitBulkList = async () => {
+    setListingInProgress(true);
     try {
-      const ids = Array.from(selectedItems);
       const selectedCards = items.filter(item => selectedItems.has(item.id));
       
-      // Calculate prices based on mode
+      // Use individual prices (which may have been overridden by user)
       const listings = selectedCards.map(item => {
-        const marketPrice = getCardPrice(item).value;
+        // Use the individual override price, or calculate from global settings
         let price: number;
-        
-        if (listPriceMode === 'percent') {
-          price = marketPrice * (parseFloat(listPercent) / 100);
+        if (individualPrices[item.id]) {
+          price = parseFloat(individualPrices[item.id]);
         } else {
-          price = parseFloat(listPrice);
+          const marketPrice = getCardPrice(item).value;
+          if (listPriceMode === 'percent') {
+            price = marketPrice * (parseFloat(listPercent) / 100);
+          } else {
+            price = parseFloat(listPrice);
+          }
         }
         
         return {
@@ -261,23 +265,35 @@ export default function CollectionPage() {
           game: item.game,
           price: Math.max(0.01, price),
           condition: listCondition,
-          quantity: item.quantity
+          quantity: item.quantity,
+          foil: item.foil
         };
       });
       
-      await fetch('/api/collection/bulk-list', {
+      const res = await fetch('/api/collection/bulk-list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ listings })
       });
-      setSelectedItems(new Set());
-      setShowListModal(false);
-      setListPrice('');
-      setListPercent('90');
-      alert('Cards listed for sale!');
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setSelectedItems(new Set());
+        setShowListModal(false);
+        setListPrice('');
+        setListPercent('90');
+        setIndividualPrices({});
+        alert(`Successfully listed ${data.listed} card(s) for sale!`);
+      } else {
+        alert('Failed to list cards: ' + (data.error || 'Unknown error'));
+      }
     } catch (error) {
       console.error('Bulk list error:', error);
+      alert('Failed to list cards. Please try again.');
+    } finally {
+      setListingInProgress(false);
     }
   };
 
