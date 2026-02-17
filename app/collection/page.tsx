@@ -294,55 +294,86 @@ export default function CollectionPage() {
         }
       } else {
         // TCGdex API for Pokemon (free, no API key required)
-        let searchUrl = 'https://api.tcgdex.net/v2/en/cards';
-        const params = new URLSearchParams();
-        
-        if (addCardName.trim()) {
-          params.append('name', addCardName.trim());
-        }
-        
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
           
-          let apiUrl = searchUrl;
-          if (params.toString()) {
-            apiUrl += '?' + params.toString();
+          let cards: any[] = [];
+          
+          // If we have set code and collector number but no name, try direct card lookup
+          if (resolvedSetCode && addCardCollectorNum.trim() && !addCardName.trim()) {
+            // Try to fetch specific card directly
+            const collNum = addCardCollectorNum.trim().padStart(3, '0');
+            const cardId = `${resolvedSetCode}-${collNum}`;
+            console.log('TCGdex direct card lookup:', cardId);
+            
+            const directRes = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`, {
+              signal: controller.signal
+            });
+            
+            if (directRes.ok) {
+              const card = await directRes.json();
+              cards = [card];
+            } else {
+              // Try without padding
+              const cardIdNoPad = `${resolvedSetCode}-${addCardCollectorNum.trim()}`;
+              const directRes2 = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardIdNoPad}`, {
+                signal: controller.signal
+              });
+              if (directRes2.ok) {
+                const card = await directRes2.json();
+                cards = [card];
+              }
+            }
+          } else {
+            // Name-based search
+            let searchUrl = 'https://api.tcgdex.net/v2/en/cards';
+            const params = new URLSearchParams();
+            
+            if (addCardName.trim()) {
+              params.append('name', addCardName.trim());
+            }
+            
+            let apiUrl = searchUrl;
+            if (params.toString()) {
+              apiUrl += '?' + params.toString();
+            }
+            
+            console.log('TCGdex search URL:', apiUrl);
+            
+            const res = await fetch(apiUrl, {
+              signal: controller.signal
+            });
+            
+            if (res.ok) {
+              cards = await res.json();
+              
+              // If set code is provided, filter results
+              if (addCardSetCode.trim()) {
+                cards = cards.filter((card: any) => 
+                  card.id?.toLowerCase().includes(resolvedSetCode) || 
+                  card.set?.id?.toLowerCase() === resolvedSetCode
+                );
+              }
+              
+              // If collector number is provided, filter results
+              if (addCardCollectorNum.trim()) {
+                const collNum = addCardCollectorNum.trim();
+                // Pad to 3 digits for comparison (e.g., "24" -> "024")
+                const paddedCollNum = collNum.padStart(3, '0');
+                cards = cards.filter((card: any) => {
+                  const cardLocalId = card.localId?.toString() || '';
+                  const cardIdNum = card.id?.split('-').pop() || '';
+                  return cardLocalId === collNum || 
+                         cardLocalId === paddedCollNum ||
+                         cardIdNum === collNum ||
+                         cardIdNum === paddedCollNum;
+                });
+              }
+            }
           }
           
-          console.log('TCGdex search URL:', apiUrl);
-          
-          const res = await fetch(apiUrl, {
-            signal: controller.signal
-          });
-          
           clearTimeout(timeoutId);
-          
-          if (res.ok) {
-            let cards = await res.json();
-            
-            // If set code is provided, filter results
-            if (addCardSetCode.trim()) {
-              cards = cards.filter((card: any) => 
-                card.id?.toLowerCase().includes(resolvedSetCode) || 
-                card.set?.id?.toLowerCase() === resolvedSetCode
-              );
-            }
-            
-            // If collector number is provided, filter results
-            if (addCardCollectorNum.trim()) {
-              const collNum = addCardCollectorNum.trim();
-              // Pad to 3 digits for comparison (e.g., "24" -> "024")
-              const paddedCollNum = collNum.padStart(3, '0');
-              cards = cards.filter((card: any) => {
-                const cardLocalId = card.localId?.toString() || '';
-                const cardIdNum = card.id?.split('-').pop() || '';
-                return cardLocalId === collNum || 
-                       cardLocalId === paddedCollNum ||
-                       cardIdNum === collNum ||
-                       cardIdNum === paddedCollNum;
-              });
-            }
             
             // Map TCGdex cards to consistent format
             const mappedCards = cards.slice(0, 30).map((card: any) => ({
