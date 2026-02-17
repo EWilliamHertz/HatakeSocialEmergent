@@ -65,6 +65,7 @@ export default function CollectionPage() {
   const [importLoading, setImportLoading] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'preview' | 'importing' | 'done'>('idle');
   const [importResult, setImportResult] = useState<{ imported: number; errors?: string[] } | null>(null);
+  const [importGameType, setImportGameType] = useState<'mtg' | 'pokemon'>('mtg');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Manual add card state
