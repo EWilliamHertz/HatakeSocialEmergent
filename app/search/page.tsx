@@ -514,8 +514,6 @@ function SearchContent() {
             </div>
           </div>
         )}
-          </>
-        )}
 
         {/* Empty State */}
         {!loading && results.length === 0 && users.length === 0 && decks.length === 0 && posts.length === 0 && (
