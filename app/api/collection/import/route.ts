@@ -286,29 +286,23 @@ export async function POST(request: NextRequest) {
             // Log key fields for debugging
             console.log(`[CSV Import] Processing Pokemon card ${idx + 1}:`, { name, setCode, collectorNum });
             
-            // Try to fetch from TCGdex
+            // Try to fetch from TCGdex (with caching)
+            let tcgdexData = null;
             if (setCode && collectorNum) {
-              try {
-                const tcgdexRes = await fetch(`https://api.tcgdex.net/v2/en/cards/${setCode.toLowerCase()}-${collectorNum}`, {
-                  signal: AbortSignal.timeout(5000)
-                });
-                if (tcgdexRes.ok) {
-                  cardData = await tcgdexRes.json();
-                  console.log('[CSV Import] TCGdex fetch success for', name);
-                }
-              } catch (e: any) {
-                console.log('[CSV Import] TCGdex fetch error:', e.message);
+              tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${setCode.toLowerCase()}-${collectorNum}`);
+              if (tcgdexData) {
+                console.log('[CSV Import] TCGdex fetch success for', name);
               }
             }
             
             // Build card data
             cardData = {
               id: cardId,
-              name: name || cardData?.name || 'Unknown Card',
+              name: name || tcgdexData?.name || 'Unknown Card',
               set: { id: setCode, name: card['Edition Name'] || '' },
               localId: collectorNum,
-              image: cardData?.image ? `${cardData.image}/high.webp` : null,
-              prices: cardData?.prices || { firstEdition: { mid: purchasePrice } },
+              image: tcgdexData?.image ? `${tcgdexData.image}/high.webp` : null,
+              prices: tcgdexData?.prices || { firstEdition: { mid: purchasePrice } },
               purchase_price: purchasePrice,
               purchase_currency: currency
             };
