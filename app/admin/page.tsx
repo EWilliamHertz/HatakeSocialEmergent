@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Package, Plus, Edit2, Trash2, Save, X, DollarSign, Image as ImageIcon, ShoppingBag, BarChart3, Users, Settings, TrendingUp, FileText, Layers, MessageCircle, RefreshCw, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, Save, X, DollarSign, Image as ImageIcon, ShoppingBag, BarChart3, Users, Settings, TrendingUp, FileText, Layers, MessageCircle, RefreshCw, Search, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
 
 interface Product {
   id: number;
