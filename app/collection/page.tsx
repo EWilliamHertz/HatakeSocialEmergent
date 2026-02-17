@@ -268,29 +268,56 @@ export default function CollectionPage() {
           }
         }
         
-        // Try search API first
-        const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`);
+        if (!query) {
+          setAddCardSearchResults([]);
+          return;
+        }
         
-        if (searchRes.ok) {
-          const data = await searchRes.json();
-          setAddCardSearchResults(data.data?.slice(0, 30) || []);
-        } else {
-          // If search fails and we have set+number, try direct lookup
-          if (addCardSetCode.trim() && addCardCollectorNum.trim()) {
-            const directRes = await fetch(`https://api.scryfall.com/cards/${addCardSetCode.toLowerCase()}/${addCardCollectorNum}`);
-            if (directRes.ok) {
-              const card = await directRes.json();
-              setAddCardSearchResults([card]);
-            } else {
-              // Try with padded collector number (some sets need leading zeros)
-              const paddedNum = addCardCollectorNum.padStart(3, '0');
-              const paddedRes = await fetch(`https://api.scryfall.com/cards/${addCardSetCode.toLowerCase()}/${paddedNum}`);
-              if (paddedRes.ok) {
-                const card = await paddedRes.json();
+        try {
+          // Try search API first
+          console.log('Scryfall search query:', query);
+          const searchRes = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`, {
+            headers: {
+              'Accept': 'application/json',
+            }
+          });
+          
+          if (searchRes.ok) {
+            const data = await searchRes.json();
+            setAddCardSearchResults(data.data?.slice(0, 30) || []);
+          } else {
+            // If search fails, check error response
+            const errorData = await searchRes.json().catch(() => ({}));
+            console.log('Scryfall search error:', errorData);
+            
+            // If search fails and we have set+number, try direct lookup
+            if (addCardSetCode.trim() && addCardCollectorNum.trim()) {
+              const directRes = await fetch(`https://api.scryfall.com/cards/${addCardSetCode.toLowerCase()}/${addCardCollectorNum}`, {
+                headers: { 'Accept': 'application/json' }
+              });
+              if (directRes.ok) {
+                const card = await directRes.json();
                 setAddCardSearchResults([card]);
+              } else {
+                // Try with padded collector number (some sets need leading zeros)
+                const paddedNum = addCardCollectorNum.padStart(3, '0');
+                const paddedRes = await fetch(`https://api.scryfall.com/cards/${addCardSetCode.toLowerCase()}/${paddedNum}`, {
+                  headers: { 'Accept': 'application/json' }
+                });
+                if (paddedRes.ok) {
+                  const card = await paddedRes.json();
+                  setAddCardSearchResults([card]);
+                } else {
+                  setAddCardSearchResults([]);
+                }
               }
+            } else {
+              setAddCardSearchResults([]);
             }
           }
+        } catch (scryfallError) {
+          console.error('Scryfall API error:', scryfallError);
+          setAddCardSearchResults([]);
         }
       } else {
         // TCGdex API for Pokemon (free, no API key required)
