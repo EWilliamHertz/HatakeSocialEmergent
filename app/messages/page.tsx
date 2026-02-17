@@ -516,14 +516,21 @@ export default function MessagesPage() {
                           {conv.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <p className="font-semibold truncate dark:text-white">{conv.name}</p>
-                          {conv.unread_count > 0 && (
-                            <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                              {conv.unread_count}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {conv.last_message_at && (
+                              <span className="text-xs text-gray-400 whitespace-nowrap">
+                                {formatMessageTime(conv.last_message_at)}
+                              </span>
+                            )}
+                            {conv.unread_count > 0 && (
+                              <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                {conv.unread_count}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{conv.last_message || 'Start a conversation'}</p>
                       </div>
