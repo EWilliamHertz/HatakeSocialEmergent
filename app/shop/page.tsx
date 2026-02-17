@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ShoppingCart, Package, Truck, Shield, Mail, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Package, Truck, Shield, Mail, Loader2, X } from 'lucide-react';
 
 interface Product {
   id: string;
