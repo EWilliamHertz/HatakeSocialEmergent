@@ -67,7 +67,11 @@ function mapTCGdexCard(card: any): PokemonCard {
     images: {
       small: card.image ? `${card.image}/low.webp` : '',
       large: card.image ? `${card.image}/high.webp` : '',
-    }
+    },
+    tcgplayer: card.pricing?.tcgplayer ? {
+      url: '',
+      prices: card.pricing.tcgplayer
+    } : undefined
   };
 }
 
@@ -162,7 +166,11 @@ export async function getPokemonCard(cardId: string): Promise<PokemonCard | null
       images: {
         small: card.image ? `${card.image}/low.webp` : '',
         large: card.image ? `${card.image}/high.webp` : '',
-      }
+      },
+      tcgplayer: card.pricing?.tcgplayer ? {
+        url: '',
+        prices: card.pricing.tcgplayer
+      } : undefined
     };
   } catch (error) {
     console.error('Error getting Pokemon card:', error);

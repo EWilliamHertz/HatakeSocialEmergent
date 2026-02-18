@@ -165,27 +165,35 @@ export async function POST(request: NextRequest) {
 
             // Construct Data (Force CSV Price if needed)
             const imageBase = tcgdexData?.image;
+            
+            // Extract prices from TCGdex if available, otherwise use CSV price
+            const tcgPrices = tcgdexData?.pricing?.tcgplayer || {};
+            const cmPrices = tcgdexData?.pricing?.cardmarket || {};
+            
             cardData = {
               id: cardId,
               name: name || tcgdexData?.name,
               set: { id: setCode, name: setName || tcgdexData?.set?.name },
               localId: collectorNum,
-              // FIX: Ensure correct image URL format
+              // FIX: Ensure correct image URL format (TCGdex 'image' field is the base URL)
               images: imageBase ? { 
                 small: `${imageBase}/low.webp`, 
                 large: `${imageBase}/high.webp` 
               } : null,
-              // FIX: Force CSV price into structure frontend expects
+              // FIX: Ensure pricing structure matches what the frontend expects
               pricing: {
+                 ...tcgdexData?.pricing,
                  cardmarket: {
-                    avg: purchasePrice, // Use CSV price
-                    trend: purchasePrice
+                    ...cmPrices,
+                    avg: cmPrices.avg || purchasePrice,
+                    trend: cmPrices.trend || purchasePrice
                  }
               },
               tcgplayer: {
-                prices: {
-                   holofoil: { market: purchasePrice },
-                   normal: { market: purchasePrice }
+                ...tcgdexData?.pricing?.tcgplayer,
+                prices: tcgPrices.normal || tcgPrices.holofoil || {
+                   normal: { market: purchasePrice },
+                   holofoil: { market: purchasePrice }
                 }
               },
               purchase_price: purchasePrice
