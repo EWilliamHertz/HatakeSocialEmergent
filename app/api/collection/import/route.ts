@@ -5,49 +5,6 @@ import { fetchScryfallCached, fetchTCGdexCached } from '@/lib/api-cache';
 
 // --- Interfaces ---
 
-interface ManaBoxCard {
-  Name: string;
-  'Set code': string;
-  'Set name': string;
-  'Collector number': string;
-  Foil: string;
-  Rarity: string;
-  Quantity: string;
-  'ManaBox ID': string;
-  'Scryfall ID': string;
-  'Purchase price': string;
-  Misprint: string;
-  Altered: string;
-  Condition: string;
-  Language: string;
-  'Purchase price currency': string;
-}
-
-interface PokemonExportCard {
-  Name: string;
-  'Set Code': string;
-  'Edition Name': string;
-  'Collector Number': string;
-  'Release Date': string;
-  Price: string;
-  Condition: string;
-  Quantity: string;
-}
-
-// --- Helper Functions ---
-
-function detectFormat(headers: string[]): 'manabox' | 'pokemon' | 'unknown' {
-  const headerSet = new Set(headers.map(h => h.toLowerCase().trim()));
-  
-  // ManaBox unique headers
-  if (headerSet.has('manabox id') || headerSet.has('scryfall id')) return 'manabox';
-  
-  // Pokemon Export unique headers
-  if (headerSet.has('edition name') && headerSet.has('set code')) return 'pokemon';
-  
-  return 'unknown';
-}
-
 function mapCondition(condition: string | undefined): string {
   if (!condition) return 'Near Mint';
   const c = condition.toLowerCase().trim();
@@ -59,43 +16,41 @@ function mapCondition(condition: string | undefined): string {
   return 'Near Mint';
 }
 
-// Robust CSV Line Parser that handles quoted commas but ALLOWS spaces
-function parseCSVLine(text: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      result.push(current.trim().replace(/^"|"$/g, '')); // Push value and remove surrounding quotes
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  // Push the last value
-  result.push(current.trim().replace(/^"|"$/g, ''));
-  return result;
-}
-
+// Robust CSV Parser (Handles quoted fields containing commas)
 function parseCSV(csvText: string) {
   const lines = csvText.split(/\r?\n/).filter(line => line.trim());
   if (lines.length < 2) return { cards: [], format: 'unknown' };
 
-  // Parse Headers using the robust parser
-  const headers = parseCSVLine(lines[0]);
-  const format = detectFormat(headers);
+  // Parse Header Line
+  // This regex matches: quoted strings OR non-comma sequences
+  const headerRegex = /(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g;
+  const headers: string[] = [];
+  let match;
+  while ((match = headerRegex.exec(lines[0])) !== null) {
+    // match[1] is quoted content, match[2] is unquoted
+    headers.push((match[1] || match[2]).trim());
+  }
+
+  // Detect Format
+  const headerSet = new Set(headers.map(h => h.toLowerCase()));
+  let format: 'manabox' | 'pokemon' | 'unknown' = 'unknown';
+  
+  if (headerSet.has('manabox id') || headerSet.has('scryfall id')) format = 'manabox';
+  else if (headerSet.has('edition name') && headerSet.has('set code')) format = 'pokemon';
+  else if (headerSet.has('set code')) format = 'pokemon'; // Fallback for simple exports
 
   const cards = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
+    const values: string[] = [];
+    // Reset regex index for each line
+    headerRegex.lastIndex = 0;
     
-    // Skip empty lines or lines that don't match header length roughly
-    if (values.length === 0 || values.length < Math.max(2, headers.length - 2)) continue;
+    while ((match = headerRegex.exec(lines[i])) !== null) {
+      values.push((match[1] || match[2] || '').trim());
+    }
+
+    if (values.length === 0) continue;
 
     const card: any = {};
     headers.forEach((h, index) => {
@@ -111,13 +66,11 @@ function parseCSV(csvText: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Auth Check
     const sessionToken = request.cookies.get('session_token')?.value;
     if (!sessionToken) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     const user = await getSessionUser(sessionToken);
     if (!user) return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
 
-    // 2. Parse Request
     const body = await request.json();
     const { csvContent, action, gameType } = body;
 
@@ -126,9 +79,9 @@ export async function POST(request: NextRequest) {
     const { cards, format } = parseCSV(csvContent);
     const actualFormat = format === 'unknown' ? (gameType === 'pokemon' ? 'pokemon' : 'manabox') : format;
 
-    // 3. Handle PREVIEW Action
+    // --- PREVIEW ---
     if (action === 'preview') {
-      const previewCards = cards.slice(0, 50).map(card => { // Limit preview to 50
+      const previewCards = cards.slice(0, 50).map(card => {
         if (actualFormat === 'pokemon') {
           return {
             name: card['Name'],
@@ -156,7 +109,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, cards: previewCards, format: actualFormat });
     }
 
-    // 4. Handle IMPORT Action
+    // --- IMPORT ---
     if (action === 'import') {
       let imported = 0;
       let errors = [];
@@ -169,43 +122,52 @@ export async function POST(request: NextRequest) {
           let quantity = parseInt(card['Quantity']) || 1;
           let purchasePrice = parseFloat(card[actualFormat === 'pokemon' ? 'Price' : 'Purchase price']) || 0;
           let condition = mapCondition(card['Condition']);
-          
+          let isFoil = card['Foil'] === 'true' || card['Foil'] === 'foil';
+
           if (game === 'pokemon') {
             const name = card['Name'];
             const setCode = card['Set Code'] || '';
             const collectorNum = card['Collector Number'] || '';
             
-            // Generate a temporary ID in case API fails
+            // Clean ID components
             const cleanSet = setCode.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const cleanNum = collectorNum.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const cleanNum = collectorNum.replace(/^0+/, ''); // Remove leading zeros
+            
+            // Default ID (Fallback)
             cardId = `${cleanSet}-${cleanNum}`;
 
-            // --- TCGDex API Fetch ---
+            // --- TCGDex API Strategy ---
             let tcgdexData = null;
             
-            // Strategy A: Direct ID fetch
-            if (cleanSet && cleanNum) {
-               tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${cardId}`);
+            // 1. Try Direct ID (Exact)
+            tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${cleanSet}-${collectorNum}`);
+            
+            // 2. Try Direct ID (No Zeros)
+            if (!tcgdexData) {
+               tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${cleanSet}-${cleanNum}`);
             }
 
-            // Strategy B: Search by Name (Fallback)
+            // 3. Fallback: Search by Name (Crucial for Set Code mismatches like ASR vs swsh10)
             if (!tcgdexData && name) {
-               console.log(`[Import] Searching fallback for: ${name}`);
                const searchResults = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(name)}`);
                if (Array.isArray(searchResults)) {
-                 // Try to find matching set
-                 tcgdexData = searchResults.find((c: any) => 
-                   c.localId === collectorNum || 
-                   (c.set?.id && c.set.id.toLowerCase() === cleanSet)
-                 );
-                 // If strict match fails, just take the first result with matching name
-                 if (!tcgdexData) tcgdexData = searchResults[0];
+                 // Fuzzy match the set or number
+                 tcgdexData = searchResults.find((c: any) => {
+                    const resSet = (c.set?.id || c.id.split('-')[0] || '').toLowerCase();
+                    const resNum = (c.localId || c.id.split('-').pop() || '').replace(/^0+/, '');
+                    
+                    // Match number OR set (relaxed matching)
+                    return resNum === cleanNum || resSet.includes(cleanSet);
+                 });
                  
-                 if (tcgdexData) cardId = tcgdexData.id; // Update ID to real API ID
+                 // If no specific match, take the first result (better than nothing)
+                 if (!tcgdexData && searchResults.length > 0) tcgdexData = searchResults[0];
+                 
+                 if (tcgdexData) cardId = tcgdexData.id; // Update to real ID
                }
             }
 
-            // Construct Data
+            // Construct Data with Price Fallback
             const imageBase = tcgdexData?.image;
             cardData = {
               id: cardId,
@@ -216,14 +178,14 @@ export async function POST(request: NextRequest) {
                 small: `${imageBase}/low.webp`, 
                 large: `${imageBase}/high.webp` 
               } : null,
-              // FIX: Ensure pricing structure matches what frontend expects
+              // FORCE the CSV price if API price is missing
               pricing: {
                  cardmarket: {
-                    avg: purchasePrice,
+                    avg: purchasePrice, // Use CSV price here
                     trend: purchasePrice
                  }
               },
-              // Legacy structure for compatibility
+              // Legacy structure
               tcgplayer: {
                 prices: {
                    holofoil: { market: purchasePrice },
@@ -240,29 +202,33 @@ export async function POST(request: NextRequest) {
              const collectorNum = card['Collector number'];
              cardId = card['Scryfall ID'] || `${setCode?.toLowerCase()}-${collectorNum}`;
 
-             // Simple Scryfall fetch
              let scryfallData = null;
              if (card['Scryfall ID']) {
                 scryfallData = await fetchScryfallCached(`https://api.scryfall.com/cards/${card['Scryfall ID']}`);
+             } else if (name && setCode) {
+                // Search fallback for MTG
+                const q = encodeURIComponent(`!"${name}" set:${setCode}`);
+                const res = await fetchScryfallCached(`https://api.scryfall.com/cards/search?q=${q}`);
+                if (res?.data?.length > 0) scryfallData = res.data[0];
              }
 
              cardData = {
                id: cardId,
-               name: name,
+               name: name || scryfallData?.name,
                set: setCode,
                set_name: card['Set name'],
                collector_number: collectorNum,
                image_uris: scryfallData?.image_uris || null,
-               // FIX: Fallback price for MTG if API fails
+               // FORCE CSV Price fallback
                prices: scryfallData?.prices || {
-                 usd: purchasePrice,
-                 eur: purchasePrice
+                 usd: purchasePrice.toString(),
+                 eur: purchasePrice.toString()
                },
                purchase_price: purchasePrice
              };
           }
 
-          // SQL Insert
+          // Insert
           await sql`
             INSERT INTO collection_items (
               user_id, card_id, game, card_data, quantity, condition, foil, notes
@@ -273,15 +239,14 @@ export async function POST(request: NextRequest) {
               ${JSON.stringify(cardData)},
               ${quantity},
               ${condition},
-              ${card['Foil'] === 'true' || card['Foil'] === 'foil'},
+              ${isFoil},
               'Imported via CSV'
             )
           `;
           imported++;
-
         } catch (e: any) {
-          console.error(`Failed to import ${card['Name']}:`, e.message);
-          errors.push(`Row ${imported + 1}: ${e.message}`);
+          console.error(`Row error:`, e.message);
+          errors.push(`Row ${imported}: ${e.message}`);
         }
       }
 
