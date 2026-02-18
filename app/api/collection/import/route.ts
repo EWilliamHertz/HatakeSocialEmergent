@@ -59,21 +59,43 @@ function mapCondition(condition: string | undefined): string {
   return 'Near Mint';
 }
 
+// Robust CSV Line Parser that handles quoted commas but ALLOWS spaces
+function parseCSVLine(text: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim().replace(/^"|"$/g, '')); // Push value and remove surrounding quotes
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  // Push the last value
+  result.push(current.trim().replace(/^"|"$/g, ''));
+  return result;
+}
+
 function parseCSV(csvText: string) {
-  const lines = csvText.split('\n').filter(line => line.trim());
+  const lines = csvText.split(/\r?\n/).filter(line => line.trim());
   if (lines.length < 2) return { cards: [], format: 'unknown' };
 
-  // Parse Headers
-  const headers = lines[0].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(h => h.replace(/^"|"$/g, '').trim()) || [];
+  // Parse Headers using the robust parser
+  const headers = parseCSVLine(lines[0]);
   const format = detectFormat(headers);
 
   const cards = [];
 
   for (let i = 1; i < lines.length; i++) {
-    // Regex to split by comma ONLY if not inside quotes
-    const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '').trim()) || [];
+    const values = parseCSVLine(lines[i]);
     
-    if (values.length === 0) continue;
+    // Skip empty lines or lines that don't match header length roughly
+    if (values.length === 0 || values.length < Math.max(2, headers.length - 2)) continue;
 
     const card: any = {};
     headers.forEach((h, index) => {
@@ -190,17 +212,18 @@ export async function POST(request: NextRequest) {
               name: name || tcgdexData?.name,
               set: { id: setCode, name: card['Edition Name'] || tcgdexData?.set?.name },
               localId: collectorNum,
-              // FIX: Ensure images object exists for frontend
               images: imageBase ? { 
                 small: `${imageBase}/low.webp`, 
                 large: `${imageBase}/high.webp` 
               } : null,
-              // FIX: Use CSV price if API price is missing
-              cardmarket: { 
-                prices: { 
-                  averageSellPrice: purchasePrice 
-                } 
+              // FIX: Ensure pricing structure matches what frontend expects
+              pricing: {
+                 cardmarket: {
+                    avg: purchasePrice,
+                    trend: purchasePrice
+                 }
               },
+              // Legacy structure for compatibility
               tcgplayer: {
                 prices: {
                    holofoil: { market: purchasePrice },
@@ -211,7 +234,7 @@ export async function POST(request: NextRequest) {
             };
 
           } else {
-             // MTG Logic (Keep existing logic if working, or simplified here)
+             // MTG Logic
              const name = card['Name'];
              const setCode = card['Set code'];
              const collectorNum = card['Collector number'];
@@ -230,7 +253,11 @@ export async function POST(request: NextRequest) {
                set_name: card['Set name'],
                collector_number: collectorNum,
                image_uris: scryfallData?.image_uris || null,
-               prices: scryfallData?.prices || null,
+               // FIX: Fallback price for MTG if API fails
+               prices: scryfallData?.prices || {
+                 usd: purchasePrice,
+                 eur: purchasePrice
+               },
                purchase_price: purchasePrice
              };
           }
