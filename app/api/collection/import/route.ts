@@ -20,7 +20,6 @@ function parseCSV(csvText: string) {
   const lines = csvText.split(/\r?\n/).filter(line => line.trim());
   if (lines.length < 2) return { cards: [], format: 'unknown' };
 
-  // Robust Header Parsing
   const headerRegex = /(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g;
   const headers: string[] = [];
   let match;
@@ -33,6 +32,7 @@ function parseCSV(csvText: string) {
   
   if (headerSet.has('manabox id') || headerSet.has('scryfall id')) format = 'manabox';
   else if (headerSet.has('edition name') || headerSet.has('set code')) format = 'pokemon';
+  else if (headerSet.has('set code')) format = 'pokemon';
 
   const cards = [];
 
@@ -69,7 +69,8 @@ export async function POST(request: NextRequest) {
 
     // --- PREVIEW ACTION ---
     if (action === 'preview') {
-      const previewCards = cards.slice(0, 50).map(card => {
+      // FIX 1: Increased limit from 50 to 500 to show all your cards
+      const previewCards = cards.slice(0, 500).map(card => {
         if (actualFormat === 'pokemon') {
           return {
             name: card['Name'],
@@ -109,7 +110,6 @@ export async function POST(request: NextRequest) {
           let game = actualFormat === 'pokemon' ? 'pokemon' : 'mtg';
           let quantity = parseInt(card['Quantity']) || 1;
           
-          // Clean price string (remove currency symbols if present)
           let priceStr = (card[actualFormat === 'pokemon' ? 'Price' : 'Purchase price'] || '0').toString().replace(/[^0-9.]/g, '');
           let purchasePrice = parseFloat(priceStr) || 0;
           let condition = mapCondition(card['Condition']);
@@ -117,43 +117,39 @@ export async function POST(request: NextRequest) {
 
           if (game === 'pokemon') {
             const name = card['Name'];
-            const setCode = card['Set Code'] || ''; // e.g. "ASR"
-            const setName = card['Edition Name'] || ''; // e.g. "Astral Radiance"
-            const collectorNum = card['Collector Number'] || ''; // e.g. "148"
+            const setCode = card['Set Code'] || '';
+            const setName = card['Edition Name'] || '';
+            const collectorNum = card['Collector Number'] || '';
             
-            // Clean components for API matching
             const cleanSet = setCode.toLowerCase().replace(/[^a-z0-9]/g, '');
             const cleanNum = collectorNum.replace(/^0+/, ''); 
             
-            // Fallback ID
             cardId = `${cleanSet}-${cleanNum}`;
 
             // --- TCGDex Strategy ---
             let tcgdexData = null;
             
-            // 1. Try fetching exact ID (rarely works with CSV export codes)
+            // 1. Try fetching exact ID
             tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${cleanSet}-${collectorNum}`);
             
-            // 2. Search Fallback (Main Strategy)
+            // 2. Search Fallback (CRITICAL FIX)
             if (!tcgdexData && name) {
                const searchResults = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(name)}`);
                
                if (Array.isArray(searchResults)) {
-                 // Find best match in results
+                 // Fuzzy match
                  let match = searchResults.find((c: any) => {
                     const apiSet = (c.set?.name || '').toLowerCase();
                     const csvSet = setName.toLowerCase();
-                    // Match if Set Names overlap (e.g. "Astral Radiance" matches "Sword & Shield - Astral Radiance")
                     const setMatch = apiSet && csvSet && (apiSet.includes(csvSet) || csvSet.includes(apiSet));
                     
-                    // Match if numbers match (ignoring leading zeros)
                     const resNum = (c.localId || '').toString().replace(/^0+/, '');
                     const numMatch = resNum === cleanNum;
 
                     return setMatch || numMatch;
                  });
 
-                 // Fallback: If no strict match, but we have results, take the first one if name is exact
+                 // Fallback to first exact name match if specific set match fails
                  if (!match && searchResults.length > 0) {
                     if (searchResults[0].name.toLowerCase() === name.toLowerCase()) {
                         match = searchResults[0];
@@ -161,9 +157,8 @@ export async function POST(request: NextRequest) {
                  }
 
                  if (match) {
-                     // IMPORTANT: Fetch the FULL details for the matched card.
-                     // The search result `match` does NOT contain pricing or high-res images.
-                     // We must fetch by ID to get the complete object.
+                     // FIX 2: FETCH FULL DATA
+                     // The search result `match` lacks prices. We MUST fetch by ID.
                      const fullCardData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${match.id}`);
                      if (fullCardData) {
                          tcgdexData = fullCardData;
@@ -173,22 +168,22 @@ export async function POST(request: NextRequest) {
                }
             }
 
-            // Construct Data (With strict Price/Image fallbacks)
             const imageBase = tcgdexData?.image;
+            
             cardData = {
               id: cardId,
               name: name || tcgdexData?.name,
               set: { id: setCode, name: setName || tcgdexData?.set?.name },
               localId: collectorNum,
-              // Frontend expects 'images' object
+              // Frontend expects 'images' object with high res
               images: imageBase ? { 
                 small: `${imageBase}/low.webp`, 
                 large: `${imageBase}/high.webp` 
               } : null,
               // Frontend expects 'pricing' object
-              pricing: {
+              pricing: tcgdexData?.pricing || {
                  cardmarket: {
-                    avg: purchasePrice, // Use CSV price as primary if API fails
+                    avg: purchasePrice, // Use CSV price as fallback
                     trend: purchasePrice
                  }
               },
@@ -223,7 +218,6 @@ export async function POST(request: NextRequest) {
              };
           }
 
-          // SQL Insert
           await sql`
             INSERT INTO collection_items (
               user_id, card_id, game, card_data, quantity, condition, foil, notes
