@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Users, Globe, Hash, Heart, MessageCircle, Send, ChevronDown, ChevronUp, Reply, Smile, X } from 'lucide-react';
+import { Users, Globe, Hash, ThumbsUp, MessageCircle, Send, ChevronDown, ChevronUp, Reply, Smile, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -38,7 +38,8 @@ interface Post {
   reactions?: Reaction[];
 }
 
-const QUICK_REACTIONS = ['👍', '😂', '😮', '😢', '😡', '🔥', '💯'];
+// Updated reactions: Heart added, ThumbsUp removed (since it's the main button)
+const QUICK_REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '🔥', '💯'];
 
 export default function FeedPage() {
   const router = useRouter();
@@ -82,7 +83,6 @@ export default function FeedPage() {
       const data = await res.json();
       if (data.success) {
         setPosts(data.posts || []);
-        // Load reactions for each post
         for (const post of data.posts || []) {
           loadPostReactions(post.post_id);
         }
@@ -212,7 +212,6 @@ export default function FeedPage() {
         setCommentInputs(prev => ({ ...prev, [postId]: '' }));
         setReplyingTo(null);
         loadComments(postId);
-        // Update comment count
         setPosts(current =>
           current.map(p => (p.post_id === postId ? { ...p, comment_count: (p.comment_count || 0) + 1 } : p))
         );
@@ -240,7 +239,6 @@ export default function FeedPage() {
     setCommentInputs(prev => ({ ...prev, [postId]: `@${userName} ` }));
   };
 
-  // Organize comments into threads
   const getThreadedComments = (comments: Comment[]) => {
     const topLevel = comments.filter(c => !c.parent_comment_id);
     const replies: Record<string, Comment[]> = {};
@@ -264,7 +262,6 @@ export default function FeedPage() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        {/* Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-6 p-2 flex gap-2">
           {['friends', 'groups', 'public'].map(t => (
             <button
@@ -282,7 +279,6 @@ export default function FeedPage() {
           ))}
         </div>
 
-        {/* Create Post */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <textarea
             value={newPost}
@@ -305,7 +301,6 @@ export default function FeedPage() {
           </div>
         </div>
 
-        {/* Posts Feed */}
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -319,7 +314,6 @@ export default function FeedPage() {
           <div className="space-y-6">
             {posts.map(post => (
               <div key={post.post_id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm" data-testid={`post-${post.post_id}`}>
-                {/* Post Header */}
                 <div className="p-6 pb-4">
                   <div className="flex items-center gap-3 mb-4">
                     <Link href={`/profile/${post.user_id}`} className="hover:opacity-80 transition">
@@ -338,22 +332,19 @@ export default function FeedPage() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(post.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
-
-                  {/* Post Content */}
                   <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">{post.content}</p>
-
                 </div>
 
-                {/* Post Actions */}
-                <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-700">
-                  {/* Action Buttons */}
+                {/* Post Actions & Reactions - MERGED ROW */}
+                <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
+                    {/* Main Like Button - Thumbs Up */}
                     <button
                       onClick={() => toggleLike(post.post_id)}
-                      className={`flex items-center gap-2 ${post.liked ? 'text-red-600' : 'text-gray-600 dark:text-gray-400'} hover:text-red-600 transition`}
+                      className={`flex items-center gap-2 ${post.liked ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'} hover:text-blue-600 transition`}
                       data-testid={`like-btn-${post.post_id}`}
                     >
-                      <Heart className={`w-5 h-5 ${post.liked ? 'fill-current' : ''}`} />
+                      <ThumbsUp className={`w-5 h-5 ${post.liked ? 'fill-current' : ''}`} />
                       <span>{post.like_count || 0}</span>
                     </button>
 
@@ -367,8 +358,7 @@ export default function FeedPage() {
                       {expandedComments.has(post.post_id) ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
 
-                    {/* Emoji Reaction Button */}
-                    <div className="relative ml-auto">
+                    <div className="relative">
                       <button
                         onClick={() => setShowEmojiPicker(showEmojiPicker === post.post_id ? null : post.post_id)}
                         className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
@@ -377,9 +367,8 @@ export default function FeedPage() {
                         <Smile className="w-5 h-5" />
                       </button>
 
-                      {/* Quick Emoji Picker */}
                       {showEmojiPicker === post.post_id && (
-                        <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2 z-10 flex gap-1">
+                        <div className="absolute left-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2 z-10 flex gap-1">
                           {QUICK_REACTIONS.map(emoji => (
                             <button
                               key={emoji}
@@ -393,10 +382,10 @@ export default function FeedPage() {
                       )}
                     </div>
                   </div>
-                  
-                  {/* Emoji Reactions Display - Combined in same section */}
+
+                  {/* Reactions Display (Same Row) */}
                   {postReactions[post.post_id]?.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-50 dark:border-gray-700">
+                    <div className="flex flex-wrap gap-2">
                       {postReactions[post.post_id].map(r => (
                         <button
                           key={r.emoji}
@@ -415,7 +404,6 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                {/* Comments Section */}
                 {expandedComments.has(post.post_id) && (
                   <div className="border-t border-gray-100 dark:border-gray-700 p-4">
                     {loadingComments.has(post.post_id) ? (
@@ -424,14 +412,12 @@ export default function FeedPage() {
                       </div>
                     ) : (
                       <>
-                        {/* Comments List */}
                         {postComments[post.post_id]?.length > 0 && (
                           <div className="space-y-4 mb-4">
                             {(() => {
                               const { topLevel, replies } = getThreadedComments(postComments[post.post_id] || []);
                               return topLevel.map(comment => (
                                 <div key={comment.comment_id}>
-                                  {/* Main Comment */}
                                   <div className="flex gap-3" data-testid={`comment-${comment.comment_id}`}>
                                     <Link href={`/profile/${comment.user_id}`}>
                                       {comment.picture ? (
@@ -449,23 +435,18 @@ export default function FeedPage() {
                                         </Link>
                                         <p className="text-sm text-gray-800 dark:text-gray-200">{comment.content}</p>
                                       </div>
-
-                                      {/* Comment Actions */}
                                       <div className="flex items-center gap-3 mt-1 px-2">
                                         <span className="text-xs text-gray-500">{new Date(comment.created_at).toLocaleDateString()}</span>
-
-                                        {/* Reaction Button */}
                                         <button
-                                          onClick={() => toggleCommentReaction(post.post_id, comment.comment_id, '👍')}
+                                          onClick={() => toggleCommentReaction(post.post_id, comment.comment_id, '❤️')}
                                           className={`text-xs ${
-                                            comment.reactions?.some(r => r.emoji === '👍' && r.userReacted)
-                                              ? 'text-blue-600'
-                                              : 'text-gray-500 hover:text-blue-600'
+                                            comment.reactions?.some(r => r.emoji === '❤️' && r.userReacted)
+                                              ? 'text-red-600'
+                                              : 'text-gray-500 hover:text-red-600'
                                           }`}
                                         >
-                                          👍 {comment.reactions?.find(r => r.emoji === '👍')?.count || ''}
+                                          ❤️ {comment.reactions?.find(r => r.emoji === '❤️')?.count || ''}
                                         </button>
-
                                         <button
                                           onClick={() => startReply(post.post_id, comment.comment_id, comment.name)}
                                           className="text-xs text-gray-500 hover:text-blue-600 flex items-center gap-1"
@@ -475,8 +456,6 @@ export default function FeedPage() {
                                           Reply
                                         </button>
                                       </div>
-
-                                      {/* Comment Reactions */}
                                       {comment.reactions?.length > 0 && (
                                         <div className="flex gap-1 mt-1 px-2">
                                           {comment.reactions.map(r => (
@@ -494,8 +473,6 @@ export default function FeedPage() {
                                       )}
                                     </div>
                                   </div>
-
-                                  {/* Replies */}
                                   {replies[comment.comment_id]?.length > 0 && (
                                     <div className="ml-10 mt-3 space-y-3 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
                                       {replies[comment.comment_id].map(reply => (
@@ -519,14 +496,14 @@ export default function FeedPage() {
                                             <div className="flex items-center gap-3 mt-1 px-2">
                                               <span className="text-xs text-gray-500">{new Date(reply.created_at).toLocaleDateString()}</span>
                                               <button
-                                                onClick={() => toggleCommentReaction(post.post_id, reply.comment_id, '👍')}
+                                                onClick={() => toggleCommentReaction(post.post_id, reply.comment_id, '❤️')}
                                                 className={`text-xs ${
-                                                  reply.reactions?.some(r => r.emoji === '👍' && r.userReacted)
-                                                    ? 'text-blue-600'
-                                                    : 'text-gray-500 hover:text-blue-600'
+                                                  reply.reactions?.some(r => r.emoji === '❤️' && r.userReacted)
+                                                    ? 'text-red-600'
+                                                    : 'text-gray-500 hover:text-red-600'
                                                 }`}
                                               >
-                                                👍 {reply.reactions?.find(r => r.emoji === '👍')?.count || ''}
+                                                ❤️ {reply.reactions?.find(r => r.emoji === '❤️')?.count || ''}
                                               </button>
                                             </div>
                                           </div>
@@ -539,8 +516,6 @@ export default function FeedPage() {
                             })()}
                           </div>
                         )}
-
-                        {/* Comment Input */}
                         <div className="flex gap-3">
                           <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                             Y

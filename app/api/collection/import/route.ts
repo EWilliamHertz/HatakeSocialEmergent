@@ -136,7 +136,9 @@ export async function POST(request: NextRequest) {
             
             // 2. Try Fallback Search (Critical for "ASR" vs "swsh10" mismatch)
             if (!tcgdexData && name) {
+               // Perform a loose search by name
                const searchResults = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(name)}`);
+               
                if (Array.isArray(searchResults)) {
                  // Fuzzy match: Look for matching Set Name (e.g. "Astral Radiance")
                  tcgdexData = searchResults.find((c: any) => {
