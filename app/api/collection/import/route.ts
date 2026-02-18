@@ -67,7 +67,37 @@ export async function POST(request: NextRequest) {
     const { cards, format } = parseCSV(csvContent);
     const actualFormat = format === 'unknown' ? (gameType === 'pokemon' ? 'pokemon' : 'manabox') : format;
 
-    // --- IMPORT LOGIC ---
+    // --- PREVIEW ACTION ---
+    if (action === 'preview') {
+      const previewCards = cards.slice(0, 50).map(card => {
+        if (actualFormat === 'pokemon') {
+          return {
+            name: card['Name'],
+            setCode: card['Set Code'],
+            setName: card['Edition Name'],
+            collectorNumber: card['Collector Number'],
+            quantity: parseInt(card['Quantity']) || 1,
+            price: parseFloat(card['Price']) || 0,
+            condition: mapCondition(card['Condition']),
+            game: 'pokemon'
+          };
+        } else {
+          return {
+            name: card['Name'],
+            setCode: card['Set code'],
+            setName: card['Set name'],
+            collectorNumber: card['Collector number'],
+            quantity: parseInt(card['Quantity']) || 1,
+            price: parseFloat(card['Purchase price']) || 0,
+            condition: mapCondition(card['Condition']),
+            game: 'mtg'
+          };
+        }
+      });
+      return NextResponse.json({ success: true, cards: previewCards, format: actualFormat });
+    }
+
+    // --- IMPORT ACTION ---
     if (action === 'import') {
       let imported = 0;
       let errors = [];
@@ -78,6 +108,7 @@ export async function POST(request: NextRequest) {
           let cardId: string;
           let game = actualFormat === 'pokemon' ? 'pokemon' : 'mtg';
           let quantity = parseInt(card['Quantity']) || 1;
+          
           // Clean price string (remove currency symbols if present)
           let priceStr = (card[actualFormat === 'pokemon' ? 'Price' : 'Purchase price'] || '0').toString().replace(/[^0-9.]/g, '');
           let purchasePrice = parseFloat(priceStr) || 0;
@@ -109,10 +140,10 @@ export async function POST(request: NextRequest) {
                
                if (Array.isArray(searchResults)) {
                  // Find best match in results
-                 const match = searchResults.find((c: any) => {
+                 let match = searchResults.find((c: any) => {
                     const apiSet = (c.set?.name || '').toLowerCase();
                     const csvSet = setName.toLowerCase();
-                    // Match if Set Names overlap
+                    // Match if Set Names overlap (e.g. "Astral Radiance" matches "Sword & Shield - Astral Radiance")
                     const setMatch = apiSet && csvSet && (apiSet.includes(csvSet) || csvSet.includes(apiSet));
                     
                     // Match if numbers match (ignoring leading zeros)
@@ -122,15 +153,21 @@ export async function POST(request: NextRequest) {
                     return setMatch || numMatch;
                  });
 
+                 // Fallback: If no strict match, but we have results, take the first one if name is exact
+                 if (!match && searchResults.length > 0) {
+                    if (searchResults[0].name.toLowerCase() === name.toLowerCase()) {
+                        match = searchResults[0];
+                    }
+                 }
+
                  if (match) {
-                     // IMPORTANT: Fetch the FULL details for the matched card to get the image/price
-                     tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${match.id}`);
-                     if (tcgdexData) cardId = tcgdexData.id;
-                 } else if (searchResults.length > 0) {
-                     // Loose fallback: take first result if name is exact
-                     if (searchResults[0].name.toLowerCase() === name.toLowerCase()) {
-                         tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${searchResults[0].id}`);
-                         if (tcgdexData) cardId = tcgdexData.id;
+                     // IMPORTANT: Fetch the FULL details for the matched card.
+                     // The search result `match` does NOT contain pricing or high-res images.
+                     // We must fetch by ID to get the complete object.
+                     const fullCardData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${match.id}`);
+                     if (fullCardData) {
+                         tcgdexData = fullCardData;
+                         cardId = tcgdexData.id;
                      }
                  }
                }
@@ -151,7 +188,7 @@ export async function POST(request: NextRequest) {
               // Frontend expects 'pricing' object
               pricing: {
                  cardmarket: {
-                    avg: purchasePrice, // Use CSV price
+                    avg: purchasePrice, // Use CSV price as primary if API fails
                     trend: purchasePrice
                  }
               },
@@ -159,7 +196,7 @@ export async function POST(request: NextRequest) {
             };
 
           } else {
-             // MTG Logic (Working correctly)
+             // MTG Logic
              const name = card['Name'];
              const setCode = card['Set code'];
              const collectorNum = card['Collector number'];
@@ -209,18 +246,6 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json({ success: true, imported, errors });
-    }
-
-    // Preview Action
-    if (action === 'preview') {
-       // ... existing preview logic ...
-       const previewCards = cards.slice(0, 50).map(card => ({
-           name: card['Name'],
-           setCode: card[actualFormat === 'pokemon' ? 'Set Code' : 'Set code'],
-           game: actualFormat === 'pokemon' ? 'pokemon' : 'mtg',
-           quantity: parseInt(card['Quantity']) || 1
-       }));
-       return NextResponse.json({ success: true, cards: previewCards, format: actualFormat });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
