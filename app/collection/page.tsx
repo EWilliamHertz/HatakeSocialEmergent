@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Package, Trash2, DollarSign, CheckSquare, Square, MoreHorizontal, Edit2, ShoppingBag, Search, Upload, FileSpreadsheet, X, AlertCircle, CheckCircle, Plus, Loader2 } from 'lucide-react';
+import { Package, Trash2, CheckSquare, Square, MoreHorizontal, Edit2, ShoppingBag, Search, Upload, FileSpreadsheet, X, AlertCircle, CheckCircle, Plus, Loader2, Camera } from 'lucide-react';
 import Image from 'next/image';
 
 interface CollectionItem {
@@ -49,8 +49,13 @@ export default function CollectionPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [showBulkMenu, setShowBulkMenu] = useState(false);
+  
+  // Edit State
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  
+  // Bulk List State
   const [showListModal, setShowListModal] = useState(false);
   const [listPrice, setListPrice] = useState('');
   const [listCondition, setListCondition] = useState('Near Mint');
@@ -80,7 +85,6 @@ export default function CollectionPage() {
   const [addCardCondition, setAddCardCondition] = useState('Near Mint');
   const [addCardFoil, setAddCardFoil] = useState(false);
   const [addingCard, setAddingCard] = useState(false);
-  const [addCardSearchMode, setAddCardSearchMode] = useState<'name' | 'set'>('name');
   
   // Enhanced add card modal state
   const [selectedCardToAdd, setSelectedCardToAdd] = useState<any>(null);
@@ -91,7 +95,6 @@ export default function CollectionPage() {
   const [gradeValue, setGradeValue] = useState('10');
   const [loadingCardPrice, setLoadingCardPrice] = useState(false);
   const [cardPriceData, setCardPriceData] = useState<any>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Pokemon finish options
   const pokemonFinishOptions = [
@@ -128,7 +131,7 @@ export default function CollectionPage() {
   ];
 
   // Grading companies
-  const gradingCompanies = ['PSA', 'BGS', 'CGC', 'SGC'];
+  const gradingCompanies = ['PSA', 'BGS', 'CGC', 'SGC', 'PCG', 'Ace'];
   const gradeValues = ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5.5', '5', '4', '3', '2', '1'];
 
   useEffect(() => {
@@ -354,7 +357,6 @@ export default function CollectionPage() {
     
     try {
       if (addCardGame === 'mtg') {
-        // Use backend proxy to avoid CORS issues in production
         try {
           const params = new URLSearchParams();
           if (addCardName.trim()) {
@@ -372,8 +374,6 @@ export default function CollectionPage() {
             return;
           }
           
-          console.log('MTG search via proxy:', params.toString());
-          
           const searchRes = await fetch(`/api/cards/mtg?${params.toString()}`, {
             credentials: 'include',
             signal: AbortSignal.timeout(15000)
@@ -383,7 +383,6 @@ export default function CollectionPage() {
             const data = await searchRes.json();
             setAddCardSearchResults(data.cards || []);
           } else {
-            console.log('MTG proxy search failed');
             setAddCardSearchResults([]);
           }
         } catch (mtgError) {
@@ -391,81 +390,47 @@ export default function CollectionPage() {
           setAddCardSearchResults([]);
         }
       } else {
-        // TCGdex API for Pokemon (free, no API key required)
+        // TCGdex API for Pokemon
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
-          
           let cards: any[] = [];
           
-          // If we have set code and collector number but no name, try direct card lookup
           if (resolvedSetCode && addCardCollectorNum.trim() && !addCardName.trim()) {
-            // Try to fetch specific card directly
             const collNum = addCardCollectorNum.trim().padStart(3, '0');
             const cardId = `${resolvedSetCode}-${collNum}`;
-            console.log('TCGdex direct card lookup:', cardId);
-            
-            const directRes = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`, {
-              signal: controller.signal
-            });
-            
+            const directRes = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`, { signal: controller.signal });
             if (directRes.ok) {
               const card = await directRes.json();
               cards = [card];
             } else {
-              // Try without padding
               const cardIdNoPad = `${resolvedSetCode}-${addCardCollectorNum.trim()}`;
-              const directRes2 = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardIdNoPad}`, {
-                signal: controller.signal
-              });
+              const directRes2 = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardIdNoPad}`, { signal: controller.signal });
               if (directRes2.ok) {
                 const card = await directRes2.json();
                 cards = [card];
               }
             }
           } else {
-            // Name-based search
             let searchUrl = 'https://api.tcgdex.net/v2/en/cards';
             const params = new URLSearchParams();
-            
-            if (addCardName.trim()) {
-              params.append('name', addCardName.trim());
-            }
-            
+            if (addCardName.trim()) params.append('name', addCardName.trim());
             let apiUrl = searchUrl;
-            if (params.toString()) {
-              apiUrl += '?' + params.toString();
-            }
+            if (params.toString()) apiUrl += '?' + params.toString();
             
-            console.log('TCGdex search URL:', apiUrl);
-            
-            const res = await fetch(apiUrl, {
-              signal: controller.signal
-            });
-            
+            const res = await fetch(apiUrl, { signal: controller.signal });
             if (res.ok) {
               cards = await res.json();
-              
-              // If set code is provided, filter results
               if (addCardSetCode.trim()) {
-                cards = cards.filter((card: any) => 
-                  card.id?.toLowerCase().includes(resolvedSetCode) || 
-                  card.set?.id?.toLowerCase() === resolvedSetCode
-                );
+                cards = cards.filter((card: any) => card.id?.toLowerCase().includes(resolvedSetCode) || card.set?.id?.toLowerCase() === resolvedSetCode);
               }
-              
-              // If collector number is provided, filter results
               if (addCardCollectorNum.trim()) {
                 const collNum = addCardCollectorNum.trim();
-                // Pad to 3 digits for comparison (e.g., "24" -> "024")
                 const paddedCollNum = collNum.padStart(3, '0');
                 cards = cards.filter((card: any) => {
                   const cardLocalId = card.localId?.toString() || '';
                   const cardIdNum = card.id?.split('-').pop() || '';
-                  return cardLocalId === collNum || 
-                         cardLocalId === paddedCollNum ||
-                         cardIdNum === collNum ||
-                         cardIdNum === paddedCollNum;
+                  return cardLocalId === collNum || cardLocalId === paddedCollNum || cardIdNum === collNum || cardIdNum === paddedCollNum;
                 });
               }
             }
@@ -473,7 +438,6 @@ export default function CollectionPage() {
           
           clearTimeout(timeoutId);
           
-          // Map TCGdex cards to consistent format
           const mappedCards = cards.slice(0, 30).map((card: any) => ({
             id: card.id,
             name: card.name,
@@ -491,20 +455,11 @@ export default function CollectionPage() {
             set_code: card.set?.id || card.id?.split('-')[0] || '',
             collector_number: card.localId || card.id?.split('-').pop() || '',
             set: { id: card.set?.id, name: card.set?.name },
-            pricing: card.pricing  // Include pricing if available
+            pricing: card.pricing
           }));
           
           setAddCardSearchResults(mappedCards);
-          
-          if (mappedCards.length === 0) {
-            console.log('No Pokemon cards found for search');
-          }
-        } catch (fetchError: any) {
-          if (fetchError.name === 'AbortError') {
-            console.error('TCGdex API timeout');
-          } else {
-            console.error('TCGdex API fetch error:', fetchError);
-          }
+        } catch (fetchError) {
           setAddCardSearchResults([]);
         }
       }
@@ -513,71 +468,6 @@ export default function CollectionPage() {
       setAddCardSearchResults([]);
     } finally {
       setAddCardSearching(false);
-    }
-  };
-
-  // Add selected card to collection
-  const addCardToCollection = async (card: any) => {
-    setAddingCard(true);
-    
-    try {
-      let cardData = card;
-      
-      // For Pokemon cards, fetch full details to get pricing
-      if (addCardGame === 'pokemon' && card.id) {
-        try {
-          const detailRes = await fetch(`https://api.tcgdex.net/v2/en/cards/${card.id}`, {
-            signal: AbortSignal.timeout(10000)
-          });
-          if (detailRes.ok) {
-            const fullCard = await detailRes.json();
-            // Merge full card data with our mapped format
-            cardData = {
-              ...card,
-              pricing: fullCard.pricing,
-              rarity: fullCard.rarity,
-              hp: fullCard.hp,
-              types: fullCard.types,
-              artist: fullCard.illustrator,
-            };
-          }
-        } catch (e) {
-          console.warn('Could not fetch full card details:', e);
-        }
-      }
-      
-      const res = await fetch('/api/collection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          cardId: card.id,
-          game: addCardGame,
-          cardData: cardData,
-          quantity: addCardQuantity,
-          condition: addCardCondition,
-          foil: addCardFoil
-        })
-      });
-      
-      const data = await res.json();
-      if (data.success) {
-        alert(`Added ${card.name} to collection!`);
-        loadCollection();
-        // Reset form
-        setAddCardSetCode('');
-        setAddCardCollectorNum('');
-        setAddCardSearchResults([]);
-        setAddCardQuantity(1);
-        setAddCardFoil(false);
-      } else {
-        alert(data.error || 'Failed to add card');
-      }
-    } catch (error) {
-      console.error('Add card error:', error);
-      alert('Failed to add card');
-    } finally {
-      setAddingCard(false);
     }
   };
 
@@ -608,11 +498,7 @@ export default function CollectionPage() {
   };
 
   const getCardImage = (item: CollectionItem) => {
-    // Use custom image if available
-    if (item.custom_image_url) {
-      return item.custom_image_url;
-    }
-    
+    if (item.custom_image_url) return item.custom_image_url;
     const card = item.card_data || {};
     if (card.images?.small) return card.images.small;
     if (card.image_uris?.small) return card.image_uris.small;
@@ -624,38 +510,23 @@ export default function CollectionPage() {
   const getCardPrice = (item: CollectionItem) => {
     const card = item.card_data;
     if (item.game === 'pokemon') {
-      // Check for TCGdex pricing (from cardmarket) - prices are in EUR
       if (card.pricing?.cardmarket) {
         return { value: card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0, currency: 'EUR' };
       }
-      // Legacy TCGplayer format - prices are in USD
       if (card.tcgplayer?.prices) {
         const prices = card.tcgplayer.prices;
         return { value: prices.holofoil?.market || prices.normal?.market || 0, currency: 'USD' };
       }
       return { value: 0, currency: 'EUR' };
     } else if (item.game === 'mtg') {
-      // Scryfall prices - prefer EUR for consistency with Pokemon/Cardmarket
-      if (card.prices?.eur) {
-        return { value: parseFloat(card.prices.eur), currency: 'EUR' };
-      }
-      if (card.prices?.eur_foil && item.foil) {
-        return { value: parseFloat(card.prices.eur_foil), currency: 'EUR' };
-      }
-      // Fallback to USD if EUR not available
-      if (card.prices?.usd) {
-        return { value: parseFloat(card.prices.usd), currency: 'USD' };
-      }
-      if (card.prices?.usd_foil && item.foil) {
-        return { value: parseFloat(card.prices.usd_foil), currency: 'USD' };
-      }
+      if (card.prices?.eur) return { value: parseFloat(card.prices.eur), currency: 'EUR' };
+      if (card.prices?.eur_foil && item.foil) return { value: parseFloat(card.prices.eur_foil), currency: 'EUR' };
+      if (card.prices?.usd) return { value: parseFloat(card.prices.usd), currency: 'USD' };
+      if (card.prices?.usd_foil && item.foil) return { value: parseFloat(card.prices.usd_foil), currency: 'USD' };
     }
     return { value: 0, currency: 'EUR' };
   };
   
-  // Helper to get just the numeric value
-  const getCardPriceValue = (item: CollectionItem) => getCardPrice(item).value;
-
   const calculateTotalValue = () => {
     let totalEUR = 0;
     let totalUSD = 0;
@@ -667,8 +538,6 @@ export default function CollectionPage() {
         totalUSD += price.value * item.quantity;
       }
     });
-    
-    // Return formatted string with both currencies if applicable
     const parts = [];
     if (totalUSD > 0) parts.push(`$${totalUSD.toFixed(2)}`);
     if (totalEUR > 0) parts.push(`€${totalEUR.toFixed(2)}`);
@@ -684,22 +553,17 @@ export default function CollectionPage() {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     setImportLoading(true);
     setImportStatus('preview');
-
     try {
       const text = await file.text();
-      
       const res = await fetch('/api/collection/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ csvContent: text, action: 'preview', gameType: importGameType })
       });
-
       const data = await res.json();
-      
       if (data.success) {
         setImportCards(data.cards);
       } else {
@@ -707,63 +571,34 @@ export default function CollectionPage() {
         setImportStatus('idle');
       }
     } catch (error) {
-      console.error('File upload error:', error);
       alert('Failed to read file');
       setImportStatus('idle');
     } finally {
       setImportLoading(false);
     }
-    
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const confirmImport = async () => {
     setImportLoading(true);
     setImportStatus('importing');
-
     try {
-      // Re-read the file for import
-      const file = fileInputRef.current?.files?.[0];
-      if (!file) {
-        // Use the already parsed cards - reconstruct CSV with headers
-        const headers = 'Name,Set code,Set name,Collector number,Foil,Rarity,Quantity,ManaBox ID,Scryfall ID,Purchase price,Misprint,Altered,Condition,Language,Purchase price currency';
-        const csvLines = importCards.map(c => 
-          `"${c.name}",${c.setCode},"${c.setName}",${c.collectorNumber},${c.foil ? 'foil' : 'normal'},${c.rarity},${c.quantity},,${c.scryfallId},${c.purchasePrice},false,${c.altered || false},${c.condition},${c.language || 'English'},${c.currency}`
-        );
-        const csvContent = [headers, ...csvLines].join('\n');
-        
-        const res = await fetch('/api/collection/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ csvContent, action: 'import', gameType: importGameType })
-        });
-
-        const data = await res.json();
-        setImportResult(data);
-        setImportStatus('done');
-        loadCollection();
-        return;
-      }
-
-      const text = await file.text();
-      
+      const headers = 'Name,Set code,Set name,Collector number,Foil,Rarity,Quantity,ManaBox ID,Scryfall ID,Purchase price,Misprint,Altered,Condition,Language,Purchase price currency';
+      const csvLines = importCards.map(c => 
+        `"${c.name}",${c.setCode},"${c.setName}",${c.collectorNumber},${c.foil ? 'foil' : 'normal'},${c.rarity},${c.quantity},,${c.scryfallId},${c.purchasePrice},false,${c.altered || false},${c.condition},${c.language || 'English'},${c.currency}`
+      );
+      const csvContent = [headers, ...csvLines].join('\n');
       const res = await fetch('/api/collection/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ csvContent: text, action: 'import', gameType: importGameType })
+        body: JSON.stringify({ csvContent, action: 'import', gameType: importGameType })
       });
-
       const data = await res.json();
       setImportResult(data);
       setImportStatus('done');
       loadCollection();
     } catch (error) {
-      console.error('Import error:', error);
       alert('Failed to import cards');
       setImportStatus('preview');
     } finally {
@@ -776,9 +611,7 @@ export default function CollectionPage() {
     setImportCards([]);
     setImportStatus('idle');
     setImportResult(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
@@ -927,14 +760,21 @@ export default function CollectionPage() {
             {filteredItems.map((item) => (
               <div 
                 key={item.id} 
-                className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition relative group ${
+                className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition relative group cursor-pointer ${
                   selectedItems.has(item.id) ? 'ring-2 ring-blue-600' : ''
                 }`}
                 data-testid={`collection-item-${item.id}`}
+                onClick={() => {
+                  setEditingItem(item);
+                  setShowEditModal(true);
+                }}
               >
                 {/* Selection Checkbox */}
                 <button
-                  onClick={() => toggleItemSelection(item.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleItemSelection(item.id);
+                  }}
                   className="absolute top-2 left-2 z-10 bg-white dark:bg-gray-700 rounded p-1 shadow"
                 >
                   {selectedItems.has(item.id) ? (
@@ -966,7 +806,8 @@ export default function CollectionPage() {
                   {/* Hover Actions */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setEditingItem(item);
                         setShowEditModal(true);
                       }}
@@ -976,7 +817,10 @@ export default function CollectionPage() {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeItem(item.id);
+                      }}
                       className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                       title="Delete"
                     >
@@ -1026,34 +870,49 @@ export default function CollectionPage() {
         )}
       </div>
 
-      {/* Edit Modal */}
+      {/* Edit Modal - ENHANCED to match Add Card style */}
       {showEditModal && editingItem && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-4 dark:text-white">Edit Card</h3>
-            
-            {/* Card Preview with Custom Image Upload */}
-            <div className="flex gap-4 mb-4">
-              <div className="w-24 flex-shrink-0">
-                <div className="relative aspect-[2/3] bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                  <img
-                    src={editingItem.custom_image_url || getCardImage(editingItem)}
-                    alt={editingItem.card_data?.name || 'Card'}
-                    className="w-full h-full object-cover"
-                  />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-xl font-bold dark:text-white">Edit Card Details</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {editingItem.card_data?.name || 'Unknown Card'} • {editingItem.card_data?.set?.id || editingItem.card_data?.set_code || editingItem.card_data?.set || ''} #{editingItem.card_data?.collector_number || editingItem.card_data?.number || editingItem.card_data?.localId || ''}
+                  </p>
                 </div>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingItem(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
-              <div className="flex-1">
-                <p className="font-medium dark:text-white">{editingItem.card_data?.name || 'Unknown Card'}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                  {editingItem.card_data?.set?.id || editingItem.card_data?.set_code || editingItem.card_data?.set || ''} #{editingItem.card_data?.collector_number || editingItem.card_data?.number || editingItem.card_data?.localId || ''}
-                </p>
-                
-                {/* Custom Image Upload */}
-                <div className="mt-2">
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Custom Image</label>
-                  <div className="flex gap-2">
-                    <label className="cursor-pointer px-3 py-1 text-xs bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded text-gray-700 dark:text-gray-300">
+              
+              <div className="flex gap-6 mb-6">
+                {/* Left: Card Preview & Image Upload */}
+                <div className="w-1/3 flex-shrink-0">
+                  <div className="relative aspect-[2/3] bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden shadow-md mb-3">
+                    <img
+                      src={editingItem.custom_image_url || getCardImage(editingItem)}
+                      alt={editingItem.card_data?.name || 'Card'}
+                      className="w-full h-full object-cover"
+                    />
+                    {uploadingImage && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Custom Image Controls */}
+                  <div className="flex flex-col gap-2">
+                    <label className="cursor-pointer w-full py-2 px-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 flex items-center justify-center gap-2 transition">
+                      <Camera className="w-3 h-3" />
                       <input
                         type="file"
                         accept="image/*"
@@ -1088,11 +947,12 @@ export default function CollectionPage() {
                           }
                         }}
                       />
-                      {uploadingImage ? 'Uploading...' : 'Upload Photo'}
+                      Upload My Photo
                     </label>
                     {editingItem.custom_image_url && (
                       <button
                         onClick={async () => {
+                          if(!confirm("Remove custom photo?")) return;
                           try {
                             await fetch(`/api/collection/upload-image?itemId=${editingItem.id}`, {
                               method: 'DELETE',
@@ -1107,155 +967,171 @@ export default function CollectionPage() {
                             console.error('Delete image error:', err);
                           }
                         }}
-                        className="px-3 py-1 text-xs bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 rounded text-red-700 dark:text-red-300"
+                        className="w-full py-2 px-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-medium rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition"
                       >
-                        Remove
+                        Revert to Scan
                       </button>
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
-                  <input
-                    type="number"
-                    min="1"
-                    defaultValue={editingItem.quantity}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                    id="edit-quantity"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Finish</label>
-                  <select 
-                    defaultValue={editingItem.finish || 'Normal'}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                    id="edit-finish"
-                  >
-                    {(editingItem.game === 'pokemon' ? pokemonFinishOptions : mtgFinishOptions).map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
+                {/* Right: Editing Form */}
+                <div className="flex-1 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        min="1"
+                        defaultValue={editingItem.quantity}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        id="edit-quantity"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Finish</label>
+                      <select 
+                        defaultValue={editingItem.finish || 'Normal'}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        id="edit-finish"
+                        onChange={(e) => {
+                          const isFoil = e.target.value !== 'Normal';
+                          (document.getElementById('edit-foil') as HTMLInputElement).checked = isFoil;
+                        }}
+                      >
+                        {(editingItem.game === 'pokemon' ? pokemonFinishOptions : mtgFinishOptions).map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Condition</label>
+                    <select 
+                      defaultValue={editingItem.condition || 'Near Mint'}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      id="edit-condition"
+                    >
+                      {conditionOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Attributes</label>
+                    <div className="flex flex-wrap gap-4">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          defaultChecked={editingItem.foil}
+                          id="edit-foil"
+                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor="edit-foil" className="text-sm text-gray-700 dark:text-gray-300">Foil/Holo</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          defaultChecked={editingItem.is_signed}
+                          id="edit-signed"
+                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor="edit-signed" className="text-sm text-gray-700 dark:text-gray-300">Signed</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          defaultChecked={editingItem.is_graded}
+                          id="edit-graded"
+                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                          onChange={(e) => {
+                            const details = document.getElementById('grading-details');
+                            if (details) details.style.display = e.target.checked ? 'grid' : 'none';
+                          }}
+                        />
+                        <label htmlFor="edit-graded" className="text-sm text-gray-700 dark:text-gray-300">Graded</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grading Details (shown if graded) */}
+                  <div className="grid grid-cols-2 gap-4" id="grading-details" style={{ display: editingItem.is_graded ? 'grid' : 'none' }}>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grading Company</label>
+                      <select 
+                        defaultValue={editingItem.grading_company || 'PSA'}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                        id="edit-grading-company"
+                      >
+                        {gradingCompanies.map(company => (
+                          <option key={company} value={company}>{company}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grade</label>
+                      <select 
+                        defaultValue={editingItem.grade_value || '10'}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                        id="edit-grade-value"
+                      >
+                        {gradeValues.map(grade => (
+                          <option key={grade} value={grade}>{grade}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+                    <textarea
+                      defaultValue={editingItem.notes || ''}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                      rows={2}
+                      placeholder="Add personal notes (e.g. bought from LGS, gift, etc.)"
+                      id="edit-notes"
+                    />
+                  </div>
                 </div>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Condition</label>
-                <select 
-                  defaultValue={editingItem.condition || 'Near Mint'}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                  id="edit-condition"
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2 border-t dark:border-gray-700">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingItem(null);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
-                  {conditionOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const quantity = parseInt((document.getElementById('edit-quantity') as HTMLInputElement).value);
+                    const condition = (document.getElementById('edit-condition') as HTMLSelectElement).value;
+                    const finish = (document.getElementById('edit-finish') as HTMLSelectElement).value;
+                    const foil = (document.getElementById('edit-foil') as HTMLInputElement).checked;
+                    const isSigned = (document.getElementById('edit-signed') as HTMLInputElement).checked;
+                    const isGraded = (document.getElementById('edit-graded') as HTMLInputElement).checked;
+                    const gradingCompany = (document.getElementById('edit-grading-company') as HTMLSelectElement).value;
+                    const gradeValue = (document.getElementById('edit-grade-value') as HTMLSelectElement).value;
+                    const notes = (document.getElementById('edit-notes') as HTMLTextAreaElement).value;
+                    
+                    updateItem(editingItem.id, { 
+                      quantity, condition, foil, notes, finish,
+                      isSigned, isGraded, 
+                      gradingCompany: isGraded ? gradingCompany : null,
+                      gradeValue: isGraded ? gradeValue : null
+                    });
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md"
+                >
+                  Save Changes
+                </button>
               </div>
-
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    defaultChecked={editingItem.foil}
-                    id="edit-foil"
-                    className="w-4 h-4 rounded"
-                  />
-                  <label htmlFor="edit-foil" className="text-sm font-medium text-gray-700 dark:text-gray-300">Foil/Holo</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    defaultChecked={editingItem.is_signed}
-                    id="edit-signed"
-                    className="w-4 h-4 rounded"
-                  />
-                  <label htmlFor="edit-signed" className="text-sm font-medium text-gray-700 dark:text-gray-300">Signed</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    defaultChecked={editingItem.is_graded}
-                    id="edit-graded"
-                    className="w-4 h-4 rounded"
-                  />
-                  <label htmlFor="edit-graded" className="text-sm font-medium text-gray-700 dark:text-gray-300">Graded</label>
-                </div>
-              </div>
-
-              {/* Grading Details (shown if graded) */}
-              <div className="grid grid-cols-2 gap-4" id="grading-details">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grading Company</label>
-                  <select 
-                    defaultValue={editingItem.grading_company || 'PSA'}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                    id="edit-grading-company"
-                  >
-                    {gradingCompanies.map(company => (
-                      <option key={company} value={company}>{company}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grade</label>
-                  <select 
-                    defaultValue={editingItem.grade_value || '10'}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                    id="edit-grade-value"
-                  >
-                    {gradeValues.map(grade => (
-                      <option key={grade} value={grade}>{grade}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-                <textarea
-                  defaultValue={editingItem.notes || ''}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                  rows={2}
-                  id="edit-notes"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 mt-6">
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingItem(null);
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  const quantity = parseInt((document.getElementById('edit-quantity') as HTMLInputElement).value);
-                  const condition = (document.getElementById('edit-condition') as HTMLSelectElement).value;
-                  const finish = (document.getElementById('edit-finish') as HTMLSelectElement).value;
-                  const foil = (document.getElementById('edit-foil') as HTMLInputElement).checked;
-                  const isSigned = (document.getElementById('edit-signed') as HTMLInputElement).checked;
-                  const isGraded = (document.getElementById('edit-graded') as HTMLInputElement).checked;
-                  const gradingCompany = (document.getElementById('edit-grading-company') as HTMLSelectElement).value;
-                  const gradeValue = (document.getElementById('edit-grade-value') as HTMLSelectElement).value;
-                  const notes = (document.getElementById('edit-notes') as HTMLTextAreaElement).value;
-                  updateItem(editingItem.id, { 
-                    quantity, condition, foil, notes, finish,
-                    isSigned, isGraded, 
-                    gradingCompany: isGraded ? gradingCompany : null,
-                    gradeValue: isGraded ? gradeValue : null
-                  });
-                }}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Save Changes
-              </button>
             </div>
           </div>
         </div>
