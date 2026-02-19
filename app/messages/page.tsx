@@ -336,7 +336,12 @@ export default function MessagesPage() {
 
   const selectConversation = (convId: string) => {
     setSelectedConv(convId);
+    setSelectedGroup(null);
     loadMessages(convId);
+    // Reset text area
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
   };
 
   const openNewConversationModal = () => {
