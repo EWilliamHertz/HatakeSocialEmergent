@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       game,
       cardData,
       price,
+      pricePercentage, // New: percentage of market value (e.g., 90 = 90% of market price)
       currency,
       condition,
       foil,
@@ -66,18 +67,28 @@ export async function POST(request: NextRequest) {
       description,
     } = await request.json();
 
-    if (!cardId || !game || !cardData || !price) {
+    if (!cardId || !game || !cardData || (!price && !pricePercentage)) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
+    // Calculate actual price if percentage is provided
+    let finalPrice = price;
+    if (pricePercentage && cardData.prices) {
+      // Get the market price from card data
+      const marketPrice = cardData.prices?.usd || cardData.prices?.eur || cardData.price || 0;
+      if (marketPrice > 0) {
+        finalPrice = (marketPrice * pricePercentage / 100).toFixed(2);
+      }
+    }
+
     const listingId = generateId('listing');
 
     await sql`
       INSERT INTO marketplace_listings (
-        listing_id, user_id, card_id, game, card_data, price, currency,
+        listing_id, user_id, card_id, game, card_data, price, price_percentage, currency,
         condition, foil, quantity, description, status
       )
       VALUES (
@@ -86,7 +97,8 @@ export async function POST(request: NextRequest) {
         ${cardId},
         ${game},
         ${JSON.stringify(cardData)},
-        ${price},
+        ${finalPrice},
+        ${pricePercentage || null},
         ${currency || 'USD'},
         ${condition || 'near_mint'},
         ${foil || false},
@@ -96,7 +108,7 @@ export async function POST(request: NextRequest) {
       )
     `;
 
-    return NextResponse.json({ success: true, listingId });
+    return NextResponse.json({ success: true, listingId, calculatedPrice: finalPrice });
   } catch (error) {
     console.error('Create listing error:', error);
     return NextResponse.json(
