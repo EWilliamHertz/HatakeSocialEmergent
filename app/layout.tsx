@@ -19,6 +19,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hatake.Social - Trade & Collect",
   description: "Your ultimate TCG trading and collection platform",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '256x256', type: 'image/x-icon' },
+      { url: 'https://i.imgur.com/B06rBhI.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: 'https://i.imgur.com/B06rBhI.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({
