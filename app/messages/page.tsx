@@ -907,6 +907,166 @@ export default function MessagesPage() {
                     <p className="text-xs text-gray-400 mt-1 ml-2">Press Enter to send, Shift+Enter for new line</p>
                   </div>
                 </>
+              ) : selectedGroup ? (
+                /* Group Chat View */
+                <>
+                  {/* Group Chat Header */}
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    {(() => {
+                      const group = groupChats.find(g => g.group_id === selectedGroup);
+                      if (!group) return null;
+                      return (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {group.image ? (
+                              <Image src={group.image} alt={group.name} width={40} height={40} className="rounded-xl" unoptimized />
+                            ) : (
+                              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white">
+                                <Users className="w-5 h-5" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-semibold dark:text-white">{group.name}</p>
+                              <p className="text-xs text-gray-500">{group.member_count} members</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => router.push(`/groups/${selectedGroup}`)}
+                            className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                          >
+                            View Group
+                          </button>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Group Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {messages.length === 0 ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                          <p className="text-gray-500">No messages in this group yet</p>
+                          <p className="text-gray-400 text-sm">Be the first to say something!</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {filteredMessages.map((msg, idx) => {
+                          const isOwn = msg.sender_id === currentUserId;
+                          const showDateSep = needsDateSeparator(msg, filteredMessages[idx - 1]);
+                          
+                          return (
+                            <div key={msg.message_id}>
+                              {showDateSep && (
+                                <div className="flex items-center justify-center my-4">
+                                  <div className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full text-xs text-gray-500 dark:text-gray-400">
+                                    {formatDateSeparator(msg.created_at)}
+                                  </div>
+                                </div>
+                              )}
+                              <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2 items-end`}>
+                                {!isOwn && (
+                                  <div className="flex flex-col items-center">
+                                    {msg.picture ? (
+                                      <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full" unoptimized />
+                                    ) : (
+                                      <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                        {msg.name?.charAt(0).toUpperCase() || '?'}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                <div className={`max-w-[70%] ${isOwn ? 'order-first' : ''}`}>
+                                  {!isOwn && (
+                                    <p className="text-xs text-gray-500 mb-0.5 ml-1">{msg.name}</p>
+                                  )}
+                                  <div className={`rounded-2xl px-4 py-2 ${
+                                    isOwn 
+                                      ? 'bg-blue-600 text-white rounded-br-sm' 
+                                      : 'bg-gray-100 dark:bg-gray-700 dark:text-white rounded-bl-sm'
+                                  }`}>
+                                    {renderMessageContent(msg)}
+                                  </div>
+                                  <p className={`text-xs text-gray-400 mt-0.5 ${isOwn ? 'text-right mr-1' : 'ml-1'}`}>
+                                    {formatMessageTime(msg.created_at)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div ref={messagesEndRef} />
+                      </>
+                    )}
+                  </div>
+
+                  {/* Send Group Message */}
+                  <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+                    <div className="flex gap-2 items-end relative">
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                          title="Send Image or Video"
+                        >
+                          <ImageIcon className="w-5 h-5 text-gray-500" />
+                        </button>
+                        <button
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                          title="Add Emoji"
+                        >
+                          <Smile className="w-5 h-5 text-gray-500" />
+                        </button>
+                      </div>
+                      
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,video/*"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                      />
+                      
+                      {showEmojiPicker && (
+                        <div className="absolute bottom-16 left-0 z-50">
+                          <EmojiPicker 
+                            onEmojiClick={handleEmojiSelect}
+                            theme={Theme.LIGHT}
+                            width={350}
+                            height={400}
+                          />
+                        </div>
+                      )}
+                      
+                      <textarea
+                        ref={textareaRef}
+                        value={newMessage}
+                        onChange={handleTextareaChange}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            sendGroupMessage(newMessage);
+                          }
+                        }}
+                        placeholder="Type a message to the group..."
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[40px] max-h-[120px]"
+                        rows={1}
+                      />
+                      
+                      <button
+                        onClick={() => sendGroupMessage(newMessage)}
+                        disabled={!newMessage.trim()}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        <Send className="w-4 h-4" />
+                        Send
+                      </button>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
