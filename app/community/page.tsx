@@ -285,9 +285,22 @@ export default function CommunityPage() {
               {/* Groups Tab */}
               {tab === 'groups' && (
                 <div data-testid="groups-content">
-                  <div className="p-4 border-b dark:border-gray-700">
+                  <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between gap-4">
                     <button
                       onClick={() => setShowCreateGroup(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create New Group
+                    </button>
+                    <a
+                      href="/groups"
+                      className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition"
+                    >
+                      View All Groups
+                      <ChevronRight className="w-4 h-4" />
+                    </a>
+                  </div>
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                       data-testid="create-group-btn"
                     >
