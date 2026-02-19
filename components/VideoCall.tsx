@@ -489,10 +489,31 @@ export default function VideoCall({
       // Then connect to WebSocket signaling server
       connectWebSocket();
       
-      // If caller, notify remote user
+      // If caller, notify remote user via database (for the IncomingCall notification)
       if (!isReceiver) {
         setCallStatus('calling');
-        // The offer will be sent when WebSocket connects and joins room
+        
+        // Send incoming_call signal via database so MessengerWidget can show IncomingCall modal
+        try {
+          await fetch('/api/calls', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              type: 'incoming_call',
+              target: remoteUserId,
+              data: {
+                call_type: callType,
+                caller_name: currentUserName
+              }
+            })
+          });
+          console.log('Sent incoming_call notification to database');
+        } catch (err) {
+          console.error('Failed to send incoming_call notification:', err);
+        }
+        
+        // The WebRTC offer will be sent when WebSocket connects and joins room
       } else {
         setCallStatus('ringing');
         // Send call_accepted when receiver joins
