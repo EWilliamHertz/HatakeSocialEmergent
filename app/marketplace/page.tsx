@@ -169,6 +169,18 @@ export default function MarketplacePage() {
     // Foil filter
     if (foilOnly && !listing.foil) return false;
     
+    // Expansion filter
+    if (expansionFilter !== 'All') {
+      const listingSet = listing.card_data?.set_name || listing.card_data?.set?.name || 'Unknown';
+      if (listingSet !== expansionFilter) return false;
+    }
+    
+    // Rarity filter
+    if (rarityFilter !== 'All') {
+      const listingRarity = listing.card_data?.rarity || 'Unknown';
+      if (listingRarity !== rarityFilter) return false;
+    }
+    
     return true;
   });
 
@@ -179,9 +191,11 @@ export default function MarketplacePage() {
     setConditionFilter('All');
     setFoilOnly(false);
     setGameFilter('all');
+    setExpansionFilter('All');
+    setRarityFilter('All');
   };
 
-  const hasActiveFilters = searchQuery || priceMin || priceMax || conditionFilter !== 'All' || foilOnly || gameFilter !== 'all';
+  const hasActiveFilters = searchQuery || priceMin || priceMax || conditionFilter !== 'All' || foilOnly || gameFilter !== 'all' || expansionFilter !== 'All' || rarityFilter !== 'All';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
