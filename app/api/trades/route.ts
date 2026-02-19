@@ -28,6 +28,8 @@ export async function GET(request: NextRequest) {
         t.initiator_cards,
         t.receiver_cards,
         t.message,
+        t.cash_requested,
+        t.cash_currency,
         i.name as initiator_name,
         i.picture as initiator_picture,
         r.name as recipient_name,
