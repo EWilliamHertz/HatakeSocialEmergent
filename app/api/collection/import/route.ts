@@ -187,20 +187,23 @@ export async function POST(request: NextRequest) {
             const setName = card['Edition Name'] || '';
             const collectorNum = card['Collector Number'] || '';
             
-            // Clean ID components for TCGdex (e.g., remove leading zeros)
-            const cleanSet = setCode.toLowerCase().replace(/[^a-z0-9]/g, '');
+            // Map CSV set code to TCGdex format (e.g., ASR -> swsh10)
+            const mappedSetCode = mapPokemonSetCode(setCode);
             const cleanNum = collectorNum.replace(/^0+/, ''); 
             
             // Default ID (Fallback)
-            cardId = `${cleanSet}-${cleanNum}`;
+            cardId = `${mappedSetCode}-${cleanNum}`;
 
             // --- TCGDex Lookup Strategy ---
             let tcgdexData = null;
             
-            // 1. Try Exact ID
-            tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${cleanSet}-${collectorNum}`);
+            // 1. Try with mapped set code + collector number (with/without padding)
+            tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${mappedSetCode}-${collectorNum}`);
+            if (!tcgdexData) {
+              tcgdexData = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards/${mappedSetCode}-${cleanNum}`);
+            }
             
-            // 2. Try Fallback Search (Critical for "ASR" vs "swsh10" mismatch)
+            // 2. Try Fallback Search by name (Critical for edge cases)
             if (!tcgdexData && name) {
                const searchResults = await fetchTCGdexCached(`https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(name)}`);
                if (Array.isArray(searchResults)) {
@@ -212,7 +215,7 @@ export async function POST(request: NextRequest) {
                     return apiSet.includes(csvSet) || csvSet.includes(apiSet);
                  });
                  
-                 // If Set Name match fails, try relaxed Number match
+                 // If Set Name match fails, try relaxed Number match within same set
                  if (!tcgdexData) {
                     tcgdexData = searchResults.find((c: any) => {
                          const resNum = (c.localId || '').replace(/^0+/, '');
