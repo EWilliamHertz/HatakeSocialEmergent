@@ -38,7 +38,10 @@ export default function MarketplacePage() {
   const [foilOnly, setFoilOnly] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [currentUserId, setCurrentUserId] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [expansionFilter, setExpansionFilter] = useState('All');
+  const [rarityFilter, setRarityFilter] = useState('All');
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -52,6 +55,7 @@ export default function MarketplacePage() {
       .then((data) => {
         if (data?.user) {
           setCurrentUserId(data.user.user_id);
+          setIsAdmin(data.user.role === 'admin');
           loadListings();
         }
       })
