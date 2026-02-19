@@ -503,6 +503,39 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
                   Import
                 </button>
                 <button
+                  onClick={() => setShowAnalytics(!showAnalytics)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                    showAnalytics 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Analytics
+                </button>
+                <div className="relative group">
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export
+                  </button>
+                  <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                    <button
+                      onClick={() => exportDecklist('mtga')}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
+                    >
+                      MTG Arena Format
+                    </button>
+                    <button
+                      onClick={() => exportDecklist('text')}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg"
+                    >
+                      Plain Text
+                    </button>
+                  </div>
+                </div>
+                <button
                   onClick={() => setShowSettings(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
                 >
