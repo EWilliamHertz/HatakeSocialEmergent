@@ -152,6 +152,38 @@ export default function GroupsPage() {
           </button>
         </div>
 
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
+              <Users className="w-4 h-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">My Groups</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{myGroups.length}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 mb-1">
+              <Globe className="w-4 h-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Public</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{discoverGroups.length}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
+              <Crown className="w-4 h-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Admin</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{myGroups.filter(g => g.role === 'admin').length}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Total Members</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{myGroups.reduce((sum, g) => sum + (g.member_count || 0), 0)}</p>
+          </div>
+        </div>
+
         {/* Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-6 p-2 flex gap-2">
           <button
