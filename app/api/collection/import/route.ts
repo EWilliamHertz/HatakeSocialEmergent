@@ -291,11 +291,15 @@ export async function POST(request: NextRequest) {
              cardData = {
                id: cardId,
                name: name || scryfallData?.name,
-               set: setCode,
-               set_name: card['Set name'],
+               set: { id: setCode, name: card['Set name'] || scryfallData?.set_name },
+               set_name: card['Set name'] || scryfallData?.set_name,
+               set_code: setCode,
                collector_number: collectorNum,
+               rarity: scryfallData?.rarity || 'Unknown',
+               type_line: scryfallData?.type_line || '',
+               mana_cost: scryfallData?.mana_cost || '',
                image_uris: scryfallData?.image_uris || null,
-               // Force CSV Price for MTG
+               // Use Scryfall prices if available, otherwise CSV price
                prices: scryfallData?.prices || {
                  usd: purchasePrice.toString(),
                  eur: purchasePrice.toString()
