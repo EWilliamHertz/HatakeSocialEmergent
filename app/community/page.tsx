@@ -289,6 +289,7 @@ export default function CommunityPage() {
                     <button
                       onClick={() => setShowCreateGroup(true)}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      data-testid="create-group-btn"
                     >
                       <Plus className="w-4 h-4" />
                       Create New Group
@@ -300,13 +301,6 @@ export default function CommunityPage() {
                       View All Groups
                       <ChevronRight className="w-4 h-4" />
                     </a>
-                  </div>
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                      data-testid="create-group-btn"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Create New Group
-                    </button>
                   </div>
                   {groups.length === 0 ? (
                     <div className="p-12 text-center">
