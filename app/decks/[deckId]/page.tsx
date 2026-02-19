@@ -580,12 +580,18 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
                     <Download className="w-4 h-4" />
                     Export
                   </button>
-                  <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
                     <button
                       onClick={() => exportDecklist('mtga')}
                       className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
                     >
                       MTG Arena Format
+                    </button>
+                    <button
+                      onClick={() => exportDecklist('archidekt')}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Archidekt Format
                     </button>
                     <button
                       onClick={() => exportDecklist('text')}
