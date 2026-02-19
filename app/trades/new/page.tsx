@@ -602,6 +602,40 @@ export default function NewTradePage() {
           </div>
         </div>
 
+        {/* Cash Request */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mt-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Cash Request (optional)</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Request an additional cash amount as part of this trade</p>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+              <input
+                type="number"
+                value={cashAmount}
+                onChange={(e) => setCashAmount(e.target.value)}
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                data-testid="cash-amount-input"
+              />
+            </div>
+            <div className="w-32">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
+              <select
+                value={cashCurrency}
+                onChange={(e) => setCashCurrency(e.target.value as 'EUR' | 'USD' | 'SEK')}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                data-testid="cash-currency-select"
+              >
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="SEK">SEK</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         {/* Notes */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mt-6">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Notes (optional)</h2>
