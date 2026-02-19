@@ -175,6 +175,8 @@ export async function POST(request: NextRequest) {
               name: name || tcgdexData?.name,
               set: { id: setCode, name: setName || tcgdexData?.set?.name },
               localId: collectorNum,
+              // Include rarity from TCGdex API
+              rarity: tcgdexData?.rarity || 'Unknown',
               // FIX: Ensure correct image URL format (TCGdex 'image' field is the base URL)
               images: imageBase ? { 
                 small: `${imageBase}/low.webp`, 
