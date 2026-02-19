@@ -30,6 +30,7 @@ export default function GroupsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [newGroup, setNewGroup] = useState({
     name: '',
     description: '',
