@@ -320,30 +320,43 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
     setImporting(true);
     
     try {
-      // Parse decklist format: "4 Lightning Bolt" or "4x Lightning Bolt"
-      // Support "SB:" or "Sideboard" prefix for sideboard cards
+      // Parse decklist format, supports:
+      // - MTGA: "4 Lightning Bolt" or "4x Lightning Bolt"
+      // - Archidekt: "1x Lightning Bolt (2XM) 141" or "1 Lightning Bolt [2XM] 141"
+      // - Commander/EDH: "1x Commander: Atraxa, Grand Unifier"
+      // - SB/Sideboard prefix
       const lines = importText.split('\n').filter(line => line.trim());
-      const cardsToAdd: { name: string; quantity: number; category: string }[] = [];
+      const cardsToAdd: { name: string; quantity: number; category: string; setCode?: string }[] = [];
       let currentCategory = 'main';
       
       for (const line of lines) {
         const trimmedLine = line.trim();
         
-        // Check for sideboard section markers
-        if (trimmedLine.toLowerCase() === 'sideboard' || 
-            trimmedLine.toLowerCase() === 'sideboard:' ||
-            trimmedLine.toLowerCase() === 'sb' ||
-            trimmedLine.toLowerCase() === 'sb:') {
-          currentCategory = 'sideboard';
+        // Skip empty lines and comments
+        if (!trimmedLine || trimmedLine.startsWith('//') || trimmedLine.startsWith('#')) {
           continue;
         }
         
-        // Check for main deck section marker
-        if (trimmedLine.toLowerCase() === 'main' || 
-            trimmedLine.toLowerCase() === 'main deck' ||
-            trimmedLine.toLowerCase() === 'maindeck' ||
-            trimmedLine.toLowerCase() === 'main:') {
+        // Check for section markers
+        const lowerLine = trimmedLine.toLowerCase();
+        if (lowerLine === 'sideboard' || lowerLine === 'sideboard:' || lowerLine === 'sb' || lowerLine === 'sb:') {
+          currentCategory = 'sideboard';
+          continue;
+        }
+        if (lowerLine === 'main' || lowerLine === 'main deck' || lowerLine === 'maindeck' || lowerLine === 'main:' || lowerLine === 'deck' || lowerLine === 'deck:') {
           currentCategory = 'main';
+          continue;
+        }
+        if (lowerLine.startsWith('commander') || lowerLine.startsWith('commander:')) {
+          currentCategory = 'main';
+          // Extract commander name if present
+          const cmdMatch = trimmedLine.match(/^commander:?\s*(.+)$/i);
+          if (cmdMatch && cmdMatch[1].trim()) {
+            const cmdName = cmdMatch[1].trim().replace(/^\d+x?\s+/, '');
+            if (cmdName) {
+              cardsToAdd.push({ name: cmdName, quantity: 1, category: 'main' });
+            }
+          }
           continue;
         }
         
@@ -351,24 +364,44 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
         const sbMatch = trimmedLine.match(/^(?:SB:|Sideboard:)\s*(\d+)x?\s+(.+)$/i);
         if (sbMatch) {
           const quantity = parseInt(sbMatch[1]);
-          const name = sbMatch[2].trim();
+          let name = sbMatch[2].trim();
+          // Remove set code from Archidekt format: "Card Name (SET) 123"
+          name = name.replace(/\s*[\(\[][\w\d]+[\)\]]\s*\d*$/, '').trim();
           if (quantity > 0 && name) {
             cardsToAdd.push({ name, quantity, category: 'sideboard' });
           }
           continue;
         }
         
-        // Regular card line
-        const match = trimmedLine.match(/^(\d+)x?\s+(.+)$/i);
-        if (match) {
-          const quantity = parseInt(match[1]);
-          const name = match[2].trim();
+        // Archidekt format: "1x Card Name (SET) 123" or "1 Card Name [SET] 123"
+        const archidektMatch = trimmedLine.match(/^(\d+)x?\s+(.+?)\s*[\(\[][\w\d]+[\)\]]\s*\d*$/i);
+        if (archidektMatch) {
+          const quantity = parseInt(archidektMatch[1]);
+          const name = archidektMatch[2].trim();
           if (quantity > 0 && name) {
             cardsToAdd.push({ name, quantity, category: currentCategory });
           }
-        } else if (trimmedLine && !trimmedLine.startsWith('//') && !trimmedLine.startsWith('#')) {
-          // Single card without quantity
-          cardsToAdd.push({ name: trimmedLine, quantity: 1, category: currentCategory });
+          continue;
+        }
+        
+        // Standard format: "4 Card Name" or "4x Card Name"
+        const match = trimmedLine.match(/^(\d+)x?\s+(.+)$/i);
+        if (match) {
+          const quantity = parseInt(match[1]);
+          let name = match[2].trim();
+          // Remove any trailing set info that might still be there
+          name = name.replace(/\s*[\(\[][\w\d]+[\)\]]\s*\d*$/, '').trim();
+          if (quantity > 0 && name) {
+            cardsToAdd.push({ name, quantity, category: currentCategory });
+          }
+        } else {
+          // Single card without quantity (like in some commander lists)
+          let name = trimmedLine;
+          // Remove set codes if present
+          name = name.replace(/\s*[\(\[][\w\d]+[\)\]]\s*\d*$/, '').trim();
+          if (name) {
+            cardsToAdd.push({ name, quantity: 1, category: currentCategory });
+          }
         }
       }
       
