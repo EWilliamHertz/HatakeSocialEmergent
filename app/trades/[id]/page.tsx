@@ -373,6 +373,24 @@ export default function TradeDetailPage() {
           </div>
         )}
 
+        {/* Cash Request */}
+        {trade.cash_requested && trade.cash_requested > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border-2 border-yellow-400">
+            <h2 className="text-lg font-bold mb-3 dark:text-white flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-yellow-500" />
+              Cash Requested
+            </h2>
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+              {trade.cash_currency === 'EUR' ? '€' : trade.cash_currency === 'SEK' ? 'kr ' : '$'}
+              {Number(trade.cash_requested).toFixed(2)}
+              {trade.cash_currency === 'SEK' ? '' : ` ${trade.cash_currency}`}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              The initiator is requesting this amount in addition to the card trade.
+            </p>
+          </div>
+        )}
+
         {/* Shipping & Payment Info - Show when trade is accepted or completed */}
         {(trade.status === 'accepted' || trade.status === 'completed') && (
           <div className="grid md:grid-cols-2 gap-6 mb-6">
