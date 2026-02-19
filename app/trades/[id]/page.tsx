@@ -279,23 +279,24 @@ export default function TradeDetailPage() {
 
         {/* Trade Items */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
-          {/* Your Items */}
+          {/* First column - Always shows initiator's cards */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold dark:text-white flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-500" />
                 {isInitiator ? 'You Offer' : 'They Offer'}
               </h2>
-              {myTotal > 0 && (
-                <span className="text-lg font-bold text-green-600">€{myTotal.toFixed(2)}</span>
-              )}
+              {(() => {
+                const total = (trade.initiator_cards || []).reduce((sum, item) => sum + ((item.value || 0) * (item.quantity || 1)), 0);
+                return total > 0 ? <span className="text-lg font-bold text-green-600">€{total.toFixed(2)}</span> : null;
+              })()}
             </div>
             <div className="space-y-3">
-              {(isInitiator ? trade.initiator_cards : trade.receiver_cards)?.length > 0 ? (
-                (isInitiator ? trade.initiator_cards : trade.receiver_cards).map((item, idx) => (
+              {trade.initiator_cards?.length > 0 ? (
+                trade.initiator_cards.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                     {item.card_image ? (
-                      <Image src={item.card_image} alt={item.card_name} width={48} height={68} className="rounded object-cover" />
+                      <Image src={item.card_image} alt={item.card_name} width={48} height={68} className="rounded object-cover" unoptimized />
                     ) : (
                       <div className="w-12 h-17 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
                         <Package className="w-6 h-6 text-gray-400" />
@@ -321,23 +322,24 @@ export default function TradeDetailPage() {
             </div>
           </div>
 
-          {/* Their Items */}
+          {/* Second column - Always shows receiver's cards */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold dark:text-white flex items-center gap-2">
                 <User className="w-5 h-5 text-green-500" />
                 {isInitiator ? 'They Offer' : 'You Offer'}
               </h2>
-              {theirTotal > 0 && (
-                <span className="text-lg font-bold text-blue-600">€{theirTotal.toFixed(2)}</span>
-              )}
+              {(() => {
+                const total = (trade.receiver_cards || []).reduce((sum, item) => sum + ((item.value || 0) * (item.quantity || 1)), 0);
+                return total > 0 ? <span className="text-lg font-bold text-blue-600">€{total.toFixed(2)}</span> : null;
+              })()}
             </div>
             <div className="space-y-3">
-              {(isInitiator ? trade.receiver_cards : trade.initiator_cards)?.length > 0 ? (
-                (isInitiator ? trade.receiver_cards : trade.initiator_cards).map((item, idx) => (
+              {trade.receiver_cards?.length > 0 ? (
+                trade.receiver_cards.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                     {item.card_image ? (
-                      <Image src={item.card_image} alt={item.card_name} width={48} height={68} className="rounded object-cover" />
+                      <Image src={item.card_image} alt={item.card_name} width={48} height={68} className="rounded object-cover" unoptimized />
                     ) : (
                       <div className="w-12 h-17 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
                         <Package className="w-6 h-6 text-gray-400" />
