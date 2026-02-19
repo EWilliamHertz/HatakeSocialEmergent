@@ -69,6 +69,7 @@ export default function Navbar() {
     { href: '/decks', icon: Layers, label: 'Decks' },
     { href: '/marketplace', icon: ShoppingBag, label: 'Market' },
     { href: '/trades', icon: ArrowRightLeft, label: 'Trades' },
+    { href: '/wishlists', icon: Heart, label: 'Wishlists' },
     { href: '/community', icon: Users, label: 'Community' }, // Combined Friends + Groups
     { href: '/messages', icon: MessageCircle, label: 'Messages' },
   ];
