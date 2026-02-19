@@ -931,6 +931,131 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
           </div>
         ) : null}
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowSettings(false); }}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold dark:text-white">Group Settings</h2>
+              <button onClick={() => setShowSettings(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                <svg className="w-5 h-5 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Group Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Group Name</label>
+                <input
+                  type="text"
+                  value={editGroupName}
+                  onChange={(e) => setEditGroupName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                  data-testid="edit-group-name"
+                />
+              </div>
+              
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                <textarea
+                  value={editGroupDesc}
+                  onChange={(e) => setEditGroupDesc(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="What is this group about?"
+                  data-testid="edit-group-desc"
+                />
+              </div>
+              
+              {/* Privacy */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Privacy</label>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditGroupPrivacy('public')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 transition ${
+                      editGroupPrivacy === 'public' 
+                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600' 
+                        : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400'
+                    }`}
+                    data-testid="privacy-public"
+                  >
+                    <Globe className="w-5 h-5" />
+                    Public
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditGroupPrivacy('private')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 transition ${
+                      editGroupPrivacy === 'private' 
+                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600' 
+                        : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400'
+                    }`}
+                    data-testid="privacy-private"
+                  >
+                    <Lock className="w-5 h-5" />
+                    Private
+                  </button>
+                </div>
+              </div>
+              
+              {/* Banner URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Banner Image URL</label>
+                <input
+                  type="url"
+                  value={editGroupBanner}
+                  onChange={(e) => setEditGroupBanner(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="https://i.imgur.com/..."
+                  data-testid="edit-group-banner"
+                />
+              </div>
+              
+              {/* Danger Zone - only for owner */}
+              {role === 'owner' && (
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="text-sm font-semibold text-red-600 mb-3">Danger Zone</h3>
+                  <button
+                    onClick={deleteGroup}
+                    className="w-full py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
+                    data-testid="delete-group-btn"
+                  >
+                    Delete Group
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2">This action cannot be undone. All posts and messages will be deleted.</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-6 border-t dark:border-gray-700 flex gap-3">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveGroupSettings}
+                disabled={savingSettings || !editGroupName.trim()}
+                className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition flex items-center justify-center gap-2"
+                data-testid="save-settings-btn"
+              >
+                {savingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
