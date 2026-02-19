@@ -277,6 +277,64 @@ export default function TradeDetailPage() {
           </div>
         </div>
 
+        {/* Trade Summary */}
+        <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-xl shadow-sm p-6 mb-6 border border-blue-200 dark:border-blue-800">
+          <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
+            <ArrowRightLeft className="w-5 h-5 text-blue-600" />
+            Trade Summary
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                {trade.initiator_name} offers
+              </p>
+              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                {trade.initiator_cards?.length || 0} card{(trade.initiator_cards?.length || 0) !== 1 ? 's' : ''}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Value: €{(trade.initiator_cards || []).reduce((sum, item) => sum + ((item.value || 0) * (item.quantity || 1)), 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                {trade.recipient_name} offers
+              </p>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                {trade.receiver_cards?.length || 0} card{(trade.receiver_cards?.length || 0) !== 1 ? 's' : ''}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Value: €{(trade.receiver_cards || []).reduce((sum, item) => sum + ((item.value || 0) * (item.quantity || 1)), 0).toFixed(2)}
+              </p>
+            </div>
+            {trade.cash_requested && trade.cash_requested > 0 ? (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
+                <p className="text-sm text-yellow-600 dark:text-yellow-400 mb-1">
+                  Cash Requested
+                </p>
+                <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                  {trade.cash_currency === 'EUR' ? '€' : trade.cash_currency === 'SEK' ? 'kr ' : '$'}
+                  {Number(trade.cash_requested).toFixed(2)}
+                </p>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  {trade.cash_currency}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                  Cash
+                </p>
+                <p className="text-lg font-bold text-gray-400 dark:text-gray-500">
+                  None
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Cards only
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Trade Items */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           {/* First column - Always shows initiator's cards */}
