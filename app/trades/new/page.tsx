@@ -225,7 +225,9 @@ export default function NewTradePage() {
             foil: o.card.is_foil,
             value: getCardValue(o.card)
           })),
-          message: notes
+          message: notes,
+          cash_requested: cashAmount ? parseFloat(cashAmount) : null,
+          cash_currency: cashAmount ? cashCurrency : null
         })
       });
       
