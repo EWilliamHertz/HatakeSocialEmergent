@@ -18,6 +18,18 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 
 ## What's Been Implemented
 
+### February 19, 2026 - Current Session
+- ✅ **Shop "Add to Cart" bug fixed** - Clicking Add to Cart no longer opens product modal (e.stopPropagation() fix)
+- ✅ **Thumb emoji removed from reactions** - Feed reactions: ❤️, 😂, 😮, 😢, 😡, 🔥, 💯 (no 👍)
+- ✅ **Groups page enhanced** with:
+  - Quick Stats section (My Groups, Public, Admin, Total Members)
+  - Public/Private badges on group cards with color coding
+  - Expand/collapse "More" button for group details
+  - Activity indicators support
+  - Banner image display support
+- ✅ **Favicon set** to Hatake.Social logo (PNG from Imgur)
+- ✅ **Video calls - Added incoming_call notification** via /api/calls when caller initiates
+
 ### February 17, 2026 - Evening Session
 - ✅ Removed heart emoji from feed reactions (redundant with like button)
 - ✅ Messenger widget image expand - Click opens fullscreen modal
@@ -61,14 +73,15 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 ## Known Issues / Remaining Work
 
 ### P0 - Critical
-- WebRTC video calls - Still needs WebSocket refactor testing
+- ⚠️ WebRTC video calls - Needs end-to-end testing between two users
 
-### P1 - Important
+### P1 - Important  
 - Profile/group banner image upload UI
 - Pokemon CSV import full end-to-end testing with real file
+- Deck infographics (mana curve, color distribution)
 
-### P2 - Future
-- Mobile app development
+### P2 - Future Enhancements
+- Mobile app design/development
 - Payment gateway (Stripe)
 - Find duplicates in collection
 - Sealed product management
