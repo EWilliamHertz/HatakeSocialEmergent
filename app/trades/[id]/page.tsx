@@ -54,6 +54,8 @@ export default function TradeDetailPage() {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
