@@ -575,60 +575,139 @@ export default function MessagesPage() {
                 </div>
               </div>
               
+              {/* Tabs for Direct Messages vs Groups */}
+              <div className="flex border-b border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setMessageTab('direct')}
+                  className={`flex-1 py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition border-b-2 ${
+                    messageTab === 'direct'
+                      ? 'text-blue-600 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                      : 'text-gray-500 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                  data-testid="direct-messages-tab"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Direct
+                  {conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0) > 0 && (
+                    <span className="bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                      {conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0)}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setMessageTab('groups')}
+                  className={`flex-1 py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition border-b-2 ${
+                    messageTab === 'groups'
+                      ? 'text-blue-600 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                      : 'text-gray-500 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                  data-testid="group-chats-tab"
+                >
+                  <Users className="w-4 h-4" />
+                  Groups ({groupChats.length})
+                </button>
+              </div>
+              
               <div className="flex-1 overflow-y-auto">
                 {loading ? (
                   <div className="p-8 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                   </div>
-                ) : conversations.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm mb-4">No conversations yet</p>
-                    <button
-                      onClick={openNewConversationModal}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
-                      data-testid="start-first-conversation"
-                    >
-                      Start a Conversation
-                    </button>
-                  </div>
-                ) : (
-                  conversations.map((conv) => (
-                    <button
-                      key={conv.conversation_id}
-                      onClick={() => selectConversation(conv.conversation_id)}
-                      className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left ${
-                        selectedConv === conv.conversation_id ? 'bg-blue-50 dark:bg-gray-700' : ''
-                      }`}
-                      data-testid={`conversation-${conv.conversation_id}`}
-                    >
-                      {conv.picture ? (
-                        <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" />
-                      ) : (
-                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                          {conv.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                        <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold truncate dark:text-white">{conv.name}</p>
-                          <div className="flex items-center gap-2">
-                            {conv.last_message_at && (
-                              <span className="text-xs text-gray-400 whitespace-nowrap">
-                                {formatMessageTime(conv.last_message_at)}
-                              </span>
-                            )}
-                            {conv.unread_count > 0 && (
-                              <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                {conv.unread_count}
-                              </span>
-                            )}
+                ) : messageTab === 'direct' ? (
+                  /* Direct Messages List */
+                  conversations.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500 text-sm mb-4">No conversations yet</p>
+                      <button
+                        onClick={openNewConversationModal}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+                        data-testid="start-first-conversation"
+                      >
+                        Start a Conversation
+                      </button>
+                    </div>
+                  ) : (
+                    conversations.map((conv) => (
+                      <button
+                        key={conv.conversation_id}
+                        onClick={() => selectConversation(conv.conversation_id)}
+                        className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left ${
+                          selectedConv === conv.conversation_id ? 'bg-blue-50 dark:bg-gray-700' : ''
+                        }`}
+                        data-testid={`conversation-${conv.conversation_id}`}
+                      >
+                        {conv.picture ? (
+                          <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" unoptimized />
+                        ) : (
+                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            {conv.name.charAt(0).toUpperCase()}
                           </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-semibold truncate dark:text-white">{conv.name}</p>
+                            <div className="flex items-center gap-2">
+                              {conv.last_message_at && (
+                                <span className="text-xs text-gray-400 whitespace-nowrap">
+                                  {formatMessageTime(conv.last_message_at)}
+                                </span>
+                              )}
+                              {conv.unread_count > 0 && (
+                                <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                  {conv.unread_count}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{conv.last_message || 'Start a conversation'}</p>
                         </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{conv.last_message || 'Start a conversation'}</p>
-                      </div>
-                    </button>
-                  ))
+                      </button>
+                    ))
+                  )
+                ) : (
+                  /* Group Chats List */
+                  groupChats.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500 text-sm mb-4">No groups joined</p>
+                      <button
+                        onClick={() => router.push('/groups')}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+                        data-testid="join-group-button"
+                      >
+                        Find Groups
+                      </button>
+                    </div>
+                  ) : (
+                    groupChats.map((group) => (
+                      <button
+                        key={group.group_id}
+                        onClick={() => selectGroupChat(group.group_id)}
+                        className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left ${
+                          selectedGroup === group.group_id ? 'bg-blue-50 dark:bg-gray-700' : ''
+                        }`}
+                        data-testid={`group-chat-${group.group_id}`}
+                      >
+                        {group.image ? (
+                          <Image src={group.image} alt={group.name} width={40} height={40} className="rounded-xl" unoptimized />
+                        ) : (
+                          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            <Users className="w-5 h-5" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-semibold truncate dark:text-white">{group.name}</p>
+                            <span className="text-xs text-gray-400">{group.member_count} members</span>
+                          </div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                            {group.last_message || 'No messages yet'}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  )
                 )}
               </div>
             </div>
@@ -637,7 +716,7 @@ export default function MessagesPage() {
             <div className="flex-1 flex flex-col">
               {selectedConv ? (
                 <>
-                  {/* Chat Header */}
+                  {/* Direct Chat Header */}
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     {(() => {
                       const conv = conversations.find(c => c.conversation_id === selectedConv);
