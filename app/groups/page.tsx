@@ -223,6 +223,19 @@ export default function GroupsPage() {
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition"
                 data-testid={`group-${group.group_id}`}
               >
+                {/* Banner Image (if available) */}
+                {group.banner_image && (
+                  <div className="h-20 relative">
+                    <Image
+                      src={group.banner_image}
+                      alt={`${group.name} banner`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                )}
+                
                 <div className="p-4">
                   <div className="flex items-start gap-4">
                     {group.image ? (
@@ -232,10 +245,19 @@ export default function GroupsPage() {
                         width={64}
                         height={64}
                         className="rounded-xl object-cover"
+                        unoptimized
                       />
                     ) : (
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white">
-                        <Users className="w-8 h-8" />
+                      <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-white ${
+                        group.privacy === 'private' 
+                          ? 'bg-gradient-to-br from-purple-500 to-pink-600' 
+                          : 'bg-gradient-to-br from-blue-500 to-cyan-500'
+                      }`}>
+                        {group.privacy === 'private' ? (
+                          <Lock className="w-7 h-7" />
+                        ) : (
+                          <Users className="w-8 h-8" />
+                        )}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -244,9 +266,13 @@ export default function GroupsPage() {
                           {group.name}
                         </h3>
                         {group.privacy === 'private' ? (
-                          <Lock className="w-4 h-4 text-gray-400" />
+                          <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs rounded-full font-medium">
+                            Private
+                          </span>
                         ) : (
-                          <Globe className="w-4 h-4 text-gray-400" />
+                          <span className="px-2 py-0.5 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 text-xs rounded-full font-medium">
+                            Public
+                          </span>
                         )}
                         {group.role === 'admin' && (
                           <Crown className="w-4 h-4 text-yellow-500" />
@@ -255,44 +281,134 @@ export default function GroupsPage() {
                       <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
                         {group.description || 'No description'}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500">
-                        {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
-                      </p>
+                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5" />
+                          {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
+                        </span>
+                        {group.recent_activity !== undefined && group.recent_activity > 0 && (
+                          <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <Activity className="w-3.5 h-3.5" />
+                            {group.recent_activity} posts this week
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
-                  {tab === 'my' ? (
-                    <>
-                      <button
-                        onClick={() => router.push(`/groups/${group.group_id}`)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg font-medium transition"
-                        data-testid={`view-group-${group.group_id}`}
-                      >
-                        View
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                      {group.role === 'admin' && (
+                {/* Action Bar */}
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                  {/* Expand Button */}
+                  <button
+                    onClick={() => setExpandedGroup(expandedGroup === group.group_id ? null : group.group_id)}
+                    className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition"
+                    data-testid={`expand-group-${group.group_id}`}
+                  >
+                    {expandedGroup === group.group_id ? (
+                      <>
+                        <ChevronUp className="w-3.5 h-3.5" />
+                        Less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-3.5 h-3.5" />
+                        More
+                      </>
+                    )}
+                  </button>
+                  
+                  <div className="flex gap-2">
+                    {tab === 'my' ? (
+                      <>
                         <button
-                          onClick={() => router.push(`/groups/${group.group_id}/settings`)}
-                          className="p-1.5 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition"
+                          onClick={() => router.push(`/groups/${group.group_id}`)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition"
+                          data-testid={`view-group-${group.group_id}`}
                         >
-                          <Settings className="w-4 h-4" />
+                          Enter
+                          <ChevronRight className="w-4 h-4" />
                         </button>
-                      )}
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => joinGroup(group.group_id)}
-                      className="flex items-center gap-1 px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 transition"
-                      data-testid={`join-group-${group.group_id}`}
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      Join
-                    </button>
-                  )}
+                        {group.role === 'admin' && (
+                          <button
+                            onClick={() => router.push(`/groups/${group.group_id}?tab=settings`)}
+                            className="p-1.5 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition"
+                            title="Group Settings"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => joinGroup(group.group_id)}
+                        className="flex items-center gap-1 px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 transition"
+                        data-testid={`join-group-${group.group_id}`}
+                      >
+                        <UserPlus className="w-4 h-4" />
+                        Join Group
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Expanded Preview */}
+                {expandedGroup === group.group_id && (
+                  <div className="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50/50 dark:bg-gray-800/50 animate-in slide-in-from-top-2 duration-200">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Created</p>
+                        <p className="text-gray-800 dark:text-gray-200">
+                          {new Date(group.created_at).toLocaleDateString(undefined, { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Type</p>
+                        <p className="text-gray-800 dark:text-gray-200 flex items-center gap-1">
+                          {group.privacy === 'private' ? (
+                            <>
+                              <Lock className="w-3.5 h-3.5 text-purple-500" />
+                              Invite Only
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="w-3.5 h-3.5 text-cyan-500" />
+                              Open to All
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {group.description && group.description.length > 80 && (
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Full Description</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          {group.description}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {group.last_activity && (
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Activity</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          {new Date(group.last_activity).toLocaleDateString(undefined, { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
