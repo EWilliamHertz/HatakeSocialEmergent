@@ -91,7 +91,7 @@ export default function ScannerScreen({ navigation }: any) {
           { text: 'Cancel', style: 'cancel' },
           { 
             text: 'Search', 
-            onPress: async (cardName) => {
+            onPress: async (cardName: string | undefined) => {
               if (cardName) {
                 const results = await searchService.searchCards(cardName, selectedGame);
                 setMatchedCards(results.slice(0, 5));
