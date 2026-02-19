@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Users, Plus, Search, Lock, Globe, Settings, UserPlus, Crown, ChevronRight, Loader2 } from 'lucide-react';
+import { Users, Plus, Search, Lock, Globe, Settings, UserPlus, Crown, ChevronRight, Loader2, MessageSquare, Activity, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 
 interface Group {
@@ -11,10 +11,13 @@ interface Group {
   name: string;
   description?: string;
   image?: string;
+  banner_image?: string;
   privacy: 'public' | 'private';
   member_count: number;
   role?: string;
   created_at: string;
+  recent_activity?: number; // Number of posts in last 7 days
+  last_activity?: string; // Last post date
 }
 
 export default function GroupsPage() {
