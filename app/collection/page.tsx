@@ -444,6 +444,7 @@ export default function CollectionPage() {
             id: card.id,
             name: card.name,
             game: 'pokemon',
+            rarity: card.rarity || 'Unknown',
             image_uris: {
               small: card.image ? card.image + '/low.webp' : null,
               normal: card.image ? card.image + '/high.webp' : null,
