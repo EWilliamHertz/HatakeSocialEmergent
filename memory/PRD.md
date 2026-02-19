@@ -6,7 +6,7 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 - Marketplace for buying/selling
 - Trading system with value tracking
 - Social features (feed, messaging, groups)
-- Real-time video/voice calls (WebRTC)
+- Real-time video/voice calls
 
 ## Core Requirements
 1. **Authentication**: Google Sign-In and Email/Password
@@ -14,57 +14,68 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 3. **Social**: Feed with posts/comments/reactions, Friends, Groups
 4. **Messaging**: Real-time with media sharing and fullscreen image view
 5. **Commerce**: Marketplace, trades with value summary, shop with product gallery
-6. **Admin Panel**: User management, content moderation, shop management with photo uploads
+6. **Admin Panel**: User management, content moderation, shop management
 
 ## What's Been Implemented
 
-### February 19, 2026 - Latest Session
-- ✅ **Pokemon Rarity Fix** - Cards now include rarity field when added via search or import
-- ✅ **Pokemon CSV Import Enhancement** - Added comprehensive set code mapping (ASR → swsh10, etc.)
-- ✅ **Suggestions Document** - Created `/app/SUGGESTIONS.md` with roadmap and improvements
+### February 19, 2026 - Current Session
+- ✅ **Marketplace Deletion Fix** - Fixed SQL query (was using non-existent column). Owners can now delete their listings
+- ✅ **LiveKit Video Calls** - Integrated LiveKit for WebRTC video/audio calls (replaces custom WebSocket signaling)
+- ✅ **Deck Analytics** - Full deck builder infographics:
+  - Mana curve visualization
+  - Color pie distribution
+  - Card type breakdown
+  - Format legality validation (Standard, Modern, Commander, etc.)
+  - Deck playtesting (shuffle, draw sample hands)
+  - Export decklist (MTGA format, plain text)
+- ✅ **Collection Statistics** - Enhanced dashboard:
+  - Rarity distribution
+  - Game distribution (MTG/Pokemon)
+  - Condition breakdown
+  - Foil count
+  - CSV export functionality
+- ✅ **Pokemon Rarity Fix** - Cards now include rarity field when added
+- ✅ **Pokemon CSV Import Enhancement** - Set code mapping (ASR → swsh10, etc.)
+- ✅ **Suggestions Document** - Created `/app/SUGGESTIONS.md` with full roadmap
 
 ### February 19, 2026 - Previous Session (11 Issues Fixed)
-- ✅ **Issue 1: Group banner fixed** - Banner no longer overlaps text, clean layout with icon on left
-- ✅ **Issue 2: Group Settings modal** - Admins/owners can now edit name, description, privacy, banner URL, and delete group
-- ✅ **Issue 3: Groups page tabs** - Added "Invites" tab for pending group invites with accept/decline buttons
-- ✅ **Issue 4: Click outside modal** - Add Card modal now closes when clicking outside
-- ✅ **Issue 6: Trade profile links** - User names in trade window are now clickable links to profiles
-- ✅ **Issue 7 & 8: Marketplace delete** - Admins and owners can delete listings (red trash button on hover)
-- ✅ **Issue 9: Marketplace filters** - Game-specific Expansion and Rarity filters appear when game is selected
-- ✅ **Issue 10: Trade cash request** - Can now request EUR/USD/SEK amount in trade creation
-- ✅ **Issue 11: Messenger widget Groups** - Purple "Groups" button next to "New Chat" opens full Messages page
+- ✅ Group banner layout, settings modal, invites tab
+- ✅ Marketplace filters (Expansion, Rarity)
+- ✅ Trade cash requests (EUR/USD/SEK)
+- ✅ Trade profile links
+- ✅ Click-outside modal close
+- ✅ Messenger widget groups button
 
-### Earlier February 19, 2026
-- ✅ Messages page Groups tab with group chat functionality
-- ✅ Video calls WebSocket routing fix (`/api/ws/signaling/`)
-- ✅ Shop "Add to Cart" bug fix
-- ✅ Thumb emoji removed from reactions
-- ✅ Groups page Quick Stats and enhanced cards
-- ✅ Favicon set to Hatake.Social logo
-
-### February 17, 2026
-- ✅ All previous features including trade values, admin features, messenger media, etc.
+### Earlier Sessions
+- ✅ Messages page Groups tab
+- ✅ WebSocket routing fix
+- ✅ Shop functionality
+- ✅ Groups page enhancements
+- ✅ Favicon
+- ✅ CSV imports for MTG/Pokemon
+- ✅ Admin tools
+- ✅ Dark mode
+- ✅ And more...
 
 ## Database Updates
-- Added `cash_requested` (DECIMAL 10,2) and `cash_currency` (VARCHAR 3) to trades table
+- `trades`: cash_requested, cash_currency columns
+- `users`: banner_url, shipping_address, payment fields
+- `shop_products`: gallery_images
 
 ## Known Issues / Remaining Work
 
-### P0 - Critical (BLOCKED)
-- ⚠️ **WebSocket on Vercel** - Vercel doesn't support persistent WebSocket connections. Options:
-  1. Deploy FastAPI backend separately on Railway/Render ($5-7/mo)
-  2. Use Pusher/Ably for real-time features
-  3. Use Daily.co/Vonage for video calls
-  - See `/app/SUGGESTIONS.md` for detailed options
+### P0 - Critical
+- ⚠️ **Shop Image Upload (500 error)** - File uploads fail on Vercel (serverless limitation). Need external storage (S3/Cloudinary)
 
 ### P1 - Important  
-- ⬜ Trade value shows 0.00€ sometimes - needs investigation
-- ⬜ Existing cards in DB missing rarity data (migration needed)
-- ⬜ Deck infographics (mana curve, color distribution)
-- ⬜ Profile/group banner image upload UI
+- ⬜ Trade value shows 0.00€ sometimes
+- ⬜ Existing cards in DB missing rarity (need migration script)
+- ⬜ Wishlists feature
+- ⬜ Trade reputation system
+- ⬜ Custom % pricing per card in bulk list
 
 ### P2 - Future Enhancements
-- ⬜ Mobile app design/development (PWA first, then React Native)
+- ⬜ Mobile app (PWA first, then React Native)
 - ⬜ Payment gateway (Stripe)
 - ⬜ Find duplicates in collection
 - ⬜ Sealed product management
@@ -72,12 +83,13 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 - ⬜ See `/app/SUGGESTIONS.md` for full roadmap
 
 ## Tech Stack
-- **Framework**: Next.js 14+ with App Router
+- **Framework**: Next.js 16+ with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS, shadcn/ui
 - **Database**: PostgreSQL (Neon)
 - **Auth**: NextAuth.js
 - **APIs**: Scryfall (MTG), TCGdex (Pokemon)
+- **Video Calls**: LiveKit (wss://hatakesocial-abnya21v.livekit.cloud)
 
 ## Test Credentials
 - **Test User**: test@test.com / password
@@ -88,59 +100,11 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 - **Kontonummer**: 9660-357 25 85
 - **Bankgiro**: 5051-0031
 - **Contact**: ernst@hatake.eu
-- ✅ Messages photo expand to fullscreen modal
-- ✅ Admin can delete community decks
-- ✅ Shop payment info (Swish, Bankgiro, Account)
-- ✅ Email updated to ernst@hatake.eu
-- ✅ "Member since Invalid Date" fixed
-- ✅ Profile shows Collection + Items for Sale sections
 
-### Previous Sessions
-- CSV Import for MTG (ManaBox) and Pokémon formats
-- MTG Search via backend proxy
-- Unified Search page
-- Dark mode consistency
-- Admin tools (promote/demote users, delete posts)
-- Avatar dropdown menu
-- Combined Community page
-- Server-side API caching
-- Messenger enhancements
-
-## Database Updates
-- `users` table: banner_url, shipping_address, payment_swish, payment_bankgiro, payment_account
-- `shop_products` table: gallery_images TEXT[]
-
-## Known Issues / Remaining Work
-
-### P0 - Critical
-- ⚠️ WebRTC video calls - Needs end-to-end testing between two users
-
-### P1 - Important  
-- Profile/group banner image upload UI
-- Pokemon CSV import full end-to-end testing with real file
-- Deck infographics (mana curve, color distribution)
-
-### P2 - Future Enhancements
-- Mobile app design/development
-- Payment gateway (Stripe)
-- Find duplicates in collection
-- Sealed product management
-- Admin Panel analytics tab
-
-## Tech Stack
-- **Framework**: Next.js 14+ with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS, shadcn/ui
-- **Database**: PostgreSQL (Neon)
-- **Auth**: NextAuth.js
-- **APIs**: Scryfall (MTG), TCGdex (Pokemon)
-
-## Test Credentials
-- **Test User**: test@test.com / password
-- **Admin Emails**: zudran@gmail.com, ernst@hatake.eu
-
-## Payment Information (Shop)
-- **Swish**: 123-587 57 37
-- **Kontonummer**: 9660-357 25 85
-- **Bankgiro**: 5051-0031
-- **Contact**: ernst@hatake.eu
+## Key Files Reference
+- `/app/components/DeckAnalytics.tsx` - Deck infographics
+- `/app/components/CollectionDashboard.tsx` - Collection stats
+- `/app/components/LiveKitCall.tsx` - Video call UI
+- `/app/app/api/livekit/token/route.ts` - LiveKit token generation
+- `/app/app/api/marketplace/[listingId]/route.ts` - Marketplace delete
+- `/app/SUGGESTIONS.md` - Full improvement roadmap
