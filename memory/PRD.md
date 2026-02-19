@@ -18,42 +18,66 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 
 ## What's Been Implemented
 
-### February 19, 2026 - Latest Session
-- ✅ **Messages page Groups tab** - Direct messages and group chats are now in the same Messages page with tabs
-  - "Direct" tab for 1-on-1 conversations
-  - "Groups" tab shows joined groups with chat capability
-  - Full group chat interface with message input, emoji picker, media upload
-- ✅ **MessengerWidget Groups button** - Icon button in header opens full Messages page for group chats
-- ✅ **Video calls WebSocket fix** - Changed WebSocket URL to use `/api/ws/signaling/` prefix for external proxy routing
-- ✅ **Backend dual WebSocket routes** - Both `/ws/signaling/` and `/api/ws/signaling/` routes for compatibility
-- ✅ **Shop "Add to Cart" bug fixed** - Clicking Add to Cart no longer opens product modal (e.stopPropagation() fix)
-- ✅ **Thumb emoji removed from reactions** - Feed reactions: ❤️, 😂, 😮, 😢, 😡, 🔥, 💯 (no 👍)
-- ✅ **Groups page enhanced** with:
-  - Quick Stats section (My Groups, Public, Admin, Total Members)
-  - Public/Private badges on group cards with color coding
-  - Expand/collapse "More" button for group details
-  - Activity indicators support
-  - Banner image display support
-- ✅ **Favicon set** to Hatake.Social logo (PNG from Imgur)
+### February 19, 2026 - Current Session (11 Issues Fixed)
+- ✅ **Issue 1: Group banner fixed** - Banner no longer overlaps text, clean layout with icon on left
+- ✅ **Issue 2: Group Settings modal** - Admins/owners can now edit name, description, privacy, banner URL, and delete group
+- ✅ **Issue 3: Groups page tabs** - Added "Invites" tab for pending group invites with accept/decline buttons
+- ✅ **Issue 4: Click outside modal** - Add Card modal now closes when clicking outside
+- ✅ **Issue 6: Trade profile links** - User names in trade window are now clickable links to profiles
+- ✅ **Issue 7 & 8: Marketplace delete** - Admins and owners can delete listings (red trash button on hover)
+- ✅ **Issue 9: Marketplace filters** - Game-specific Expansion and Rarity filters appear when game is selected
+- ✅ **Issue 10: Trade cash request** - Can now request EUR/USD/SEK amount in trade creation
+- ✅ **Issue 11: Messenger widget Groups** - Purple "Groups" button next to "New Chat" opens full Messages page
 
-### February 17, 2026 - Evening Session
-- ✅ Removed heart emoji from feed reactions (redundant with like button)
-- ✅ Messenger widget image expand - Click opens fullscreen modal
-- ✅ Admin panel shop photo uploads - Main image + gallery images
-- ✅ Shop product detail modal with photo gallery system
-- ✅ Product descriptions support **BOLD** markdown formatting
-- ✅ Groups UX improved - Click to expand info, Enter button on right
-- ✅ Trade overview dashboard - Stats showing active/completed/total value
-- ✅ Trade tabs show counts (Active, Completed)
+### Earlier February 19, 2026
+- ✅ Messages page Groups tab with group chat functionality
+- ✅ Video calls WebSocket routing fix (`/api/ws/signaling/`)
+- ✅ Shop "Add to Cart" bug fix
+- ✅ Thumb emoji removed from reactions
+- ✅ Groups page Quick Stats and enhanced cards
+- ✅ Favicon set to Hatake.Social logo
 
-### February 17, 2026 - Earlier Session
-- ✅ Bulk list for sale with individual pricing
-- ✅ CSV Import game selector (MTG/Pokemon dropdown)
-- ✅ Dark mode on Trades page
-- ✅ Trade detail page with card names, values, totals
-- ✅ Profile settings with payment details and shipping address
-- ✅ Trade detail shows payment/shipping info when accepted
-- ✅ Feed emoji reactions in single section
+### February 17, 2026
+- ✅ All previous features including trade values, admin features, messenger media, etc.
+
+## Database Updates
+- Added `cash_requested` (DECIMAL 10,2) and `cash_currency` (VARCHAR 3) to trades table
+
+## Known Issues / Remaining Work
+
+### P0 - Critical
+- ⚠️ **Issue 5: Trade value shows 0.00** - Card prices might not be coming through from collection data. Needs investigation into how card_data prices are stored and retrieved.
+- ⚠️ **WebSocket on production** - `wss://www.hatake.eu/api/ws/signaling/` fails - needs WebSocket proxy configuration on production server (Nginx/reverse proxy config)
+
+### P1 - Important  
+- Profile/group banner image upload UI
+- Pokemon CSV import full end-to-end testing
+- Deck infographics (mana curve, color distribution)
+
+### P2 - Future Enhancements
+- Mobile app design/development
+- Payment gateway (Stripe)
+- Find duplicates in collection
+- Sealed product management
+- Admin Panel analytics tab
+
+## Tech Stack
+- **Framework**: Next.js 14+ with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui
+- **Database**: PostgreSQL (Neon)
+- **Auth**: NextAuth.js
+- **APIs**: Scryfall (MTG), TCGdex (Pokemon)
+
+## Test Credentials
+- **Test User**: test@test.com / password
+- **Admin Emails**: zudran@gmail.com, ernst@hatake.eu
+
+## Payment Information (Shop)
+- **Swish**: 123-587 57 37
+- **Kontonummer**: 9660-357 25 85
+- **Bankgiro**: 5051-0031
+- **Contact**: ernst@hatake.eu
 - ✅ Messages photo expand to fullscreen modal
 - ✅ Admin can delete community decks
 - ✅ Shop payment info (Swish, Bankgiro, Account)
