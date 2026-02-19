@@ -163,7 +163,13 @@ export async function POST(request: NextRequest) {
           };
         }
       });
-      return NextResponse.json({ success: true, cards: previewCards, format: actualFormat });
+      return NextResponse.json({ 
+        success: true, 
+        preview: previewCards, 
+        cards: previewCards,
+        totalCards: cards.length,
+        format: actualFormat 
+      });
     }
 
     // --- IMPORT ACTION ---
