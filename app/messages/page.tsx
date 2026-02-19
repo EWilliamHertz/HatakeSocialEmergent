@@ -16,6 +16,18 @@ interface Conversation {
   last_message: string;
   last_message_at: string;
   unread_count: number;
+  is_group?: boolean;
+  group_id?: string;
+}
+
+interface GroupChat {
+  group_id: string;
+  name: string;
+  image?: string;
+  member_count: number;
+  last_message?: string;
+  last_message_at?: string;
+  unread_count?: number;
 }
 
 interface Message {
@@ -42,7 +54,10 @@ const NOTIFICATION_SOUND = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTG
 export default function MessagesPage() {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [groupChats, setGroupChats] = useState<GroupChat[]>([]);
+  const [messageTab, setMessageTab] = useState<'direct' | 'groups'>('direct');
   const [selectedConv, setSelectedConv] = useState<string | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUserId, setCurrentUserId] = useState('');
