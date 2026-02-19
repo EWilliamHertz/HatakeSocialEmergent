@@ -789,14 +789,25 @@ export default function MessengerWidget() {
               ) : (
                 // Conversations List
                 <>
-                  <button
-                    onClick={handleOpenNewConversation}
-                    className="m-3 p-2 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 flex items-center justify-center gap-2"
-                    data-testid="new-conversation-button"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    Start New Conversation
-                  </button>
+                  <div className="flex gap-2 m-3">
+                    <button
+                      onClick={handleOpenNewConversation}
+                      className="flex-1 p-2 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 flex items-center justify-center gap-2"
+                      data-testid="new-conversation-button"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      New Chat
+                    </button>
+                    <a
+                      href="/messages"
+                      className="p-2 bg-purple-600 text-white rounded-lg font-semibold text-sm hover:bg-purple-700 flex items-center justify-center gap-2"
+                      title="Open Groups & Full Messages"
+                      data-testid="open-groups-button"
+                    >
+                      <Users className="w-4 h-4" />
+                      Groups
+                    </a>
+                  </div>
                   <div className="flex-1 overflow-y-auto">
                     {conversations.length === 0 ? (
                       <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
@@ -812,7 +823,7 @@ export default function MessengerWidget() {
                           data-testid={`widget-conversation-${conv.conversation_id}`}
                         >
                           {conv.picture ? (
-                            <Image src={conv.picture} alt={conv.name} width={36} height={36} className="rounded-full" />
+                            <Image src={conv.picture} alt={conv.name} width={36} height={36} className="rounded-full" unoptimized />
                           ) : (
                             <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                               {conv.name.charAt(0).toUpperCase()}
