@@ -55,7 +55,7 @@ export default function MarketplacePage() {
       .then((data) => {
         if (data?.user) {
           setCurrentUserId(data.user.user_id);
-          setIsAdmin(data.user.role === 'admin');
+          setIsAdmin(data.user.is_admin === true);
           loadListings();
         }
       })
