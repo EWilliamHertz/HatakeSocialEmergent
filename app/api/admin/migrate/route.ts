@@ -83,6 +83,50 @@ export async function POST(request: NextRequest) {
       results.push(`indexes: ${e.message}`);
     }
 
+    // Create sealed_products table
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS sealed_products (
+          product_id VARCHAR(50) PRIMARY KEY,
+          user_id VARCHAR(50) NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          game VARCHAR(20) DEFAULT 'pokemon',
+          product_type VARCHAR(50) NOT NULL,
+          set_name VARCHAR(255),
+          set_code VARCHAR(50),
+          language VARCHAR(10) DEFAULT 'EN',
+          quantity INTEGER DEFAULT 1,
+          purchase_price DECIMAL(10,2) DEFAULT 0,
+          current_value DECIMAL(10,2),
+          purchase_date DATE,
+          notes TEXT,
+          image_url TEXT,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP
+        )
+      `;
+      results.push('Created sealed_products table');
+    } catch (e: any) {
+      results.push(`sealed_products: ${e.message}`);
+    }
+
+    // Add sealed products indexes
+    try {
+      await sql`CREATE INDEX IF NOT EXISTS idx_sealed_user ON sealed_products(user_id)`;
+      await sql`CREATE INDEX IF NOT EXISTS idx_sealed_game ON sealed_products(game)`;
+      results.push('Created sealed products indexes');
+    } catch (e: any) {
+      results.push(`sealed indexes: ${e.message}`);
+    }
+
+    // Add custom_price column to marketplace_listings for percentage-based pricing
+    try {
+      await sql`ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS price_percentage INTEGER`;
+      results.push('Added price_percentage column to marketplace_listings');
+    } catch (e: any) {
+      results.push(`marketplace price_percentage: ${e.message}`);
+    }
+
     return NextResponse.json({ success: true, results });
   } catch (error: any) {
     console.error('Migration error:', error);
