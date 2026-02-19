@@ -18,7 +18,14 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 
 ## What's Been Implemented
 
-### February 19, 2026 - Current Session
+### February 19, 2026 - Latest Session
+- ✅ **Messages page Groups tab** - Direct messages and group chats are now in the same Messages page with tabs
+  - "Direct" tab for 1-on-1 conversations
+  - "Groups" tab shows joined groups with chat capability
+  - Full group chat interface with message input, emoji picker, media upload
+- ✅ **MessengerWidget Groups button** - Icon button in header opens full Messages page for group chats
+- ✅ **Video calls WebSocket fix** - Changed WebSocket URL to use `/api/ws/signaling/` prefix for external proxy routing
+- ✅ **Backend dual WebSocket routes** - Both `/ws/signaling/` and `/api/ws/signaling/` routes for compatibility
 - ✅ **Shop "Add to Cart" bug fixed** - Clicking Add to Cart no longer opens product modal (e.stopPropagation() fix)
 - ✅ **Thumb emoji removed from reactions** - Feed reactions: ❤️, 😂, 😮, 😢, 😡, 🔥, 💯 (no 👍)
 - ✅ **Groups page enhanced** with:
@@ -28,7 +35,6 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
   - Activity indicators support
   - Banner image display support
 - ✅ **Favicon set** to Hatake.Social logo (PNG from Imgur)
-- ✅ **Video calls - Added incoming_call notification** via /api/calls when caller initiates
 
 ### February 17, 2026 - Evening Session
 - ✅ Removed heart emoji from feed reactions (redundant with like button)
