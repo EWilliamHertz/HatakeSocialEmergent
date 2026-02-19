@@ -84,7 +84,15 @@ function mapCondition(condition: string | undefined): string {
 
 // Robust CSV Parser (Handles quoted fields containing commas)
 function parseCSV(csvText: string) {
-  const lines = csvText.split(/\r?\n/).filter(line => line.trim());
+  // Remove BOM if present
+  let cleanText = csvText;
+  if (cleanText.charCodeAt(0) === 0xFEFF) {
+    cleanText = cleanText.slice(1);
+  }
+  // Also handle UTF-8 BOM encoded as string
+  cleanText = cleanText.replace(/^\ufeff/, '').replace(/^ï»¿/, '');
+  
+  const lines = cleanText.split(/\r?\n/).filter(line => line.trim());
   if (lines.length < 2) return { cards: [], format: 'unknown' };
 
   // Parse Header Line
