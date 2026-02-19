@@ -224,15 +224,23 @@ export default function TradeDetailPage() {
           {/* Trade Parties */}
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div className="flex items-center gap-3">
-              {trade.initiator_picture ? (
-                <Image src={trade.initiator_picture} alt={trade.initiator_name} width={48} height={48} className="rounded-full" />
-              ) : (
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
-                  {trade.initiator_name.charAt(0).toUpperCase()}
-                </div>
-              )}
+              <a href={`/profile/${trade.initiator_id}`} className="hover:opacity-80 transition">
+                {trade.initiator_picture ? (
+                  <Image src={trade.initiator_picture} alt={trade.initiator_name} width={48} height={48} className="rounded-full" unoptimized />
+                ) : (
+                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
+                    {trade.initiator_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </a>
               <div>
-                <p className="font-semibold dark:text-white">{trade.initiator_name}</p>
+                <a 
+                  href={`/profile/${trade.initiator_id}`}
+                  className="font-semibold dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition"
+                  data-testid="initiator-profile-link"
+                >
+                  {trade.initiator_name}
+                </a>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {trade.initiator_id === currentUserId ? '(You) ' : ''}Initiator
                 </p>
