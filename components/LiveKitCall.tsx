@@ -65,11 +65,16 @@ export default function LiveKitCall({
         }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to get LiveKit token');
+        throw new Error(data.error || 'Failed to get LiveKit token');
+      }
+      
+      if (!data.token) {
+        throw new Error('No token received from server');
       }
 
-      const data = await response.json();
       setToken(data.token);
       setServerUrl(data.serverUrl);
       
