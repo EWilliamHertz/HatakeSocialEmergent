@@ -39,6 +39,8 @@ interface Trade {
   initiator_cards: TradeItem[];
   receiver_cards: TradeItem[];
   message?: string;
+  cash_requested?: number;
+  cash_currency?: string;
 }
 
 export default function TradeDetailPage() {
