@@ -270,10 +270,11 @@ export default function VideoCall({
       return;
     }
 
-    // Use the backend WebSocket endpoint
+    // Use the backend WebSocket endpoint - route through /api which proxies to backend
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsHost = window.location.host;
-    const wsUrl = `${wsProtocol}//${wsHost}/ws/signaling/${currentUserId}`;
+    // WebSocket needs to go through the /api prefix for proper routing to backend
+    const wsUrl = `${wsProtocol}//${wsHost}/api/ws/signaling/${currentUserId}`;
     
     console.log('Connecting to WebSocket:', wsUrl);
     setDebugInfo('Connecting to signaling server...');
