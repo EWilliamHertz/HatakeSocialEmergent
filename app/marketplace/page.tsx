@@ -335,6 +335,40 @@ export default function MarketplacePage() {
                 </div>
               </div>
               
+              {/* Game-specific filters */}
+              {gameFilter !== 'all' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Expansion/Set</label>
+                    <select
+                      value={expansionFilter}
+                      onChange={(e) => setExpansionFilter(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                      data-testid="expansion-select"
+                    >
+                      <option value="All">All Expansions</option>
+                      {availableExpansions.map(exp => (
+                        <option key={exp} value={exp}>{exp}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Rarity</label>
+                    <select
+                      value={rarityFilter}
+                      onChange={(e) => setRarityFilter(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                      data-testid="rarity-select"
+                    >
+                      <option value="All">All Rarities</option>
+                      {availableRarities.map(rar => (
+                        <option key={rar} value={rar} className="capitalize">{rar}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+              
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
