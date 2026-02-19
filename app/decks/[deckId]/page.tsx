@@ -57,6 +57,7 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
   const [searching, setSearching] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [importText, setImportText] = useState('');
   const [importing, setImporting] = useState(false);
   const [editName, setEditName] = useState('');
@@ -67,6 +68,57 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
+
+  // Export decklist function
+  const exportDecklist = (format: 'mtga' | 'text') => {
+    if (!deck || cards.length === 0) return;
+    
+    let output = '';
+    const mainCards = cards.filter(c => c.category === 'main' || !c.category);
+    const sideboardCards = cards.filter(c => c.category === 'sideboard');
+    
+    if (format === 'mtga') {
+      // MTGA format
+      output += 'Deck\n';
+      mainCards.forEach(card => {
+        output += `${card.quantity} ${card.card_data?.name || card.card_id}\n`;
+      });
+      if (sideboardCards.length > 0) {
+        output += '\nSideboard\n';
+        sideboardCards.forEach(card => {
+          output += `${card.quantity} ${card.card_data?.name || card.card_id}\n`;
+        });
+      }
+    } else {
+      // Plain text format
+      output += `// ${deck.name}\n`;
+      if (deck.format) output += `// Format: ${deck.format}\n`;
+      output += `// Total: ${mainCards.reduce((sum, c) => sum + c.quantity, 0)} cards\n\n`;
+      mainCards.forEach(card => {
+        output += `${card.quantity} ${card.card_data?.name || card.card_id}\n`;
+      });
+      if (sideboardCards.length > 0) {
+        output += '\nSideboard:\n';
+        sideboardCards.forEach(card => {
+          output += `${card.quantity} ${card.card_data?.name || card.card_id}\n`;
+        });
+      }
+    }
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(output).then(() => {
+      alert('Decklist copied to clipboard!');
+    }).catch(() => {
+      // Fallback: create download
+      const blob = new Blob([output], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${deck.name.replace(/[^a-z0-9]/gi, '_')}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  };
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
