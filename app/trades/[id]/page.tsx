@@ -251,18 +251,26 @@ export default function TradeDetailPage() {
             
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="font-semibold dark:text-white">{trade.recipient_name}</p>
+                <a 
+                  href={`/profile/${trade.receiver_id}`}
+                  className="font-semibold dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition"
+                  data-testid="recipient-profile-link"
+                >
+                  {trade.recipient_name}
+                </a>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {trade.receiver_id === currentUserId ? '(You) ' : ''}Recipient
                 </p>
               </div>
-              {trade.recipient_picture ? (
-                <Image src={trade.recipient_picture} alt={trade.recipient_name} width={48} height={48} className="rounded-full" />
-              ) : (
-                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
-                  {trade.recipient_name.charAt(0).toUpperCase()}
-                </div>
-              )}
+              <a href={`/profile/${trade.receiver_id}`} className="hover:opacity-80 transition">
+                {trade.recipient_picture ? (
+                  <Image src={trade.recipient_picture} alt={trade.recipient_name} width={48} height={48} className="rounded-full" unoptimized />
+                ) : (
+                  <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
+                    {trade.recipient_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </a>
             </div>
           </div>
         </div>
