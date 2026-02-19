@@ -555,6 +555,14 @@ export default function MessengerWidget() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <a 
+                href="/messages" 
+                onClick={(e) => e.stopPropagation()} 
+                className="hover:bg-blue-700 p-1 rounded flex items-center gap-1 text-xs"
+                title="Open Full Messages (includes Groups)"
+              >
+                <Users className="w-4 h-4" />
+              </a>
               <button onClick={(e) => { e.stopPropagation(); setSoundEnabled(!soundEnabled); }} className="hover:bg-blue-700 p-1 rounded" title={soundEnabled ? 'Sound On' : 'Sound Off'}>
                 {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </button>
