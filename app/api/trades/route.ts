@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    const { recipientId, initiatorItems, recipientItems, message } = await request.json();
+    const { recipientId, initiatorItems, recipientItems, message, cash_requested, cash_currency } = await request.json();
 
     if (!recipientId) {
       return NextResponse.json(
@@ -81,7 +81,9 @@ export async function POST(request: NextRequest) {
         initiator_cards,
         receiver_cards,
         message,
-        status
+        status,
+        cash_requested,
+        cash_currency
       )
       VALUES (
         ${tradeId},
@@ -90,7 +92,9 @@ export async function POST(request: NextRequest) {
         ${JSON.stringify(initiatorItems || [])},
         ${JSON.stringify(recipientItems || [])},
         ${message || null},
-        'pending'
+        'pending',
+        ${cash_requested || null},
+        ${cash_currency || null}
       )
     `;
 
