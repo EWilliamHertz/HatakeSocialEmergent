@@ -106,8 +106,9 @@ class SignalingServer:
 
 signaling = SignalingServer()
 
-# WebSocket endpoint for video call signaling
+# WebSocket endpoint for video call signaling (both with and without /api prefix for compatibility)
 @app.websocket("/ws/signaling/{user_id}")
+@app.websocket("/api/ws/signaling/{user_id}")
 async def websocket_signaling(websocket: WebSocket, user_id: str):
     await signaling.connect(websocket, user_id)
     
