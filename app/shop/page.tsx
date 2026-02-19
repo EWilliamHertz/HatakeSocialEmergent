@@ -292,7 +292,7 @@ export default function ShopPage() {
                   )}
                   <div className="flex gap-2">
                     <button
-                      onClick={() => addToCart(product.id)}
+                      onClick={(e) => { e.stopPropagation(); addToCart(product.id); }}
                       disabled={product.stock === 0}
                       className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       data-testid={`add-to-cart-${product.id}`}
@@ -302,6 +302,7 @@ export default function ShopPage() {
                     </button>
                     <a
                       href="mailto:ernst@hatake.eu?subject=Product Inquiry"
+                      onClick={(e) => e.stopPropagation()}
                       className="py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
                     >
                       <Mail className="w-4 h-4" />
