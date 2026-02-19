@@ -23,7 +23,7 @@ export default function Button({
   fullWidth = false
 }: ButtonProps) {
   const getButtonStyle = () => {
-    const base = [styles.button, styles[size]];
+    const base: any[] = [styles.button, styles[size]];
     
     if (fullWidth) base.push(styles.fullWidth);
     
@@ -47,7 +47,7 @@ export default function Button({
   };
 
   const getTextStyle = () => {
-    const base = [styles.text, styles[`${size}Text`]];
+    const base: any[] = [styles.text, styles[`${size}Text`]];
     
     if (variant === 'outline') {
       base.push(styles.outlineText);
