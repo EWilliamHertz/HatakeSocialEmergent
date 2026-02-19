@@ -929,21 +929,33 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
               <textarea
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
-                placeholder="4 Lightning Bolt
-4x Counterspell
-2 Island
-// Sideboard
-3x Negate
+                placeholder="Paste your decklist here...
 
-Supports formats:
-- 4 Card Name
-- 4x Card Name
-- Card Name (adds 1)"
+MTGA Format:
+4 Lightning Bolt
+4x Counterspell
+
+Archidekt Format:
+1x Lightning Bolt (2XM) 141
+2x Sol Ring [C21] 263
+
+Commander:
+Commander: Atraxa, Grand Unifier
+1 Sol Ring
+
+Sideboard
+3x Negate"
                 className="w-full h-64 px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-none font-mono text-sm"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Lines starting with // or # are ignored. Each card will be searched and added if found.
-              </p>
+              <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Supported Formats:</p>
+                <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                  <li>• <span className="font-mono">4 Card Name</span> - Standard format</li>
+                  <li>• <span className="font-mono">4x Card Name (SET) 123</span> - MTGA / Archidekt</li>
+                  <li>• <span className="font-mono">Commander: Card Name</span> - Commander lists</li>
+                  <li>• Use <span className="font-mono">Sideboard</span> or <span className="font-mono">SB:</span> for sideboard cards</li>
+                </ul>
+              </div>
             </div>
             
             <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
