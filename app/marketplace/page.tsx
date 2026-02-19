@@ -120,6 +120,37 @@ export default function MarketplacePage() {
     }
   };
 
+  const deleteListing = async (listingId: string) => {
+    if (!confirm('Are you sure you want to delete this listing?')) return;
+    
+    try {
+      const res = await fetch(`/api/marketplace/${listingId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success) {
+        setListings(listings.filter(l => l.listing_id !== listingId));
+      } else {
+        alert(data.error || 'Failed to delete listing');
+      }
+    } catch (error) {
+      console.error('Delete listing error:', error);
+      alert('Failed to delete listing');
+    }
+  };
+
+  // Get unique expansions and rarities from listings for filters
+  const availableExpansions = [...new Set(listings.filter(l => {
+    if (gameFilter === 'all') return true;
+    return l.game === gameFilter;
+  }).map(l => l.card_data?.set_name || l.card_data?.set?.name || 'Unknown').filter(Boolean))].sort();
+  
+  const availableRarities = [...new Set(listings.filter(l => {
+    if (gameFilter === 'all') return true;
+    return l.game === gameFilter;
+  }).map(l => l.card_data?.rarity || 'Unknown').filter(Boolean))].sort();
+
   // Apply client-side filters
   const filteredListings = listings.filter(listing => {
     // Search filter
