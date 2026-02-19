@@ -6,7 +6,7 @@ import Image from 'next/image';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import dynamic from 'next/dynamic';
 
-const VideoCall = dynamic(() => import('./VideoCall'), { ssr: false });
+const LiveKitCall = dynamic(() => import('./LiveKitCall'), { ssr: false });
 const IncomingCall = dynamic(() => import('./IncomingCall'), { ssr: false });
 
 interface Conversation {
