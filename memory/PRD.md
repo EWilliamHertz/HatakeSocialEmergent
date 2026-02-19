@@ -18,7 +18,12 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 
 ## What's Been Implemented
 
-### February 19, 2026 - Current Session (11 Issues Fixed)
+### February 19, 2026 - Latest Session
+- ✅ **Pokemon Rarity Fix** - Cards now include rarity field when added via search or import
+- ✅ **Pokemon CSV Import Enhancement** - Added comprehensive set code mapping (ASR → swsh10, etc.)
+- ✅ **Suggestions Document** - Created `/app/SUGGESTIONS.md` with roadmap and improvements
+
+### February 19, 2026 - Previous Session (11 Issues Fixed)
 - ✅ **Issue 1: Group banner fixed** - Banner no longer overlaps text, clean layout with icon on left
 - ✅ **Issue 2: Group Settings modal** - Admins/owners can now edit name, description, privacy, banner URL, and delete group
 - ✅ **Issue 3: Groups page tabs** - Added "Invites" tab for pending group invites with accept/decline buttons
@@ -45,21 +50,26 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with:
 
 ## Known Issues / Remaining Work
 
-### P0 - Critical
-- ⚠️ **Issue 5: Trade value shows 0.00** - Card prices might not be coming through from collection data. Needs investigation into how card_data prices are stored and retrieved.
-- ⚠️ **WebSocket on production** - `wss://www.hatake.eu/api/ws/signaling/` fails - needs WebSocket proxy configuration on production server (Nginx/reverse proxy config)
+### P0 - Critical (BLOCKED)
+- ⚠️ **WebSocket on Vercel** - Vercel doesn't support persistent WebSocket connections. Options:
+  1. Deploy FastAPI backend separately on Railway/Render ($5-7/mo)
+  2. Use Pusher/Ably for real-time features
+  3. Use Daily.co/Vonage for video calls
+  - See `/app/SUGGESTIONS.md` for detailed options
 
 ### P1 - Important  
-- Profile/group banner image upload UI
-- Pokemon CSV import full end-to-end testing
-- Deck infographics (mana curve, color distribution)
+- ⬜ Trade value shows 0.00€ sometimes - needs investigation
+- ⬜ Existing cards in DB missing rarity data (migration needed)
+- ⬜ Deck infographics (mana curve, color distribution)
+- ⬜ Profile/group banner image upload UI
 
 ### P2 - Future Enhancements
-- Mobile app design/development
-- Payment gateway (Stripe)
-- Find duplicates in collection
-- Sealed product management
-- Admin Panel analytics tab
+- ⬜ Mobile app design/development (PWA first, then React Native)
+- ⬜ Payment gateway (Stripe)
+- ⬜ Find duplicates in collection
+- ⬜ Sealed product management
+- ⬜ Admin Panel analytics tab
+- ⬜ See `/app/SUGGESTIONS.md` for full roadmap
 
 ## Tech Stack
 - **Framework**: Next.js 14+ with App Router
