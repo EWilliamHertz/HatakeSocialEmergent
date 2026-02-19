@@ -5,6 +5,72 @@ import { fetchScryfallCached, fetchTCGdexCached } from '@/lib/api-cache';
 
 // --- Helper Functions ---
 
+// Pokemon TCG set code mappings (common export codes -> TCGdex codes)
+const POKEMON_SET_ALIASES: Record<string, string> = {
+  // Scarlet & Violet Era
+  'sv09': 'sv09', 'jtg': 'sv09', // Journey Together
+  'sv08': 'sv08', 'ssp': 'sv08', // Surging Sparks
+  'sv07': 'sv07', 'scr': 'sv07', // Stellar Crown
+  'sv06': 'sv06', 'twm': 'sv06', // Twilight Masquerade
+  'sv05': 'sv05', 'tef': 'sv05', // Temporal Forces
+  'sv04': 'sv04', 'par': 'sv04', // Paradox Rift
+  'sv03': 'sv03', 'obf': 'sv03', // Obsidian Flames
+  'sv02': 'sv02', 'pal': 'sv02', // Paldea Evolved
+  'sv01': 'sv01', 'svi': 'sv01', // Scarlet & Violet Base
+  'svp': 'svp', // SV Promo
+  
+  // Sword & Shield Era
+  'swsh12': 'swsh12', 'crs': 'swsh12', 'sil': 'swsh12', // Crown Zenith / Silver Tempest
+  'swsh11': 'swsh11', 'loi': 'swsh11', 'lor': 'swsh11', // Lost Origin
+  'swsh10': 'swsh10', 'asr': 'swsh10', // Astral Radiance
+  'swsh9': 'swsh9', 'brs': 'swsh9', // Brilliant Stars
+  'swsh8': 'swsh8', 'fus': 'swsh8', 'fsn': 'swsh8', // Fusion Strike
+  'swsh7': 'swsh7', 'evo': 'swsh7', 'evs': 'swsh7', // Evolving Skies
+  'swsh6': 'swsh6', 'cre': 'swsh6', // Chilling Reign
+  'swsh5': 'swsh5', 'bst': 'swsh5', // Battle Styles
+  'swsh4': 'swsh4', 'viv': 'swsh4', // Vivid Voltage
+  'swsh3': 'swsh3', 'dab': 'swsh3', // Darkness Ablaze
+  'swsh2': 'swsh2', 'reb': 'swsh2', // Rebel Clash
+  'swsh1': 'swsh1', // Sword & Shield Base
+  'swshp': 'swshp', // SW&SH Promo
+  
+  // Sun & Moon Era
+  'sm12': 'sm12', 'cec': 'sm12', // Cosmic Eclipse
+  'sm11': 'sm11', 'unm': 'sm11', // Unified Minds
+  'sm10': 'sm10', 'unb': 'sm10', // Unbroken Bonds
+  'sm9': 'sm9', 'det': 'sm9', // Detective Pikachu
+  'sm8': 'sm8', 'lot': 'sm8', // Lost Thunder
+  'sm7': 'sm7', 'cel': 'sm7', // Celestial Storm
+  'sm6': 'sm6', 'fli': 'sm6', // Forbidden Light
+  'sm5': 'sm5', 'ula': 'sm5', // Ultra Prism
+  'sm4': 'sm4', 'cri': 'sm4', // Crimson Invasion
+  'sm3': 'sm3', 'bus': 'sm3', // Burning Shadows
+  'sm2': 'sm2', 'gri': 'sm2', // Guardians Rising
+  'sm1': 'sm1', // Sun & Moon Base
+  'smp': 'smp', // SM Promo
+  
+  // XY Era
+  'xy12': 'xy12', 'evo': 'xy12', // Evolutions
+  'xy11': 'xy11', 'stc': 'xy11', // Steam Siege
+  'xy10': 'xy10', 'fco': 'xy10', // Fates Collide
+  'xy9': 'xy9', 'bkp': 'xy9', // BREAKpoint
+  'xy8': 'xy8', 'bkt': 'xy8', // BREAKthrough
+  'xy7': 'xy7', 'aor': 'xy7', // Ancient Origins
+  'xy6': 'xy6', 'ros': 'xy6', // Roaring Skies
+  'xy5': 'xy5', 'prc': 'xy5', // Primal Clash
+  'xy4': 'xy4', 'phf': 'xy4', // Phantom Forces
+  'xy3': 'xy3', 'ffi': 'xy3', // Furious Fists
+  'xy2': 'xy2', 'flf': 'xy2', // Flashfire
+  'xy1': 'xy1', // XY Base
+  'xyp': 'xyp', // XY Promo
+};
+
+// Map a set code from CSV to TCGdex format
+function mapPokemonSetCode(setCode: string): string {
+  const code = setCode.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return POKEMON_SET_ALIASES[code] || code;
+}
+
 function mapCondition(condition: string | undefined): string {
   if (!condition) return 'Near Mint';
   const c = condition.toLowerCase().trim();
