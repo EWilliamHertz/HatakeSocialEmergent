@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Users, ShoppingBag, MessageCircle, Store, Info, Package, LayoutGrid, RefreshCw, Heart, Video, Globe, Shield, ChevronRight } from 'lucide-react';
+import { Search, Users, ShoppingBag, MessageCircle, Store, Info, Package, LayoutGrid, RefreshCw, Heart, Video, Globe, Shield, ChevronRight, Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -10,6 +10,7 @@ export default function Home() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -36,69 +37,121 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col overflow-x-hidden">
       {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="https://i.imgur.com/B06rBhI.png"
-              alt="Hatake.Social Logo"
-              width={36}
-              height={36}
-              className="rounded-lg"
-            />
-            <span className="font-bold text-xl text-gray-900">Hatake.Social</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/shop" className="px-3 py-2 text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1.5 text-sm">
-              <Store className="w-4 h-4" />
-              Shop
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+              <Image
+                src="https://i.imgur.com/B06rBhI.png"
+                alt="Hatake.Social Logo"
+                width={36}
+                height={36}
+                className="rounded-lg"
+              />
+              <span className="font-bold text-lg sm:text-xl text-gray-900">Hatake.Social</span>
             </Link>
-            <Link href="/about" className="px-3 py-2 text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1.5 text-sm">
-              <Info className="w-4 h-4" />
-              About
-            </Link>
-            <Link
-              href="/auth/login"
-              className="px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition"
+
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-2 lg:gap-4">
+              <Link href="/shop" className="px-3 py-2 text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1.5 text-sm">
+                <Store className="w-4 h-4" />
+                Shop
+              </Link>
+              <Link href="/about" className="px-3 py-2 text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1.5 text-sm">
+                <Info className="w-4 h-4" />
+                About
+              </Link>
+              <Link
+                href="/auth/login"
+                className="px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
+              >
+                Get Started
+              </Link>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition"
+              aria-label="Toggle menu"
             >
-              Sign In
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
-            >
-              Get Started
-            </Link>
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4 space-y-2">
+              <Link 
+                href="/shop" 
+                className="flex items-center gap-2 px-3 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Store className="w-5 h-5" />
+                Shop
+              </Link>
+              <Link 
+                href="/about" 
+                className="flex items-center gap-2 px-3 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Info className="w-5 h-5" />
+                About
+              </Link>
+              <div className="pt-2 border-t border-gray-100 mt-2 grid grid-cols-2 gap-2">
+                <Link
+                  href="/auth/login"
+                  className="px-4 py-3 text-center text-blue-600 font-medium border border-blue-600 rounded-lg"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="px-4 py-3 text-center bg-blue-600 text-white font-medium rounded-lg"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Get Started
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
+      <section className="py-12 sm:py-20 px-4">
         <div className="container mx-auto max-w-5xl text-center">
-          <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center justify-center mb-6 sm:mb-8">
             <Image
               src="https://i.imgur.com/B06rBhI.png"
               alt="Hatake.Social Logo"
-              width={100}
-              height={100}
-              className="rounded-2xl shadow-lg"
+              width={80}
+              height={80}
+              className="rounded-2xl shadow-lg sm:w-[100px] sm:h-[100px]"
               priority
             />
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent px-2">
             Hatake.Social
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
             The ultimate platform for trading card game collectors. Manage your collection,
             connect with friends, build decks, and trade cards with the community.
           </p>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-10">
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8 sm:mb-10 px-4">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -106,31 +159,31 @@ export default function Home() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for Pokemon, Magic, or any TCG card..."
-                className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-lg shadow-lg"
+                className="w-full pl-12 pr-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-base sm:text-lg shadow-lg"
                 data-testid="landing-search"
               />
             </div>
           </form>
 
           {/* CTA Buttons */}
-          <div className="flex flex-wrap gap-4 justify-center mb-16">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-12 sm:mb-16 px-4">
             <Link
               href="/auth/signup"
-              className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-center"
               data-testid="get-started-btn"
             >
               Get Started Free
             </Link>
             <Link
               href="/auth/login"
-              className="px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-lg border-2 border-blue-600"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-blue-600 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-lg border-2 border-blue-600 text-center"
               data-testid="sign-in-btn"
             >
               Sign In
             </Link>
             <Link
               href="/shop"
-              className="px-8 py-4 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               data-testid="shop-btn"
             >
               <Store className="w-5 h-5" />
