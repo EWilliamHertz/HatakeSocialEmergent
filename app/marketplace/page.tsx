@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { ShoppingBag, MessageCircle, Filter, X, Search, SlidersHorizontal, Plus } from 'lucide-react';
+import { ShoppingBag, MessageCircle, Filter, X, Search, SlidersHorizontal, Plus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface Listing {
