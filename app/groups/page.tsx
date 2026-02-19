@@ -542,7 +542,7 @@ export default function GroupsPage() {
               </div>
             ))}
           </div>
-        )}
+        ))}
       </div>
 
       {/* Create Group Modal */}
