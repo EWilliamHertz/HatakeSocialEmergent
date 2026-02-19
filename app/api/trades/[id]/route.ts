@@ -30,6 +30,8 @@ export async function GET(
         t.initiator_cards,
         t.receiver_cards,
         t.message,
+        t.cash_requested,
+        t.cash_currency,
         i.name as initiator_name,
         i.picture as initiator_picture,
         i.shipping_address as initiator_shipping_address,
