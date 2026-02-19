@@ -602,8 +602,62 @@ export default function TradeDetailPage() {
               <MessageCircle className="w-4 h-4" />
               Message {otherParty.name}
             </button>
+
+            {/* Rate Trade - Only for completed trades */}
+            {trade.status === 'completed' && !hasRated && !showRating && (
+              <button
+                onClick={() => setShowRating(true)}
+                className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center gap-2"
+                data-testid="rate-trade-btn"
+              >
+                <Star className="w-4 h-4" />
+                Rate This Trade
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Trade Rating Section - Show for completed trades */}
+        {trade.status === 'completed' && showRating && !hasRated && (
+          <div className="mt-6">
+            <TradeRating
+              tradeId={trade.trade_id}
+              ratedUserId={otherParty.id}
+              ratedUserName={otherParty.name}
+              onRatingSubmitted={() => {
+                setHasRated(true);
+                setShowRating(false);
+              }}
+              onClose={() => setShowRating(false)}
+            />
+          </div>
+        )}
+
+        {/* Completed Rating Confirmation */}
+        {trade.status === 'completed' && hasRated && (
+          <div className="mt-6 bg-green-50 dark:bg-green-900/20 rounded-xl p-6 text-center">
+            <Star className="w-12 h-12 text-yellow-400 fill-yellow-400 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-green-800 dark:text-green-300">
+              You've rated this trade!
+            </h3>
+            <p className="text-green-600 dark:text-green-400 text-sm mt-1">
+              Thank you for your feedback
+            </p>
+          </div>
+        )}
+
+        {/* User Reputation - Show for both parties on completed trades */}
+        {trade.status === 'completed' && (
+          <div className="mt-6 grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <User className="w-5 h-5" />
+                {otherParty.name}'s Reputation
+              </h3>
+              <UserReputation userId={otherParty.id} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
