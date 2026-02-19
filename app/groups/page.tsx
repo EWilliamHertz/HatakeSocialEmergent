@@ -244,23 +244,87 @@ export default function GroupsPage() {
             <Search className="w-5 h-5 inline mr-2" />
             Discover
           </button>
+          <button
+            onClick={() => setTab('invites')}
+            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition relative ${
+              tab === 'invites'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+            data-testid="invites-tab"
+          >
+            Invites
+            {pendingInvites.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                {pendingInvites.length}
+              </span>
+            )}
+          </button>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search groups..."
-            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white"
-            data-testid="search-groups-input"
-          />
-        </div>
+        {/* Search - only for my and discover tabs */}
+        {(tab === 'my' || tab === 'discover') && (
+          <div className="relative mb-6">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search groups..."
+              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white"
+              data-testid="search-groups-input"
+            />
+          </div>
+        )}
+
+        {/* Pending Invites */}
+        {tab === 'invites' && (
+          <div className="space-y-4">
+            {pendingInvites.length === 0 ? (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+                <Users className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">No pending invites</p>
+              </div>
+            ) : (
+              pendingInvites.map((invite) => (
+                <div 
+                  key={invite.invite_id}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center justify-between"
+                  data-testid={`invite-${invite.invite_id}`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{invite.group_name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Invited by {invite.inviter_name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => respondToInvite(invite.invite_id, false)}
+                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                    >
+                      Decline
+                    </button>
+                    <button
+                      onClick={() => respondToInvite(invite.invite_id, true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                    >
+                      Accept
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* Groups List */}
-        {loading ? (
+        {(tab === 'my' || tab === 'discover') && (loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           </div>
