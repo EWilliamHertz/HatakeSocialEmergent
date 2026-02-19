@@ -34,6 +34,10 @@ export default function NewTradePage() {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   
+  // Cash request
+  const [cashAmount, setCashAmount] = useState('');
+  const [cashCurrency, setCashCurrency] = useState<'EUR' | 'USD' | 'SEK'>('EUR');
+  
   // User search
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState<UserResult[]>([]);
