@@ -265,10 +265,19 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
             <p className="text-gray-600 dark:text-gray-400 text-sm">Friends</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 text-center">
-            <User className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+            <Star className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.trades_count}</p>
             <p className="text-gray-600 dark:text-gray-400 text-sm">Trades</p>
           </div>
+        </div>
+
+        {/* Trade Reputation */}
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Star className="w-5 h-5 text-yellow-500" />
+            Trade Reputation
+          </h2>
+          <UserReputation userId={resolvedParams.id} />
         </div>
 
         {/* Activity placeholder */}
