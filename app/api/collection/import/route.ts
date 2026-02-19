@@ -25,7 +25,7 @@ const POKEMON_SET_ALIASES: Record<string, string> = {
   'swsh10': 'swsh10', 'asr': 'swsh10', // Astral Radiance
   'swsh9': 'swsh9', 'brs': 'swsh9', // Brilliant Stars
   'swsh8': 'swsh8', 'fus': 'swsh8', 'fsn': 'swsh8', // Fusion Strike
-  'swsh7': 'swsh7', 'evo': 'swsh7', 'evs': 'swsh7', // Evolving Skies
+  'swsh7': 'swsh7', 'evs': 'swsh7', // Evolving Skies
   'swsh6': 'swsh6', 'cre': 'swsh6', // Chilling Reign
   'swsh5': 'swsh5', 'bst': 'swsh5', // Battle Styles
   'swsh4': 'swsh4', 'viv': 'swsh4', // Vivid Voltage
