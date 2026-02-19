@@ -537,10 +537,10 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
               </button>
             )}
           </div>
-          <div className="px-6 pb-6">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12">
-              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl border-4 border-white dark:border-gray-800 flex items-center justify-center">
-                <Users className="w-10 h-10 text-white" />
+          <div className="px-6 pb-6 pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Users className="w-8 h-8 text-white" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -559,9 +559,9 @@ export default function GroupDetailPage({ params }: { params: Promise<{ groupId:
               <div className="flex gap-2">
                 {isMember ? (
                   <>
-                    {role === 'admin' && (
+                    {(role === 'admin' || role === 'owner') && (
                       <button
-                        onClick={() => router.push(`/groups/${resolvedParams.groupId}/settings`)}
+                        onClick={() => setShowSettings(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
                         data-testid="group-settings-btn"
                       >
