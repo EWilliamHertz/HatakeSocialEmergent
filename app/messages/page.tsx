@@ -176,6 +176,7 @@ export default function MessagesPage() {
           setCurrentUserId(data.user.user_id);
           setCurrentUserName(data.user.name || 'User');
           loadConversations();
+          loadGroupChats();
         }
       })
       .catch(() => router.push('/auth/login'));
@@ -183,14 +184,86 @@ export default function MessagesPage() {
 
   // Poll for new messages when a conversation is selected
   useEffect(() => {
-    if (!selectedConv) return;
+    if (!selectedConv && !selectedGroup) return;
     
     const interval = setInterval(() => {
-      loadMessages(selectedConv, true);
+      if (selectedConv) {
+        loadMessages(selectedConv, true);
+      } else if (selectedGroup) {
+        loadGroupMessages(selectedGroup, true);
+      }
     }, 3000);
     
     return () => clearInterval(interval);
-  }, [selectedConv]);
+  }, [selectedConv, selectedGroup]);
+
+  const loadGroupChats = async () => {
+    try {
+      const res = await fetch('/api/groups?my_groups=true', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setGroupChats(data.groups || []);
+      }
+    } catch (error) {
+      console.error('Load group chats error:', error);
+    }
+  };
+
+  const loadGroupMessages = async (groupId: string, silent = false) => {
+    try {
+      const res = await fetch(`/api/groups/${groupId}/chat`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        const newMessages = data.messages || [];
+        
+        // Check if there are new messages from other users
+        if (!silent && newMessages.length > messages.length) {
+          const latestMessage = newMessages[newMessages.length - 1];
+          if (latestMessage && latestMessage.sender_id !== currentUserId) {
+            playNotificationSound();
+          }
+        }
+        
+        setMessages(newMessages);
+      }
+    } catch (error) {
+      console.error('Load group messages error:', error);
+    }
+  };
+
+  const sendGroupMessage = async (content: string, messageType = 'text') => {
+    if (!selectedGroup) return;
+    
+    try {
+      const res = await fetch(`/api/groups/${selectedGroup}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          content,
+          message_type: messageType
+        })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        loadGroupMessages(selectedGroup);
+        setNewMessage('');
+      }
+    } catch (error) {
+      console.error('Send group message error:', error);
+    }
+  };
+
+  const selectGroupChat = (groupId: string) => {
+    setSelectedGroup(groupId);
+    setSelectedConv(null);
+    loadGroupMessages(groupId);
+    // Reset text area
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+  };
 
   const loadConversations = async () => {
     try {
