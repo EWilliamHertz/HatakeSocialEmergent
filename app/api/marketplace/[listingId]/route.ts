@@ -21,7 +21,7 @@ export async function DELETE(
 
     // Get the listing to check ownership
     const listings = await sql`
-      SELECT l.*, u.role as owner_role
+      SELECT l.*, u.is_admin as owner_is_admin
       FROM marketplace_listings l
       JOIN users u ON l.user_id = u.user_id
       WHERE l.listing_id = ${listingId}
