@@ -851,9 +851,9 @@ export default function MessengerWidget() {
         </div>
       )}
 
-      {/* Video Call Modal */}
+      {/* Video Call Modal - Using LiveKit */}
       {showVideoCall && (selectedConv || activeCallData) && (
-        <VideoCall
+        <LiveKitCall
           isOpen={showVideoCall}
           onClose={() => {
             setShowVideoCall(false);
