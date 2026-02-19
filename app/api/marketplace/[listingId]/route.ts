@@ -33,7 +33,7 @@ export async function DELETE(
 
     const listing = listings[0];
     const isOwner = listing.user_id === user.user_id;
-    const isAdmin = user.role === 'admin';
+    const isAdmin = user.is_admin === true;
 
     // Only owner or admin can delete
     if (!isOwner && !isAdmin) {
