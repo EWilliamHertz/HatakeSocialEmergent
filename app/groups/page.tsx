@@ -26,7 +26,8 @@ export default function GroupsPage() {
   const [loading, setLoading] = useState(true);
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [discoverGroups, setDiscoverGroups] = useState<Group[]>([]);
-  const [tab, setTab] = useState<'my' | 'discover'>('my');
+  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+  const [tab, setTab] = useState<'my' | 'discover' | 'invites'>('my');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -50,9 +51,42 @@ export default function GroupsPage() {
       .then(() => {
         loadMyGroups();
         loadDiscoverGroups();
+        loadPendingInvites();
       })
       .catch(() => router.push('/auth/login'));
   }, [router]);
+
+  const loadPendingInvites = async () => {
+    try {
+      const res = await fetch('/api/groups/invites?type=pending', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setPendingInvites(data.invites || []);
+      }
+    } catch (error) {
+      console.error('Load pending invites error:', error);
+    }
+  };
+
+  const respondToInvite = async (inviteId: string, accept: boolean) => {
+    try {
+      const res = await fetch(`/api/groups/invites`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ invite_id: inviteId, accept })
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadPendingInvites();
+        if (accept) {
+          loadMyGroups();
+        }
+      }
+    } catch (error) {
+      console.error('Respond to invite error:', error);
+    }
+  };
 
   const loadMyGroups = async () => {
     try {
