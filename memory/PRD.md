@@ -4,6 +4,8 @@
 Create a comprehensive full-stack TCG (Trading Card Game) social platform with card management, marketplace, social features, and trading capabilities.
 
 ## Tech Stack
+
+### Web Application
 - Next.js 16+ with App Router
 - TypeScript, Tailwind CSS, shadcn/ui
 - PostgreSQL (Neon)
@@ -11,9 +13,17 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 - Cloudinary (image storage)
 - TCGdex API (Pokemon), Scryfall API (MTG)
 
+### Mobile Application (NEW)
+- React Native with Expo
+- React Navigation (Native Stack + Bottom Tabs)
+- Zustand (State Management)
+- Axios (API Client)
+- Expo SecureStore (Token Storage)
+- Expo Camera (Card Scanner)
+
 ## Test Credentials
 - **Test User**: test@test.com / password (admin)
-- **Admin Users**: zudran@gmail.com, ernst@hatake.eu, ewilliamhe@gmail.com
+- **Admin Users**: zudran@gmail.com, ernst@hatake.eu
 
 ---
 
@@ -21,97 +31,136 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ### Session 2026-02-19 (Latest)
 
-1. **Sealed Product Management** ✅
-   - Full CRUD for Pokemon and MTG sealed products
-   - Track booster boxes, ETBs, tins, bundles, etc.
-   - Investment tracking (purchase price, current value, profit/loss)
-   - Stats dashboard with total invested, current value, and ROI
-   - Filter by game type
-   - UI at `/sealed`
+#### Mobile App Development ✅
+Complete React Native mobile application with:
 
-2. **Deck Builder Import/Export Enhancements** ✅
-   - Import supports multiple formats:
-     - MTGA: `4 Lightning Bolt`
-     - Archidekt: `1x Card Name (SET) 123` or `[SET]`
-     - Commander: `Commander: Card Name`
-     - Sideboard: `SB: 4 Card Name` or `Sideboard` section
-   - Export in three formats:
-     - MTG Arena Format (with set codes)
-     - Archidekt Format
-     - Plain Text
+1. **Authentication**
+   - Email/password login & registration
+   - Session persistence with SecureStore
+   - Auto-login on app restart
 
-3. **Deck Analytics** ✅
-   - Mana Curve visualization (bar chart)
-   - Color Distribution (pie chart with mana pip counts)
-   - Card Type Breakdown (Creature, Instant, etc.)
-   - Format Legality Validation
-   - Playtesting (draw sample hands, goldfish mode)
+2. **Collection Management**
+   - View collection with grid layout
+   - Filter by game (MTG/Pokémon)
+   - Search within collection
+   - Collection stats (total cards, unique, value)
+   - Add/remove cards
 
-4. **Deck Format Validation** ✅
-   - MTG Formats: Standard, Modern, Legacy, Vintage, Pioneer, Commander, Pauper, Draft, Sealed
-   - Pokemon Formats: Standard, Expanded, Legacy, Unlimited
-   - Validates deck size, card copy limits, basic land rules
+3. **Card Search**
+   - Search MTG via Scryfall API
+   - Search Pokémon via TCGdex API
+   - Quick-add to collection
 
-5. **Individual Card Sale Pricing** ✅
-   - Set card prices as percentage of market value
-   - API calculates final price from percentage
-   - Marketplace listing shows calculated price
+4. **Card Scanner**
+   - Camera-based card capture
+   - Game selection (MTG/Pokémon)
+   - Card frame guide overlay
+   - Photo library import
+   - Match results with quick-add
 
-6. **Database Migration Updates** ✅
-   - Added `sealed_products` table
-   - Added `price_percentage` column to `marketplace_listings`
+5. **Marketplace**
+   - Browse listings with filters
+   - View listing details
+   - Seller information
+   - Price display with foil badges
 
-7. **Mobile App Roadmap** ✅
-   - Created comprehensive roadmap at `/app/MOBILE_APP_ROADMAP.md`
-   - 4-phase development plan
-   - Technology recommendation (React Native with Expo)
-   - Feature prioritization for MVP
-   - Resource requirements and timeline
+6. **Trading System**
+   - View trades (all/pending/completed)
+   - Trade status badges
+   - Trade summary (cards + cash)
 
-### Previous Session
-- Database migration: `wishlists`, `wishlist_items`, `trade_ratings` tables
-- Wishlists feature (full CRUD)
-- Trade Reputation system
-- Marketplace Delete fix
-- LiveKit Video Calls (user confirmed working)
-- Cloudinary Image Upload (user confirmed working)
+7. **Profile**
+   - User stats display
+   - Menu navigation
+   - Logout functionality
+
+#### Previous Features (Maintained)
+- Sealed Product Management (Pokemon + MTG)
+- Deck Builder Import/Export (MTGA, Archidekt)
+- Deck Builder Playtesting
+- Individual card sale pricing (% of market)
+- Deck format validation (MTG + Pokemon)
+- Wishlists, Trade Reputation
+
+---
+
+## MOBILE APP STRUCTURE
+
+```
+/app/mobile/hatake-mobile/
+├── App.tsx                 # Main entry point
+├── app.json               # Expo configuration
+├── package.json           # Dependencies
+├── README.md              # Documentation
+├── src/
+│   ├── components/        # Reusable UI components
+│   │   ├── Button.tsx
+│   │   ├── CardItem.tsx
+│   │   ├── GameFilter.tsx
+│   │   └── SearchBar.tsx
+│   ├── navigation/        # React Navigation config
+│   │   └── AppNavigator.tsx
+│   ├── screens/           # Screen components
+│   │   ├── LoginScreen.tsx
+│   │   ├── CollectionScreen.tsx
+│   │   ├── SearchScreen.tsx
+│   │   ├── MarketplaceScreen.tsx
+│   │   ├── TradesScreen.tsx
+│   │   ├── ProfileScreen.tsx
+│   │   └── ScannerScreen.tsx
+│   ├── services/          # API services
+│   │   ├── api.ts
+│   │   ├── auth.ts
+│   │   ├── collection.ts
+│   │   ├── marketplace.ts
+│   │   ├── search.ts
+│   │   ├── trades.ts
+│   │   └── config.ts
+│   └── store/             # Zustand state
+│       └── index.ts
+```
+
+---
+
+## RUNNING THE MOBILE APP
+
+```bash
+# Navigate to mobile directory
+cd /app/mobile/hatake-mobile
+
+# Install dependencies (already done)
+npm install
+
+# Start Expo development server
+npm start
+
+# Or run on specific platform
+npm run ios      # iOS Simulator
+npm run android  # Android Emulator
+```
+
+---
+
+## API CONFIGURATION
+
+The mobile app is pre-configured to use:
+```typescript
+API_BASE_URL = 'https://trader-hub-61.preview.emergentagent.com'
+```
 
 ---
 
 ## DATABASE SCHEMA
 
-### New Tables (2026-02-19)
-```sql
--- Sealed Products
-sealed_products (
-  product_id, user_id, name, game, product_type, 
-  set_name, set_code, language, quantity,
-  purchase_price, current_value, purchase_date, 
-  notes, image_url, created_at, updated_at
-)
-
--- Updated: marketplace_listings
-+ price_percentage INTEGER  -- % of market value (e.g., 90 = 90%)
-```
-
----
-
-## KEY API ENDPOINTS
-
-### Sealed Products
-- `GET /api/sealed` - List sealed products (with optional `?game=` filter)
-- `POST /api/sealed` - Add sealed product
-- `GET /api/sealed/[productId]` - Get product details
-- `PATCH /api/sealed/[productId]` - Update product
-- `DELETE /api/sealed/[productId]` - Delete product
-
-### Marketplace (Updated)
-- `POST /api/marketplace` - Create listing with optional `pricePercentage` field
-
----
-
-## NAVIGATION
-Main nav includes: Feed, Search, Collection, Decks, **Sealed**, Market, Trades, Wishlists, Community, Messages
+### Tables
+- `users` - User accounts with is_admin flag
+- `collection_items` - User card collections
+- `marketplace_listings` - Cards for sale (with price_percentage)
+- `trades` - Trade offers between users
+- `trade_ratings` - Trade reputation system
+- `wishlists` - User wishlists
+- `wishlist_items` - Cards in wishlists
+- `sealed_products` - Sealed product tracking
 
 ---
 
@@ -120,33 +169,18 @@ Main nav includes: Feed, Search, Collection, Decks, **Sealed**, Market, Trades, 
 
 ---
 
-## MOBILE APP ROADMAP SUMMARY
+## NEXT STEPS
 
-**Location**: `/app/MOBILE_APP_ROADMAP.md`
+### Mobile App Enhancements
+1. **Push Notifications** - Trade updates, messages, price alerts
+2. **Card Recognition ML** - Integrate Google Vision or custom model
+3. **Offline Mode** - SQLite caching for offline collection viewing
+4. **Biometric Auth** - Face ID / Fingerprint login
 
-### Phases:
-1. **Foundation (2-3 weeks)**: Tech stack, architecture, feature prioritization
-2. **MVP (6-8 weeks)**: Auth, Collection, Card Scanner, Marketplace, Trading, Push Notifications
-3. **Enhanced (4-6 weeks)**: Social features, Messaging, Deck Builder, Video Calls
-4. **Launch (3-4 weeks)**: Performance optimization, App Store submission
-
-### Key Mobile-Only Feature:
-- **Card Scanner**: Camera-based card recognition for quick collection adds
-
-### Tech Recommendation:
-- React Native with Expo (leverages existing React/TypeScript skills)
-
----
-
-## UPCOMING TASKS
-
-None remaining from user's request. All items completed:
-- ✅ Sealed product management (Pokemon + MTG)
-- ✅ Deck Builder Import/Export (MTGA, Archidekt)
-- ✅ Deck Builder Playtesting
-- ✅ Individual card sale pricing (% of market)
-- ✅ Deck format validation (MTG + Pokemon)
-- ✅ Mobile app roadmap
+### Publishing
+- Apple Developer Account needed for iOS
+- Google Play Developer Account needed for Android
+- EAS Build for app distribution
 
 ---
 
