@@ -194,14 +194,14 @@ export default function Home() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-16 px-4 bg-white/50">
+      <section className="py-12 sm:py-16 px-4 bg-white/50">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">Everything You Need</h2>
-          <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 mb-3 sm:mb-4">Everything You Need</h2>
+          <p className="text-gray-600 text-center mb-8 sm:mb-12 max-w-2xl mx-auto text-sm sm:text-base px-4">
             From collection management to social features, we've got you covered
           </p>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Card Search */}
             <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
