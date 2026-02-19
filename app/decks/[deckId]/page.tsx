@@ -70,7 +70,7 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
   const [selectMode, setSelectMode] = useState(false);
 
   // Export decklist function
-  const exportDecklist = (format: 'mtga' | 'text') => {
+  const exportDecklist = (format: 'mtga' | 'text' | 'archidekt') => {
     if (!deck || cards.length === 0) return;
     
     let output = '';
@@ -81,12 +81,39 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
       // MTGA format
       output += 'Deck\n';
       mainCards.forEach(card => {
-        output += `${card.quantity} ${card.card_data?.name || card.card_id}\n`;
+        const setCode = card.card_data?.set?.toUpperCase() || '';
+        const collectorNum = card.card_data?.collector_number || '';
+        if (setCode && collectorNum) {
+          output += `${card.quantity} ${card.card_data?.name || card.card_id} (${setCode}) ${collectorNum}\n`;
+        } else {
+          output += `${card.quantity} ${card.card_data?.name || card.card_id}\n`;
+        }
       });
       if (sideboardCards.length > 0) {
         output += '\nSideboard\n';
         sideboardCards.forEach(card => {
-          output += `${card.quantity} ${card.card_data?.name || card.card_id}\n`;
+          const setCode = card.card_data?.set?.toUpperCase() || '';
+          const collectorNum = card.card_data?.collector_number || '';
+          if (setCode && collectorNum) {
+            output += `${card.quantity} ${card.card_data?.name || card.card_id} (${setCode}) ${collectorNum}\n`;
+          } else {
+            output += `${card.quantity} ${card.card_data?.name || card.card_id}\n`;
+          }
+        });
+      }
+    } else if (format === 'archidekt') {
+      // Archidekt format: "1x Card Name (SET) 123"
+      mainCards.forEach(card => {
+        const setCode = card.card_data?.set?.toUpperCase() || 'XXX';
+        const collectorNum = card.card_data?.collector_number || '1';
+        output += `${card.quantity}x ${card.card_data?.name || card.card_id} (${setCode}) ${collectorNum}\n`;
+      });
+      if (sideboardCards.length > 0) {
+        output += '\nSideboard\n';
+        sideboardCards.forEach(card => {
+          const setCode = card.card_data?.set?.toUpperCase() || 'XXX';
+          const collectorNum = card.card_data?.collector_number || '1';
+          output += `${card.quantity}x ${card.card_data?.name || card.card_id} (${setCode}) ${collectorNum}\n`;
         });
       }
     } else {
