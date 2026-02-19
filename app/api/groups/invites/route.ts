@@ -70,27 +70,31 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { inviteId, action } = body; // action: 'accept' or 'decline'
+    const { inviteId, action, invite_id, accept } = body; 
+    
+    // Support both formats: {inviteId, action} and {invite_id, accept}
+    const actualInviteId = inviteId || invite_id;
+    const actualAction = action || (accept ? 'accept' : 'decline');
 
-    if (!inviteId || !action) {
+    if (!actualInviteId || !actualAction) {
       return NextResponse.json({ error: 'Invite ID and action required' }, { status: 400 });
     }
 
-    if (!['accept', 'decline'].includes(action)) {
+    if (!['accept', 'decline'].includes(actualAction)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
     // Get the invite
     const invite = await sql`
       SELECT * FROM group_invites 
-      WHERE invite_id = ${inviteId} AND invitee_id = ${user.user_id} AND status = 'pending'
+      WHERE invite_id = ${actualInviteId} AND invitee_id = ${user.user_id} AND status = 'pending'
     `;
 
     if (invite.length === 0) {
       return NextResponse.json({ error: 'Invite not found or already processed' }, { status: 404 });
     }
 
-    if (action === 'accept') {
+    if (actualAction === 'accept') {
       // Add user to group
       const memberId = generateId('member');
       await sql`
@@ -109,13 +113,18 @@ export async function POST(request: NextRequest) {
     // Update invite status
     await sql`
       UPDATE group_invites 
-      SET status = ${action === 'accept' ? 'accepted' : 'declined'}
-      WHERE invite_id = ${inviteId}
+      SET status = ${actualAction === 'accept' ? 'accepted' : 'declined'}
+      WHERE invite_id = ${actualInviteId}
     `;
 
-    return NextResponse.json({ success: true, action });
+    return NextResponse.json({ success: true, action: actualAction });
   } catch (error: any) {
     console.error('Process invite error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+}
+
+// PUT - Accept or decline an invite (alternative method)
+export async function PUT(request: NextRequest) {
+  return POST(request);
 }
