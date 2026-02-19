@@ -294,16 +294,16 @@ export default function Home() {
       </section>
 
       {/* Shop Section */}
-      <section className="py-16 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+      <section className="py-12 sm:py-16 px-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
         <div className="container mx-auto max-w-4xl text-center">
-          <Store className="w-16 h-16 mx-auto mb-6 opacity-90" />
-          <h2 className="text-3xl font-bold mb-4">Hatake TCG Merch</h2>
-          <p className="text-xl opacity-90 mb-8">
+          <Store className="w-12 sm:w-16 h-12 sm:h-16 mx-auto mb-4 sm:mb-6 opacity-90" />
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Hatake TCG Merch</h2>
+          <p className="text-base sm:text-xl opacity-90 mb-6 sm:mb-8 px-4">
             Premium TCG accessories including toploaders, playmats, deck boxes, and more — shipped directly from Sweden
           </p>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-600 rounded-xl font-semibold hover:bg-gray-100 transition shadow-lg"
+            className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-white text-purple-600 rounded-xl font-semibold hover:bg-gray-100 transition shadow-lg"
           >
             Browse Shop
             <ChevronRight className="w-5 h-5" />
@@ -312,16 +312,16 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section className="py-16 px-4">
+      <section className="py-12 sm:py-16 px-4">
         <div className="container mx-auto max-w-4xl">
-          <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
-            <div className="flex flex-col md:flex-row gap-8 items-center">
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">About HatakeSocial</h2>
-                <p className="text-gray-600 mb-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-12">
+            <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-center">
+              <div className="flex-1 text-center md:text-left">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">About HatakeSocial</h2>
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
                   We're building two things at once — because they belong together. A healthy supply chain for TCG products across Europe, and a social platform that brings collectors together.
                 </p>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
                   Our long-term goal is to support local game shops with better discovery, clearer events, and real partnerships that help the community grow.
                 </p>
                 <Link
@@ -332,13 +332,13 @@ export default function Home() {
                   <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 order-first md:order-last">
                 <Image
                   src="https://i.imgur.com/B06rBhI.png"
                   alt="Hatake.Social"
-                  width={150}
-                  height={150}
-                  className="rounded-2xl shadow-lg"
+                  width={120}
+                  height={120}
+                  className="rounded-2xl shadow-lg sm:w-[150px] sm:h-[150px]"
                 />
               </div>
             </div>
@@ -347,10 +347,10 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 mt-auto">
+      <footer className="bg-gray-900 text-white py-10 sm:py-12 px-4 mt-auto">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8">
+            <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <Image
                   src="https://i.imgur.com/B06rBhI.png"
@@ -366,8 +366,8 @@ export default function Home() {
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Platform</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Platform</h4>
+              <ul className="space-y-2 text-xs sm:text-sm text-gray-400">
                 <li><Link href="/feed" className="hover:text-white transition">Social Feed</Link></li>
                 <li><Link href="/collection" className="hover:text-white transition">Collection</Link></li>
                 <li><Link href="/decks" className="hover:text-white transition">Deck Builder</Link></li>
@@ -375,26 +375,26 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Community</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Community</h4>
+              <ul className="space-y-2 text-xs sm:text-sm text-gray-400">
                 <li><Link href="/friends" className="hover:text-white transition">Friends</Link></li>
                 <li><Link href="/groups" className="hover:text-white transition">Groups</Link></li>
                 <li><Link href="/messages" className="hover:text-white transition">Messages</Link></li>
                 <li><Link href="/trades" className="hover:text-white transition">Trades</Link></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
+            <div className="col-span-2 md:col-span-1">
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h4>
+              <ul className="space-y-2 text-xs sm:text-sm text-gray-400">
                 <li><Link href="/shop" className="hover:text-white transition">Shop</Link></li>
                 <li><Link href="/about" className="hover:text-white transition">About Us</Link></li>
                 <li><a href="mailto:contact@hatake.social" className="hover:text-white transition">Contact</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-gray-500">© {new Date().getFullYear()} Hatake.Social. All rights reserved.</p>
-            <p className="text-sm text-gray-500">Made with care in Sweden</p>
+          <div className="border-t border-gray-800 pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-center sm:text-left">
+            <p className="text-xs sm:text-sm text-gray-500">© {new Date().getFullYear()} Hatake.Social. All rights reserved.</p>
+            <p className="text-xs sm:text-sm text-gray-500">Made with care in Sweden</p>
           </div>
         </div>
       </footer>
