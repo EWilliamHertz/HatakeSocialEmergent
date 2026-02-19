@@ -176,14 +176,24 @@ export default function GroupsPage() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Groups</h1>
             <p className="text-gray-600 dark:text-gray-400">Join communities of TCG collectors</p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-            data-testid="create-group-btn"
-          >
-            <Plus className="w-5 h-5" />
-            Create Group
-          </button>
+          <div className="flex gap-2">
+            <a
+              href="/community"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+              data-testid="view-community-btn"
+            >
+              <Users className="w-5 h-5" />
+              Friends
+            </a>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+              data-testid="create-group-btn"
+            >
+              <Plus className="w-5 h-5" />
+              Create Group
+            </button>
+          </div>
         </div>
 
         {/* Quick Stats */}
