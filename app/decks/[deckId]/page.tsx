@@ -547,6 +547,18 @@ export default function DeckEditorPage({ params }: { params: Promise<{ deckId: s
           </div>
         </div>
 
+        {/* Analytics Panel */}
+        {showAnalytics && deck && (
+          <div className="mb-6">
+            <DeckAnalytics 
+              cards={cards} 
+              game={deck.game} 
+              format={deck.format} 
+              isOwner={isOwner}
+            />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Card Search */}
           {isOwner && (
