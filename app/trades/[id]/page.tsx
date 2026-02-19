@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { ArrowRightLeft, ArrowLeft, Clock, CheckCircle, XCircle, Package, MessageCircle, User, MapPin, CreditCard } from 'lucide-react';
+import { ArrowRightLeft, ArrowLeft, Clock, CheckCircle, XCircle, Package, MessageCircle, User, MapPin, CreditCard, Star } from 'lucide-react';
 import Image from 'next/image';
+import TradeRating from '@/components/TradeRating';
+import UserReputation from '@/components/UserReputation';
 
 interface TradeItem {
   card_id: string;
