@@ -399,11 +399,13 @@ export default function App() {
               presentationStyle="fullScreen"
               onRequestClose={() => setShowDecks(false)}
             >
-              <DecksScreen
-                user={user}
-                token={token}
-                onClose={() => setShowDecks(false)}
-              />
+              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                <DecksScreen
+                  user={user}
+                  token={token}
+                  onClose={() => setShowDecks(false)}
+                />
+              </View>
             </Modal>
 
             {/* Trades Modal */}
