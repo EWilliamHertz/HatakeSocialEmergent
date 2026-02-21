@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet, View, ActivityIndicator, Text, Alert, Platform } from 'react-native';
@@ -15,6 +15,14 @@ import DrawerMenu from './src/components/DrawerMenu';
 import { API_URL } from './src/config';
 
 const Tab = createBottomTabNavigator();
+
+// Navigation ref for programmatic navigation
+type RootTabParamList = {
+  Feed: undefined;
+  Collection: undefined;
+  Marketplace: undefined;
+  Profile: undefined;
+};
 
 interface User {
   user_id: string;
