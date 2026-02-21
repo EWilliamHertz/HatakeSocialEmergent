@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { ShoppingBag, MessageCircle, Filter, X, Search, SlidersHorizontal, Plus, Trash2 } from 'lucide-react';
+import { ShoppingBag, MessageCircle, Filter, X, Search, SlidersHorizontal, Plus, Trash2, Package, Store } from 'lucide-react';
 import Image from 'next/image';
 
 interface Listing {
@@ -23,10 +23,28 @@ interface Listing {
   created_at: string;
 }
 
+interface ShopProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: string;
+  image: string;
+  gallery_images?: string[];
+  features: string[];
+  category: string;
+  stock: number;
+}
+
 const CONDITIONS = ['All', 'Mint', 'Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played', 'Damaged'];
+const SHOP_CATEGORIES = ['All', 'Protection', 'Storage', 'Accessories', 'Bags'];
 
 export default function MarketplacePage() {
   const router = useRouter();
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'cards' | 'shop'>('cards');
+  
+  // Card listings state
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [gameFilter, setGameFilter] = useState('all');
@@ -42,6 +60,13 @@ export default function MarketplacePage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [expansionFilter, setExpansionFilter] = useState('All');
   const [rarityFilter, setRarityFilter] = useState('All');
+  
+  // Shop products state
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
+  const [shopLoading, setShopLoading] = useState(false);
+  const [shopCategory, setShopCategory] = useState('All');
+  const [selectedProduct, setSelectedProduct] = useState<ShopProduct | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
