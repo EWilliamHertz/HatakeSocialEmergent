@@ -79,12 +79,13 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
   const fetchMyGroups = async () => {
     try {
       const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
-      const res = await fetch(`${API_URL}/api/groups`, {
+      const res = await fetch(`${API_URL}/api/groups?type=my`, {
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
       const data = await res.json();
       if (data.success) {
-        setMyGroups(data.myGroups || []);
+        // API returns 'groups' not 'myGroups'
+        setMyGroups(data.groups || []);
       }
     } catch (err) {
       console.log('Failed to fetch groups:', err);
