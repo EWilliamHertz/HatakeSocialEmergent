@@ -677,7 +677,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>Total Value</Text>
               <Text style={styles.statValue}>
-                ${stats.totalValue.toFixed(2)}
+                €{stats.totalValue.toFixed(2)}
               </Text>
             </View>
             {stats.mtgValue > 0 && (
@@ -692,7 +692,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>Pokémon</Text>
                 <Text style={[styles.statValue, styles.pokemonColor]}>
-                  ${stats.pokemonValue.toFixed(2)}
+                  €{stats.pokemonValue.toFixed(2)}
                 </Text>
               </View>
             )}
