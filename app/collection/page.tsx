@@ -137,6 +137,14 @@ export default function CollectionPage() {
   const gradingCompanies = ['PSA', 'BGS', 'CGC', 'SGC', 'PCG', 'Ace'];
   const gradeValues = ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5.5', '5', '4', '3', '2', '1'];
 
+  // Wishlist state
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [loadingWishlist, setLoadingWishlist] = useState(false);
+  
+  // Sealed products state
+  const [sealedProducts, setSealedProducts] = useState<any[]>([]);
+  const [loadingSealed, setLoadingSealed] = useState(false);
+
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
@@ -148,6 +156,45 @@ export default function CollectionPage() {
       })
       .catch(() => router.push('/auth/login'));
   }, [router, filter]);
+
+  // Load data based on active tab
+  useEffect(() => {
+    if (activeTab === 'wishlist') {
+      loadWishlist();
+    } else if (activeTab === 'sealed') {
+      loadSealedProducts();
+    }
+  }, [activeTab]);
+
+  const loadWishlist = async () => {
+    setLoadingWishlist(true);
+    try {
+      const res = await fetch('/api/wishlist', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setWishlistItems(data.items || []);
+      }
+    } catch (error) {
+      console.error('Load wishlist error:', error);
+    } finally {
+      setLoadingWishlist(false);
+    }
+  };
+
+  const loadSealedProducts = async () => {
+    setLoadingSealed(true);
+    try {
+      const res = await fetch('/api/sealed', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setSealedProducts(data.products || []);
+      }
+    } catch (error) {
+      console.error('Load sealed products error:', error);
+    } finally {
+      setLoadingSealed(false);
+    }
+  };
 
   const loadCollection = async () => {
     setLoading(true);
