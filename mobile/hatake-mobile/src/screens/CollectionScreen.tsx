@@ -888,9 +888,36 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   const renderItem = ({ item }: { item: CollectionItem }) => {
     const imageUrl = getCardImage(item);
     const price = getDisplayPrice(item);
+    const isSelected = selectedIds.has(item.id);
+    
+    const handlePress = () => {
+      if (selectionMode) {
+        toggleSelection(item.id);
+      } else {
+        openCollectionCardDetail(item);
+      }
+    };
+
+    const handleLongPress = () => {
+      if (!selectionMode) {
+        setSelectionMode(true);
+        toggleSelection(item.id);
+      }
+    };
     
     return (
-      <TouchableOpacity style={styles.card} onPress={() => openCollectionCardDetail(item)}>
+      <TouchableOpacity 
+        style={[styles.card, isSelected && styles.cardSelected]} 
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+      >
+        {selectionMode && (
+          <View style={styles.checkboxContainer}>
+            <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
+              {isSelected && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+            </View>
+          </View>
+        )}
         {imageUrl ? (
           <Image 
             source={{ uri: imageUrl }} 
