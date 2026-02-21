@@ -12,7 +12,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera, CameraType } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { searchService, CardSearchResult } from '../services/search';
@@ -20,8 +20,8 @@ import { useStore } from '../store';
 import Button from '../components/Button';
 
 export default function ScannerScreen({ navigation }: any) {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [type, setType] = useState(CameraType.back);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [facing, setFacing] = useState<'back' | 'front'>('back');
   const [scanning, setScanning] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [matchedCards, setMatchedCards] = useState<CardSearchResult[]>([]);
@@ -29,15 +29,8 @@ export default function ScannerScreen({ navigation }: any) {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [selectedGame, setSelectedGame] = useState<'mtg' | 'pokemon'>('mtg');
-  const cameraRef = useRef<Camera>(null);
+  const cameraRef = useRef<any>(null);
   const { addToCollection } = useStore();
-
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
-  }, []);
 
   const takePicture = async () => {
     if (!cameraRef.current) return;
@@ -107,7 +100,7 @@ export default function ScannerScreen({ navigation }: any) {
     }
   };
 
-  if (hasPermission === null) {
+  if (!permission) {
     return (
       <SafeAreaView style={styles.container}>
         <ActivityIndicator size="large" color="#3B82F6" />
@@ -115,7 +108,7 @@ export default function ScannerScreen({ navigation }: any) {
     );
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
     return (
       <SafeAreaView style={styles.permissionContainer}>
         <View style={styles.permissionContent}>
@@ -126,10 +119,7 @@ export default function ScannerScreen({ navigation }: any) {
           </Text>
           <Button 
             title="Grant Permission" 
-            onPress={async () => {
-              const { status } = await Camera.requestCameraPermissionsAsync();
-              setHasPermission(status === 'granted');
-            }}
+            onPress={requestPermission}
             size="large"
           />
         </View>
@@ -172,10 +162,10 @@ export default function ScannerScreen({ navigation }: any) {
 
       {/* Camera View */}
       <View style={styles.cameraContainer}>
-        <Camera
+        <CameraView
           ref={cameraRef}
           style={styles.camera}
-          type={type}
+          facing={facing}
         >
           {/* Card Frame Guide */}
           <View style={styles.frameContainer}>
@@ -189,7 +179,7 @@ export default function ScannerScreen({ navigation }: any) {
               Position card within frame
             </Text>
           </View>
-        </Camera>
+        </CameraView>
 
         {scanning && (
           <View style={styles.scanningOverlay}>
@@ -203,7 +193,7 @@ export default function ScannerScreen({ navigation }: any) {
       <View style={styles.controls}>
         <TouchableOpacity 
           style={styles.flipButton}
-          onPress={() => setType(t => t === CameraType.back ? CameraType.front : CameraType.back)}
+          onPress={() => setFacing(f => f === 'back' ? 'front' : 'back')}
         >
           <Ionicons name="camera-reverse" size={24} color="#fff" />
         </TouchableOpacity>
