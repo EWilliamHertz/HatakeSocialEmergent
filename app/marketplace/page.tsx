@@ -643,6 +643,7 @@ export default function MarketplacePage() {
                           alt={product.name}
                           fill
                           className="object-cover group-hover:scale-105 transition"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
