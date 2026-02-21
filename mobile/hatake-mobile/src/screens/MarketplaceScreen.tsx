@@ -382,58 +382,120 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
           </TouchableOpacity>
           <View style={styles.headerCenter}>
             <Text style={styles.title}>Marketplace</Text>
-            <Text style={styles.subtitle}>{listings.length} listings</Text>
+            <Text style={styles.subtitle}>
+              {activeTab === 'cards' ? `${listings.length} listings` : `${shopProducts.length} products`}
+            </Text>
           </View>
           <View style={styles.menuButton} />
         </View>
       </View>
 
-      {/* Filters */}
-      <View style={styles.filters}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
-          {(['all', 'mine', 'mtg', 'pokemon'] as const).map((f) => (
-            <TouchableOpacity
-              key={f}
-              style={[styles.filterButton, filter === f && styles.filterActive]}
-              onPress={() => setFilter(f)}
-              data-testid={`filter-${f}`}
-            >
-              <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                {f === 'all' ? 'All' : f === 'mine' ? 'My Listings' : f === 'mtg' ? 'Magic' : 'Pokémon'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+      {/* Tabs */}
+      <View style={styles.tabs}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'cards' && styles.tabActive]}
+          onPress={() => setActiveTab('cards')}
+          data-testid="tab-cards"
+        >
+          <Ionicons name="card-outline" size={18} color={activeTab === 'cards' ? '#3B82F6' : '#6B7280'} />
+          <Text style={[styles.tabText, activeTab === 'cards' && styles.tabTextActive]}>
+            Card Listings
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'hatake' && styles.tabActive]}
+          onPress={() => setActiveTab('hatake')}
+          data-testid="tab-hatake"
+        >
+          <Ionicons name="storefront-outline" size={18} color={activeTab === 'hatake' ? '#3B82F6' : '#6B7280'} />
+          <Text style={[styles.tabText, activeTab === 'hatake' && styles.tabTextActive]}>
+            Hatake Products
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {error ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchListings}>
-            <Text style={styles.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
+      {/* Card Listings Tab */}
+      {activeTab === 'cards' && (
+        <>
+          {/* Filters */}
+          <View style={styles.filters}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
+              {(['all', 'mine', 'mtg', 'pokemon'] as const).map((f) => (
+                <TouchableOpacity
+                  key={f}
+                  style={[styles.filterButton, filter === f && styles.filterActive]}
+                  onPress={() => setFilter(f)}
+                  data-testid={`filter-${f}`}
+                >
+                  <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                    {f === 'all' ? 'All' : f === 'mine' ? 'My Listings' : f === 'mtg' ? 'Magic' : 'Pokémon'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
 
-      {listings.length === 0 && !error ? (
-        <View style={styles.centered}>
-          <Ionicons name="storefront-outline" size={64} color="#D1D5DB" />
-          <Text style={styles.emptyText}>No listings available</Text>
-          <Text style={styles.emptySubtext}>
-            Check back later or list your own cards from the web app
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={listings}
-          renderItem={renderItem}
-          keyExtractor={(item) => String(item.id || item.listing_id)}
-          numColumns={2}
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        />
+          {error ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={fetchListings}>
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
+          {listings.length === 0 && !error ? (
+            <View style={styles.centered}>
+              <Ionicons name="storefront-outline" size={64} color="#D1D5DB" />
+              <Text style={styles.emptyText}>No listings available</Text>
+              <Text style={styles.emptySubtext}>
+                Check back later or list your own cards from the web app
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={listings}
+              renderItem={renderItem}
+              keyExtractor={(item) => String(item.id || item.listing_id)}
+              numColumns={2}
+              contentContainerStyle={styles.list}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            />
+          )}
+        </>
+      )}
+
+      {/* Hatake Products Tab */}
+      {activeTab === 'hatake' && (
+        <>
+          {shopLoading ? (
+            <View style={styles.centered}>
+              <ActivityIndicator size="large" color="#3B82F6" />
+              <Text style={styles.loadingText}>Loading products...</Text>
+            </View>
+          ) : shopProducts.length === 0 ? (
+            <View style={styles.centered}>
+              <Ionicons name="bag-outline" size={64} color="#D1D5DB" />
+              <Text style={styles.emptyText}>No products available</Text>
+              <Text style={styles.emptySubtext}>
+                Official Hatake products coming soon!
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={shopProducts}
+              renderItem={renderShopProduct}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              contentContainerStyle={styles.list}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={fetchShopProducts} />
+              }
+            />
+          )}
+        </>
       )}
     </SafeAreaView>
   );
