@@ -87,6 +87,8 @@ export async function PATCH(
     }
 
     const trade = trades[0];
+    let notifyUserId = '';
+    let notifyAction = '';
 
     // Handle different status updates
     if ((action === 'accept' || action === 'accepted') && trade.receiver_id === user.user_id) {
@@ -95,26 +97,50 @@ export async function PATCH(
         SET status = 'accepted', updated_at = NOW()
         WHERE trade_id = ${id}
       `;
+      notifyUserId = trade.initiator_id;
+      notifyAction = 'accepted';
     } else if ((action === 'reject' || action === 'rejected' || action === 'decline' || action === 'declined') && trade.receiver_id === user.user_id) {
       await sql`
         UPDATE trades
         SET status = 'declined', updated_at = NOW()
         WHERE trade_id = ${id}
       `;
+      notifyUserId = trade.initiator_id;
+      notifyAction = 'declined';
     } else if ((action === 'complete' || action === 'completed') && trade.status === 'accepted') {
       await sql`
         UPDATE trades
         SET status = 'completed', updated_at = NOW()
         WHERE trade_id = ${id}
       `;
+      // Notify both users
+      notifyUserId = trade.initiator_id === user.user_id ? trade.receiver_id : trade.initiator_id;
+      notifyAction = 'completed';
     } else if ((action === 'cancel' || action === 'cancelled') && trade.initiator_id === user.user_id && trade.status === 'pending') {
       await sql`
         UPDATE trades
         SET status = 'cancelled', updated_at = NOW()
         WHERE trade_id = ${id}
       `;
+      notifyUserId = trade.receiver_id;
+      notifyAction = 'declined';
     } else {
       return NextResponse.json({ error: 'Invalid action or not authorized' }, { status: 400 });
+    }
+
+    // Send push notification
+    if (notifyUserId && notifyAction) {
+      const pushTokens = await sql`
+        SELECT token FROM push_tokens 
+        WHERE user_id = ${notifyUserId} AND is_active = true
+      `;
+      if (pushTokens.length > 0) {
+        const notif = getTradeNotification(user.name || 'Someone', notifyAction);
+        for (const pt of pushTokens) {
+          sendPushNotification(pt.token, notif.title, notif.body, notif.data)
+            .catch(err => console.error('Push notification error:', err));
+        }
+      }
     }
 
     return NextResponse.json({ success: true });
