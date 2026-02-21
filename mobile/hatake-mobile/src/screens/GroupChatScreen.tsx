@@ -259,7 +259,7 @@ export default function GroupChatScreen({ user, token, group, onClose }: GroupCh
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Container>
   );
 }
 
