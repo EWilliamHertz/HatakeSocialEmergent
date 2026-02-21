@@ -258,7 +258,12 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
             </View>
           )}
           <View style={styles.postHeaderInfo}>
-            <Text style={styles.userName}>{userName}</Text>
+            <View style={styles.userNameRow}>
+              <Text style={styles.userName}>{userName}</Text>
+              {item.group_name && (
+                <Text style={styles.groupNameBadge}>@ {item.group_name}</Text>
+              )}
+            </View>
             <Text style={styles.postTime}>{formatDate(item.created_at)}</Text>
           </View>
         </TouchableOpacity>
