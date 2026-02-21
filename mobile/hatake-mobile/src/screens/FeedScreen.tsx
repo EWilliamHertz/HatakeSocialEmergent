@@ -146,10 +146,35 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
     const likeCount = item.like_count ?? item.likes_count ?? 0;
     const commentCount = item.comment_count ?? item.comments_count ?? 0;
     const isLiked = item.liked ?? item.is_liked ?? false;
+    const userId = item.user_id;
+
+    const handleUserPress = () => {
+      // Show alert with user info (profile navigation not yet implemented)
+      if (Platform.OS === 'web') {
+        alert(`View ${userName}'s profile - Coming soon!`);
+      } else {
+        Alert.alert('Profile', `View ${userName}'s profile - Coming soon!`);
+      }
+    };
+
+    const handleLike = async () => {
+      // Toggle like - API call
+      try {
+        const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+        const postId = item.post_id || item.id;
+        await fetch(`${API_URL}/api/feed/${postId}/like`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        fetchPosts(); // Refresh to get updated count
+      } catch (err) {
+        console.log('Like error:', err);
+      }
+    };
 
     return (
       <View style={styles.post}>
-        <View style={styles.postHeader}>
+        <TouchableOpacity style={styles.postHeader} onPress={handleUserPress}>
           {userPicture ? (
             <Image source={{ uri: userPicture }} style={styles.avatar} />
           ) : (
@@ -161,7 +186,7 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
             <Text style={styles.userName}>{userName}</Text>
             <Text style={styles.postTime}>{formatDate(item.created_at)}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
         
         <Text style={styles.postContent}>{item.content}</Text>
         
@@ -180,7 +205,7 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
         )}
         
         <View style={styles.postActions}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
             <Ionicons 
               name={isLiked ? "heart" : "heart-outline"} 
               size={20} 
