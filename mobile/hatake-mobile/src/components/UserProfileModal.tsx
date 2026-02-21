@@ -242,10 +242,11 @@ export default function UserProfileModal({
 
             {/* Stats */}
             <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
+              <TouchableOpacity style={styles.statItem} onPress={handleViewCollection}>
                 <Text style={styles.statValue}>{stats.collections}</Text>
-                <Text style={styles.statLabel}>Cards</Text>
-              </View>
+                <Text style={styles.statLabelLink}>Cards</Text>
+                <Ionicons name="chevron-forward" size={14} color="#3B82F6" />
+              </TouchableOpacity>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{stats.posts}</Text>
@@ -257,6 +258,16 @@ export default function UserProfileModal({
                 <Text style={styles.statLabel}>Friends</Text>
               </View>
             </View>
+
+            {/* View Collection Button */}
+            <TouchableOpacity 
+              style={styles.viewCollectionButton}
+              onPress={handleViewCollection}
+            >
+              <Ionicons name="albums-outline" size={20} color="#3B82F6" />
+              <Text style={styles.viewCollectionText}>View Collection</Text>
+              <Ionicons name="chevron-forward" size={20} color="#3B82F6" />
+            </TouchableOpacity>
 
             {/* Actions */}
             <View style={styles.actionsContainer}>
