@@ -1826,6 +1826,117 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* CSV Import Modal */}
+      <Modal
+        visible={showCsvModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowCsvModal(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Import from CSV</Text>
+            <TouchableOpacity onPress={() => setShowCsvModal(false)}>
+              <Ionicons name="close" size={28} color="#1F2937" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.csvInstructions}>
+              Paste your card list below. Supported formats:
+            </Text>
+            <View style={styles.csvFormatExamples}>
+              <Text style={styles.csvFormatLine}>• set_code, collector_number, quantity</Text>
+              <Text style={styles.csvFormatLine}>• sv09, 123, 2</Text>
+              <Text style={styles.csvFormatLine}>• NEO 45 4</Text>
+            </View>
+
+            {/* Game Selector */}
+            <Text style={styles.inputLabel}>Card Game</Text>
+            <View style={styles.gameSelector}>
+              <TouchableOpacity
+                style={[styles.gameButton, csvGame === 'mtg' && styles.gameButtonActive]}
+                onPress={() => setCsvGame('mtg')}
+              >
+                <Text style={[styles.gameButtonText, csvGame === 'mtg' && styles.gameButtonTextActive]}>
+                  Magic
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.gameButton, csvGame === 'pokemon' && styles.gameButtonActive]}
+                onPress={() => setCsvGame('pokemon')}
+              >
+                <Text style={[styles.gameButtonText, csvGame === 'pokemon' && styles.gameButtonTextActive]}>
+                  Pokémon
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* CSV Input */}
+            <Text style={styles.inputLabel}>Card List</Text>
+            <TextInput
+              style={styles.csvInput}
+              placeholder="sv09, 001, 1&#10;sv09, 002, 2&#10;NEO, 45, 4"
+              value={csvText}
+              onChangeText={setCsvText}
+              multiline
+              numberOfLines={10}
+              textAlignVertical="top"
+              data-testid="csv-text-input"
+            />
+
+            {/* Import Progress */}
+            {importing && (
+              <View style={styles.importProgress}>
+                <Text style={styles.importProgressText}>
+                  Importing... {importProgress.current}/{importProgress.total}
+                </Text>
+                <View style={styles.importProgressBar}>
+                  <View 
+                    style={[
+                      styles.importProgressFill, 
+                      { width: `${(importProgress.current / importProgress.total) * 100}%` }
+                    ]} 
+                  />
+                </View>
+                <Text style={styles.importStats}>
+                  ✅ {importProgress.success} added | ❌ {importProgress.failed} failed
+                </Text>
+              </View>
+            )}
+
+            {/* Import Log */}
+            {importLog.length > 0 && (
+              <View style={styles.importLog}>
+                <Text style={styles.importLogTitle}>Import Log:</Text>
+                <ScrollView style={styles.importLogScroll} nestedScrollEnabled>
+                  {importLog.map((log, idx) => (
+                    <Text key={idx} style={styles.importLogLine}>{log}</Text>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Import Button */}
+            <TouchableOpacity
+              style={[styles.importButton, (importing || !csvText.trim()) && styles.importButtonDisabled]}
+              onPress={importFromCSV}
+              disabled={importing || !csvText.trim()}
+              data-testid="csv-import-submit"
+            >
+              {importing ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
+                  <Text style={styles.importButtonText}>Import Cards</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
