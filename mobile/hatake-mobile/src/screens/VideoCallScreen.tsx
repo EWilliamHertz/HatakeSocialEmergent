@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,38 @@ import {
   Platform,
   Alert,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
+
+// LiveKit imports - these will only work in a native build
+let Room: any = null;
+let RoomEvent: any = null;
+let VideoTrack: any = null;
+let useParticipant: any = null;
+let useRoom: any = null;
+let registerGlobals: any = null;
+
+// Try to import LiveKit - will fail in Expo Go but work in native builds
+try {
+  const livekit = require('@livekit/react-native');
+  const webrtc = require('@livekit/react-native-webrtc');
+  Room = livekit.Room;
+  RoomEvent = livekit.RoomEvent;
+  VideoTrack = livekit.VideoTrack;
+  useParticipant = livekit.useParticipant;
+  useRoom = livekit.useRoom;
+  registerGlobals = webrtc.registerGlobals;
+  
+  // Register WebRTC globals
+  if (registerGlobals) {
+    registerGlobals();
+  }
+} catch (e) {
+  console.log('LiveKit not available - running in Expo Go mode');
+}
 
 interface Participant {
   user_id: string;
@@ -41,12 +69,21 @@ export default function VideoCallScreen({
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(callType === 'video');
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
+  const [livekitAvailable, setLivekitAvailable] = useState(false);
+  const [room, setRoom] = useState<any>(null);
+  const [livekitToken, setLivekitToken] = useState<string | null>(null);
+  const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
+  
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Check if LiveKit is available (native build)
+    setLivekitAvailable(Room !== null);
+    
     // Start pulse animation for ringing state
     if (callState === 'ringing' || callState === 'connecting') {
       Animated.loop(
@@ -68,14 +105,11 @@ export default function VideoCallScreen({
 
   useEffect(() => {
     if (isIncoming) {
-      // Already ringing
       setCallState('ringing');
     } else {
-      // Initiate outgoing call
       initiateCall();
     }
 
-    // Start polling for call signals
     startPolling();
 
     return () => {
@@ -84,11 +118,15 @@ export default function VideoCallScreen({
   }, []);
 
   useEffect(() => {
-    // Start duration timer when connected
     if (callState === 'connected') {
       durationRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
+      
+      // Connect to LiveKit room if available
+      if (livekitAvailable && livekitToken && livekitUrl) {
+        connectToRoom();
+      }
     }
 
     return () => {
@@ -96,7 +134,7 @@ export default function VideoCallScreen({
         clearInterval(durationRef.current);
       }
     };
-  }, [callState]);
+  }, [callState, livekitToken]);
 
   const getAuthToken = () => {
     if (typeof localStorage !== 'undefined') {
@@ -105,9 +143,68 @@ export default function VideoCallScreen({
     return token;
   };
 
+  const getLivekitToken = async (roomName: string) => {
+    try {
+      const authToken = getAuthToken();
+      const res = await fetch(`${API_URL}/api/livekit/token`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ roomName }),
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setLivekitToken(data.token);
+        setLivekitUrl(data.wsUrl);
+        return data;
+      }
+    } catch (err) {
+      console.error('Failed to get LiveKit token:', err);
+    }
+    return null;
+  };
+
+  const connectToRoom = async () => {
+    if (!livekitAvailable || !livekitToken || !livekitUrl) return;
+    
+    try {
+      const newRoom = new Room();
+      
+      newRoom.on(RoomEvent.TrackSubscribed, (track: any) => {
+        console.log('Track subscribed:', track.kind);
+      });
+      
+      newRoom.on(RoomEvent.Disconnected, () => {
+        console.log('Disconnected from room');
+        endCall(true);
+      });
+      
+      await newRoom.connect(livekitUrl, livekitToken);
+      
+      // Enable camera and microphone based on call type
+      if (callType === 'video' && isVideoEnabled) {
+        await newRoom.localParticipant.setCameraEnabled(true);
+      }
+      await newRoom.localParticipant.setMicrophoneEnabled(!isMuted);
+      
+      setRoom(newRoom);
+    } catch (err) {
+      console.error('Failed to connect to LiveKit room:', err);
+    }
+  };
+
   const initiateCall = async () => {
     try {
       const authToken = getAuthToken();
+      
+      // Create a unique room name for this call
+      const roomName = `call_${user.user_id}_${recipient.user_id}_${Date.now()}`;
+      
+      // Get LiveKit token
+      const tokenData = await getLivekitToken(roomName);
       
       // Send incoming_call signal to recipient
       await fetch(`${API_URL}/api/calls`, {
@@ -124,19 +221,13 @@ export default function VideoCallScreen({
             caller_id: user.user_id,
             caller_name: user.name,
             caller_picture: user.picture,
+            room_name: roomName,
+            livekit_url: tokenData?.wsUrl,
           },
         }),
       });
 
       setCallState('ringing');
-      
-      // Simulate connection after 3 seconds for demo
-      // In production, this would wait for recipient to accept
-      setTimeout(() => {
-        if (callState !== 'ended') {
-          setCallState('connected');
-        }
-      }, 3000);
       
     } catch (err) {
       console.error('Failed to initiate call:', err);
@@ -158,6 +249,10 @@ export default function VideoCallScreen({
           for (const signal of data.signals) {
             if (signal.type === 'call_accepted' && signal.from === recipient.user_id) {
               setCallState('connected');
+              // Get LiveKit token for the room if we're the caller
+              if (signal.data?.room_name) {
+                await getLivekitToken(signal.data.room_name);
+              }
             } else if (signal.type === 'call_ended' && signal.from === recipient.user_id) {
               endCall(true);
             }
@@ -175,6 +270,9 @@ export default function VideoCallScreen({
     }
     if (durationRef.current) {
       clearInterval(durationRef.current);
+    }
+    if (room) {
+      room.disconnect();
     }
   };
 
@@ -222,16 +320,39 @@ export default function VideoCallScreen({
     }, 500);
   };
 
-  const toggleMute = () => {
+  const toggleMute = async () => {
     setIsMuted(!isMuted);
+    if (room) {
+      await room.localParticipant.setMicrophoneEnabled(isMuted);
+    }
   };
 
-  const toggleVideo = () => {
+  const toggleVideo = async () => {
     setIsVideoEnabled(!isVideoEnabled);
+    if (room) {
+      await room.localParticipant.setCameraEnabled(!isVideoEnabled);
+    }
   };
 
   const toggleSpeaker = () => {
     setIsSpeakerOn(!isSpeakerOn);
+    // Audio routing would need native module
+  };
+
+  const toggleScreenShare = async () => {
+    if (!room) return;
+    
+    try {
+      if (isScreenSharing) {
+        await room.localParticipant.setScreenShareEnabled(false);
+      } else {
+        await room.localParticipant.setScreenShareEnabled(true);
+      }
+      setIsScreenSharing(!isScreenSharing);
+    } catch (err) {
+      console.error('Screen share error:', err);
+      showAlert('Screen Share', 'Screen sharing requires a native app build.');
+    }
   };
 
   const showAlert = (title: string, message: string) => {
@@ -271,11 +392,20 @@ export default function VideoCallScreen({
       <View style={[styles.videoArea, { height: screenHeight * 0.65 }]}>
         {/* Remote participant display */}
         <View style={styles.remoteParticipant}>
-          {callType === 'video' && callState === 'connected' ? (
+          {callType === 'video' && callState === 'connected' && livekitAvailable ? (
+            <View style={styles.videoPlaceholder}>
+              <Text style={styles.videoPlaceholderText}>
+                Video connected via LiveKit
+              </Text>
+            </View>
+          ) : callType === 'video' && callState === 'connected' && !livekitAvailable ? (
             <View style={styles.videoPlaceholder}>
               <Ionicons name="videocam-off" size={64} color="#6B7280" />
               <Text style={styles.videoPlaceholderText}>
-                Video unavailable in preview
+                Video requires native build
+              </Text>
+              <Text style={styles.videoSubtext}>
+                Run `eas build` to enable full video
               </Text>
             </View>
           ) : (
@@ -298,6 +428,7 @@ export default function VideoCallScreen({
           <Text style={styles.callStatus}>{getStatusText()}</Text>
           <Text style={styles.callType}>
             {callType === 'video' ? 'Video Call' : 'Voice Call'}
+            {livekitAvailable && ' • HD'}
           </Text>
         </View>
 
@@ -306,6 +437,7 @@ export default function VideoCallScreen({
           <View style={styles.localVideoPreview}>
             <View style={styles.localVideoPlaceholder}>
               <Ionicons name="person" size={24} color="#9CA3AF" />
+              <Text style={styles.localVideoText}>You</Text>
             </View>
           </View>
         )}
@@ -322,6 +454,7 @@ export default function VideoCallScreen({
               data-testid="decline-call-btn"
             >
               <Ionicons name="close" size={32} color="#FFFFFF" />
+              <Text style={styles.controlLabel}>Decline</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.controlButton, styles.acceptButton]}
@@ -329,6 +462,7 @@ export default function VideoCallScreen({
               data-testid="accept-call-btn"
             >
               <Ionicons name={callType === 'video' ? 'videocam' : 'call'} size={32} color="#FFFFFF" />
+              <Text style={styles.controlLabel}>Accept</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -342,6 +476,9 @@ export default function VideoCallScreen({
               data-testid="mute-btn"
             >
               <Ionicons name={isMuted ? 'mic-off' : 'mic'} size={24} color={isMuted ? '#FFFFFF' : '#1F2937'} />
+              <Text style={[styles.controlLabelSmall, isMuted && styles.controlLabelActive]}>
+                {isMuted ? 'Unmute' : 'Mute'}
+              </Text>
             </TouchableOpacity>
 
             {callType === 'video' && (
@@ -351,6 +488,9 @@ export default function VideoCallScreen({
                 data-testid="toggle-video-btn"
               >
                 <Ionicons name={isVideoEnabled ? 'videocam' : 'videocam-off'} size={24} color={!isVideoEnabled ? '#FFFFFF' : '#1F2937'} />
+                <Text style={[styles.controlLabelSmall, !isVideoEnabled && styles.controlLabelActive]}>
+                  {isVideoEnabled ? 'Stop' : 'Start'}
+                </Text>
               </TouchableOpacity>
             )}
 
@@ -362,30 +502,42 @@ export default function VideoCallScreen({
               <Ionicons name="call" size={28} color="#FFFFFF" style={{ transform: [{ rotate: '135deg' }] }} />
             </TouchableOpacity>
 
+            {/* Screen Share Button */}
+            {callType === 'video' && callState === 'connected' && (
+              <TouchableOpacity 
+                style={[styles.controlButton, styles.smallControlButton, isScreenSharing && styles.controlButtonActive]}
+                onPress={toggleScreenShare}
+                data-testid="screen-share-btn"
+              >
+                <Ionicons name="share-outline" size={24} color={isScreenSharing ? '#FFFFFF' : '#1F2937'} />
+                <Text style={[styles.controlLabelSmall, isScreenSharing && styles.controlLabelActive]}>
+                  Share
+                </Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity 
               style={[styles.controlButton, styles.smallControlButton, isSpeakerOn && styles.controlButtonActive]}
               onPress={toggleSpeaker}
               data-testid="speaker-btn"
             >
               <Ionicons name={isSpeakerOn ? 'volume-high' : 'volume-low'} size={24} color={isSpeakerOn ? '#FFFFFF' : '#1F2937'} />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.controlButton, styles.smallControlButton]}
-              data-testid="flip-camera-btn"
-            >
-              <Ionicons name="camera-reverse" size={24} color="#1F2937" />
+              <Text style={[styles.controlLabelSmall, isSpeakerOn && styles.controlLabelActive]}>
+                Speaker
+              </Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
 
-      {/* Note about preview limitations */}
-      <View style={styles.previewNote}>
-        <Text style={styles.previewNoteText}>
-          Full video/audio streaming requires a native app build
-        </Text>
-      </View>
+      {/* Native build notice */}
+      {!livekitAvailable && (
+        <View style={styles.previewNote}>
+          <Text style={styles.previewNoteText}>
+            Full HD video/audio requires native build • Audio is simulated in preview
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -417,7 +569,12 @@ const styles = StyleSheet.create({
   videoPlaceholderText: {
     color: '#9CA3AF',
     marginTop: 12,
-    fontSize: 14,
+    fontSize: 16,
+  },
+  videoSubtext: {
+    color: '#6B7280',
+    fontSize: 12,
+    marginTop: 4,
   },
   avatarContainer: {
     justifyContent: 'center',
@@ -485,9 +642,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  localVideoText: {
+    color: '#9CA3AF',
+    fontSize: 12,
+    marginTop: 4,
+  },
   controlsContainer: {
     paddingVertical: 24,
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
     backgroundColor: '#1F2937',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -501,6 +663,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   controlButton: {
     justifyContent: 'center',
@@ -508,23 +671,23 @@ const styles = StyleSheet.create({
   },
   smallControlButton: {
     width: 56,
-    height: 56,
-    borderRadius: 28,
+    height: 70,
+    borderRadius: 16,
     backgroundColor: '#374151',
   },
   controlButtonActive: {
     backgroundColor: '#3B82F6',
   },
   declineButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 90,
+    borderRadius: 20,
     backgroundColor: '#EF4444',
   },
   acceptButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 90,
+    borderRadius: 20,
     backgroundColor: '#10B981',
   },
   endCallButton: {
@@ -532,6 +695,20 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     backgroundColor: '#EF4444',
+  },
+  controlLabel: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  controlLabelSmall: {
+    color: '#9CA3AF',
+    fontSize: 10,
+    marginTop: 4,
+  },
+  controlLabelActive: {
+    color: '#FFFFFF',
   },
   previewNote: {
     backgroundColor: '#1F2937',
