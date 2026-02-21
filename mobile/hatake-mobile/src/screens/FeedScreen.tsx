@@ -680,11 +680,27 @@ const styles = StyleSheet.create({
   },
   postHeaderInfo: {
     marginLeft: 10,
+    flex: 1,
+  },
+  userNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
   },
   userName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1F2937',
+  },
+  groupNameBadge: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#3B82F6',
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   postTime: {
     fontSize: 12,
