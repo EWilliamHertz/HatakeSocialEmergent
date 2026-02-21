@@ -281,6 +281,11 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
             if (response.ok) {
               const card = await response.json();
               if (card && card.id) {
+                // Extract pricing from TCGdex response
+                const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
+                const tcgPrice = card.tcgplayer?.prices?.holofoil?.market || card.tcgplayer?.prices?.normal?.market;
+                const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : tcgPrice ? `$${tcgPrice.toFixed(2)}` : 'N/A';
+                
                 setSearchResults([{
                   id: card.id,
                   name: card.name,
@@ -288,6 +293,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                   set_name: card.set?.name || '',
                   set_code: card.set?.id?.toUpperCase() || mappedSetCode.toUpperCase(),
                   collector_number: card.localId || collectorNumQuery,
+                  price: displayPrice,
                   rarity: card.rarity,
                   game: 'pokemon' as const,
                   data: card,
