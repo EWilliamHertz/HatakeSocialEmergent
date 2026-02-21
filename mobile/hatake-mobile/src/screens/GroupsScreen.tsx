@@ -413,6 +413,7 @@ const styles = StyleSheet.create({
   joinButton: { backgroundColor: '#3B82F6', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' },
   joinButtonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 },
   leaveButton: { padding: 8, alignSelf: 'flex-start' },
+  arrowButton: { padding: 8, alignSelf: 'center' },
   empty: { alignItems: 'center', paddingVertical: 48 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: '#6B7280', marginTop: 16 },
   emptySubtitle: { fontSize: 14, color: '#9CA3AF', marginTop: 4, textAlign: 'center', paddingHorizontal: 32 },
