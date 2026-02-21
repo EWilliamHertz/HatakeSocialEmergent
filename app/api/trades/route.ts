@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { generateId } from '@/lib/utils';
+import { sendPushNotification, getTradeNotification } from '@/lib/push-notifications';
 import sql from '@/lib/db';
 
 export async function GET(request: NextRequest) {
