@@ -218,6 +218,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   const searchCards = async () => {
     setSearching(true);
     setSearchResults([]);
+    setMtgCardGroups([]); // Clear grouped results
     setSearchError('');
     
     try {
