@@ -134,6 +134,30 @@ export default function CommentsModal({
     inputRef.current?.focus();
   };
 
+  const handleCommentReaction = async (commentId: string, emoji: string) => {
+    try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      
+      const response = await fetch(`${API_URL}/api/comments/${commentId}/reactions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ emoji }),
+      });
+      
+      if (response.ok) {
+        // Refresh comments to update reactions
+        fetchComments();
+      }
+    } catch (err) {
+      console.error('Failed to add reaction:', err);
+    }
+  };
+
+  const COMMENT_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+
   // Organize comments into threads
   const organizeComments = () => {
     const topLevel = comments.filter(c => !c.parent_comment_id);
@@ -144,6 +168,8 @@ export default function CommentsModal({
       replies: replies.filter(r => r.parent_comment_id === comment.comment_id),
     }));
   };
+
+  const [showEmojiPickerFor, setShowEmojiPickerFor] = useState<string | null>(null);
 
   const renderComment = ({ item, isReply = false }: { item: Comment & { replies?: Comment[] }; isReply?: boolean }) => (
     <View style={[styles.commentContainer, isReply && styles.replyContainer]}>
@@ -160,13 +186,57 @@ export default function CommentsModal({
             <Text style={styles.commentAuthor}>{item.name}</Text>
             <Text style={styles.commentText}>{item.content}</Text>
           </View>
+          
+          {/* Reactions display */}
+          {item.reactions && item.reactions.length > 0 && (
+            <View style={styles.reactionsRow}>
+              {item.reactions.map((r) => (
+                <TouchableOpacity
+                  key={r.emoji}
+                  style={[styles.reactionBadge, r.userReacted && styles.reactionBadgeActive]}
+                  onPress={() => handleCommentReaction(item.comment_id, r.emoji)}
+                >
+                  <Text style={styles.reactionEmoji}>{r.emoji}</Text>
+                  <Text style={styles.reactionCount}>{r.count}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          
           <View style={styles.commentActions}>
             <Text style={styles.commentTime}>{formatTime(item.created_at)}</Text>
+            <TouchableOpacity onPress={() => handleCommentReaction(item.comment_id, '👍')}>
+              <Text style={styles.actionLink}>Like</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowEmojiPickerFor(
+              showEmojiPickerFor === item.comment_id ? null : item.comment_id
+            )}>
+              <Text style={styles.actionLink}>React</Text>
+            </TouchableOpacity>
             {!isReply && (
               <TouchableOpacity onPress={() => handleReply(item)}>
                 <Text style={styles.replyButton}>Reply</Text>
               </TouchableOpacity>
             )}
+          </View>
+          
+          {/* Emoji picker */}
+          {showEmojiPickerFor === item.comment_id && (
+            <View style={styles.emojiPicker}>
+              {COMMENT_EMOJIS.map(emoji => (
+                <TouchableOpacity
+                  key={emoji}
+                  style={styles.emojiOption}
+                  onPress={() => {
+                    handleCommentReaction(item.comment_id, emoji);
+                    setShowEmojiPickerFor(null);
+                  }}
+                >
+                  <Text style={styles.emojiText}>{emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
           </View>
         </View>
       </View>
