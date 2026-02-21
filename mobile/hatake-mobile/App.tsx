@@ -522,10 +522,12 @@ export default function App() {
                 <VideoCallScreen
                   user={user}
                   token={token}
-                  recipient={callState.recipient}
-                  callType={callState.callType}
-                  isIncoming={callState.isIncoming}
-                  onClose={handleEndCall}
+                  callState={{
+                    recipient: callState.recipient,
+                    callType: callState.callType,
+                    isIncoming: callState.isIncoming,
+                  }}
+                  onEndCall={handleEndCall}
                 />
               )}
             </Modal>
@@ -538,6 +540,13 @@ export default function App() {
                 onAcceptCall={handleIncomingCall}
               />
             )}
+
+            {/* Messenger Widget - Floating chat button */}
+            <MessengerWidget
+              user={user}
+              token={token || ''}
+              visible={messengerWidgetEnabled}
+            />
           </>
         ) : (
           <LoginScreen onLoginSuccess={handleLoginSuccess} />
