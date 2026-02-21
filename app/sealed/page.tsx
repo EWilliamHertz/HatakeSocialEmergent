@@ -679,8 +679,10 @@ export default function SealedProductsPage() {
                     type="number"
                     min="0"
                     step="0.01"
-                    value={formData.purchasePrice}
+                    value={formData.purchasePrice || ''}
                     onChange={(e) => setFormData({ ...formData, purchasePrice: parseFloat(e.target.value) || 0 })}
+                    onFocus={(e) => { if (e.target.value === '0') e.target.value = ''; }}
+                    placeholder="0.00"
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
                   />
                 </div>
@@ -690,8 +692,10 @@ export default function SealedProductsPage() {
                     type="number"
                     min="0"
                     step="0.01"
-                    value={formData.currentValue}
+                    value={formData.currentValue || ''}
                     onChange={(e) => setFormData({ ...formData, currentValue: parseFloat(e.target.value) || 0 })}
+                    onFocus={(e) => { if (e.target.value === '0') e.target.value = ''; }}
+                    placeholder="0.00"
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
                   />
                 </div>
