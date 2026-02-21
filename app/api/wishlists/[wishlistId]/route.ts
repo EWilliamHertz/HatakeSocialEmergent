@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 import { generateId } from '@/lib/utils';
 
@@ -10,8 +10,7 @@ export async function GET(
 ) {
   try {
     const { wishlistId } = await params;
-    const sessionToken = request.cookies.get('session_token')?.value;
-    const currentUser = sessionToken ? await getSessionUser(sessionToken) : null;
+    const currentUser = await getUserFromRequest(request);
 
     // Get wishlist
     const wishlists = await sql`
