@@ -77,11 +77,13 @@ export default function MessengerWidget() {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
   const lastMessageCount = useRef(0);
+  const userScrolledUp = useRef(false);
 
   // Format message timestamp
   const formatMessageTime = (dateStr: string) => {
