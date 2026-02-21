@@ -541,9 +541,9 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
               const setCode = idParts.length > 1 ? idParts.slice(0, -1).join('-').toUpperCase() : '';
               const collectorNum = card.localId || idParts[idParts.length - 1] || '';
               
-              // Prefer European cardmarket prices
-              const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
-              const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : 'N/A';
+              // Prefer European cardmarket prices - TCGdex uses pricing.cardmarket.avg
+              const cmPrice = card.pricing?.cardmarket?.avg || card.pricing?.cardmarket?.trend || 0;
+              const displayPrice = cmPrice > 0 ? `€${cmPrice.toFixed(2)}` : 'N/A';
               
               return {
                 id: card.id,
