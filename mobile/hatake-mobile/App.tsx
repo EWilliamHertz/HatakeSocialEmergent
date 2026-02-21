@@ -428,6 +428,10 @@ export default function App() {
                 user={user}
                 token={token}
                 onClose={() => setShowTrades(false)}
+                onCreateTrade={() => {
+                  setShowTrades(false);
+                  setShowCreateTrade(true);
+                }}
               />
             </Modal>
 
