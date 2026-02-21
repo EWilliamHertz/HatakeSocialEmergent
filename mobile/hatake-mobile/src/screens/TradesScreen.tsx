@@ -407,6 +407,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   backButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  createTradeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#10B981', alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
   title: { fontSize: 18, fontWeight: '600', color: '#1F2937' },
   subtitle: { fontSize: 13, color: '#6B7280', marginTop: 2 },
