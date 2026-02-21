@@ -166,12 +166,8 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
     const postId = String(item.post_id || item.id);
 
     const handleUserPress = () => {
-      // Show alert with user info (profile navigation not yet implemented)
-      if (Platform.OS === 'web') {
-        alert(`View ${userName}'s profile - Coming soon!`);
-      } else {
-        Alert.alert('Profile', `View ${userName}'s profile - Coming soon!`);
-      }
+      // Open user profile modal
+      setViewProfileUserId(item.user_id);
     };
 
     const handleLike = async () => {
