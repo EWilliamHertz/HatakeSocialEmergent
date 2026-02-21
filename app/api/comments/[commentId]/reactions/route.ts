@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
+import { createNotification } from '@/lib/notifications';
 
 // Add or remove emoji reaction on a comment
 export async function POST(
@@ -51,6 +52,26 @@ export async function POST(
         INSERT INTO comment_reactions (comment_id, user_id, emoji)
         VALUES (${commentId}, ${user.user_id}, ${emoji})
       `;
+      
+      // Get comment owner to send notification
+      const comments = await sql`
+        SELECT user_id, post_id FROM comments WHERE comment_id = ${commentId}
+      `;
+      
+      if (comments.length > 0 && comments[0].user_id !== user.user_id) {
+        try {
+          await createNotification({
+            userId: comments[0].user_id,
+            type: 'like',
+            title: 'New Reaction',
+            message: `${user.name} reacted ${emoji} to your comment`,
+            link: `/feed#${comments[0].post_id}`,
+          });
+        } catch (e) {
+          console.error('Failed to send comment reaction notification:', e);
+        }
+      }
+      
       return NextResponse.json({ success: true, action: 'added' });
     }
   } catch (error) {
