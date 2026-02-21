@@ -227,23 +227,32 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
           }
         }
         
-        // Build search query
-        let query = '';
+        // Build search query - combine all provided fields
+        const queryParts: string[] = [];
         if (searchQuery.trim()) {
-          query = `name:${searchQuery.trim()}`;
+          queryParts.push(`name:${searchQuery.trim()}`);
         }
         if (setCodeQuery.trim()) {
-          query += (query ? ' ' : '') + `set:${setCodeQuery.toLowerCase().trim()}`;
+          queryParts.push(`set:${setCodeQuery.toLowerCase().trim()}`);
         }
-        if (collectorNumQuery.trim() && !setCodeQuery.trim()) {
-          query += (query ? ' ' : '') + `cn:${collectorNumQuery.trim()}`;
+        if (collectorNumQuery.trim()) {
+          queryParts.push(`cn:${collectorNumQuery.trim()}`);
         }
         
+        const query = queryParts.join(' ');
+        
         if (!query) {
+          // No search criteria provided - show error
+          if (Platform.OS === 'web') {
+            alert('Please enter a card name, set code, or collector number');
+          } else {
+            Alert.alert('Search', 'Please enter a card name, set code, or collector number');
+          }
           setSearching(false);
           return;
         }
         
+        console.log('MTG Search query:', query);
         const response = await fetch(
           `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`
         );
@@ -263,9 +272,20 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               game: 'mtg' as const,
               data: card,
             })));
+          } else {
+            console.log('No results found');
           }
         } else {
-          console.log('Search failed:', await response.text());
+          const errorText = await response.text();
+          console.log('Scryfall search failed:', errorText);
+          // Scryfall returns 404 for no results, which is normal
+          if (response.status !== 404) {
+            if (Platform.OS === 'web') {
+              alert('Search failed. Please try again.');
+            } else {
+              Alert.alert('Error', 'Search failed. Please try again.');
+            }
+          }
         }
       } else {
         // Pokemon search
