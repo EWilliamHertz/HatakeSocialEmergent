@@ -1,6 +1,6 @@
 // API Configuration
 // Update this to your production API URL when deploying
-export const API_BASE_URL = 'https://trading-cards-6.preview.emergentagent.com';
+export const API_BASE_URL = 'https://hatake.eu';
 
 export const API_ENDPOINTS = {
   // Auth
