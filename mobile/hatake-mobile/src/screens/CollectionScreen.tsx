@@ -1625,6 +1625,19 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#E5E7EB',
   },
+  debugBox: {
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#92400E',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
   searchResultImagePlaceholder: {
     width: 50,
     height: 70,
