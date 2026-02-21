@@ -707,6 +707,7 @@ export default function MarketplacePage() {
                           alt={selectedProduct.name}
                           fill
                           className="object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -736,6 +737,7 @@ export default function MarketplacePage() {
                                 width={64}
                                 height={64}
                                 className="object-cover w-full h-full"
+                                unoptimized
                               />
                             </button>
                           ))}
