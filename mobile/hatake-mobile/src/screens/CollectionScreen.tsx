@@ -646,22 +646,22 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
 
   const stats = calculateCollectionStats();
 
-  // State for card detail modal
-  const [selectedCard, setSelectedCard] = useState<CollectionItem | null>(null);
+  // State for card detail modal (collection card view/edit)
+  const [detailCard, setDetailCard] = useState<CollectionItem | null>(null);
   const [editingQuantity, setEditingQuantity] = useState('1');
   const [editingFinish, setEditingFinish] = useState('Normal');
   const [editingCondition, setEditingCondition] = useState('Near Mint');
   const [savingEdit, setSavingEdit] = useState(false);
 
   const openCardDetail = (item: CollectionItem) => {
-    setSelectedCard(item);
+    setDetailCard(item);
     setEditingQuantity(String(item.quantity || 1));
     setEditingFinish(item.finish || 'Normal');
     setEditingCondition(item.condition || 'Near Mint');
   };
 
   const updateCard = async () => {
-    if (!selectedCard) return;
+    if (!detailCard) return;
     setSavingEdit(true);
     try {
       const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
@@ -672,7 +672,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
           'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-          item_id: selectedCard.item_id || selectedCard.id,
+          item_id: detailCard.item_id || detailCard.id,
           quantity: parseInt(editingQuantity) || 1,
           finish: editingFinish,
           condition: editingCondition,
@@ -680,7 +680,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
       });
       if (response.ok) {
         fetchCollection();
-        setSelectedCard(null);
+        setDetailCard(null);
       } else {
         const err = await response.text();
         Alert.alert('Error', 'Failed to update card');
@@ -711,7 +711,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               });
               if (response.ok) {
                 fetchCollection();
-                setSelectedCard(null);
+                setDetailCard(null);
               } else {
                 Alert.alert('Error', 'Failed to delete card');
               }
