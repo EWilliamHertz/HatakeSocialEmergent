@@ -1429,4 +1429,32 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.6,
   },
+  statsRow: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 12,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  mtgColor: {
+    color: '#7C3AED',
+  },
+  pokemonColor: {
+    color: '#F59E0B',
+  },
 });
