@@ -206,11 +206,24 @@ export default function App() {
       return;
     }
     
+    // Handle Wishlists
+    if (screen === 'wishlists') {
+      setDrawerOpen(false);
+      setShowWishlists(true);
+      return;
+    }
+    
+    // Handle Reputation
+    if (screen === 'reputation') {
+      setDrawerOpen(false);
+      setShowReputation(true);
+      return;
+    }
+    
     // Show coming soon for screens not yet implemented in mobile
-    const comingSoonScreens = ['wishlists', 'settings'];
+    const comingSoonScreens = ['settings'];
     if (comingSoonScreens.includes(screen)) {
       const screenNames: Record<string, string> = {
-        'wishlists': 'Wishlists',
         'settings': 'Settings',
       };
       const name = screenNames[screen] || screen;
