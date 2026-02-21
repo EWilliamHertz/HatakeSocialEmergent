@@ -55,6 +55,11 @@ export default function FeedPage() {
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const [postReactions, setPostReactions] = useState<Record<string, Reaction[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
+  
+  // Groups for posting
+  const [myGroups, setMyGroups] = useState<any[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [showGroupDropdown, setShowGroupDropdown] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -66,7 +71,10 @@ export default function FeedPage() {
         setAuthenticated(true);
         return res.json();
       })
-      .then(() => loadPosts())
+      .then(() => {
+        loadPosts();
+        loadMyGroups();
+      })
       .catch(() => router.push('/auth/login'));
   }, [router]);
 
@@ -74,12 +82,28 @@ export default function FeedPage() {
     if (authenticated) {
       loadPosts();
     }
-  }, [tab, authenticated]);
+  }, [tab, authenticated, selectedGroup]);
+
+  const loadMyGroups = async () => {
+    try {
+      const res = await fetch('/api/groups', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setMyGroups(data.myGroups || []);
+      }
+    } catch (e) {
+      console.log('Failed to load groups:', e);
+    }
+  };
 
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/feed?tab=${tab}`);
+      let url = `/api/feed?tab=${tab}`;
+      if (tab === 'groups' && selectedGroup) {
+        url += `&group_id=${selectedGroup}`;
+      }
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setPosts(data.posts || []);
