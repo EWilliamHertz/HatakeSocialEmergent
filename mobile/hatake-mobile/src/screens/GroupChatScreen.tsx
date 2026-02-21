@@ -185,7 +185,7 @@ export default function GroupChatScreen({ user, token, group, onClose }: GroupCh
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <Container style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
