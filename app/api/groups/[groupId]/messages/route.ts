@@ -84,11 +84,11 @@ export async function POST(
       return NextResponse.json({ error: 'Not a member of this group' }, { status: 403 });
     }
 
-    // Insert message
+    // Insert message (table uses user_id not sender_id)
     const messageId = generateId('gmsg');
     await sql`
-      INSERT INTO group_messages (message_id, group_id, sender_id, content, created_at)
-      VALUES (${messageId}, ${groupId}, ${user.user_id}, ${content.trim()}, NOW())
+      INSERT INTO group_messages (message_id, group_id, user_id, content, message_type, created_at)
+      VALUES (${messageId}, ${groupId}, ${user.user_id}, ${content.trim()}, 'text', NOW())
     `;
 
     // Update group activity timestamp
