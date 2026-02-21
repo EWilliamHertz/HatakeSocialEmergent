@@ -57,6 +57,10 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showFriends, setShowFriends] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
+  const [showDecks, setShowDecks] = useState(false);
+  const [showTrades, setShowTrades] = useState(false);
+  const [showGroups, setShowGroups] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [messageRecipient, setMessageRecipient] = useState<any>(null);
   const [callState, setCallState] = useState<CallState>({
     active: false,
