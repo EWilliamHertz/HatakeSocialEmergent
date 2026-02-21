@@ -324,36 +324,42 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         
         // Strategy 1: Direct lookup by set code and collector number
         if (mappedSetCode && collectorNumQuery.trim()) {
-          try {
-            const cardId = `${mappedSetCode}-${collectorNumQuery.trim()}`;
-            console.log(`Trying Pokemon direct lookup: ${cardId}`);
-            const response = await fetch(`${TCGDEX_API}/cards/${cardId}`);
-            if (response.ok) {
-              const card = await response.json();
-              if (card && card.id) {
-                // Prefer European cardmarket prices
-                const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
-                const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : 'N/A';
-                
-                setSearchResults([{
-                  id: card.id,
-                  name: card.name,
-                  image: card.image ? `${card.image}/high.webp` : '',
-                  set_name: card.set?.name || '',
-                  set_code: card.set?.id?.toUpperCase() || mappedSetCode.toUpperCase(),
-                  collector_number: card.localId || collectorNumQuery,
-                  price: displayPrice,
-                  rarity: card.rarity,
-                  game: 'pokemon' as const,
-                  data: card,
-                }]);
-                setSearching(false);
-                return;
+          const numVariants = normalizeCollectorNumber(collectorNumQuery);
+          console.log(`Trying Pokemon direct lookup with variants:`, numVariants);
+          
+          for (const num of numVariants) {
+            try {
+              const cardId = `${mappedSetCode}-${num}`;
+              console.log(`Trying: ${cardId}`);
+              const response = await fetch(`${TCGDEX_API}/cards/${cardId}`);
+              if (response.ok) {
+                const card = await response.json();
+                if (card && card.id) {
+                  // Prefer European cardmarket prices
+                  const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
+                  const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : 'N/A';
+                  
+                  setSearchResults([{
+                    id: card.id,
+                    name: card.name,
+                    image: card.image ? `${card.image}/high.webp` : '',
+                    set_name: card.set?.name || '',
+                    set_code: card.set?.id?.toUpperCase() || mappedSetCode.toUpperCase(),
+                    collector_number: card.localId || num,
+                    price: displayPrice,
+                    rarity: card.rarity,
+                    game: 'pokemon' as const,
+                    data: card,
+                  }]);
+                  setSearching(false);
+                  return;
+                }
               }
+            } catch (e) {
+              // Try next variant
             }
-          } catch (e) {
-            console.log('Pokemon direct lookup failed, trying search...');
           }
+          console.log('Pokemon direct lookup failed, trying search...');
         }
         
         // Strategy 2: Search by name (with optional set/number filter)
