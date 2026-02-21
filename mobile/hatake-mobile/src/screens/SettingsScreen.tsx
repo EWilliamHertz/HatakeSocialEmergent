@@ -32,8 +32,13 @@ export default function SettingsScreen({ user, token, onClose, onLogout }: Setti
   // Profile settings
   const [name, setName] = useState(user?.name || '');
   const [shippingAddress, setShippingAddress] = useState('');
+  
+  // Payment settings - Swedish
   const [paymentSwish, setPaymentSwish] = useState('');
-  const [paymentAccount, setPaymentAccount] = useState('');
+  const [paymentClearing, setPaymentClearing] = useState('');
+  const [paymentKontonummer, setPaymentKontonummer] = useState('');
+  const [paymentIban, setPaymentIban] = useState('');
+  const [paymentSwift, setPaymentSwift] = useState('');
   
   // UI state
   const [loading, setLoading] = useState(true);
@@ -62,7 +67,10 @@ export default function SettingsScreen({ user, token, onClose, onLogout }: Setti
         setName(data.user.name || '');
         setShippingAddress(data.user.shipping_address || '');
         setPaymentSwish(data.user.payment_swish || '');
-        setPaymentAccount(data.user.payment_account || '');
+        setPaymentClearing(data.user.payment_clearing || '');
+        setPaymentKontonummer(data.user.payment_kontonummer || '');
+        setPaymentIban(data.user.payment_iban || '');
+        setPaymentSwift(data.user.payment_swift || '');
       }
     } catch (err) {
       console.error('Failed to fetch settings:', err);
