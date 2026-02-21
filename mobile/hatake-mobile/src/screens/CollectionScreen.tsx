@@ -704,18 +704,26 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
           onPress: async () => {
             try {
               const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
-              const itemId = item.item_id || item.id;
+              // Use 'id' field as that's what the API expects
+              const itemId = item.id;
+              console.log('Deleting card with ID:', itemId);
               const response = await fetch(`${API_URL}/api/collection?id=${itemId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${authToken}` },
               });
-              if (response.ok) {
+              const result = await response.json();
+              console.log('Delete response:', result);
+              if (response.ok && result.success) {
                 fetchCollection();
                 setDetailCard(null);
+                if (Platform.OS === 'web') {
+                  alert('Card deleted successfully');
+                }
               } else {
-                Alert.alert('Error', 'Failed to delete card');
+                Alert.alert('Error', result.error || 'Failed to delete card');
               }
             } catch (err) {
+              console.error('Delete error:', err);
               Alert.alert('Error', 'Failed to delete card');
             }
           },
