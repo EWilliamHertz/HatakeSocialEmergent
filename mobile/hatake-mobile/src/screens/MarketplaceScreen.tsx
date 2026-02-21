@@ -459,6 +459,17 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '600',
   },
+  deleteButton: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    backgroundColor: '#EF4444',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cardInfo: {
     padding: 8,
   },
