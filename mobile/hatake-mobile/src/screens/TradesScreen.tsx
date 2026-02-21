@@ -216,7 +216,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
     const incoming = isIncoming(selectedTrade);
     
     return (
-      <Container style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => setSelectedTrade(null)} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
@@ -337,13 +337,13 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
             </Text>
           </View>
         </View>
-      </Container>
+      </View>
     );
   }
 
   // Trades List View
   return (
-    <Container style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         {onOpenMenu ? (
           <TouchableOpacity onPress={onOpenMenu} style={styles.backButton}>
@@ -405,7 +405,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
           }
         />
       )}
-    </Container>
+    </View>
   );
 }
 
