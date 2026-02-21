@@ -625,6 +625,34 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
             <Ionicons name="add" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
+        
+        {/* Collection Value Stats */}
+        {items.length > 0 && (
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+              <Text style={styles.statLabel}>Total Value</Text>
+              <Text style={styles.statValue}>
+                ${stats.totalValue.toFixed(2)}
+              </Text>
+            </View>
+            {stats.mtgValue > 0 && (
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>MTG</Text>
+                <Text style={[styles.statValue, styles.mtgColor]}>
+                  ${stats.mtgValue.toFixed(2)}
+                </Text>
+              </View>
+            )}
+            {stats.pokemonValue > 0 && (
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Pokémon</Text>
+                <Text style={[styles.statValue, styles.pokemonColor]}>
+                  ${stats.pokemonValue.toFixed(2)}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       <View style={styles.filters}>
