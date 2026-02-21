@@ -867,6 +867,149 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         />
       )}
 
+      {/* Card Detail Modal */}
+      <Modal
+        visible={selectedCard !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSelectedCard(null)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Card Details</Text>
+            <TouchableOpacity onPress={() => setSelectedCard(null)}>
+              <Ionicons name="close" size={28} color="#1F2937" />
+            </TouchableOpacity>
+          </View>
+
+          {selectedCard && (
+            <ScrollView style={styles.modalContent}>
+              {/* Card Image */}
+              <View style={styles.detailImageContainer}>
+                {getCardImage(selectedCard) ? (
+                  <Image 
+                    source={{ uri: getCardImage(selectedCard)! }} 
+                    style={styles.detailImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={styles.detailImagePlaceholder}>
+                    <Ionicons name="image-outline" size={80} color="#9CA3AF" />
+                  </View>
+                )}
+              </View>
+
+              {/* Card Info */}
+              <View style={styles.detailInfo}>
+                <Text style={styles.detailName}>{selectedCard.card_data?.name || 'Unknown Card'}</Text>
+                <Text style={styles.detailPrice}>{getDisplayPrice(selectedCard)}</Text>
+                <Text style={styles.detailMeta}>
+                  {selectedCard.game === 'mtg' ? 'Magic: The Gathering' : 'Pokémon TCG'}
+                </Text>
+                <Text style={styles.detailMeta}>
+                  Set: {selectedCard.card_data?.set?.name || selectedCard.card_data?.set_name || 'Unknown'}
+                </Text>
+                {selectedCard.card_data?.rarity && (
+                  <Text style={styles.detailMeta}>Rarity: {selectedCard.card_data.rarity}</Text>
+                )}
+              </View>
+
+              {/* Edit Section */}
+              <View style={styles.editSection}>
+                <Text style={styles.editTitle}>Edit Card</Text>
+                
+                {/* Quantity */}
+                <View style={styles.editRow}>
+                  <Text style={styles.editLabel}>Quantity</Text>
+                  <View style={styles.quantityControls}>
+                    <TouchableOpacity 
+                      style={styles.quantityButton}
+                      onPress={() => setEditingQuantity(String(Math.max(1, parseInt(editingQuantity) - 1)))}
+                    >
+                      <Ionicons name="remove" size={20} color="#fff" />
+                    </TouchableOpacity>
+                    <TextInput
+                      style={styles.quantityInput}
+                      value={editingQuantity}
+                      onChangeText={setEditingQuantity}
+                      keyboardType="number-pad"
+                    />
+                    <TouchableOpacity 
+                      style={styles.quantityButton}
+                      onPress={() => setEditingQuantity(String(parseInt(editingQuantity) + 1))}
+                    >
+                      <Ionicons name="add" size={20} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Finish */}
+                <View style={styles.editRow}>
+                  <Text style={styles.editLabel}>Finish</Text>
+                  <View style={styles.finishOptions}>
+                    {(selectedCard.game === 'mtg' ? getMagicFinishes() : getPokemonFinishes()).map((f) => (
+                      <TouchableOpacity
+                        key={f}
+                        style={[styles.finishOption, editingFinish === f && styles.finishOptionActive]}
+                        onPress={() => setEditingFinish(f)}
+                      >
+                        <Text style={[styles.finishOptionText, editingFinish === f && styles.finishOptionTextActive]}>
+                          {f}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Condition */}
+                <View style={styles.editRow}>
+                  <Text style={styles.editLabel}>Condition</Text>
+                  <View style={styles.finishOptions}>
+                    {['Mint', 'Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played'].map((c) => (
+                      <TouchableOpacity
+                        key={c}
+                        style={[styles.finishOption, editingCondition === c && styles.finishOptionActive]}
+                        onPress={() => setEditingCondition(c)}
+                      >
+                        <Text style={[styles.finishOptionText, editingCondition === c && styles.finishOptionTextActive]}>
+                          {c}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.detailActions}>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={updateCard}
+                  disabled={savingEdit}
+                >
+                  {savingEdit ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark" size={20} color="#fff" />
+                      <Text style={styles.saveButtonText}>Save Changes</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => deleteCard(selectedCard)}
+                >
+                  <Ionicons name="trash-outline" size={20} color="#fff" />
+                  <Text style={styles.deleteButtonText}>Delete Card</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
+
       {/* Search Modal */}
       <Modal
         visible={showAddModal}
