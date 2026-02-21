@@ -210,6 +210,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   const searchCards = async () => {
     setSearching(true);
     setSearchResults([]);
+    setSearchError('');
     
     try {
       if (searchGame === 'mtg') {
@@ -247,18 +248,15 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               setSearching(false);
               return;
             }
-          } catch (e) {
+          } catch (e: any) {
             console.log('Direct lookup failed:', e);
+            setSearchError(`Direct lookup error: ${e.message}`);
           }
         }
         
         // Build search query - combine all provided fields
-        // Note: Scryfall uses full-text search by default, name: prefix requires exact word match
-        // For better partial matching, we use the card name directly without the name: prefix
         const queryParts: string[] = [];
         if (searchQuery.trim()) {
-          // Use the search term directly for partial matching
-          // Scryfall's full-text search handles this better than name: prefix
           queryParts.push(searchQuery.trim());
         }
         if (setCodeQuery.trim()) {
@@ -271,7 +269,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         const query = queryParts.join(' ');
         
         if (!query) {
-          // No search criteria provided - show error
+          setSearchError('Please enter a card name, set code, or collector number');
           if (Platform.OS === 'web') {
             alert('Please enter a card name, set code, or collector number');
           } else {
@@ -283,9 +281,11 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         
         const searchUrl = `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`;
         console.log('MTG Search URL:', searchUrl);
+        setSearchError(`Searching: ${query}`);
         
         const response = await fetch(searchUrl);
         console.log('MTG search response status:', response.status);
+        setSearchError(`Response: ${response.status}`);
         
         if (response.ok) {
           const data = await response.json();
