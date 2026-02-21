@@ -16,10 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-
-const API_URL = 'https://www.hatake.eu';
-const SCRYFALL_API = 'https://api.scryfall.com';
-const TCGDEX_API = 'https://api.tcgdex.net/v2/en';
+import { API_URL, SCRYFALL_API, TCGDEX_API } from '../config';
 
 interface CollectionItem {
   id: number;
