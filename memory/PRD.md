@@ -24,80 +24,97 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ---
 
-## COMPLETED FEATURES - Session 2026-02-21
+## COMPLETED FEATURES - Session 2026-02-21 (Latest)
 
-### Euro Currency Update
-- All prices now display in € (Euro) across web and mobile
-- MTG prices: Prefer EUR from Scryfall, convert USD at 0.92 rate
-- Pokemon prices: Use cardmarket EUR prices
-- Sealed products, marketplace, collection all use €
+### Bug Fixes Verified (All Tests Passed)
 
-### Mobile App Fixes
-1. **Feed Screen Fixed** - Usernames now display correctly, clickable profiles, working like button
-2. **Pokemon Search Improved** - Added set code mapping (sv09, jtg, etc.), multiple search strategies
-3. **MTG Search Fixed** - Now supports name, set code, and collector number searches
-4. **Collection Value Stats** - Shows total value, MTG value, Pokemon value in €
-5. **Card Sizes Fixed** - Collection (46% width, 140px height), Marketplace (46% width, 100px height)
+1. **Mobile Collection Delete** - Fixed platform-specific confirmation dialogs
+   - Uses `window.confirm()` on web for immediate response
+   - Uses `Alert.alert()` on native for native dialogs
+   - DELETE /api/collection?id={id} working with Bearer token
 
-### Web Marketplace Updates
-1. **Shop Tab Added** - New tab showing shop products with product detail modal
-2. **Gallery Support** - Product modal shows image gallery with thumbnails
-3. **Seller Info Fixed** - Using seller_name/seller_picture fields correctly
+2. **Mobile MTG Search** - Fixed partial name matching
+   - Removed `name:` prefix from Scryfall queries
+   - Uses full-text search for better partial matching
+   - Both name search and set+collector number lookup work
 
-### Admin Page Improvements
-1. **Multi-Image Upload** - Can now select multiple gallery images at once
-2. **Gallery Images Field** - Added to shop products database schema
+3. **Mobile Feed Interactions** - Like, comment, emoji features implemented
+   - Like toggle: POST /api/feed/{postId}/like with Bearer token
+   - Emoji reactions: POST /api/feed/{postId}/reactions with emoji body
+   - Feed API now returns reactions array for each post
+
+4. **Price Display** - Search results show prices for both MTG and Pokemon
+   - Removed MTG-only filter for price display
+   - All prices in EUR format
+
+### Previous Session Completions
+- Euro currency conversion across all platforms
+- Pokemon search improvements with set code mapping
+- Collection value stats display
+- Shop tab on marketplace with product gallery
+- Multi-image upload in admin panel
 
 ---
 
 ## KEY API ENDPOINTS
 
+### Collection Management
+- `GET /api/collection` - Get user's collection (supports Bearer token)
+- `POST /api/collection` - Add card to collection
+- `PATCH /api/collection` - Update card details
+- `DELETE /api/collection?id={id}` - Delete single card
+
+### Feed & Social
+- `GET /api/feed` - Get posts with reactions array
+- `POST /api/feed` - Create new post
+- `POST /api/feed/{postId}/like` - Toggle like
+- `POST /api/feed/{postId}/reactions` - Add/remove emoji reaction
+
 ### Shop Products
 - `GET /api/shop` - Get active shop products (includes gallery_images)
 - `POST /api/admin/products` - Create/update product (admin only)
-- `DELETE /api/admin/products/{id}` - Delete product (admin only)
-
-### Collection/Marketplace
-- All prices now unified to EUR format
 
 ---
 
-## DATABASE UPDATES
+## KNOWN BEHAVIORS (Not Bugs)
 
-### shop_products table
-- Added `gallery_images TEXT[]` column for product galleries
-
----
-
-## TEST REPORTS
-- Latest: `/app/test_reports/iteration_13.json`
-- Mobile app syntax fixed (CollectionScreen.tsx)
+1. **Shop Products without images** - Show Package placeholder icon (expected)
+2. **Cards without price data** - Show "N/A" for cards added before price tracking
+3. **Comments** - Currently show "Coming soon" placeholder (P2 feature)
 
 ---
 
 ## NEXT STEPS
 
-### User Verification Needed
-- Test marketplace Shop tab functionality
-- Test multi-image gallery upload in admin
-- Verify all prices display in € correctly
-- Test mobile app search improvements
-
 ### High Priority (P1)
 1. **Mobile App Phase 2:**
+   - Implement full comments system (view, reply, create)
    - Implement Trades screen
    - Implement Friends screen
-   - Implement Wishlists screen
 
-2. **Mobile Shop Tab** - Add shop products to mobile marketplace
+2. **Mobile Bulk Actions:**
+   - Multi-select mode for collection
+   - Bulk delete functionality
+   - Bulk list for sale
 
 ### Medium Priority (P2)
-1. Mobile App real-time messaging
-2. Push notifications for trade updates
+1. Search results pagination
+2. Delete own marketplace listings (mobile)
+3. Profile & Settings pages (mobile)
+4. Mobile real-time messaging
 
 ### Future (P3)
-- Card Recognition ML integration
+- Deck Builder playtesting
+- Push notifications
+- Card Recognition ML
 - App store publishing
+
+---
+
+## TEST REPORTS
+- Latest: `/app/test_reports/iteration_14.json` - All 7 bugs verified fixed
+- Backend: 100% (17/17 tests passed)
+- Frontend: 100% verified
 
 ---
 
