@@ -208,9 +208,11 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
 
   const renderItem = ({ item }: { item: Listing }) => {
     const imageUrl = getCardImage(item);
+    const isOwner = item.user_id === user?.user_id;
+    const isDeleting = deletingId === item.listing_id;
     
     return (
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity style={styles.card} data-testid={`listing-${item.listing_id}`}>
         <View style={styles.cardImageContainer}>
           {imageUrl ? (
             <Image 
@@ -227,6 +229,20 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
             <View style={styles.foilBadge}>
               <Text style={styles.foilText}>Foil</Text>
             </View>
+          )}
+          {isOwner && (
+            <TouchableOpacity 
+              style={styles.deleteButton}
+              onPress={() => handleDeleteListing(item.listing_id)}
+              disabled={isDeleting}
+              data-testid={`delete-listing-${item.listing_id}`}
+            >
+              {isDeleting ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Ionicons name="trash" size={14} color="#FFFFFF" />
+              )}
+            </TouchableOpacity>
           )}
         </View>
         
@@ -251,7 +267,7 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
               </View>
             )}
             <Text style={styles.sellerName} numberOfLines={1}>
-              {item.seller_name || 'Seller'}
+              {isOwner ? 'You' : (item.seller_name || 'Seller')}
             </Text>
           </View>
         </View>
