@@ -3,7 +3,7 @@ import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 import { generateId } from '@/lib/utils';
 
-// GET - List user's decks
+// GET - List user's decks or community decks
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
@@ -11,14 +11,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const decks = await sql`
-      SELECT 
-        d.*,
-        (SELECT COUNT(*) FROM deck_cards WHERE deck_id = d.deck_id) as card_count
-      FROM decks d
-      WHERE d.user_id = ${user.user_id}
-      ORDER BY d.updated_at DESC
-    `;
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+
+    let decks;
+    
+    if (type === 'community') {
+      // Get public decks from all users (excluding current user's)
+      decks = await sql`
+        SELECT 
+          d.*,
+          u.name as user_name,
+          u.picture as user_picture,
+          (SELECT COUNT(*) FROM deck_cards WHERE deck_id = d.deck_id) as card_count
+        FROM decks d
+        JOIN users u ON d.user_id = u.user_id
+        WHERE d.is_public = true AND d.user_id != ${user.user_id}
+        ORDER BY d.updated_at DESC
+        LIMIT 50
+      `;
+    } else {
+      // Get user's own decks
+      decks = await sql`
+        SELECT 
+          d.*,
+          (SELECT COUNT(*) FROM deck_cards WHERE deck_id = d.deck_id) as card_count
+        FROM decks d
+        WHERE d.user_id = ${user.user_id}
+        ORDER BY d.updated_at DESC
+      `;
+    }
 
     return NextResponse.json({ success: true, decks });
   } catch (error) {
