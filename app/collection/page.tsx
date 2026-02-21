@@ -1524,8 +1524,15 @@ export default function CollectionPage() {
                   <h3 className="text-lg font-bold dark:text-white">Import from ManaBox CSV</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {importStatus === 'idle' && 'Upload a ManaBox export file to import your cards'}
-                    {importStatus === 'preview' && `${importCards.length} cards ready to import`}
-                    {importStatus === 'importing' && 'Importing cards...'}
+                    {importStatus === 'preview' && (
+                      <>
+                        {totalCardsToImport} cards ready to import
+                        {totalCardsToImport > importCards.length && (
+                          <span className="text-xs text-gray-400"> (showing first {importCards.length} for preview)</span>
+                        )}
+                      </>
+                    )}
+                    {importStatus === 'importing' && `Importing ${totalCardsToImport} cards...`}
                     {importStatus === 'done' && `Import complete!`}
                   </p>
                 </div>
