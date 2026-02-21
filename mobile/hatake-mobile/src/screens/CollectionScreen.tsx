@@ -519,7 +519,23 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               console.log(`After number filter: ${results.length} results`);
             }
             
-            setSearchResults(results.slice(0, 50).map((card: any) => {
+            // Fetch full details for each card to get prices (limit to first 20)
+            const limitedResults = results.slice(0, 20);
+            const detailedResults = await Promise.all(
+              limitedResults.map(async (card: any) => {
+                try {
+                  const detailRes = await fetch(`${TCGDEX_API}/cards/${card.id}`);
+                  if (detailRes.ok) {
+                    return await detailRes.json();
+                  }
+                  return card;
+                } catch {
+                  return card;
+                }
+              })
+            );
+            
+            setSearchResults(detailedResults.map((card: any) => {
               const idParts = card.id?.split('-') || [];
               const setCode = idParts.length > 1 ? idParts.slice(0, -1).join('-').toUpperCase() : '';
               const collectorNum = card.localId || idParts[idParts.length - 1] || '';
