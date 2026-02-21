@@ -213,6 +213,19 @@ export default function App() {
     });
   };
 
+  const handleIncomingCall = (incomingCall: any) => {
+    setCallState({
+      active: true,
+      recipient: {
+        user_id: incomingCall.caller_id,
+        name: incomingCall.caller_name,
+        picture: incomingCall.caller_picture,
+      },
+      callType: incomingCall.call_type || 'audio',
+      isIncoming: true,
+    });
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
