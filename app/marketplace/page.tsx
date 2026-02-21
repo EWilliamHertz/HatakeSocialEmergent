@@ -395,8 +395,8 @@ export default function MarketplacePage() {
               </div>
             )}
           
-          {/* Advanced Filters Panel */}
-          {showFilters && (
+          {/* Advanced Filters Panel - Cards Tab Only */}
+          {activeTab === 'cards' && showFilters && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
