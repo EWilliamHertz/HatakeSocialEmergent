@@ -1085,8 +1085,7 @@ export default function CollectionPage() {
             )}
           </>
         )}
-      </div>
-      </>
+        </>
       )}
 
       {/* Sealed Products Tab Content */}
