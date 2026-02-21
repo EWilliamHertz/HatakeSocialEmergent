@@ -1,7 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 import { generateId } from '@/lib/utils';
+
+// GET - Fetch cards in deck
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ deckId: string }> }
+) {
+  try {
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const { deckId } = await params;
+
+    // Check if deck exists and user has access
+    const decks = await sql`
+      SELECT user_id, is_public FROM decks WHERE deck_id = ${deckId}
+    `;
+
+    if (decks.length === 0) {
+      return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
+    }
+
+    const deck = decks[0];
+    if (deck.user_id !== user.user_id && !deck.is_public) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+    }
+
+    const cards = await sql`
+      SELECT 
+        id,
+        card_id,
+        card_data,
+        quantity,
+        category as is_sideboard
+      FROM deck_cards
+      WHERE deck_id = ${deckId}
+      ORDER BY card_data->>'name' ASC
+    `;
+
+    // Transform for frontend compatibility
+    const formattedCards = cards.map(c => ({
+      ...c,
+      is_sideboard: c.is_sideboard === 'sideboard',
+    }));
+
+    return NextResponse.json({ success: true, cards: formattedCards });
+  } catch (error) {
+    console.error('Get deck cards error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 
 // POST - Add card to deck
 export async function POST(
@@ -9,14 +61,9 @@ export async function POST(
   { params }: { params: Promise<{ deckId: string }> }
 ) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { deckId } = await params;
