@@ -216,8 +216,19 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Marketplace</Text>
-        <Text style={styles.subtitle}>{listings.length} listings</Text>
+        <View style={styles.headerRow}>
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={onOpenMenu}
+          >
+            <Ionicons name="menu" size={26} color="#1F2937" />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.title}>Marketplace</Text>
+            <Text style={styles.subtitle}>{listings.length} listings</Text>
+          </View>
+          <View style={styles.menuButton} />
+        </View>
       </View>
 
       {/* Filters */}
