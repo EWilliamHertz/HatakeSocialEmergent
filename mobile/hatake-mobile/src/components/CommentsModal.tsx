@@ -237,7 +237,6 @@ export default function CommentsModal({
               ))}
             </View>
           )}
-          </View>
         </View>
       </View>
       
