@@ -214,10 +214,21 @@ export default function MessengerWidget() {
     }
   }, [soundEnabled]);
 
-  // Scroll to bottom
+  // Scroll to bottom only when new messages arrive or user sends a message
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Only auto-scroll if user hasn't scrolled up and there are new messages
+    if (!userScrolledUp.current && messages.length > lastMessageCount.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    lastMessageCount.current = messages.length;
   }, [messages]);
+
+  // Handle scroll event to detect if user scrolled up
+  const handleMessagesScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const isAtBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 50;
+    userScrolledUp.current = !isAtBottom;
+  };
 
   useEffect(() => {
     // Check auth status
