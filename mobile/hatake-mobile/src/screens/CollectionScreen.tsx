@@ -568,20 +568,22 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   };
 
   // Get price from card data - handles both MTG and Pokemon formats
+  // All prices returned in EUR
   const getCardPrice = (item: CollectionItem): number => {
     try {
       const data = item.card_data;
       if (!data) return 0;
       
       if (item.game === 'mtg') {
-        // Scryfall format
-        const price = parseFloat(data.prices?.usd) || parseFloat(data.prices?.eur) || 0;
+        // Scryfall format - prefer EUR, convert USD if needed
+        const eurPrice = parseFloat(data.prices?.eur) || 0;
+        const usdPrice = parseFloat(data.prices?.usd) || 0;
+        const price = eurPrice || (usdPrice * 0.92); // Approximate USD to EUR conversion
         return price * (item.quantity || 1);
       } else {
-        // TCGdex format - check cardmarket and tcgplayer
+        // TCGdex format - cardmarket prices are already in EUR
         const cmPrice = data.cardmarket?.prices?.averageSellPrice || data.cardmarket?.prices?.trendPrice || data.pricing?.cardmarket?.avg || 0;
-        const tcgPrice = data.tcgplayer?.prices?.holofoil?.market || data.tcgplayer?.prices?.normal?.market || 0;
-        const price = cmPrice || tcgPrice || parseFloat(data.purchase_price) || 0;
+        const price = cmPrice || parseFloat(data.purchase_price) || 0;
         return price * (item.quantity || 1);
       }
     } catch {
