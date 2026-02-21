@@ -185,12 +185,21 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
         </View>
 
         {isMember ? (
-          <TouchableOpacity 
-            style={styles.leaveButton}
-            onPress={() => leaveGroup(item.group_id)}
-          >
-            <Ionicons name="exit-outline" size={20} color="#6B7280" />
-          </TouchableOpacity>
+          <View style={styles.memberActions}>
+            <TouchableOpacity 
+              style={styles.chatButton}
+              onPress={() => setSelectedGroup(item)}
+              data-testid={`chat-${item.group_id}`}
+            >
+              <Ionicons name="chatbubble" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.leaveButton}
+              onPress={() => leaveGroup(item.group_id)}
+            >
+              <Ionicons name="exit-outline" size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
         ) : (
           <TouchableOpacity 
             style={styles.joinButton}
@@ -202,6 +211,18 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
       </View>
     );
   };
+
+  // If viewing a group chat
+  if (selectedGroup) {
+    return (
+      <GroupChatScreen
+        user={user}
+        token={token}
+        group={selectedGroup}
+        onClose={() => setSelectedGroup(null)}
+      />
+    );
+  }
 
   const currentGroups = tab === 'my' ? myGroups : discoverGroups;
 
