@@ -12,42 +12,66 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 - Cloudinary (image storage)
 - TCGdex API (Pokemon), Scryfall API (MTG)
 - **Resend** (email notifications)
+- **LiveKit** (video/voice calls)
 
 ### Mobile Application
 - React Native with Expo
 - React Navigation (Native Stack + Bottom Tabs)
 - Native fetch (API Client)
-- **LiveKit** (planned for video calls)
+- **LiveKit React Native** (video/voice calls - requires native build)
 
 ## Test Credentials
 - **Test User**: test@test.com / password (admin)
 
 ---
 
-## COMPLETED FEATURES - Session 2026-02-22
+## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
-### Latest Features (This Session)
+### Latest Features (Current Session)
 
-1. **Email Verification System** ✅
+1. **Delete Marketplace Listings** ✅ (Both Platforms)
+   - Delete button visible on own listings
+   - "My Listings" filter tab in mobile marketplace
+   - Admin can delete any listing
+   - Confirmation dialog before deletion
+   - Mobile: Uses Bearer token auth
+
+2. **LiveKit Video/Audio Calls Integration** ✅
+   - Full LiveKit React Native SDK installed
+   - Screen sharing support built-in
+   - Call controls: mute, camera toggle, speaker, screen share
+   - Graceful fallback in Expo Go (shows "native build required")
+   - app.json configured with camera/microphone permissions
+   - BUILD_GUIDE.md created with EAS build instructions
+
+3. **Updated Call Screen Features** ✅
+   - HD quality indicator when LiveKit is available
+   - Screen share button during video calls
+   - Better control labels and UI
+   - LiveKit room connection on call accept
+
+### Previous Session Features
+
+4. **Email Verification System** ✅
    - Verification email sent on signup
    - 24-hour expiration on verification links
    - Web page for email verification (`/verify-email`)
-   - Resend verification email option
-   - Database columns: `verification_token`, `verification_expires`
 
-2. **Email Notifications** ✅
-   - **Friend Requests**: Email when someone sends you a friend request
-   - **New Messages**: Email when you receive a first message from someone
-   - **Reactions**: Email when someone reacts to your post
-   - Beautiful HTML email templates with Hatake branding
-   - Non-blocking email sending (doesn't slow down API responses)
+5. **Email Notifications** ✅
+   - Friend Requests, New Messages, Reactions
+   - Beautiful HTML email templates
 
-3. **Incoming Call Notifications** ✅
-   - Global call listener running across all screens
-   - Visual notification overlay when receiving a call
-   - Accept/Decline buttons
-   - Vibration feedback on mobile devices
-   - Auto-detection of caller info (name, picture)
+6. **Incoming Call Notifications** ✅
+   - Global call listener
+   - Visual overlay with Accept/Decline
+
+7. **Friends System** ✅ (Mobile)
+   - Search, Add, Accept, Remove friends
+   - Three tabs: Friends, Requests, Search
+
+8. **Messaging System** ✅ (Mobile)
+   - Conversations list
+   - Real-time chat with polling
 
 4. **Friends System** ✅
    - Full Friends screen accessible from hamburger menu
