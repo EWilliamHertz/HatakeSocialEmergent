@@ -408,7 +408,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
           }
         />
       )}
-    </SafeAreaView>
+    </Container>
   );
 }
 
