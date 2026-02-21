@@ -36,11 +36,11 @@ export async function GET(
 
     // Get the user's collection
     const items = await sql`
-      SELECT id, card_id, card_data, game, quantity, condition, is_foil, finish,
-        is_graded, grading_company, grade_value, created_at
+      SELECT id, card_id, card_data, game, quantity, condition, foil, finish,
+        is_graded, grading_company, grade_value, added_at
       FROM collection_items
       WHERE user_id = ${userId}
-      ORDER BY created_at DESC
+      ORDER BY added_at DESC
       LIMIT 100
     `;
 
