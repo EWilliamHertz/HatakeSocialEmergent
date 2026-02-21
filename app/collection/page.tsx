@@ -81,6 +81,8 @@ export default function CollectionPage() {
   const [importStatus, setImportStatus] = useState<'idle' | 'preview' | 'importing' | 'done'>('idle');
   const [importResult, setImportResult] = useState<{ imported: number; errors?: string[] } | null>(null);
   const [importGameType, setImportGameType] = useState<'mtg' | 'pokemon'>('mtg');
+  const [originalCsvContent, setOriginalCsvContent] = useState<string>(''); // Store original CSV for full import
+  const [totalCardsToImport, setTotalCardsToImport] = useState<number>(0); // Track total cards in CSV
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Manual add card state
