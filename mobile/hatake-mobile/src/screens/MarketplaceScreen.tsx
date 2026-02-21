@@ -33,9 +33,10 @@ interface Listing {
 interface MarketplaceScreenProps {
   user: any;
   token: string;
+  onOpenMenu?: () => void;
 }
 
-export default function MarketplaceScreen({ user, token }: MarketplaceScreenProps) {
+export default function MarketplaceScreen({ user, token, onOpenMenu }: MarketplaceScreenProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
