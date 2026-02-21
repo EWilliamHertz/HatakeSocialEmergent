@@ -219,7 +219,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
     const incoming = isIncoming(selectedTrade);
     
     return (
-      <SafeAreaView style={styles.container}>
+      <Container style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => setSelectedTrade(null)} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
