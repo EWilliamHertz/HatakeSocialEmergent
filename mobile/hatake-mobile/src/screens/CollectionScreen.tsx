@@ -276,10 +276,10 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         if (response.ok) {
           const data = await response.json();
           console.log('MTG search found:', data.cards?.length || 0, 'cards');
-          setSearchError(`Found ${data.cards?.length || 0} MTG cards`);
           
           if (data.cards && data.cards.length > 0) {
-            setSearchResults(data.cards.slice(0, 50).map((card: any) => {
+            // Convert all cards to SearchResult format
+            const allResults: SearchResult[] = data.cards.map((card: any) => {
               const eurPrice = card.prices?.eur;
               const usdPrice = card.prices?.usd;
               const displayPrice = eurPrice ? `€${parseFloat(eurPrice).toFixed(2)}` : 
@@ -296,10 +296,32 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                 game: 'mtg' as const,
                 data: card,
               };
+            });
+            
+            // Group cards by name for edition picker
+            const groupedByName = new Map<string, SearchResult[]>();
+            allResults.forEach(card => {
+              const existing = groupedByName.get(card.name) || [];
+              existing.push(card);
+              groupedByName.set(card.name, existing);
+            });
+            
+            // Convert to CardGroup array
+            const groups: CardGroup[] = Array.from(groupedByName.entries()).map(([name, editions]) => ({
+              name,
+              editions: editions.sort((a, b) => {
+                // Sort by set name alphabetically
+                return a.set_name.localeCompare(b.set_name);
+              }),
+              selectedEdition: 0,
             }));
-            setSearchError('');
+            
+            setMtgCardGroups(groups);
+            setSearchResults([]); // Clear flat results for MTG
+            setSearchError(`Found ${groups.length} unique cards (${data.cards.length} editions)`);
           } else {
             console.log('No MTG results found');
+            setMtgCardGroups([]);
             setSearchError('No Magic cards found');
             if (Platform.OS === 'web') {
               alert('No Magic cards found with that search.');
