@@ -50,8 +50,7 @@
           "photosPermission": "Allow Hatake.Social to access your photos to import card images."
         }
       ],
-      "expo-secure-store",
-      "expo-router"
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {
