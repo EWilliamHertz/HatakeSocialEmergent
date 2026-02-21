@@ -70,13 +70,13 @@ export default function ReputationPage() {
 
   const fetchReputation = async (userId: string) => {
     try {
-      const res = await fetch(`/api/trades/reputation?userId=${userId}`, {
+      const res = await fetch(`/api/reputation?userId=${userId}`, {
         credentials: 'include',
       });
       const data = await res.json();
       if (data.success) {
         setStats(data.stats);
-        setRatings(data.ratings || []);
+        setRatings(data.recentRatings || []);
       }
     } catch (err) {
       console.error('Failed to fetch reputation:', err);
@@ -87,7 +87,7 @@ export default function ReputationPage() {
 
   const fetchPendingRatings = async () => {
     try {
-      const res = await fetch('/api/trades/reputation/pending', {
+      const res = await fetch('/api/reputation/pending', {
         credentials: 'include',
       });
       const data = await res.json();
@@ -104,13 +104,12 @@ export default function ReputationPage() {
     
     setSubmitting(true);
     try {
-      const res = await fetch('/api/trades/reputation', {
+      const res = await fetch('/api/reputation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           tradeId: selectedTrade.trade_id,
-          ratedUserId: selectedTrade.other_user_id,
           rating: newRating,
           comment: ratingComment,
         }),
