@@ -39,6 +39,7 @@ const menuItems: MenuItem[] = [
   { id: 'friends', label: 'Friends', icon: 'people-outline' },
   { id: 'groups', label: 'Groups', icon: 'chatbubbles-outline' },
   { id: 'messages', label: 'Messages', icon: 'mail-outline', badge: 0 },
+  { id: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
   { id: 'deckbuilder', label: 'Deck Builder', icon: 'layers-outline' },
   { id: 'profile', label: 'Profile', icon: 'person-outline' },
 ];
