@@ -27,6 +27,40 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Session 4 Updates - Bug Fixes & Enhancements (2026-02-21)
+
+1. **Feed Groups Tab Fixed (Web + Mobile)** ✅
+   - Fixed API field mismatch (was expecting 'myGroups' but API returns 'groups')
+   - Group selector dropdown now works correctly
+   - Can create posts to specific groups
+   - Feed POST API accepts both 'group_id' and 'groupId' for backwards compatibility
+
+2. **CSV Import for Collection (Mobile)** ✅
+   - New CSV import modal accessible from collection header
+   - Supports multiple CSV formats:
+     - `set_code, collector_number, quantity`
+     - Space-separated format
+   - Game selector (MTG/Pokemon)
+   - Progress tracking during import
+   - Import log with success/failure status
+   
+3. **Pokémon Card Limit Increased** ✅
+   - Changed from 20 to 100 cards max per search
+   - Matches Magic: The Gathering search limits
+
+4. **Enhanced Deck Builder (Mobile)** ✅
+   - Two tabs: "My Decks" | "Community Decks"
+   - Game filters (All, MTG, Pokemon)
+   - Format filters (Standard, Modern, Commander, etc.)
+   - Mana curve visualization for MTG decks
+   - Copy community decks to your collection
+   - Create decks with name, game, format, description, visibility
+
+5. **Copy Deck API** ✅
+   - New endpoint: POST /api/decks/{deckId}/copy
+   - Copies all cards from original deck
+   - Creates private copy for the user
+
 ### Session 3 Updates - Group Chat, Settings, Feed Groups
 
 1. **Group Chat (Web + Mobile)** ✅
