@@ -469,14 +469,14 @@ export default function MarketplacePage() {
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     {listing.picture ? (
-                      <Image src={listing.picture} alt={listing.name} width={20} height={20} className="rounded-full" />
+                      <Image src={listing.picture} alt={listing.name || 'User'} width={20} height={20} className="rounded-full" />
                     ) : (
                       <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                        {listing.name.charAt(0).toUpperCase()}
+                        {(listing.name || 'U').charAt(0).toUpperCase()}
                       </div>
                     )}
                     <span className="text-xs text-gray-600 truncate">
-                      {listing.user_id === currentUserId ? 'Your listing' : listing.name}
+                      {listing.user_id === currentUserId ? 'Your listing' : (listing.name || 'Unknown')}
                     </span>
                   </div>
                 </div>
