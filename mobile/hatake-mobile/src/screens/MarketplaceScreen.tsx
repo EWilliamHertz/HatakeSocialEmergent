@@ -391,8 +391,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   filters: {
+    paddingVertical: 8,
+  },
+  filtersContent: {
     flexDirection: 'row',
-    padding: 12,
+    paddingHorizontal: 12,
     gap: 8,
   },
   filterButton: {
