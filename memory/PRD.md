@@ -18,100 +18,70 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 - React Navigation (Native Stack + Bottom Tabs)
 - Zustand (State Management)
 - Native fetch (API Client)
-- Expo SecureStore (Token Storage)
 
 ## Test Credentials
 - **Test User**: test@test.com / password (admin)
-- **Admin Users**: zudran@gmail.com, ernst@hatake.eu
 
 ---
 
-## COMPLETED FEATURES
+## COMPLETED FEATURES - Session 2026-02-21
 
-### Session 2026-02-21 - Bug Fixes
+### Euro Currency Update
+- All prices now display in € (Euro) across web and mobile
+- MTG prices: Prefer EUR from Scryfall, convert USD at 0.92 rate
+- Pokemon prices: Use cardmarket EUR prices
+- Sealed products, marketplace, collection all use €
 
-#### Web App Fixes
-1. **Navbar Simplified** - Removed Sealed and Wishlists icons from header (accessible via Collection page tabs)
-2. **Sealed Price Input Fixed** - Leading zero bug fixed with onFocus handler
-3. **CSV Import Uncapped** - Full CSV now stored and used for import (supports 151+ cards)
-4. **Messenger Scroll Fixed** - Added scroll position tracking to prevent auto-scroll when reading old messages
+### Mobile App Fixes
+1. **Feed Screen Fixed** - Usernames now display correctly, clickable profiles, working like button
+2. **Pokemon Search Improved** - Added set code mapping (sv09, jtg, etc.), multiple search strategies
+3. **MTG Search Fixed** - Now supports name, set code, and collector number searches
+4. **Collection Value Stats** - Shows total value, MTG value, Pokemon value in €
+5. **Card Sizes Fixed** - Collection (46% width, 140px height), Marketplace (46% width, 100px height)
 
-#### Mobile App Fixes
-1. **Feed Username Display** - Fixed Post interface to use correct API field names (name/picture)
-2. **Pokemon Set Code Translation** - Added POKEMON_SET_ALIASES mapping (sv09→jtg, etc.)
-3. **Search Results Increased** - Limit raised from 30 to 50 results
-4. **Pokemon Prices Added** - getCardPrice helper extracts cardmarket/tcgplayer prices
-5. **Collection Value Stats** - Added total value, MTG value, Pokemon value display
-6. **MTG Search Working** - Scryfall API search confirmed functional
+### Web Marketplace Updates
+1. **Shop Tab Added** - New tab showing shop products with product detail modal
+2. **Gallery Support** - Product modal shows image gallery with thumbnails
+3. **Seller Info Fixed** - Using seller_name/seller_picture fields correctly
 
-### Previous Features (Maintained)
-- Sealed Product Management (Pokemon + MTG)
-- Deck Builder Import/Export (MTGA, Archidekt)
-- Deck Builder Playtesting
-- Individual card sale pricing (% of market)
-- Deck format validation (MTG + Pokemon)
-- Wishlists, Trade Reputation
+### Admin Page Improvements
+1. **Multi-Image Upload** - Can now select multiple gallery images at once
+2. **Gallery Images Field** - Added to shop products database schema
 
 ---
 
 ## KEY API ENDPOINTS
 
-### Authentication
-- `POST /api/auth/login` - Login with email/password, returns JWT token
-- `POST /api/auth/signup` - Register new user
-- `GET /api/auth/me` - Get current user (supports Bearer token + cookie)
-- `POST /api/auth/logout` - Logout user
+### Shop Products
+- `GET /api/shop` - Get active shop products (includes gallery_images)
+- `POST /api/admin/products` - Create/update product (admin only)
+- `DELETE /api/admin/products/{id}` - Delete product (admin only)
 
-### Collection
-- `GET /api/collection` - Get user's card collection (Bearer token auth)
-- `POST /api/collection` - Add card to collection
-- `POST /api/collection/import` - CSV import (preview/import actions)
-- `DELETE /api/collection?id=` - Remove card from collection
-
-### Marketplace
-- `GET /api/marketplace` - Get listings (supports Bearer token auth)
-- `POST /api/marketplace` - Create listing
-- `DELETE /api/marketplace/{id}` - Remove listing
-
-### Feed
-- `GET /api/feed` - Get posts (supports Bearer token auth)
-- `POST /api/feed` - Create post
-
-### Sealed Products
-- `GET /api/sealed` - Get user's sealed products
-- `POST /api/sealed` - Add sealed product
-- `PATCH /api/sealed/{id}` - Update sealed product
-- `DELETE /api/sealed/{id}` - Remove sealed product
+### Collection/Marketplace
+- All prices now unified to EUR format
 
 ---
 
-## SEALED TCG PRODUCT OPTIONS
+## DATABASE UPDATES
 
-### API Options Researched
-| Provider | Access | Features |
-|----------|--------|----------|
-| **PriceCharting API** | Paid (Legendary subscription) | Sealed TCG prices by ID/UPC/ASIN, demo token available |
-| **TCGplayer** | Partner access required | Extensive database, requires partnership |
-| **Manual Entry** | Free | Custom database with user-entered data |
-
-### Recommendation
-Use PriceCharting API for pricing data (paid subscription required), or implement a manual entry system for sealed products.
+### shop_products table
+- Added `gallery_images TEXT[]` column for product galleries
 
 ---
 
 ## TEST REPORTS
-- Latest: `/app/test_reports/iteration_13.json` - All 10 bugs verified fixed
-- Previous: `/app/test_reports/iteration_12.json` - Mobile app features verified
+- Latest: `/app/test_reports/iteration_13.json`
+- Mobile app syntax fixed (CollectionScreen.tsx)
 
 ---
 
 ## NEXT STEPS
 
 ### User Verification Needed
-- Test Messenger widget scroll behavior (can now scroll up to read old messages)
-- Test CSV import with 151+ card file
-- Test mobile app feed shows usernames correctly
-- Test mobile Pokemon search with sv09 set code
+- Test marketplace Shop tab functionality
+- Test multi-image gallery upload in admin
+- Verify all prices display in € correctly
+- Test mobile app search improvements
 
 ### High Priority (P1)
 1. **Mobile App Phase 2:**
@@ -119,24 +89,15 @@ Use PriceCharting API for pricing data (paid subscription required), or implemen
    - Implement Friends screen
    - Implement Wishlists screen
 
-2. **Sealed Products:**
-   - Integrate PriceCharting API (if user provides subscription)
-   - OR enhance manual entry system
+2. **Mobile Shop Tab** - Add shop products to mobile marketplace
 
 ### Medium Priority (P2)
 1. Mobile App real-time messaging
 2. Push notifications for trade updates
-3. Offline mode with SQLite caching
 
 ### Future (P3)
 - Card Recognition ML integration
-- Apple/Google Play store publishing
-
----
-
-## KNOWN ISSUES
-- Mobile app TypeScript has pre-existing type errors (don't affect runtime)
-- Some MTG test cards (CSV import) show placeholder icons due to missing Scryfall image_uris
+- App store publishing
 
 ---
 
