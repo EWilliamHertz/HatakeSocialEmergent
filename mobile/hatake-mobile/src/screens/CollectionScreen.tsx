@@ -1922,10 +1922,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
+  modalMenuButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
+    flex: 1,
+    textAlign: 'center',
   },
   modalContent: {
     flex: 1,
