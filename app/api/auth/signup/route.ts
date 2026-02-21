@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hashPassword, generateToken, createSession } from '@/lib/auth';
 import { generateId } from '@/lib/utils';
+import { sendVerificationEmail } from '@/lib/email';
 import sql from '@/lib/db';
 
 export async function POST(request: NextRequest) {
@@ -29,11 +30,18 @@ export async function POST(request: NextRequest) {
     // Create user
     const userId = generateId('user');
     const passwordHash = await hashPassword(password);
+    const verificationToken = generateId('verify');
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     await sql`
-      INSERT INTO users (user_id, email, name, password_hash, email_verified)
-      VALUES (${userId}, ${email}, ${name}, ${passwordHash}, false)
+      INSERT INTO users (user_id, email, name, password_hash, email_verified, verification_token, verification_expires)
+      VALUES (${userId}, ${email}, ${name}, ${passwordHash}, false, ${verificationToken}, ${verificationExpires})
     `;
+
+    // Send verification email (don't block on this)
+    sendVerificationEmail(email, name, verificationToken).catch(err => {
+      console.error('Failed to send verification email:', err);
+    });
 
     // Generate session token
     const sessionToken = generateId('session');
@@ -54,6 +62,7 @@ export async function POST(request: NextRequest) {
       success: true,
       user,
       token,
+      message: 'Please check your email to verify your account',
     });
 
     // Set session cookie - secure:true for HTTPS (production/preview)
