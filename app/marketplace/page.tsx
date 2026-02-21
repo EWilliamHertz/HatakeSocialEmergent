@@ -578,32 +578,32 @@ export default function MarketplacePage() {
                         </span>
                         {listing.user_id !== currentUserId && (
                           <button
-                        onClick={() => contactSeller(listing)}
-                        className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                        title="Contact seller"
-                        data-testid={`contact-seller-${listing.listing_id}`}
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    {listing.seller_picture ? (
-                      <Image src={listing.seller_picture} alt={listing.seller_name || 'User'} width={20} height={20} className="rounded-full" />
-                    ) : (
-                      <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                        {(listing.seller_name || 'U').charAt(0).toUpperCase()}
+                            onClick={() => contactSeller(listing)}
+                            className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                            title="Contact seller"
+                            data-testid={`contact-seller-${listing.listing_id}`}
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
-                    )}
-                    <span className="text-xs text-gray-600 truncate">
-                      {listing.user_id === currentUserId ? 'Your listing' : (listing.seller_name || 'Unknown')}
-                    </span>
+                      <div className="flex items-center gap-2 mt-2">
+                        {listing.seller_picture ? (
+                          <Image src={listing.seller_picture} alt={listing.seller_name || 'User'} width={20} height={20} className="rounded-full" />
+                        ) : (
+                          <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                            {(listing.seller_name || 'U').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-xs text-gray-600 truncate">
+                          {listing.user_id === currentUserId ? 'Your listing' : (listing.seller_name || 'Unknown')}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
           </>
         )}
 
