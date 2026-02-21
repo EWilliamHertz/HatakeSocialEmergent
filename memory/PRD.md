@@ -22,39 +22,69 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ---
 
-## COMPLETED FEATURES - Session 2026-02-21
+## COMPLETED FEATURES - Session 2026-02-22
 
-### Latest Features
+### Latest Features (This Session)
 
-1. **Hamburger Menu on All Pages** ✅
-   - Menu button now appears in top-left of ALL screens:
-     - Feed, Collection, Marketplace, Profile
-   - Consistent navigation experience across the app
+1. **Friends System** ✅
+   - Full Friends screen accessible from hamburger menu
+   - Three tabs: Friends list, Pending Requests, Search/Find users
+   - Send/Accept/Reject friend requests
+   - Remove existing friends
+   - Search users by name or email
+   - Chat button to message friends directly
 
-2. **Comment Reactions (Emoji)** ✅
-   - Like, React buttons on every comment
-   - Emoji picker: 👍 ❤️ 😂 😮 😢 🔥
-   - Reactions display inline with count
-   - Toggle reaction by tapping again
-   - Works on both parent comments and replies
+2. **Messaging System** ✅
+   - Full messaging screen with conversations list
+   - Real-time chat with friends
+   - Message polling for updates (every 3 seconds)
+   - Time formatting (today, yesterday, date)
+   - Unread message badges
+   - Direct chat from Friends screen
 
-3. **View User Collections** ✅
-   - Tap username in feed → View profile
-   - "View Collection" button on profile
-   - Tap card count in stats to view collection
-   - Collection grid shows all user's cards
-   - Anyone can view anyone's collection (social platform)
+3. **Video/Voice Call UI** ✅
+   - Audio and Video call buttons in chat header
+   - Full-screen call interface
+   - Call states: connecting, ringing, connected, ended
+   - Call controls: mute, camera toggle, speaker, end call
+   - Call duration timer
+   - Animated pulse ring during ringing
+   - Note: Full WebRTC streaming requires native build
 
-### Previous Features
+4. **Backend API Updates** ✅
+   - All messaging APIs now support Bearer token auth
+   - All call/signaling APIs support Bearer token auth
+   - LiveKit token API supports Bearer token auth
+   - User search API supports Bearer token auth
+
+### Previous Session Features
+- Hamburger Menu on All Pages
+- Comment Reactions (Emoji)
+- View User Collections
 - MTG Search with Edition Picker
-- Feed Comments System (view, reply, add)
+- Feed Comments System
 - Bulk Card Selection & Delete
-- Profile Screen
-- Euro currency prices
 
 ---
 
 ## KEY API ENDPOINTS
+
+### Friends System
+- `GET /api/friends` - Get friends list
+- `POST /api/friends` - Send/Accept/Reject/Remove friend
+- `GET /api/friends/requests` - Get pending friend requests
+- `GET /api/users/search?q=` - Search users
+
+### Messaging
+- `GET /api/messages` - Get conversations list
+- `POST /api/messages` - Send message / create conversation
+- `GET /api/messages/{conversationId}` - Get messages in conversation
+
+### Video Calls
+- `POST /api/livekit/token` - Get LiveKit room token
+- `GET /api/calls` - Poll for call signals
+- `POST /api/calls` - Send call signal
+- `DELETE /api/calls` - End call
 
 ### Collection Management
 - `GET /api/collection` - Get own collection
@@ -66,13 +96,6 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 - `GET /api/feed` - Get posts with reactions
 - `POST /api/feed/{postId}/comments` - Add comment
 - `GET /api/feed/{postId}/comments` - Get comments
-
-### Comment Reactions
-- `POST /api/comments/{commentId}/reactions` - Toggle emoji reaction
-- `GET /api/comments/{commentId}/reactions` - Get reactions
-
-### User Profiles
-- `GET /api/users/{userId}` - Get profile with stats
 
 ---
 
@@ -93,8 +116,9 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 | Marketplace View | ✅ Complete |
 | Profile Screen | ✅ Complete |
 | Hamburger Menu (All Pages) | ✅ Complete |
-| Add Friend | ⏳ Placeholder |
-| Messages | ⏳ Placeholder |
+| **Friends System** | ✅ Complete |
+| **Messaging** | ✅ Complete |
+| **Video/Voice Call UI** | ✅ Complete |
 | Trading | ⏳ Not started |
 
 ---
@@ -102,15 +126,33 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 ## NEXT STEPS
 
 ### High Priority (P1)
-1. Friends System (send/accept requests)
-2. Messaging (friend-to-friend chat)
-3. Trading functionality
+1. LiveKit native integration for real video/audio streaming (requires Expo development build)
+2. Trading functionality
+3. Notifications display screen
 
 ### Medium Priority (P2)
 1. Delete own marketplace listings
 2. Create listings from collection
-3. Push notifications
+3. Screen sharing in calls
 
 ---
 
-*Last Updated: February 21, 2026*
+## FILES REFERENCE
+
+### Mobile Screens
+- `mobile/hatake-mobile/App.tsx` - Main app with modals for Friends/Messages/Calls
+- `mobile/hatake-mobile/src/screens/FriendsScreen.tsx` - Friends management
+- `mobile/hatake-mobile/src/screens/MessagesScreen.tsx` - Messaging/Chat
+- `mobile/hatake-mobile/src/screens/VideoCallScreen.tsx` - Voice/Video call UI
+
+### Backend APIs (Updated for Bearer auth)
+- `app/api/messages/route.ts` - Conversations list & send message
+- `app/api/messages/[conversationId]/route.ts` - Get messages
+- `app/api/friends/route.ts` - Friends actions
+- `app/api/calls/route.ts` - Call signaling
+- `app/api/livekit/token/route.ts` - LiveKit token generation
+- `app/api/users/search/route.ts` - User search
+
+---
+
+*Last Updated: February 22, 2026*
