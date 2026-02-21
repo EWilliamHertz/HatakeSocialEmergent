@@ -134,10 +134,21 @@ export default function FeedPage() {
     if (!newPost.trim()) return;
 
     try {
+      const postData: any = { 
+        content: newPost, 
+        visibility: tab === 'public' ? 'public' : (tab === 'groups' ? 'group' : 'friends')
+      };
+      
+      // If posting to a specific group
+      if (tab === 'groups' && selectedGroup) {
+        postData.group_id = selectedGroup;
+        postData.visibility = 'group';
+      }
+
       const res = await fetch('/api/feed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newPost, visibility: tab === 'public' ? 'public' : 'friends' }),
+        body: JSON.stringify(postData),
       });
 
       if (res.ok) {
