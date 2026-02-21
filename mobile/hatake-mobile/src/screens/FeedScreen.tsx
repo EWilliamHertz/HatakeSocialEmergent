@@ -339,7 +339,7 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
           <Ionicons name="menu" size={24} color="#1F2937" />
         </TouchableOpacity>
         <Text style={styles.title}>Feed</Text>
-        <TouchableOpacity style={styles.notifButton}>
+        <TouchableOpacity style={styles.notifButton} onPress={onOpenNotifications}>
           <Ionicons name="notifications-outline" size={24} color="#1F2937" />
         </TouchableOpacity>
       </View>
@@ -364,12 +364,60 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
         ))}
       </View>
 
+      {/* Group Selector when on Groups tab */}
+      {activeTab === 'groups' && myGroups.length > 0 && (
+        <TouchableOpacity 
+          style={styles.groupSelector}
+          onPress={() => setShowGroupPicker(!showGroupPicker)}
+        >
+          <Ionicons name="chatbubbles-outline" size={18} color="#3B82F6" />
+          <Text style={styles.groupSelectorText}>
+            {selectedGroup 
+              ? myGroups.find(g => g.group_id === selectedGroup)?.name || 'Select Group'
+              : 'All Groups'}
+          </Text>
+          <Ionicons name={showGroupPicker ? 'chevron-up' : 'chevron-down'} size={18} color="#6B7280" />
+        </TouchableOpacity>
+      )}
+
+      {/* Group Picker Dropdown */}
+      {showGroupPicker && (
+        <View style={styles.groupPickerDropdown}>
+          <TouchableOpacity 
+            style={[styles.groupPickerItem, !selectedGroup && styles.groupPickerItemActive]}
+            onPress={() => { setSelectedGroup(null); setShowGroupPicker(false); }}
+          >
+            <Text style={styles.groupPickerText}>All Groups</Text>
+          </TouchableOpacity>
+          {myGroups.map(group => (
+            <TouchableOpacity 
+              key={group.group_id}
+              style={[styles.groupPickerItem, selectedGroup === group.group_id && styles.groupPickerItemActive]}
+              onPress={() => { setSelectedGroup(group.group_id); setShowGroupPicker(false); }}
+            >
+              <Text style={styles.groupPickerText}>{group.name}</Text>
+              <Text style={styles.groupPickerCount}>{group.member_count} members</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {/* New Post Input */}
       <View style={styles.newPostContainer}>
+        {activeTab === 'groups' && selectedGroup && (
+          <View style={styles.postingToGroup}>
+            <Ionicons name="chatbubbles" size={14} color="#3B82F6" />
+            <Text style={styles.postingToGroupText}>
+              Posting to {myGroups.find(g => g.group_id === selectedGroup)?.name}
+            </Text>
+          </View>
+        )}
         <View style={styles.newPostRow}>
           <TextInput
             style={styles.newPostInput}
-            placeholder="Share something with your community..."
+            placeholder={activeTab === 'groups' && selectedGroup 
+              ? "Share with this group..." 
+              : "Share something with your community..."}
             value={newPostText}
             onChangeText={setNewPostText}
             multiline
