@@ -15,6 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../store';
 import Button from '../components/Button';
 
+// Import the logo image
+const logoImage = require('../../assets/icon.png');
+
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -57,9 +60,11 @@ export default function LoginScreen({ navigation }: any) {
         >
           {/* Logo */}
           <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>H</Text>
-            </View>
+            <Image 
+              source={logoImage} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>Hatake.Social</Text>
             <Text style={styles.subtitle}>TCG Trading Platform</Text>
           </View>
