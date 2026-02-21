@@ -10,8 +10,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '../config';
 
-const API_URL = 'https://www.hatake.eu';
 const logoImage = require('../../assets/icon.png');
 
 interface User {
