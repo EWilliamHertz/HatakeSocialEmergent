@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
     height: 100,
     marginBottom: 16,
   },
-  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
