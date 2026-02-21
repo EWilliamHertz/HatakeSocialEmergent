@@ -1,0 +1,95 @@
+{
+  "summary": "Iteration 15 - Testing bug fixes for Hatake.Social TCG Platform. All reported fixes verified: Feed Groups tab, group posting, mobile groups API, Decks community feature, and copy deck functionality. Found and fixed a bug in copy deck API (was using wrong column name 'is_sideboard' instead of 'category').",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/pytest/test_iteration15.py",
+    "/app/test_reports/pytest/pytest_iteration15_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "bugs_verified": {
+    "1_feed_groups_tab": {
+      "status": "FIXED",
+      "evidence": "Web feed Groups tab shows posts from user's groups. Screenshot shows 'TEST_Post to group from feed test' and 'TEST_Post with groupId camelCase' posts appearing in Groups tab.",
+      "file": "/app/app/feed/page.tsx",
+      "test_result": "PASS"
+    },
+    "2_group_selector_dropdown": {
+      "status": "FIXED",
+      "evidence": "Group selector dropdown appears when on Groups tab, shows 'All Groups' option and 'ADMINS' group with member count. Clicking dropdown expands to show available groups.",
+      "file": "/app/app/feed/page.tsx",
+      "lines": "319-357 - Group selector dropdown component",
+      "test_result": "PASS"
+    },
+    "3_create_post_with_group_id": {
+      "status": "FIXED",
+      "evidence": "API accepts both 'group_id' (snake_case) and 'groupId' (camelCase) for backwards compatibility. Both test cases passed.",
+      "file": "/app/app/api/feed/route.ts",
+      "lines": "111-112 - const groupId = body.groupId || body.group_id",
+      "test_result": "PASS"
+    },
+    "4_mobile_groups_api_field": {
+      "status": "FIXED",
+      "evidence": "GET /api/groups?type=my returns 'groups' field (not 'myGroups'). Mobile FeedScreen and web feed page both updated to use data.groups correctly.",
+      "files": [
+        "/app/app/api/groups/route.ts",
+        "/app/app/feed/page.tsx",
+        "/app/mobile/hatake-mobile/src/screens/FeedScreen.tsx"
+      ],
+      "test_result": "PASS"
+    },
+    "5_decks_community_api": {
+      "status": "FIXED",
+      "evidence": "GET /api/decks?type=community returns public decks from other users. Community Decks tab shows decks like 'ANT 2026' by Ernst-William Hertz with 75 cards.",
+      "file": "/app/app/api/decks/route.ts",
+      "test_result": "PASS"
+    },
+    "6_copy_deck_api": {
+      "status": "FIXED (by testing agent)",
+      "evidence": "POST /api/decks/{deckId}/copy now works. Fixed column name bug: was using 'is_sideboard' which doesn't exist, changed to 'category' per actual schema.",
+      "file": "/app/app/api/decks/[deckId]/copy/route.ts",
+      "fix_applied": "Changed SELECT and INSERT to use 'entry_id' and 'category' fields instead of non-existent 'is_sideboard' column",
+      "test_result": "PASS"
+    },
+    "7_csv_import_mobile": {
+      "status": "VERIFIED",
+      "evidence": "CSV import button (data-testid='csv-import-btn') present in CollectionScreen header. Modal shows CSV input field and import functionality with game selector (MTG/Pokemon).",
+      "file": "/app/mobile/hatake-mobile/src/screens/CollectionScreen.tsx",
+      "lines": "1174-1178 - csvButton, 1830-1935 - CSV Import Modal",
+      "test_result": "VERIFIED (code review)"
+    }
+  },
+  "updated_files": [
+    "/app/app/api/decks/[deckId]/copy/route.ts"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (all verified features working)"
+  },
+  "test_credentials": {
+    "test_user": "test@test.com / password"
+  },
+  "seed_data_creation": "Created test decks for copy testing - cleaned up after tests",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All features tested and working. Fixed copy deck API bug where it was trying to use non-existent 'is_sideboard' column - the actual schema uses 'category' and 'entry_id' fields. Web app Groups tab shows group selector dropdown when user has groups. Community decks feature works with deck copying.",
+  "fix_details": {
+    "copy_deck_api_fix": {
+      "file": "/app/app/api/decks/[deckId]/copy/route.ts",
+      "issue": "The copy endpoint was trying to SELECT and INSERT with 'is_sideboard' column which doesn't exist in deck_cards table",
+      "actual_schema": "deck_cards table uses 'entry_id' and 'category' columns instead",
+      "changes": [
+        "Changed SELECT to use 'entry_id, card_id, card_data, quantity, category'",
+        "Changed INSERT to include 'entry_id' with generated ID and 'category' field"
+      ]
+    }
+  }
+}
