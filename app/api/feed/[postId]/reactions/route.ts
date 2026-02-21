@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser, getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 import { createNotification } from '@/lib/notifications';
+import { sendReactionEmail } from '@/lib/email';
 
 // Ensure post_reactions table exists
 async function ensureTable() {
