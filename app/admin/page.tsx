@@ -921,10 +921,10 @@ export default function AdminPage() {
                     <label className="w-20 h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20">
                       <Plus className="w-6 h-6 text-gray-400" />
                       <span className="text-xs text-gray-500">Add</span>
-                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} className="hidden" disabled={uploadingImage} />
+                      <input type="file" accept="image/*" multiple onChange={(e) => handleMultipleImageUpload(e)} className="hidden" disabled={uploadingImage} />
                     </label>
                   </div>
-                  <p className="text-xs text-gray-500">Add additional images for the product gallery</p>
+                  <p className="text-xs text-gray-500">Select multiple images at once to add to the gallery</p>
                 </div>
 
                 <div className="col-span-2">
