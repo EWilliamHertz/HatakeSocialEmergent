@@ -670,53 +670,135 @@ export default function CollectionPage() {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Header with Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 dark:text-white">My Collection</h1>
-              <p className="text-gray-600 dark:text-gray-400">{items.length} cards • Estimated value: {calculateTotalValue()}</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowAddCardModal(true)}
+          {/* Main Tabs */}
+          <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setActiveTab('cards')}
+              className={`px-4 py-3 font-semibold transition border-b-2 -mb-px ${
+                activeTab === 'cards' 
+                  ? 'border-blue-600 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Cards
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('sealed')}
+              className={`px-4 py-3 font-semibold transition border-b-2 -mb-px ${
+                activeTab === 'sealed' 
+                  ? 'border-blue-600 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4" />
+                Sealed Products
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('wishlist')}
+              className={`px-4 py-3 font-semibold transition border-b-2 -mb-px ${
+                activeTab === 'wishlist' 
+                  ? 'border-blue-600 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                Wishlist
+              </span>
+            </button>
+          </div>
+
+          {/* Cards Tab Header */}
+          {activeTab === 'cards' && (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h1 className="text-3xl font-bold mb-2 dark:text-white">My Collection</h1>
+                  <p className="text-gray-600 dark:text-gray-400">{items.length} cards • Estimated value: {calculateTotalValue()}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowAddCardModal(true)}
+                    className="px-4 py-2 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+                    data-testid="add-card-btn"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Card
+                  </button>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="px-4 py-2 rounded-lg font-semibold transition bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
+                    data-testid="import-btn"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import CSV
+                  </button>
+                  <button
+                    onClick={() => setFilter('all')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                    data-testid="filter-all"
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setFilter('pokemon')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'pokemon' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                    data-testid="filter-pokemon"
+                  >
+                    Pokémon
+                  </button>
+                  <button
+                    onClick={() => setFilter('mtg')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                    data-testid="filter-mtg"
+                  >
+                    Magic
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Sealed Products Tab Header */}
+          {activeTab === 'sealed' && (
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold mb-2 dark:text-white">Sealed Products</h1>
+                <p className="text-gray-600 dark:text-gray-400">{sealedProducts.length} products in your collection</p>
+              </div>
+              <a
+                href="/sealed"
                 className="px-4 py-2 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
-                data-testid="add-card-btn"
               >
                 <Plus className="w-4 h-4" />
-                Add Card
-              </button>
-              <button
-                onClick={() => setShowImportModal(true)}
-                className="px-4 py-2 rounded-lg font-semibold transition bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
-                data-testid="import-btn"
-              >
-                <Upload className="w-4 h-4" />
-                Import CSV
-              </button>
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-                data-testid="filter-all"
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilter('pokemon')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'pokemon' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-                data-testid="filter-pokemon"
-              >
-                Pokemon
-              </button>
-              <button
-                onClick={() => setFilter('mtg')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-                data-testid="filter-mtg"
-              >
-                Magic
-              </button>
+                Manage Sealed Products
+              </a>
             </div>
-          </div>
+          )}
+
+          {/* Wishlist Tab Header */}
+          {activeTab === 'wishlist' && (
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold mb-2 dark:text-white">My Wishlist</h1>
+                <p className="text-gray-600 dark:text-gray-400">{wishlistItems.length} cards you're looking for</p>
+              </div>
+              <a
+                href="/wishlist"
+                className="px-4 py-2 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Manage Wishlist
+              </a>
+            </div>
+          )}
           
           {/* Search & Bulk Actions */}
           <div className="flex items-center gap-4">
