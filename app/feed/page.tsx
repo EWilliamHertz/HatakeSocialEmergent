@@ -301,7 +301,7 @@ export default function FeedPage() {
           {['friends', 'groups', 'public'].map(t => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => { setTab(t); if (t !== 'groups') setSelectedGroup(null); }}
               data-testid={`tab-${t}`}
               className={`flex-1 py-3 px-4 rounded-lg font-semibold transition capitalize flex items-center justify-center gap-2
                 ${tab === t ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
@@ -314,11 +314,62 @@ export default function FeedPage() {
           ))}
         </div>
 
+        {/* Group Selector - only shown when on groups tab */}
+        {tab === 'groups' && myGroups.length > 0 && (
+          <div className="mb-4 relative">
+            <button
+              onClick={() => setShowGroupDropdown(!showGroupDropdown)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-left"
+            >
+              <div className="flex items-center gap-2">
+                <Hash className="w-5 h-5 text-blue-600" />
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {selectedGroup 
+                    ? myGroups.find(g => g.group_id === selectedGroup)?.name || 'Select Group'
+                    : 'All Groups'}
+                </span>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${showGroupDropdown ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showGroupDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-64 overflow-auto">
+                <button
+                  onClick={() => { setSelectedGroup(null); setShowGroupDropdown(false); }}
+                  className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between ${!selectedGroup ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}
+                >
+                  <span className="text-gray-900 dark:text-white">All Groups</span>
+                </button>
+                {myGroups.map(group => (
+                  <button
+                    key={group.group_id}
+                    onClick={() => { setSelectedGroup(group.group_id); setShowGroupDropdown(false); }}
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between ${selectedGroup === group.group_id ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}
+                  >
+                    <span className="text-gray-900 dark:text-white">{group.name}</span>
+                    <span className="text-sm text-gray-500">{group.member_count} members</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          {tab === 'groups' && selectedGroup && (
+            <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+              <Hash className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-blue-700 dark:text-blue-300">
+                Posting to {myGroups.find(g => g.group_id === selectedGroup)?.name}
+              </span>
+            </div>
+          )}
           <textarea
             value={newPost}
             onChange={e => setNewPost(e.target.value)}
-            placeholder="What's happening in your collection?"
+            placeholder={tab === 'groups' && selectedGroup 
+              ? `Share with ${myGroups.find(g => g.group_id === selectedGroup)?.name}...`
+              : "What's happening in your collection?"}
             className="w-full p-4 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             rows={3}
             data-testid="new-post-input"
