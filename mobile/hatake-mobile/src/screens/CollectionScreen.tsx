@@ -129,6 +129,13 @@ interface SearchResult {
   data: any;
 }
 
+// For grouping MTG cards by name with multiple editions
+interface CardGroup {
+  name: string;
+  editions: SearchResult[];
+  selectedEdition: number;
+}
+
 interface CollectionScreenProps {
   user: any;
   token: string;
