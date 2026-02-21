@@ -357,6 +357,25 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
           </View>
         </View>
 
+        {/* Chat Widget Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Chat Widget</Text>
+          
+          <View style={styles.settingCard}>
+            {renderSettingRow(
+              'chatbubble-ellipses-outline',
+              'Messenger Widget',
+              'Floating chat button on bottom right',
+              <Switch
+                value={messengerWidgetEnabled}
+                onValueChange={onToggleMessengerWidget}
+                trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
+                thumbColor={messengerWidgetEnabled ? '#3B82F6' : '#9CA3AF'}
+              />
+            )}
+          </View>
+        </View>
+
         {/* App Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>App</Text>
