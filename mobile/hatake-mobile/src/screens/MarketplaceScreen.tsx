@@ -90,6 +90,14 @@ export default function MarketplaceScreen({ user, token }: MarketplaceScreenProp
                listing.card_data?.image_uris?.normal ||
                listing.card_data?.card_faces?.[0]?.image_uris?.small;
       } else {
+        // TCGdex stores image as a direct URL string
+        const imageUrl = listing.card_data?.image;
+        if (imageUrl) {
+          if (imageUrl.includes('.png') || imageUrl.includes('.webp') || imageUrl.includes('.jpg')) {
+            return imageUrl;
+          }
+          return `${imageUrl}/high.webp`;
+        }
         return listing.card_data?.images?.small || listing.card_data?.images?.large;
       }
     } catch {
