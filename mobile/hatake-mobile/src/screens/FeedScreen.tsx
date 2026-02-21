@@ -391,6 +391,18 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
           }
         />
       )}
+
+      {/* Comments Modal */}
+      <CommentsModal
+        visible={!!commentsPostId}
+        onClose={() => setCommentsPostId(null)}
+        postId={commentsPostId || ''}
+        token={token}
+        onCommentAdded={() => {
+          // Refresh posts to update comment count
+          fetchPosts();
+        }}
+      />
     </SafeAreaView>
   );
 }
