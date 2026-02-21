@@ -464,9 +464,9 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
               if (response.ok) {
                 const card = await response.json();
                 if (card && card.id) {
-                  // Prefer European cardmarket prices
-                  const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
-                  const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : 'N/A';
+                  // Prefer European cardmarket prices - TCGdex uses pricing.cardmarket.avg
+                  const cmPrice = card.pricing?.cardmarket?.avg || card.pricing?.cardmarket?.trend || 0;
+                  const displayPrice = cmPrice > 0 ? `€${cmPrice.toFixed(2)}` : 'N/A';
                   
                   setSearchResults([{
                     id: card.id,
