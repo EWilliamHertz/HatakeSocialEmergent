@@ -258,10 +258,12 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
     setAdding(true);
     
     try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      
       const response = await fetch(`${API_URL}/api/collection`, {
         method: 'POST',
-        credentials: 'include',
         headers: {
+          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
