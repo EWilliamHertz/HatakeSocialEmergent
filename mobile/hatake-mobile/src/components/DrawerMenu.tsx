@@ -35,6 +35,7 @@ const menuItems: MenuItem[] = [
   { id: 'collection', label: 'Collection', icon: 'albums-outline' },
   { id: 'marketplace', label: 'Marketplace', icon: 'storefront-outline' },
   { id: 'trades', label: 'Trades', icon: 'swap-horizontal-outline', badge: 0 },
+  { id: 'wishlists', label: 'Wishlists', icon: 'heart-outline' },
   { id: 'friends', label: 'Friends', icon: 'people-outline' },
   { id: 'groups', label: 'Groups', icon: 'chatbubbles-outline' },
   { id: 'messages', label: 'Messages', icon: 'mail-outline', badge: 0 },
