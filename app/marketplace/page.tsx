@@ -342,29 +342,58 @@ export default function MarketplacePage() {
                   </button>
                 </div>
             
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${showFilters ? 'border-blue-600 text-blue-600' : 'border-gray-300 dark:border-gray-600 dark:text-gray-300'}`}
-              data-testid="toggle-filters-btn"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              Filters
-              {hasActiveFilters && (
-                <span className="bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">!</span>
-              )}
-            </button>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${showFilters ? 'border-blue-600 text-blue-600' : 'border-gray-300 dark:border-gray-600 dark:text-gray-300'}`}
+                  data-testid="toggle-filters-btn"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Filters
+                  {hasActiveFilters && (
+                    <span className="bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">!</span>
+                  )}
+                </button>
+                
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white"
+                  data-testid="sort-select"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="price_low">Price: Low to High</option>
+                  <option value="price_high">Price: High to Low</option>
+                </select>
+              </div>
+            )}
             
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white"
-              data-testid="sort-select"
-            >
-              <option value="newest">Newest First</option>
-              <option value="price_low">Price: Low to High</option>
-              <option value="price_high">Price: High to Low</option>
-            </select>
-          </div>
+            {/* Search & Filter Bar - Shop Tab */}
+            {activeTab === 'shop' && (
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex-1 min-w-64 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products..."
+                    className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  {SHOP_CATEGORIES.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setShopCategory(cat)}
+                      className={`px-4 py-2 rounded-lg font-semibold transition ${shopCategory === cat ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           
           {/* Advanced Filters Panel */}
           {showFilters && (
