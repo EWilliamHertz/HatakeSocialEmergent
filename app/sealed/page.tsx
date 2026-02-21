@@ -487,13 +487,13 @@ export default function SealedProductsPage() {
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Purchase Price</p>
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          ${(product.purchase_price * product.quantity).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          €{(product.purchase_price * product.quantity).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Current Value</p>
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          ${((product.current_value || product.purchase_price) * product.quantity).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          €{((product.current_value || product.purchase_price) * product.quantity).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                         </p>
                       </div>
                     </div>
@@ -504,7 +504,7 @@ export default function SealedProductsPage() {
                       <span className={`text-sm font-medium ${
                         profit >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
                       }`}>
-                        {profit >= 0 ? '+' : ''}${(profit * product.quantity).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {profit >= 0 ? '+' : ''}€{(profit * product.quantity).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                       </span>
                       <span className={`text-sm ${
                         profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
