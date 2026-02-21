@@ -218,24 +218,10 @@ export default function App() {
       return;
     }
     
-    // Show coming soon for screens not yet implemented in mobile
-    const comingSoonScreens = ['settings'];
-    if (comingSoonScreens.includes(screen)) {
-      const screenNames: Record<string, string> = {
-        'settings': 'Settings',
-      };
-      const name = screenNames[screen] || screen;
-      
-      if (Platform.OS === 'web') {
-        alert(`${name} - Coming soon to the mobile app! Available now on the web version.`);
-      } else {
-        Alert.alert(
-          `${name}`,
-          'Coming soon to the mobile app! Available now on the web version.',
-          [{ text: 'OK' }]
-        );
-      }
+    // Handle Settings
+    if (screen === 'settings') {
       setDrawerOpen(false);
+      setShowSettings(true);
       return;
     }
     
