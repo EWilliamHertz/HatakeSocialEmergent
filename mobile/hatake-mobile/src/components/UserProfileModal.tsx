@@ -9,6 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
   FlatList,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +25,15 @@ interface UserProfile {
   collection_count?: number;
   post_count?: number;
   friend_count?: number;
+  is_friend?: boolean;
+}
+
+interface CollectionItem {
+  id: number;
+  card_id: string;
+  card_data: any;
+  game: 'mtg' | 'pokemon';
+  quantity: number;
 }
 
 interface UserProfileModalProps {
@@ -32,6 +42,9 @@ interface UserProfileModalProps {
   userId: string;
   token: string;
 }
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const CARD_WIDTH = (SCREEN_WIDTH - 64) / 3; // 3 cards per row with padding
 
 export default function UserProfileModal({ 
   visible, 
@@ -42,10 +55,15 @@ export default function UserProfileModal({
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ collections: 0, posts: 0, friends: 0 });
+  const [collection, setCollection] = useState<CollectionItem[]>([]);
+  const [showCollection, setShowCollection] = useState(false);
+  const [loadingCollection, setLoadingCollection] = useState(false);
 
   useEffect(() => {
     if (visible && userId) {
       fetchProfile();
+      setShowCollection(false);
+      setCollection([]);
     }
   }, [visible, userId]);
 
