@@ -156,7 +156,12 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
     const isMember = tab === 'my';
     
     return (
-      <View style={styles.groupCard} data-testid={`group-${item.group_id}`}>
+      <TouchableOpacity 
+        style={styles.groupCard} 
+        data-testid={`group-${item.group_id}`}
+        onPress={isMember ? () => setSelectedGroup(item) : undefined}
+        activeOpacity={isMember ? 0.7 : 1}
+      >
         <View style={styles.groupImage}>
           {item.image ? (
             <Image source={{ uri: item.image }} style={styles.groupImageImg} />
@@ -198,10 +203,10 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
               <Ionicons name="chatbubble" size={18} color="#FFFFFF" />
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.leaveButton}
-              onPress={() => leaveGroup(item.group_id)}
+              style={styles.arrowButton}
+              onPress={() => setSelectedGroup(item)}
             >
-              <Ionicons name="exit-outline" size={20} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={24} color="#6B7280" />
             </TouchableOpacity>
           </View>
         ) : (
@@ -212,7 +217,7 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
             <Text style={styles.joinButtonText}>Join</Text>
           </TouchableOpacity>
         )}
-      </View>
+      </TouchableOpacity>
     );
   };
 
