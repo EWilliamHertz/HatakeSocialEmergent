@@ -2725,4 +2725,101 @@ const styles = StyleSheet.create({
   pokemonColor: {
     color: '#F59E0B',
   },
+  // CSV Import Styles
+  csvInstructions: {
+    fontSize: 14,
+    color: '#374151',
+    marginBottom: 8,
+  },
+  csvFormatExamples: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  csvFormatLine: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    marginBottom: 4,
+  },
+  csvInput: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    minHeight: 200,
+    marginBottom: 16,
+  },
+  importProgress: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  importProgressText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E40AF',
+    marginBottom: 8,
+  },
+  importProgressBar: {
+    height: 8,
+    backgroundColor: '#DBEAFE',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  importProgressFill: {
+    height: '100%',
+    backgroundColor: '#3B82F6',
+    borderRadius: 4,
+  },
+  importStats: {
+    fontSize: 13,
+    color: '#374151',
+  },
+  importLog: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    maxHeight: 200,
+  },
+  importLogTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  importLogScroll: {
+    maxHeight: 160,
+  },
+  importLogLine: {
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  importButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  importButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  importButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
