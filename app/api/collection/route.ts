@@ -124,10 +124,10 @@ export async function POST(request: NextRequest) {
         ${foil || false},
         ${finish || 'Normal'},
         ${finalIsSigned || false},
-        ${isGraded || false},
-        ${gradingCompany || null},
-        ${gradeValue || null},
-        ${customImageUrl || null},
+        ${finalIsGraded || false},
+        ${finalGradingCompany || null},
+        ${finalGradeValue || null},
+        ${finalCustomImageUrl || null},
         ${notes || null}
       )
     `;
@@ -144,14 +144,9 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
