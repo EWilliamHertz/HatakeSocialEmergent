@@ -3,6 +3,26 @@ import { getUserFromRequest } from '@/lib/auth';
 import { generateId } from '@/lib/utils';
 import sql from '@/lib/db';
 
+// Helper to get reactions for a post
+async function getPostReactions(postId: string, userId: string) {
+  try {
+    const reactions = await sql`
+      SELECT emoji, COUNT(*) as count,
+        BOOL_OR(user_id = ${userId}) as user_reacted
+      FROM post_reactions
+      WHERE post_id = ${postId}
+      GROUP BY emoji
+    `;
+    return reactions.map((r: any) => ({
+      emoji: r.emoji,
+      count: Number(r.count),
+      userReacted: r.user_reacted
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
@@ -61,7 +81,15 @@ export async function GET(request: NextRequest) {
       `;
     }
 
-    return NextResponse.json({ success: true, posts });
+    // Add reactions to each post
+    const postsWithReactions = await Promise.all(
+      posts.map(async (post: any) => ({
+        ...post,
+        reactions: await getPostReactions(post.post_id, user.user_id)
+      }))
+    );
+
+    return NextResponse.json({ success: true, posts: postsWithReactions });
   } catch (error) {
     console.error('Get feed error:', error);
     return NextResponse.json(
