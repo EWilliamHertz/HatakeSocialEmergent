@@ -1280,6 +1280,12 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
+            <TouchableOpacity 
+              onPress={() => { setShowAddModal(false); onOpenMenu?.(); }} 
+              style={styles.modalMenuButton}
+            >
+              <Ionicons name="menu" size={24} color="#1F2937" />
+            </TouchableOpacity>
             <Text style={styles.modalTitle}>Add Card</Text>
             <TouchableOpacity onPress={() => setShowAddModal(false)}>
               <Ionicons name="close" size={28} color="#1F2937" />
