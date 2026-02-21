@@ -413,7 +413,11 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#F9FAFB',
+    ...(Platform.OS === 'web' ? { paddingTop: 20 } : {}),
+  },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   backButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
