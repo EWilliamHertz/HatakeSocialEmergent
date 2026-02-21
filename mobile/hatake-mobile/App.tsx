@@ -15,6 +15,7 @@ import FriendsScreen from './src/screens/FriendsScreen';
 import MessagesScreen from './src/screens/MessagesScreen';
 import VideoCallScreen from './src/screens/VideoCallScreen';
 import DrawerMenu from './src/components/DrawerMenu';
+import IncomingCallNotification from './src/components/IncomingCallNotification';
 import { API_URL } from './src/config';
 
 const Tab = createBottomTabNavigator();
