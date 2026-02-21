@@ -106,8 +106,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const { content, image, cardId, game, groupId, visibility } =
-      await request.json();
+    const body = await request.json();
+    const { content, image, cardId, game, visibility } = body;
+    // Accept both groupId and group_id for backwards compatibility
+    const groupId = body.groupId || body.group_id;
 
     if (!content) {
       return NextResponse.json(
