@@ -213,15 +213,19 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
     try {
       if (searchGame === 'mtg') {
         // Magic: The Gathering search
+        console.log('Starting MTG search...');
+        console.log('Search params:', { name: searchQuery, set: setCodeQuery, num: collectorNumQuery });
         
         // Direct lookup by set and collector number (most precise)
         if (setCodeQuery.trim() && collectorNumQuery.trim()) {
           try {
-            const response = await fetch(
-              `${SCRYFALL_API}/cards/${setCodeQuery.toLowerCase().trim()}/${collectorNumQuery.trim()}`
-            );
+            const directUrl = `${SCRYFALL_API}/cards/${setCodeQuery.toLowerCase().trim()}/${collectorNumQuery.trim()}`;
+            console.log('Trying direct lookup:', directUrl);
+            const response = await fetch(directUrl);
+            console.log('Direct lookup response:', response.status);
             if (response.ok) {
               const card = await response.json();
+              console.log('Direct lookup success:', card.name);
               // Prefer EUR prices for European users
               const eurPrice = card.prices?.eur;
               const usdPrice = card.prices?.usd;
@@ -243,7 +247,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               return;
             }
           } catch (e) {
-            console.log('Direct lookup failed, trying search...');
+            console.log('Direct lookup failed:', e);
           }
         }
         
@@ -276,11 +280,10 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
           return;
         }
         
-        console.log('MTG Search query:', query);
-        const response = await fetch(
-          `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`
-        );
+        const searchUrl = `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`;
+        console.log('MTG Search URL:', searchUrl);
         
+        const response = await fetch(searchUrl);
         console.log('MTG search response status:', response.status);
         
         if (response.ok) {
