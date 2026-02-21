@@ -346,7 +346,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
 
   // Trades List View
   return (
-    <SafeAreaView style={styles.container}>
+    <Container style={styles.container}>
       <View style={styles.header}>
         {onOpenMenu ? (
           <TouchableOpacity onPress={onOpenMenu} style={styles.backButton}>
