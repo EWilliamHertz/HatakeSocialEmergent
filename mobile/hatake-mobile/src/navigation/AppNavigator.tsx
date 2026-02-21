@@ -10,7 +10,6 @@ import SearchScreen from '../screens/SearchScreen';
 import MarketplaceScreen from '../screens/MarketplaceScreen';
 import TradesScreen from '../screens/TradesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import ScannerScreen from '../screens/ScannerScreen';
 
 // Store
 import { useStore } from '../store';
@@ -87,11 +86,6 @@ export default function AppNavigator() {
             name="Search" 
             component={SearchScreen}
             options={{ presentation: 'modal' }}
-          />
-          <Stack.Screen 
-            name="Scanner" 
-            component={ScannerScreen}
-            options={{ presentation: 'fullScreenModal' }}
           />
         </>
       )}
