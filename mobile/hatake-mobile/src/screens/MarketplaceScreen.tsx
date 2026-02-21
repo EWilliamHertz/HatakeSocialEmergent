@@ -132,9 +132,9 @@ export default function MarketplaceScreen({ user, token }: MarketplaceScreenProp
   const formatPrice = (price: any) => {
     try {
       const num = parseFloat(price);
-      return isNaN(num) ? '$0.00' : `$${num.toFixed(2)}`;
+      return isNaN(num) ? '€0.00' : `€${num.toFixed(2)}`;
     } catch {
-      return '$0.00';
+      return '€0.00';
     }
   };
 
