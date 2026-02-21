@@ -500,15 +500,18 @@ export default function MarketplacePage() {
           )}
         </div>
 
-        {/* Results Info */}
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-gray-600">
-            {loading ? 'Loading...' : `${filteredListings.length} listings found`}
-          </p>
-        </div>
+        {/* Cards Tab Content */}
+        {activeTab === 'cards' && (
+          <>
+            {/* Results Info */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-gray-600">
+                {loading ? 'Loading...' : `${filteredListings.length} listings found`}
+              </p>
+            </div>
 
-        {/* Listings */}
-        {loading ? (
+            {/* Listings */}
+            {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           </div>
