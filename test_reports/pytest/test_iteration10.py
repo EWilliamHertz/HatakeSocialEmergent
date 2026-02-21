@@ -13,7 +13,7 @@ import requests
 import time
 import json
 
-BASE_URL = "https://trader-hub-61.preview.emergentagent.com"
+BASE_URL = "https://trading-cards-6.preview.emergentagent.com"
 
 
 class TestAuthentication:

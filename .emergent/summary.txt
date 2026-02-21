@@ -155,7 +155,7 @@ base_url=https://demobackend.emergentagent.com
 code_server_password=e5477111
 integration_proxy_url=https://integrations.emergentagent.com
 monitor_polling_interval=1
-preview_endpoint=https://trader-hub-61.preview.emergentagent.com
+preview_endpoint=https://trading-cards-6.preview.emergentagent.com
 run_id=trader-hub-61 object with  and , similar to Pokémon cards.
      - **Why fix this issue and what will be achieved with the fix?** Ensures data consistency for MTG cards, which is crucial for filtering and collection management.
      - **Status:** IN PROGRESS

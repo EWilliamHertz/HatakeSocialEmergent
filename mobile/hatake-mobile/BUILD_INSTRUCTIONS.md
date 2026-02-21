@@ -53,7 +53,7 @@ When build completes, EAS will give you a download link for the APK.
 
 ## 🔗 API Configuration
 
-The app connects to: `https://trader-hub-61.preview.emergentagent.com`
+The app connects to: `https://trading-cards-6.preview.emergentagent.com`
 
 This is your existing Hatake.Social backend.
 
