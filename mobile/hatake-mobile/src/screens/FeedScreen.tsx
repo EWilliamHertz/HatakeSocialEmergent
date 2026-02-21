@@ -117,6 +117,20 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
     }
   };
 
+  const getCardImageUrl = (cardData: any) => {
+    if (!cardData) return '';
+    // MTG uses image_uris
+    if (cardData.image_uris?.small) return cardData.image_uris.small;
+    if (cardData.card_faces?.[0]?.image_uris?.small) return cardData.card_faces[0].image_uris.small;
+    // Pokemon/TCGdex uses image as direct URL
+    if (cardData.image) {
+      const url = cardData.image;
+      return url.includes('.') ? url : `${url}/high.webp`;
+    }
+    // Legacy format
+    return cardData.images?.small || '';
+  };
+
   const renderPost = ({ item }: { item: Post }) => (
     <View style={styles.post}>
       <View style={styles.postHeader}>
