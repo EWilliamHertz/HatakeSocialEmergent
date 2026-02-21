@@ -345,9 +345,15 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
+        {onOpenMenu ? (
+          <TouchableOpacity onPress={onOpenMenu} style={styles.backButton}>
+            <Ionicons name="menu" size={24} color="#1F2937" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          </TouchableOpacity>
+        )}
         <View style={styles.headerCenter}>
           <Text style={styles.title}>Trades</Text>
           <Text style={styles.subtitle}>{trades.length} total trades</Text>
