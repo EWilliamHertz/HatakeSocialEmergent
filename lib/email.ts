@@ -163,12 +163,13 @@ export async function sendEmail(
   html: string
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
-    if (!process.env.RESEND_API_KEY) {
+    const resendClient = getResend();
+    if (!resendClient) {
       console.error('RESEND_API_KEY not configured');
       return { success: false, error: 'Email service not configured' };
     }
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await resendClient.emails.send({
       from: `Hatake.Social <${SENDER_EMAIL}>`,
       to: [to],
       subject,
