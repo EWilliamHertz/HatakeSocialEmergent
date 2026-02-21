@@ -1,6 +1,13 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend only when API key is available (not during build)
+let resend: Resend | null = null;
+const getResend = () => {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+};
 
 const SENDER_EMAIL = process.env.SENDER_EMAIL || 'noreply@hatake.social';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.hatake.eu';
