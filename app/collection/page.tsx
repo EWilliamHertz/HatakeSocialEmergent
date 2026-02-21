@@ -53,6 +53,13 @@ export default function CollectionPage() {
   const [showBulkMenu, setShowBulkMenu] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'binder'>('grid'); // New State
   const [activeTab, setActiveTab] = useState<'cards' | 'sealed' | 'wishlist'>('cards'); // Tab state
+  
+  // Wishlist and Sealed Products state
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [loadingWishlist, setLoadingWishlist] = useState(false);
+  const [sealedProducts, setSealedProducts] = useState<any[]>([]);
+  const [loadingSealed, setLoadingSealed] = useState(false);
+  
   // Edit State
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
