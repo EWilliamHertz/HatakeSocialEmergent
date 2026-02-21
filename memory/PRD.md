@@ -24,97 +24,118 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ---
 
-## COMPLETED FEATURES - Session 2026-02-21 (Latest)
+## COMPLETED FEATURES - Session 2026-02-21
 
-### Bug Fixes Verified (All Tests Passed)
+### Latest Fixes & Features
 
-1. **Mobile Collection Delete** - Fixed platform-specific confirmation dialogs
-   - Uses `window.confirm()` on web for immediate response
-   - Uses `Alert.alert()` on native for native dialogs
-   - DELETE /api/collection?id={id} working with Bearer token
+1. **MTG Search with Edition Picker** ✅
+   - Created `/api/scryfall` backend proxy to fix iOS network issues
+   - Fetches up to 3 pages (~175 cards) from Scryfall
+   - Groups cards by name, shows edition picker
+   - Horizontal scrollable chips to select set/edition
+   - Shows price for each edition
 
-2. **Mobile MTG Search** - Fixed partial name matching
-   - Removed `name:` prefix from Scryfall queries
-   - Uses full-text search for better partial matching
-   - Both name search and set+collector number lookup work
+2. **Feed Emoji Reactions Layout** ✅
+   - Fixed vertical stacking issue
+   - Reactions now display horizontally with proper styling
 
-3. **Mobile Feed Interactions** - Like, comment, emoji features implemented
-   - Like toggle: POST /api/feed/{postId}/like with Bearer token
-   - Emoji reactions: POST /api/feed/{postId}/reactions with emoji body
-   - Feed API now returns reactions array for each post
+3. **Mobile Bulk Selection & Delete** ✅
+   - Long-press a card to enter selection mode
+   - Checkboxes appear on all cards
+   - "Select All" and "Clear" buttons
+   - Floating delete bar at bottom
+   - Confirmation before bulk delete
 
-4. **Price Display** - Search results show prices for both MTG and Pokemon
-   - Removed MTG-only filter for price display
-   - All prices in EUR format
+4. **Profile Screen** ✅
+   - Already implemented with:
+     - User avatar and info
+     - Settings, Notifications, Privacy menu items
+     - Help Center, Terms of Service
+     - App version info
+     - Sign Out button
 
 ### Previous Session Completions
-- Euro currency conversion across all platforms
-- Pokemon search improvements with set code mapping
-- Collection value stats display
-- Shop tab on marketplace with product gallery
+- Euro currency conversion
+- Pokemon search improvements
+- Collection value stats
+- Shop tab on marketplace
 - Multi-image upload in admin panel
+- Single card delete fix
+- Feed like/emoji reactions
 
 ---
 
 ## KEY API ENDPOINTS
 
 ### Collection Management
-- `GET /api/collection` - Get user's collection (supports Bearer token)
-- `POST /api/collection` - Add card to collection
-- `PATCH /api/collection` - Update card details
-- `DELETE /api/collection?id={id}` - Delete single card
+- `GET /api/collection` - Get user's collection
+- `POST /api/collection` - Add card
+- `PATCH /api/collection` - Update card
+- `DELETE /api/collection?id={id}` - Delete card
 
 ### Feed & Social
-- `GET /api/feed` - Get posts with reactions array
-- `POST /api/feed` - Create new post
+- `GET /api/feed` - Get posts with reactions
+- `POST /api/feed` - Create post
 - `POST /api/feed/{postId}/like` - Toggle like
-- `POST /api/feed/{postId}/reactions` - Add/remove emoji reaction
+- `POST /api/feed/{postId}/reactions` - Emoji reaction
 
-### Shop Products
-- `GET /api/shop` - Get active shop products (includes gallery_images)
-- `POST /api/admin/products` - Create/update product (admin only)
+### Scryfall Proxy (NEW)
+- `GET /api/scryfall?q={query}` - Search MTG cards
+- `GET /api/scryfall?set={code}&cn={num}` - Direct lookup
 
 ---
 
-## KNOWN BEHAVIORS (Not Bugs)
+## MOBILE APP FEATURES STATUS
 
-1. **Shop Products without images** - Show Package placeholder icon (expected)
-2. **Cards without price data** - Show "N/A" for cards added before price tracking
-3. **Comments** - Currently show "Coming soon" placeholder (P2 feature)
+| Feature | Status |
+|---------|--------|
+| Authentication | ✅ Complete |
+| Collection View | ✅ Complete |
+| Add Pokemon Cards | ✅ Complete |
+| Add MTG Cards | ✅ Complete (with edition picker) |
+| Single Card Delete | ✅ Complete |
+| Bulk Card Delete | ✅ Complete |
+| Card Detail Modal | ✅ Complete |
+| Feed View | ✅ Complete |
+| Like Posts | ✅ Complete |
+| Emoji Reactions | ✅ Complete |
+| Comments | ⏳ Placeholder only |
+| Marketplace View | ✅ Complete |
+| Profile Screen | ✅ Complete |
+| Settings Page | ⏳ Placeholder |
 
 ---
 
 ## NEXT STEPS
 
 ### High Priority (P1)
-1. **Mobile App Phase 2:**
-   - Implement full comments system (view, reply, create)
-   - Implement Trades screen
-   - Implement Friends screen
+1. **Comments System:**
+   - View comments on posts
+   - Add new comments
+   - Reply to comments
 
-2. **Mobile Bulk Actions:**
-   - Multi-select mode for collection
-   - Bulk delete functionality
-   - Bulk list for sale
+2. **Marketplace Features:**
+   - Delete own listings
+   - Create new listings from collection
 
 ### Medium Priority (P2)
 1. Search results pagination
-2. Delete own marketplace listings (mobile)
-3. Profile & Settings pages (mobile)
-4. Mobile real-time messaging
+2. Friends system & messaging
+3. Trading functionality
+4. Push notifications
 
 ### Future (P3)
-- Deck Builder playtesting
-- Push notifications
+- Deck Builder
 - Card Recognition ML
 - App store publishing
 
 ---
 
-## TEST REPORTS
-- Latest: `/app/test_reports/iteration_14.json` - All 7 bugs verified fixed
-- Backend: 100% (17/17 tests passed)
-- Frontend: 100% verified
+## KNOWN BEHAVIORS
+
+1. **Cards without prices** - Show "N/A" (cards added before price tracking)
+2. **Shop products without images** - Show package placeholder
+3. **Comments** - Currently show "Coming soon" placeholder
 
 ---
 
