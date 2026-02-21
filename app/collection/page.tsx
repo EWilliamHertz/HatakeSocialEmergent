@@ -868,6 +868,7 @@ export default function CollectionPage() {
           </div>
           )}
         </div>
+      </div>
 
         {/* Tab Content */}
         {activeTab === 'cards' && (
