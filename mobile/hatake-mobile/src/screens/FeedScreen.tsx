@@ -130,13 +130,21 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
     try {
       const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
       
+      const postData: any = { content: newPostText };
+      
+      // If posting to a specific group
+      if (activeTab === 'groups' && selectedGroup) {
+        postData.group_id = selectedGroup;
+        postData.visibility = 'group';
+      }
+      
       const response = await fetch(`${API_URL}/api/feed`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: newPostText }),
+        body: JSON.stringify(postData),
       });
       
       if (response.ok) {
