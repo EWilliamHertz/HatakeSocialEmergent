@@ -7,9 +7,11 @@ import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import LoginScreen from './src/screens/LoginScreen';
+import FeedScreen from './src/screens/FeedScreen';
 import CollectionScreen from './src/screens/CollectionScreen';
 import MarketplaceScreen from './src/screens/MarketplaceScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import DrawerMenu from './src/components/DrawerMenu';
 import { API_URL } from './src/config';
 
 const Tab = createBottomTabNavigator();
@@ -25,6 +27,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     checkSession();
@@ -32,30 +35,29 @@ export default function App() {
 
   const checkSession = async () => {
     try {
-      // First check localStorage
       if (typeof localStorage !== 'undefined') {
+        const storedToken = localStorage.getItem('auth_token');
         const storedUser = localStorage.getItem('user_data');
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          
-          // Verify session is still valid by calling /api/auth/me
+        if (storedToken && storedUser) {
+          // Verify token is still valid
           try {
             const response = await fetch(`${API_URL}/api/auth/me`, {
-              credentials: 'include',
+              headers: { 'Authorization': `Bearer ${storedToken}` },
             });
             const data = await response.json();
             
             if (data.user) {
               setUser(data.user);
-              setToken('cookie-auth');
+              setToken(storedToken);
             } else {
-              // Session expired, clear localStorage
-              localStorage.removeItem('user_data');
+              // Use cached data if API fails but we have token
+              setUser(JSON.parse(storedUser));
+              setToken(storedToken);
             }
           } catch {
             // Network error, use cached user
-            setUser(parsedUser);
-            setToken('cookie-auth');
+            setUser(JSON.parse(storedUser));
+            setToken(storedToken);
           }
         }
       }
@@ -65,16 +67,17 @@ export default function App() {
     setLoading(false);
   };
 
-  const handleLoginSuccess = async (loggedInUser: User, authToken: string) => {
+  const handleLoginSuccess = (loggedInUser: User, authToken: string) => {
     setUser(loggedInUser);
     setToken(authToken);
   };
 
   const handleLogout = async () => {
     try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
       await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
-        credentials: 'include',
+        headers: { 'Authorization': `Bearer ${authToken}` },
       });
     } catch (e) {
       // Ignore logout errors
@@ -87,6 +90,12 @@ export default function App() {
     
     setUser(null);
     setToken(null);
+    setDrawerOpen(false);
+  };
+
+  const handleNavigate = (screen: string) => {
+    // TODO: Implement navigation to different screens
+    console.log('Navigate to:', screen);
   };
 
   if (loading) {
@@ -102,38 +111,59 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         {user && token ? (
-          <Tab.Navigator
-            screenOptions={({ route }) => ({
-              headerShown: false,
-              tabBarIcon: ({ focused, color, size }) => {
-                let iconName: any;
-                if (route.name === 'Collection') {
-                  iconName = focused ? 'albums' : 'albums-outline';
-                } else if (route.name === 'Marketplace') {
-                  iconName = focused ? 'storefront' : 'storefront-outline';
-                } else if (route.name === 'Profile') {
-                  iconName = focused ? 'person' : 'person-outline';
-                }
-                return <Ionicons name={iconName} size={size} color={color} />;
-              },
-              tabBarActiveTintColor: '#3B82F6',
-              tabBarInactiveTintColor: '#9CA3AF',
-              tabBarStyle: {
-                backgroundColor: '#fff',
-                borderTopColor: '#E5E7EB',
-              },
-            })}
-          >
-            <Tab.Screen name="Collection">
-              {() => <CollectionScreen user={user} token={token} />}
-            </Tab.Screen>
-            <Tab.Screen name="Marketplace">
-              {() => <MarketplaceScreen user={user} token={token} />}
-            </Tab.Screen>
-            <Tab.Screen name="Profile">
-              {() => <ProfileScreen user={user} onLogout={handleLogout} />}
-            </Tab.Screen>
-          </Tab.Navigator>
+          <>
+            <Tab.Navigator
+              screenOptions={({ route }) => ({
+                headerShown: false,
+                tabBarIcon: ({ focused, color, size }) => {
+                  let iconName: any;
+                  if (route.name === 'Feed') {
+                    iconName = focused ? 'newspaper' : 'newspaper-outline';
+                  } else if (route.name === 'Collection') {
+                    iconName = focused ? 'albums' : 'albums-outline';
+                  } else if (route.name === 'Marketplace') {
+                    iconName = focused ? 'storefront' : 'storefront-outline';
+                  } else if (route.name === 'Profile') {
+                    iconName = focused ? 'person' : 'person-outline';
+                  }
+                  return <Ionicons name={iconName} size={size} color={color} />;
+                },
+                tabBarActiveTintColor: '#3B82F6',
+                tabBarInactiveTintColor: '#9CA3AF',
+                tabBarStyle: {
+                  backgroundColor: '#fff',
+                  borderTopColor: '#E5E7EB',
+                },
+              })}
+            >
+              <Tab.Screen name="Feed">
+                {() => (
+                  <FeedScreen 
+                    user={user} 
+                    token={token} 
+                    onOpenMenu={() => setDrawerOpen(true)} 
+                  />
+                )}
+              </Tab.Screen>
+              <Tab.Screen name="Collection">
+                {() => <CollectionScreen user={user} token={token} />}
+              </Tab.Screen>
+              <Tab.Screen name="Marketplace">
+                {() => <MarketplaceScreen user={user} token={token} />}
+              </Tab.Screen>
+              <Tab.Screen name="Profile">
+                {() => <ProfileScreen user={user} onLogout={handleLogout} />}
+              </Tab.Screen>
+            </Tab.Navigator>
+            
+            <DrawerMenu
+              visible={drawerOpen}
+              onClose={() => setDrawerOpen(false)}
+              user={user}
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+            />
+          </>
         ) : (
           <LoginScreen onLoginSuccess={handleLoginSuccess} />
         )}
