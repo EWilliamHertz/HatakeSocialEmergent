@@ -34,11 +34,31 @@ interface User {
   picture?: string;
 }
 
+interface CallState {
+  active: boolean;
+  recipient: {
+    user_id: string;
+    name: string;
+    picture?: string;
+  } | null;
+  callType: 'audio' | 'video';
+  isIncoming: boolean;
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showFriends, setShowFriends] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [messageRecipient, setMessageRecipient] = useState<any>(null);
+  const [callState, setCallState] = useState<CallState>({
+    active: false,
+    recipient: null,
+    callType: 'audio',
+    isIncoming: false,
+  });
   const navigationRef = useRef<NavigationContainerRef<RootTabParamList>>(null);
 
   useEffect(() => {
