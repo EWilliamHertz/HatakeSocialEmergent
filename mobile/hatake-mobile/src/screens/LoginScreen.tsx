@@ -23,28 +23,44 @@ export default function LoginScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
   const { login, register, isLoading } = useStore();
 
   const handleSubmit = async () => {
+    setErrorMessage('');
+    setStatusMessage('Connecting...');
+    
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setErrorMessage('Please fill in all fields');
+      setStatusMessage('');
       return;
     }
 
     if (isRegister && !name) {
-      Alert.alert('Error', 'Please enter your name');
+      setErrorMessage('Please enter your name');
+      setStatusMessage('');
       return;
     }
 
-    let result;
-    if (isRegister) {
-      result = await register(email, password, name);
-    } else {
-      result = await login(email, password);
-    }
+    try {
+      setStatusMessage(isRegister ? 'Creating account...' : 'Signing in...');
+      let result;
+      if (isRegister) {
+        result = await register(email, password, name);
+      } else {
+        result = await login(email, password);
+      }
 
-    if (!result.success) {
-      Alert.alert('Error', result.error || 'Authentication failed');
+      if (!result.success) {
+        setErrorMessage(result.error || 'Authentication failed');
+        setStatusMessage('');
+      } else {
+        setStatusMessage('Success! Redirecting...');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Network error occurred');
+      setStatusMessage('');
     }
   };
 
