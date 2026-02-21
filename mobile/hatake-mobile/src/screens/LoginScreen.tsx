@@ -5,197 +5,141 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   Image,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useStore } from '../store';
 
-// Import the logo image
+const API_URL = 'https://www.hatake.eu';
 const logoImage = require('../../assets/icon.png');
 
-export default function LoginScreen({ navigation }: any) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
-  const [name, setName] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [statusMessage, setStatusMessage] = useState('');
-  const [localLoading, setLocalLoading] = useState(false);
-  const { login, register } = useStore();
+export default function LoginScreen() {
+  const [email, setEmail] = useState('test@test.com');
+  const [password, setPassword] = useState('password');
+  const [status, setStatus] = useState('Ready to login');
+  const [loading, setLoading] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
 
-  const handleSubmit = async () => {
-    console.log('[LOGIN] handleSubmit called');
-    setErrorMessage('');
-    setStatusMessage('Connecting...');
-    setLocalLoading(true);
+  const doLogin = async () => {
+    setLoading(true);
+    setStatus('Starting login...');
     
-    if (!email || !password) {
-      setErrorMessage('Please fill in all fields');
-      setStatusMessage('');
-      setLocalLoading(false);
-      return;
-    }
-
-    if (isRegister && !name) {
-      setErrorMessage('Please enter your name');
-      setStatusMessage('');
-      setLocalLoading(false);
-      return;
-    }
-
     try {
-      console.log('[LOGIN] Attempting auth with:', { email, isRegister });
-      setStatusMessage(isRegister ? 'Creating account...' : 'Signing in...');
+      setStatus('Sending request to ' + API_URL + '/api/auth/login');
       
-      let result;
-      if (isRegister) {
-        result = await register(email, password, name);
-      } else {
-        result = await login(email, password);
+      const response = await fetch(API_URL + '/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      setStatus('Got response, status: ' + response.status);
+      
+      const text = await response.text();
+      setStatus('Response text length: ' + text.length);
+      
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        setStatus('Failed to parse JSON: ' + text.substring(0, 100));
+        setLoading(false);
+        return;
       }
-
-      console.log('[LOGIN] Auth result:', result);
-
-      if (!result.success) {
-        setErrorMessage(result.error || 'Authentication failed');
-        setStatusMessage('');
+      
+      if (data.success) {
+        setStatus('LOGIN SUCCESS! User: ' + data.user.email);
+        setUserData(data.user);
+        setLoggedIn(true);
+        // Store token
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('user_data', JSON.stringify(data.user));
+        }
       } else {
-        setStatusMessage('Success! Logged in.');
+        setStatus('Login failed: ' + (data.error || 'Unknown error'));
       }
     } catch (err: any) {
-      console.error('[LOGIN] Error:', err);
-      setErrorMessage('Error: ' + (err?.message || String(err) || 'Unknown error'));
-      setStatusMessage('');
-    } finally {
-      setLocalLoading(false);
+      setStatus('ERROR: ' + (err.message || String(err)));
     }
+    
+    setLoading(false);
   };
+
+  if (loggedIn && userData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Image source={logoImage} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.title}>Welcome!</Text>
+          <Text style={styles.successText}>Logged in as: {userData.email}</Text>
+          <Text style={styles.successText}>Name: {userData.name}</Text>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={() => {
+              setLoggedIn(false);
+              setUserData(null);
+              setStatus('Logged out');
+              if (typeof localStorage !== 'undefined') {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
+              }
+            }}
+          >
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+      <View style={styles.content}>
+        <Image source={logoImage} style={styles.logo} resizeMode="contain" />
+        <Text style={styles.title}>Hatake.Social</Text>
+        <Text style={styles.subtitle}>TCG Trading Platform</Text>
+        
+        <View style={styles.statusBox}>
+          <Text style={styles.statusText}>{status}</Text>
+        </View>
+        
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Email"
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Password"
+          secureTextEntry
+        />
+        
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={doLogin}
+          disabled={loading}
         >
-          {/* Logo */}
-          <View style={styles.logoContainer}>
-            <Image 
-              source={logoImage} 
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>Hatake.Social</Text>
-            <Text style={styles.subtitle}>TCG Trading Platform</Text>
-          </View>
-
-          {/* Form */}
-          <View style={styles.form}>
-            <Text style={styles.formTitle}>
-              {isRegister ? 'Create Account' : 'Welcome Back'}
-            </Text>
-
-            {/* Status/Error Messages */}
-            {errorMessage ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{errorMessage}</Text>
-              </View>
-            ) : null}
-            {statusMessage ? (
-              <View style={styles.statusBox}>
-                <Text style={styles.statusText}>{statusMessage}</Text>
-              </View>
-            ) : null}
-
-            {isRegister && (
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Name</Text>
-                <TextInput
-                  style={styles.input}
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Your name"
-                  autoCapitalize="words"
-                />
-              </View>
-            )}
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="your@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="password"
-                secureTextEntry
-              />
-            </View>
-
-            {/* Simple TouchableOpacity Button */}
-            <TouchableOpacity
-              style={[styles.submitButton, localLoading && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={localLoading}
-              activeOpacity={0.7}
-            >
-              {localLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.submitButtonText}>
-                  {isRegister ? 'Sign Up' : 'Sign In'}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.switchButton}
-              onPress={() => setIsRegister(!isRegister)}
-            >
-              <Text style={styles.switchText}>
-                {isRegister
-                  ? 'Already have an account? Sign In'
-                  : "Don't have an account? Sign Up"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Google Sign In - Disabled for now */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <TouchableOpacity style={styles.googleButton} disabled>
-            <Text style={styles.googleButtonText}>Google Sign-In (Coming Soon)</Text>
-          </TouchableOpacity>
-
-          {/* Debug info */}
-          <Text style={styles.debugText}>
-            API: https://www.hatake.eu
-          </Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Sign In</Text>
+          )}
+        </TouchableOpacity>
+        
+        <Text style={styles.apiText}>API: {API_URL}</Text>
+      </View>
     </SafeAreaView>
   );
 }
@@ -205,140 +149,85 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  keyboardView: {
+  content: {
     flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
     padding: 24,
     justifyContent: 'center',
   },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  logoImage: {
-    width: 100,
-    height: 100,
+  logo: {
+    width: 80,
+    height: 80,
+    alignSelf: 'center',
     marginBottom: 16,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+    textAlign: 'center',
     color: '#1F2937',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
-    marginTop: 4,
-  },
-  form: {
-    marginBottom: 24,
-  },
-  formTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 24,
     textAlign: 'center',
+    color: '#6B7280',
+    marginBottom: 24,
   },
-  inputContainer: {
+  statusBox: {
+    backgroundColor: '#F3F4F6',
+    padding: 12,
+    borderRadius: 8,
     marginBottom: 16,
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#374151',
+    textAlign: 'center',
   },
   label: {
     fontSize: 14,
     fontWeight: '500',
     color: '#374151',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   input: {
     backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 8,
+    padding: 12,
     fontSize: 16,
-    color: '#1F2937',
+    marginBottom: 12,
   },
-  submitButton: {
+  button: {
     backgroundColor: '#3B82F6',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 8,
+    padding: 16,
     alignItems: 'center',
     marginTop: 8,
   },
-  submitButtonDisabled: {
-    opacity: 0.7,
+  buttonDisabled: {
+    opacity: 0.6,
   },
-  submitButtonText: {
+  buttonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
-  switchButton: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  switchText: {
-    color: '#3B82F6',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E7EB',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#9CA3AF',
-    fontSize: 14,
-  },
-  googleButton: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  googleButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#9CA3AF',
-  },
-  errorBox: {
-    backgroundColor: '#FEE2E2',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-  errorText: {
-    color: '#DC2626',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  statusBox: {
-    backgroundColor: '#DBEAFE',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-  },
-  statusText: {
-    color: '#2563EB',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  debugText: {
-    marginTop: 20,
+  apiText: {
+    marginTop: 24,
     fontSize: 10,
     color: '#9CA3AF',
     textAlign: 'center',
+  },
+  successText: {
+    fontSize: 16,
+    color: '#059669',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  logoutButton: {
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 24,
   },
 });
