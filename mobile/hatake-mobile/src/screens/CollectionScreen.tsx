@@ -254,17 +254,24 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               );
             }
             
-            setSearchResults(results.slice(0, 30).map((card: any) => ({
-              id: card.id,
-              name: card.name,
-              image: card.image ? `${card.image}/high.webp` : '',
-              set_name: card.set?.name || '',
-              set_code: card.set?.id?.toUpperCase() || '',
-              collector_number: card.localId || card.id?.split('-')[1] || '',
-              rarity: card.rarity,
-              game: 'pokemon' as const,
-              data: card,
-            })));
+            setSearchResults(results.slice(0, 30).map((card: any) => {
+              // Parse set code from card ID (format: setcode-number)
+              const idParts = card.id?.split('-') || [];
+              const setCode = idParts.length > 1 ? idParts.slice(0, -1).join('-').toUpperCase() : '';
+              const collectorNum = card.localId || idParts[idParts.length - 1] || '';
+              
+              return {
+                id: card.id,
+                name: card.name,
+                image: card.image ? `${card.image}/high.webp` : '',
+                set_name: card.set?.name || setCode, // Use set code if no set name
+                set_code: card.set?.id?.toUpperCase() || setCode,
+                collector_number: collectorNum,
+                rarity: card.rarity,
+                game: 'pokemon' as const,
+                data: card,
+              };
+            }));
           }
         } else if (setCodeQuery.trim()) {
           // Search by set only
