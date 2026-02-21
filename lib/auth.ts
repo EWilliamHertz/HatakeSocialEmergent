@@ -88,3 +88,32 @@ export async function deleteSession(sessionToken: string) {
     WHERE session_token = ${sessionToken}
   `;
 }
+
+// Helper to get user from either cookie or Bearer token
+export async function getUserFromRequest(request: Request): Promise<User | null> {
+  // First try Bearer token from Authorization header
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    const user = await getUserFromToken(token);
+    if (user) return user;
+  }
+  
+  // Then try session cookie
+  const cookieHeader = request.headers.get('cookie');
+  if (cookieHeader) {
+    const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+    
+    const sessionToken = cookies['session_token'];
+    if (sessionToken) {
+      const user = await getSessionUser(sessionToken);
+      if (user) return user;
+    }
+  }
+  
+  return null;
+}
