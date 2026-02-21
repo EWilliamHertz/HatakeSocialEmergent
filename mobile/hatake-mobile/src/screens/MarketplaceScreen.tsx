@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,12 +18,17 @@ const API_URL = 'https://www.hatake.eu';
 interface Listing {
   id: number;
   listing_id: string;
+  card_id: string;
   card_data: any;
   game: string;
   price: number;
   condition: string;
   seller_name?: string;
+  seller_picture?: string;
   user_id?: string;
+  foil?: boolean;
+  quantity?: number;
+  created_at?: string;
 }
 
 interface MarketplaceScreenProps {
@@ -35,16 +41,23 @@ export default function MarketplaceScreen({ user, token }: MarketplaceScreenProp
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [filter, setFilter] = useState<'all' | 'mtg' | 'pokemon'>('all');
 
   useEffect(() => {
     fetchListings();
-  }, []);
+  }, [filter]);
 
   const fetchListings = async () => {
     setError('');
     try {
-      const response = await fetch(`${API_URL}/api/marketplace`, {
-        credentials: 'include',
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      
+      const url = filter === 'all'
+        ? `${API_URL}/api/marketplace`
+        : `${API_URL}/api/marketplace?game=${filter}`;
+      
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
       });
       const data = await response.json();
       
@@ -74,11 +87,11 @@ export default function MarketplaceScreen({ user, token }: MarketplaceScreenProp
     try {
       if (!listing.card_data) return null;
       if (listing.game === 'mtg') {
-        return listing.card_data?.image_uris?.normal || 
-               listing.card_data?.image_uris?.small ||
-               listing.card_data?.card_faces?.[0]?.image_uris?.normal;
+        return listing.card_data?.image_uris?.small || 
+               listing.card_data?.image_uris?.normal ||
+               listing.card_data?.card_faces?.[0]?.image_uris?.small;
       } else {
-        return listing.card_data?.images?.large || listing.card_data?.images?.small;
+        return listing.card_data?.images?.small || listing.card_data?.images?.large;
       }
     } catch {
       return null;
@@ -93,6 +106,22 @@ export default function MarketplaceScreen({ user, token }: MarketplaceScreenProp
     }
   };
 
+  const getSetInfo = (listing: Listing) => {
+    try {
+      if (listing.game === 'mtg') {
+        const set = listing.card_data?.set_name || '';
+        const num = listing.card_data?.collector_number || '';
+        return set ? `${set} #${num}` : '';
+      } else {
+        const set = listing.card_data?.set?.name || '';
+        const num = listing.card_data?.localId || listing.card_id?.split('-')[1] || '';
+        return set ? `${set} #${num}` : '';
+      }
+    } catch {
+      return '';
+    }
+  };
+
   const formatPrice = (price: any) => {
     try {
       const num = parseFloat(price);
@@ -102,30 +131,64 @@ export default function MarketplaceScreen({ user, token }: MarketplaceScreenProp
     }
   };
 
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString();
+    } catch {
+      return '';
+    }
+  };
+
   const renderItem = ({ item }: { item: Listing }) => {
     const imageUrl = getCardImage(item);
     
     return (
       <TouchableOpacity style={styles.card}>
-        {imageUrl ? (
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={styles.cardImage}
-            resizeMode="contain"
-          />
-        ) : (
-          <View style={styles.cardPlaceholder}>
-            <Ionicons name="image-outline" size={40} color="#9CA3AF" />
-          </View>
-        )}
+        <View style={styles.cardImageContainer}>
+          {imageUrl ? (
+            <Image 
+              source={{ uri: imageUrl }} 
+              style={styles.cardImage}
+              resizeMode="contain"
+            />
+          ) : (
+            <View style={styles.cardPlaceholder}>
+              <Ionicons name="image-outline" size={30} color="#9CA3AF" />
+            </View>
+          )}
+          {item.foil && (
+            <View style={styles.foilBadge}>
+              <Text style={styles.foilText}>Foil</Text>
+            </View>
+          )}
+        </View>
+        
         <View style={styles.cardInfo}>
-          <Text style={styles.cardName} numberOfLines={2}>
+          <Text style={styles.cardName} numberOfLines={1}>
             {getCardName(item)}
+          </Text>
+          <Text style={styles.cardSet} numberOfLines={1}>
+            {getSetInfo(item)}
           </Text>
           <Text style={styles.price}>{formatPrice(item.price)}</Text>
           <Text style={styles.condition}>
-            {item.condition || 'NM'} • {(item.game || 'tcg').toUpperCase()}
+            {item.condition || 'NM'} • {item.game === 'mtg' ? 'Magic' : 'Pokémon'}
           </Text>
+          
+          <View style={styles.sellerRow}>
+            {item.seller_picture ? (
+              <Image source={{ uri: item.seller_picture }} style={styles.sellerAvatar} />
+            ) : (
+              <View style={styles.sellerAvatarPlaceholder}>
+                <Ionicons name="person" size={10} color="#9CA3AF" />
+              </View>
+            )}
+            <Text style={styles.sellerName} numberOfLines={1}>
+              {item.seller_name || 'Seller'}
+            </Text>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -146,7 +209,22 @@ export default function MarketplaceScreen({ user, token }: MarketplaceScreenProp
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Marketplace</Text>
-        <Text style={styles.subtitle}>{listings.length} listings available</Text>
+        <Text style={styles.subtitle}>{listings.length} listings</Text>
+      </View>
+
+      {/* Filters */}
+      <View style={styles.filters}>
+        {(['all', 'mtg', 'pokemon'] as const).map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.filterButton, filter === f && styles.filterActive]}
+            onPress={() => setFilter(f)}
+          >
+            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+              {f === 'all' ? 'All' : f === 'mtg' ? 'Magic' : 'Pokémon'}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {error ? (
@@ -203,14 +281,36 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 4,
   },
+  filters: {
+    flexDirection: 'row',
+    padding: 12,
+    gap: 8,
+  },
+  filterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#E5E7EB',
+  },
+  filterActive: {
+    backgroundColor: '#3B82F6',
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4B5563',
+  },
+  filterTextActive: {
+    color: '#fff',
+  },
   list: {
-    padding: 8,
+    padding: 6,
   },
   card: {
     flex: 1,
     margin: 4,
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -218,6 +318,9 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
     maxWidth: '48%',
+  },
+  cardImageContainer: {
+    position: 'relative',
   },
   cardImage: {
     width: '100%',
@@ -231,13 +334,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  foilBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  foilText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '600',
+  },
   cardInfo: {
     padding: 8,
   },
   cardName: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#1F2937',
+  },
+  cardSet: {
+    fontSize: 9,
+    color: '#6B7280',
+    marginTop: 1,
   },
   price: {
     fontSize: 14,
@@ -246,9 +368,37 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   condition: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#9CA3AF',
     marginTop: 2,
+  },
+  sellerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  sellerAvatar: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 4,
+  },
+  sellerAvatarPlaceholder: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
+  },
+  sellerName: {
+    fontSize: 9,
+    color: '#6B7280',
+    flex: 1,
   },
   centered: {
     flex: 1,
