@@ -1171,6 +1171,13 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
             <Text style={styles.subtitle}>{items.length} cards</Text>
           </View>
           <TouchableOpacity 
+            style={styles.csvButton}
+            onPress={() => setShowCsvModal(true)}
+            data-testid="csv-import-btn"
+          >
+            <Ionicons name="document-text-outline" size={22} color="#3B82F6" />
+          </TouchableOpacity>
+          <TouchableOpacity 
             style={styles.addButton}
             onPress={() => setShowAddModal(true)}
           >
