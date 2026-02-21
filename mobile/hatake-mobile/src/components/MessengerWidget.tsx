@@ -77,7 +77,8 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
   const fetchConversations = async () => {
     try {
       const authToken = getAuthToken();
-      const res = await fetch(`${API_URL}/api/messages/conversations`, {
+      // Conversations are returned from the main messages endpoint
+      const res = await fetch(`${API_URL}/api/messages`, {
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
       const data = await res.json();
