@@ -200,8 +200,11 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   };
 
   const selectAll = () => {
-    const filtered = getFilteredItems();
-    setSelectedIds(new Set(filtered.map(item => item.id)));
+    // Get filtered items based on current filter
+    const filteredItems = filter === 'all' 
+      ? items 
+      : items.filter(item => item.game === filter);
+    setSelectedIds(new Set(filteredItems.map(item => item.id)));
   };
 
   const clearSelection = () => {
