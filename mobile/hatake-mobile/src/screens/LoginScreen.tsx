@@ -8,12 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../store';
-import Button from '../components/Button';
 
 // Import the logo image
 const logoImage = require('../../assets/icon.png');
@@ -25,27 +24,33 @@ export default function LoginScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
-  const { login, register, isLoading } = useStore();
+  const [localLoading, setLocalLoading] = useState(false);
+  const { login, register } = useStore();
 
   const handleSubmit = async () => {
-    // Prevent any default behaviors
+    console.log('[LOGIN] handleSubmit called');
     setErrorMessage('');
     setStatusMessage('Connecting...');
+    setLocalLoading(true);
     
     if (!email || !password) {
       setErrorMessage('Please fill in all fields');
       setStatusMessage('');
+      setLocalLoading(false);
       return;
     }
 
     if (isRegister && !name) {
       setErrorMessage('Please enter your name');
       setStatusMessage('');
+      setLocalLoading(false);
       return;
     }
 
     try {
+      console.log('[LOGIN] Attempting auth with:', { email, isRegister });
       setStatusMessage(isRegister ? 'Creating account...' : 'Signing in...');
+      
       let result;
       if (isRegister) {
         result = await register(email, password, name);
@@ -53,24 +58,21 @@ export default function LoginScreen({ navigation }: any) {
         result = await login(email, password);
       }
 
+      console.log('[LOGIN] Auth result:', result);
+
       if (!result.success) {
         setErrorMessage(result.error || 'Authentication failed');
         setStatusMessage('');
       } else {
-        setStatusMessage('Success! Redirecting...');
+        setStatusMessage('Success! Logged in.');
       }
     } catch (err: any) {
-      setErrorMessage('Error: ' + (err?.message || JSON.stringify(err) || 'Unknown error'));
+      console.error('[LOGIN] Error:', err);
+      setErrorMessage('Error: ' + (err?.message || String(err) || 'Unknown error'));
       setStatusMessage('');
+    } finally {
+      setLocalLoading(false);
     }
-  };
-
-  // Wrapper to prevent form submission on web
-  const onButtonPress = () => {
-    // Using setTimeout to escape any event bubbling issues on web
-    setTimeout(() => {
-      handleSubmit();
-    }, 0);
   };
 
   return (
@@ -144,18 +146,26 @@ export default function LoginScreen({ navigation }: any) {
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="••••••••"
+                placeholder="password"
                 secureTextEntry
               />
             </View>
 
-            <Button
-              title={isRegister ? 'Sign Up' : 'Sign In'}
-              onPress={onButtonPress}
-              loading={isLoading}
-              fullWidth
-              size="large"
-            />
+            {/* Simple TouchableOpacity Button */}
+            <TouchableOpacity
+              style={[styles.submitButton, localLoading && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={localLoading}
+              activeOpacity={0.7}
+            >
+              {localLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  {isRegister ? 'Sign Up' : 'Sign In'}
+                </Text>
+              )}
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.switchButton}
@@ -169,16 +179,21 @@ export default function LoginScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          {/* Google Sign In */}
+          {/* Google Sign In - Disabled for now */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>or continue with</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          <TouchableOpacity style={styles.googleButton}>
-            <Text style={styles.googleButtonText}>Sign in with Google</Text>
+          <TouchableOpacity style={styles.googleButton} disabled>
+            <Text style={styles.googleButtonText}>Google Sign-In (Coming Soon)</Text>
           </TouchableOpacity>
+
+          {/* Debug info */}
+          <Text style={styles.debugText}>
+            API: https://trading-cards-6.preview.emergentagent.com
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -244,6 +259,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
   },
+  submitButton: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  submitButtonDisabled: {
+    opacity: 0.7,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
   switchButton: {
     marginTop: 16,
     alignItems: 'center',
@@ -269,9 +299,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   googleButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: '#E5E7EB',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
@@ -279,7 +307,7 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#374151',
+    color: '#9CA3AF',
   },
   errorBox: {
     backgroundColor: '#FEE2E2',
@@ -305,6 +333,12 @@ const styles = StyleSheet.create({
   statusText: {
     color: '#2563EB',
     fontSize: 14,
+    textAlign: 'center',
+  },
+  debugText: {
+    marginTop: 20,
+    fontSize: 10,
+    color: '#9CA3AF',
     textAlign: 'center',
   },
 });
