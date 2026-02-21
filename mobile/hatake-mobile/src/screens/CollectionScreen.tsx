@@ -510,6 +510,63 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
     return ['Normal', 'Foil', 'Etched Foil', 'Gilded Foil'];
   };
 
+  // Get price from card data - handles both MTG and Pokemon formats
+  const getCardPrice = (item: CollectionItem): number => {
+    try {
+      const data = item.card_data;
+      if (!data) return 0;
+      
+      if (item.game === 'mtg') {
+        // Scryfall format
+        const price = parseFloat(data.prices?.usd) || parseFloat(data.prices?.eur) || 0;
+        return price * (item.quantity || 1);
+      } else {
+        // TCGdex format - check cardmarket and tcgplayer
+        const cmPrice = data.cardmarket?.prices?.averageSellPrice || data.cardmarket?.prices?.trendPrice || data.pricing?.cardmarket?.avg || 0;
+        const tcgPrice = data.tcgplayer?.prices?.holofoil?.market || data.tcgplayer?.prices?.normal?.market || 0;
+        const price = cmPrice || tcgPrice || parseFloat(data.purchase_price) || 0;
+        return price * (item.quantity || 1);
+      }
+    } catch {
+      return 0;
+    }
+  };
+
+  // Calculate collection totals
+  const calculateCollectionStats = () => {
+    let totalValue = 0;
+    let mtgValue = 0;
+    let pokemonValue = 0;
+    const setValues: Record<string, number> = {};
+    
+    items.forEach(item => {
+      const price = getCardPrice(item);
+      totalValue += price;
+      
+      if (item.game === 'mtg') {
+        mtgValue += price;
+      } else {
+        pokemonValue += price;
+      }
+      
+      // Track by set
+      const setName = item.card_data?.set?.name || item.card_data?.set_name || 'Unknown';
+      setValues[setName] = (setValues[setName] || 0) + price;
+    });
+    
+    return {
+      totalValue,
+      mtgValue,
+      pokemonValue,
+      totalCards: items.length,
+      setValues: Object.entries(setValues)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5), // Top 5 sets by value
+    };
+  };
+
+  const stats = calculateCollectionStats();
+
   const renderItem = ({ item }: { item: CollectionItem }) => {
     const imageUrl = getCardImage(item);
     
