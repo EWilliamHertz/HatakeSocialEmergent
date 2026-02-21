@@ -413,9 +413,16 @@ export default function FeedPage() {
                       )}
                     </Link>
                     <div>
-                      <Link href={`/profile/${post.user_id}`} className="hover:underline hover:text-blue-600">
-                        <p className="font-semibold text-gray-900 dark:text-white">{post.name}</p>
-                      </Link>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link href={`/profile/${post.user_id}`} className="hover:underline hover:text-blue-600">
+                          <p className="font-semibold text-gray-900 dark:text-white">{post.name}</p>
+                        </Link>
+                        {(post as any).group_name && (
+                          <span className="text-xs font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded">
+                            @ {(post as any).group_name}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(post.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
