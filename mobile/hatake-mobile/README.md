@@ -145,7 +145,7 @@ Update `src/config.ts` with your backend URL:
 ```typescript
 export const API_URL = 'https://www.hatake.eu';  // Production
 // or
-export const API_URL = 'https://your-preview-url.preview.emergentagent.com';  // Preview
+export const API_URL = 'https://trading-hub-test-1.preview.emergentagent.com';  // Preview
 ```
 
 ## Google Play Store Deployment
