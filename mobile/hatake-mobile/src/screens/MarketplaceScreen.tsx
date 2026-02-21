@@ -1,134 +1,130 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  RefreshControl,
-  TouchableOpacity,
   Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useStore } from '../store';
-import GameFilter from '../components/GameFilter';
-import SearchBar from '../components/SearchBar';
 
-export default function MarketplaceScreen({ navigation }: any) {
-  const { listings, marketplaceLoading, fetchListings, selectedGame, setSelectedGame } = useStore();
-  const [searchQuery, setSearchQuery] = useState('');
+const API_URL = 'https://www.hatake.eu';
+
+interface Listing {
+  listing_id: string;
+  card_data: any;
+  game: string;
+  price: number;
+  condition: string;
+  seller_name: string;
+}
+
+interface MarketplaceScreenProps {
+  user: any;
+  token: string;
+}
+
+export default function MarketplaceScreen({ user, token }: MarketplaceScreenProps) {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchListings(selectedGame === 'all' ? undefined : selectedGame);
-  }, [selectedGame]);
+    fetchListings();
+  }, []);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchListings(selectedGame === 'all' ? undefined : selectedGame);
+  const fetchListings = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/marketplace`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setListings(data.listings || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch listings:', err);
+    }
+    setLoading(false);
     setRefreshing(false);
   };
 
-  const filteredListings = listings.filter(listing => 
-    listing.card_data?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const renderItem = ({ item }: { item: any }) => {
-    const imageUrl = item.card_data?.image_uris?.small || 
-                     item.card_data?.image_uris?.normal || 
-                     item.card_data?.images?.small || '';
-
-    return (
-      <TouchableOpacity 
-        style={styles.listingCard}
-        onPress={() => navigation.navigate('ListingDetail', { listing: item })}
-      >
-        <View style={styles.imageContainer}>
-          {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
-          ) : (
-            <View style={styles.placeholder}>
-              <Ionicons name="image-outline" size={32} color="#D1D5DB" />
-            </View>
-          )}
-          <View style={[styles.gameBadge, item.game === 'pokemon' ? styles.pokemonBadge : styles.mtgBadge]}>
-            <Text style={styles.gameBadgeText}>
-              {item.game === 'pokemon' ? 'PKM' : 'MTG'}
-            </Text>
-          </View>
-          {item.foil && (
-            <View style={styles.foilBadge}>
-              <Ionicons name="sparkles" size={12} color="#fff" />
-            </View>
-          )}
-        </View>
-        
-        <View style={styles.info}>
-          <Text style={styles.cardName} numberOfLines={1}>{item.card_data?.name}</Text>
-          <Text style={styles.condition}>{item.condition?.replace('_', ' ')}</Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>${parseFloat(item.price).toFixed(2)}</Text>
-            <View style={styles.sellerInfo}>
-              {item.picture ? (
-                <Image source={{ uri: item.picture }} style={styles.sellerAvatar} />
-              ) : (
-                <View style={styles.sellerAvatarPlaceholder}>
-                  <Text style={styles.sellerInitial}>{item.name?.[0] || '?'}</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchListings();
   };
 
+  const getCardImage = (listing: Listing) => {
+    if (listing.game === 'mtg') {
+      return listing.card_data?.image_uris?.normal || listing.card_data?.image_uris?.small;
+    } else {
+      return listing.card_data?.images?.large || listing.card_data?.images?.small;
+    }
+  };
+
+  const renderItem = ({ item }: { item: Listing }) => (
+    <TouchableOpacity style={styles.card}>
+      {getCardImage(item) ? (
+        <Image source={{ uri: getCardImage(item) }} style={styles.cardImage} />
+      ) : (
+        <View style={styles.cardPlaceholder}>
+          <Ionicons name="image-outline" size={40} color="#9CA3AF" />
+        </View>
+      )}
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardName} numberOfLines={2}>
+          {item.card_data?.name || 'Unknown Card'}
+        </Text>
+        <Text style={styles.price}>${item.price?.toFixed(2)}</Text>
+        <Text style={styles.seller}>Seller: {item.seller_name}</Text>
+        <Text style={styles.condition}>{item.condition} • {item.game.toUpperCase()}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text style={styles.loadingText}>Loading marketplace...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Marketplace</Text>
-        <TouchableOpacity 
-          style={styles.myListingsButton}
-          onPress={() => navigation.navigate('MyListings')}
-        >
-          <Ionicons name="pricetag-outline" size={24} color="#3B82F6" />
-        </TouchableOpacity>
+        <Text style={styles.subtitle}>{listings.length} listings available</Text>
       </View>
 
-      {/* Search & Filter */}
-      <View style={styles.filterContainer}>
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Search marketplace..."
-        />
-        <View style={styles.gameFilterContainer}>
-          <GameFilter selected={selectedGame} onSelect={setSelectedGame} />
+      {listings.length === 0 ? (
+        <View style={styles.centered}>
+          <Ionicons name="storefront-outline" size={64} color="#D1D5DB" />
+          <Text style={styles.emptyText}>No listings available</Text>
+          <Text style={styles.emptySubtext}>
+            Check back later or list your own cards
+          </Text>
         </View>
-      </View>
-
-      {/* Listings */}
-      <FlatList
-        data={filteredListings}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.listing_id}
-        numColumns={2}
-        contentContainerStyle={styles.list}
-        columnWrapperStyle={styles.row}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="storefront-outline" size={64} color="#D1D5DB" />
-            <Text style={styles.emptyText}>No listings found</Text>
-            <Text style={styles.emptySubtext}>
-              Check back later for new items
-            </Text>
-          </View>
-        }
-      />
+      ) : (
+        <FlatList
+          data={listings}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.listing_id}
+          numColumns={2}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -139,145 +135,80 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#1F2937',
   },
-  myListingsButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#EFF6FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  gameFilterContainer: {
-    marginTop: 12,
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
   },
   list: {
-    padding: 16,
+    padding: 8,
   },
-  row: {
-    justifyContent: 'space-between',
-  },
-  listingCard: {
-    width: '48%',
-    marginBottom: 16,
+  card: {
+    flex: 1,
+    margin: 4,
     backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  imageContainer: {
+  cardImage: {
     width: '100%',
     aspectRatio: 0.72,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#F3F4F6',
   },
-  image: {
+  cardPlaceholder: {
     width: '100%',
-    height: '100%',
-  },
-  placeholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
+    aspectRatio: 0.72,
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
-    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
   },
-  gameBadge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  pokemonBadge: {
-    backgroundColor: '#FFCB05',
-  },
-  mtgBadge: {
-    backgroundColor: '#9333EA',
-  },
-  gameBadgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  foilBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: '#F59E0B',
-    borderRadius: 12,
-    padding: 4,
-  },
-  info: {
-    padding: 12,
+  cardInfo: {
+    padding: 8,
   },
   cardName: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 4,
-  },
-  condition: {
-    fontSize: 12,
-    color: '#6B7280',
-    textTransform: 'capitalize',
-    marginBottom: 8,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   price: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#22C55E',
+    color: '#059669',
+    marginTop: 4,
   },
-  sellerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sellerAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-  },
-  sellerAvatarPlaceholder: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#E5E7EB',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sellerInitial: {
-    fontSize: 12,
-    fontWeight: '600',
+  seller: {
+    fontSize: 10,
     color: '#6B7280',
+    marginTop: 2,
   },
-  emptyContainer: {
+  condition: {
+    fontSize: 10,
+    color: '#9CA3AF',
+  },
+  centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#6B7280',
   },
   emptyText: {
     fontSize: 18,
@@ -288,6 +219,7 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     color: '#9CA3AF',
-    marginTop: 8,
+    marginTop: 4,
+    textAlign: 'center',
   },
 });
