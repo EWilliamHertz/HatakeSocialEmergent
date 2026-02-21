@@ -325,6 +325,7 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 0.72,
     backgroundColor: '#F3F4F6',
+    maxHeight: 100,
   },
   cardPlaceholder: {
     width: '100%',
@@ -332,6 +333,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+    maxHeight: 100,
   },
   foilBadge: {
     position: 'absolute',
