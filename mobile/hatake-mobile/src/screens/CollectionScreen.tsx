@@ -207,6 +207,11 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
             );
             if (response.ok) {
               const card = await response.json();
+              // Prefer EUR prices for European users
+              const eurPrice = card.prices?.eur;
+              const usdPrice = card.prices?.usd;
+              const displayPrice = eurPrice ? `€${parseFloat(eurPrice).toFixed(2)}` : 
+                                   usdPrice ? `€${(parseFloat(usdPrice) * 0.92).toFixed(2)}` : 'N/A';
               setSearchResults([{
                 id: card.id,
                 name: card.name,
@@ -214,7 +219,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                 set_name: card.set_name,
                 set_code: card.set.toUpperCase(),
                 collector_number: card.collector_number,
-                price: card.prices?.usd || card.prices?.eur || 'N/A',
+                price: displayPrice,
                 rarity: card.rarity,
                 game: 'mtg',
                 data: card,
