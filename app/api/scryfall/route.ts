@@ -33,34 +33,46 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Search by query
+    // Search by query - fetch multiple pages to get all editions
     if (query) {
-      const scryfallUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`;
+      const allCards: any[] = [];
+      let nextPageUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`;
+      let pageCount = 0;
+      const maxPages = 3; // Limit to 3 pages (175 cards max) to avoid timeout
       
-      const response = await fetch(scryfallUrl, {
-        headers: {
-          'User-Agent': 'HatakeSocial/1.0',
-          'Accept': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return NextResponse.json({ 
-          success: true, 
-          cards: data.data || [],
-          total: data.total_cards || 0,
+      while (nextPageUrl && pageCount < maxPages) {
+        const response = await fetch(nextPageUrl, {
+          headers: {
+            'User-Agent': 'HatakeSocial/1.0',
+            'Accept': 'application/json',
+          },
         });
-      } else if (response.status === 404) {
-        return NextResponse.json({ success: true, cards: [], total: 0 });
-      } else {
-        const errorText = await response.text();
-        console.error('Scryfall search error:', response.status, errorText);
-        return NextResponse.json(
-          { error: `Scryfall error: ${response.status}` },
-          { status: response.status }
-        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data) {
+            allCards.push(...data.data);
+          }
+          // Check if there's a next page
+          nextPageUrl = data.has_more ? data.next_page : null;
+          pageCount++;
+        } else if (response.status === 404) {
+          break;
+        } else {
+          const errorText = await response.text();
+          console.error('Scryfall search error:', response.status, errorText);
+          return NextResponse.json(
+            { error: `Scryfall error: ${response.status}` },
+            { status: response.status }
+          );
+        }
       }
+
+      return NextResponse.json({ 
+        success: true, 
+        cards: allCards,
+        total: allCards.length,
+      });
     }
 
     return NextResponse.json(
