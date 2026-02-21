@@ -653,7 +653,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   const [editingCondition, setEditingCondition] = useState('Near Mint');
   const [savingEdit, setSavingEdit] = useState(false);
 
-  const openCardDetail = (item: CollectionItem) => {
+  const openCollectionCardDetail = (item: CollectionItem) => {
     setDetailCard(item);
     setEditingQuantity(String(item.quantity || 1));
     setEditingFinish(item.finish || 'Normal');
