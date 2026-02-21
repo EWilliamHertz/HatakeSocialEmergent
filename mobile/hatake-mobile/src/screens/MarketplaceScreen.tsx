@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   card: {
-    flex: 1,
+    width: '46%',
     margin: 4,
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -324,24 +324,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
-    maxWidth: '48%',
   },
   cardImageContainer: {
     position: 'relative',
   },
   cardImage: {
     width: '100%',
-    aspectRatio: 0.72,
+    height: 100,
     backgroundColor: '#F3F4F6',
-    maxHeight: 100,
   },
   cardPlaceholder: {
     width: '100%',
-    aspectRatio: 0.72,
+    height: 100,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
-    maxHeight: 100,
   },
   foilBadge: {
     position: 'absolute',
