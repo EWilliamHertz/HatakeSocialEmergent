@@ -1001,6 +1001,21 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         )}
       </View>
 
+      {/* Selection Mode Bar */}
+      {selectionMode && (
+        <View style={styles.selectionBar}>
+          <TouchableOpacity style={styles.selectionButton} onPress={selectAll}>
+            <Ionicons name="checkmark-done-outline" size={20} color="#3B82F6" />
+            <Text style={styles.selectionButtonText}>Select All</Text>
+          </TouchableOpacity>
+          <Text style={styles.selectionCount}>{selectedIds.size} selected</Text>
+          <TouchableOpacity style={styles.selectionButton} onPress={clearSelection}>
+            <Ionicons name="close-outline" size={20} color="#6B7280" />
+            <Text style={styles.selectionButtonText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.filters}>
         {(['all', 'mtg', 'pokemon'] as const).map((f) => (
           <TouchableOpacity
@@ -1047,6 +1062,28 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
+      )}
+
+      {/* Bulk Delete Button - Shows when in selection mode with items selected */}
+      {selectionMode && selectedIds.size > 0 && (
+        <View style={styles.bulkActionBar}>
+          <TouchableOpacity 
+            style={styles.bulkDeleteButton}
+            onPress={bulkDelete}
+          >
+            <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.bulkDeleteText}>Delete ({selectedIds.size})</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.bulkCancelButton}
+            onPress={() => {
+              setSelectionMode(false);
+              setSelectedIds(new Set());
+            }}
+          >
+            <Text style={styles.bulkCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Card Detail Modal */}
