@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const listings = await sql`
@@ -26,12 +21,13 @@ export async function GET(request: NextRequest) {
         foil,
         quantity,
         status,
+        user_id,
         created_at
       FROM marketplace_listings
       WHERE user_id = ${user.user_id}
         AND status = 'active'
       ORDER BY created_at DESC
-      LIMIT 20
+      LIMIT 50
     `;
 
     return NextResponse.json({ 
