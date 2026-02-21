@@ -399,10 +399,57 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
+  statLabelLink: {
+    fontSize: 13,
+    color: '#3B82F6',
+    marginTop: 2,
+    fontWeight: '500',
+  },
   statDivider: {
     width: 1,
     height: 32,
     backgroundColor: '#E5E7EB',
+  },
+  viewCollectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingVertical: 14,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 10,
+    gap: 8,
+  },
+  viewCollectionText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
+  collectionContainer: {
+    flex: 1,
+  },
+  collectionGrid: {
+    padding: 12,
+  },
+  collectionCard: {
+    width: CARD_WIDTH,
+    aspectRatio: 0.72,
+    margin: 4,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
+  },
+  collectionCardImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  collectionCardPlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionsContainer: {
     flexDirection: 'row',
