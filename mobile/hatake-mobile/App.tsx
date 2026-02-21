@@ -431,11 +431,13 @@ export default function App() {
               presentationStyle="fullScreen"
               onRequestClose={() => setShowGroups(false)}
             >
-              <GroupsScreen
-                user={user}
-                token={token}
-                onClose={() => setShowGroups(false)}
-              />
+              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                <GroupsScreen
+                  user={user}
+                  token={token}
+                  onClose={() => setShowGroups(false)}
+                />
+              </View>
             </Modal>
 
             {/* Notifications Modal */}
