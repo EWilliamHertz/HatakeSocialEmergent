@@ -1085,8 +1085,6 @@ export default function CollectionPage() {
             )}
           </>
         )}
-        </>
-      )}
 
       {/* Sealed Products Tab Content */}
       {activeTab === 'sealed' && (
