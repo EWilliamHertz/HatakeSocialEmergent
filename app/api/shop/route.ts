@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 
-// Ensure shop_products table exists
+// Ensure shop_products table exists with gallery_images column
 async function ensureTable() {
   try {
     await sql`
@@ -15,6 +15,7 @@ async function ensureTable() {
         price_wholesale_max DECIMAL(10,2),
         currency VARCHAR(10) DEFAULT 'SEK',
         image_url TEXT,
+        gallery_images TEXT[],
         category VARCHAR(100),
         stock_quantity INT DEFAULT 0,
         sku VARCHAR(100),
@@ -24,8 +25,12 @@ async function ensureTable() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    // Add gallery_images column if it doesn't exist
+    await sql`
+      ALTER TABLE shop_products ADD COLUMN IF NOT EXISTS gallery_images TEXT[]
+    `;
   } catch (e) {
-    // Table might already exist
+    // Table might already exist or column already exists
   }
 }
 
@@ -40,14 +45,14 @@ export async function GET(request: NextRequest) {
     let products;
     if (category && category !== 'All') {
       products = await sql`
-        SELECT product_id, name, description, price_consumer, currency, image_url, category, stock_quantity, sku, features
+        SELECT product_id, name, description, price_consumer, currency, image_url, gallery_images, category, stock_quantity, sku, features
         FROM shop_products 
         WHERE active = true AND category = ${category}
         ORDER BY created_at DESC
       `;
     } else {
       products = await sql`
-        SELECT product_id, name, description, price_consumer, currency, image_url, category, stock_quantity, sku, features
+        SELECT product_id, name, description, price_consumer, currency, image_url, gallery_images, category, stock_quantity, sku, features
         FROM shop_products 
         WHERE active = true
         ORDER BY created_at DESC
@@ -63,6 +68,7 @@ export async function GET(request: NextRequest) {
         price: Number(p.price_consumer),
         currency: p.currency,
         image: p.image_url,
+        gallery_images: p.gallery_images || [],
         category: p.category,
         stock: p.stock_quantity,
         sku: p.sku,
