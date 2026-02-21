@@ -140,9 +140,10 @@ interface CollectionScreenProps {
   user: any;
   token: string;
   sessionCookie?: string;
+  onOpenMenu?: () => void;
 }
 
-export default function CollectionScreen({ user, token }: CollectionScreenProps) {
+export default function CollectionScreen({ user, token, onOpenMenu }: CollectionScreenProps) {
   const [items, setItems] = useState<CollectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
