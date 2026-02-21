@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getSessionUser, getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 
 // Ensure post_reactions table exists
@@ -25,14 +25,10 @@ export async function POST(
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const user = await getSessionUser(sessionToken);
+    // Support both cookie and Bearer token auth
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { emoji } = await request.json();
@@ -75,19 +71,16 @@ export async function GET(
 ) {
   try {
     const { postId } = await params;
-    const sessionToken = request.cookies.get('session_token')?.value;
-    let currentUserId = null;
     
-    if (sessionToken) {
-      const user = await getSessionUser(sessionToken);
-      if (user) currentUserId = user.user_id;
-    }
+    // Support both cookie and Bearer token auth
+    const user = await getUserFromRequest(request);
+    const currentUserId = user?.user_id || '';
 
     await ensureTable();
 
     const reactions = await sql`
       SELECT emoji, COUNT(*) as count,
-        BOOL_OR(user_id = ${currentUserId || ''}) as user_reacted
+        BOOL_OR(user_id = ${currentUserId}) as user_reacted
       FROM post_reactions
       WHERE post_id = ${postId}
       GROUP BY emoji
