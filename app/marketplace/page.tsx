@@ -498,6 +498,7 @@ export default function MarketplacePage() {
               )}
             </div>
           )}
+          </div>
         </div>
 
         {/* Cards Tab Content */}
