@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
+  Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,7 +43,8 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<'all' | 'mtg' | 'pokemon'>('all');
+  const [filter, setFilter] = useState<'all' | 'mtg' | 'pokemon' | 'mine'>('all');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchListings();
