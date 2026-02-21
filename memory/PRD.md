@@ -145,7 +145,7 @@ npm run android  # Android Emulator
 
 The mobile app is pre-configured to use:
 ```typescript
-API_BASE_URL = 'https://trading-cards-6.preview.emergentagent.com'
+API_BASE_URL = 'https://deck-builder-69.preview.emergentagent.com'
 ```
 
 ---
