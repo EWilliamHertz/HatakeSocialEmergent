@@ -512,22 +512,22 @@ export default function MarketplacePage() {
 
             {/* Listings */}
             {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          </div>
-        ) : filteredListings.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">
-              {listings.length === 0 ? 'No listings available yet' : 'No listings match your filters'}
-            </p>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 text-blue-600 hover:underline"
-              >
-                Clear filters
-              </button>
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              </div>
+            ) : filteredListings.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 mb-4">
+                  {listings.length === 0 ? 'No listings available yet' : 'No listings match your filters'}
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="px-4 py-2 text-blue-600 hover:underline"
+                  >
+                    Clear filters
+                  </button>
             )}
           </div>
         ) : (
