@@ -107,18 +107,34 @@ export async function POST(request: NextRequest) {
 
     // Send email notification to recipient (only for first message or after long gap)
     // Don't spam with emails for every message in an active conversation
-    if (content && isNewConversation) {
-      const recipientResult = await sql`
-        SELECT email, name FROM users WHERE user_id = ${recipientId}
-      `;
-      if (recipientResult.length > 0) {
-        const recipient = recipientResult[0];
+    const recipientResult = await sql`
+      SELECT email, name FROM users WHERE user_id = ${recipientId}
+    `;
+    
+    if (recipientResult.length > 0) {
+      const recipient = recipientResult[0];
+      
+      // Send email only for new conversations
+      if (content && isNewConversation) {
         sendNewMessageEmail(
           recipient.email,
           recipient.name,
           user.name || 'Someone',
           content
         ).catch(err => console.error('Failed to send message email:', err));
+      }
+      
+      // Always send push notification for new messages
+      const pushTokens = await sql`
+        SELECT token FROM push_tokens 
+        WHERE user_id = ${recipientId} AND is_active = true
+      `;
+      if (pushTokens.length > 0) {
+        const notif = getMessageNotification(user.name || 'Someone', content || 'Media message');
+        for (const pt of pushTokens) {
+          sendPushNotification(pt.token, notif.title, notif.body, notif.data)
+            .catch(err => console.error('Push notification error:', err));
+        }
       }
     }
 
