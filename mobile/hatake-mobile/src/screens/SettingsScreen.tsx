@@ -20,9 +20,11 @@ interface SettingsScreenProps {
   token: string;
   onClose: () => void;
   onLogout: () => void;
+  messengerWidgetEnabled?: boolean;
+  onToggleMessengerWidget?: () => void;
 }
 
-export default function SettingsScreen({ user, token, onClose, onLogout }: SettingsScreenProps) {
+export default function SettingsScreen({ user, token, onClose, onLogout, messengerWidgetEnabled = true, onToggleMessengerWidget }: SettingsScreenProps) {
   // Notification settings
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
