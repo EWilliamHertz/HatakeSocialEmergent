@@ -49,15 +49,16 @@ export async function POST(
 
     // Copy all cards from original deck
     const originalCards = await sql`
-      SELECT card_id, card_data, quantity, is_sideboard 
+      SELECT entry_id, card_id, card_data, quantity, category 
       FROM deck_cards 
       WHERE deck_id = ${deckId}
     `;
 
     for (const card of originalCards) {
+      const newEntryId = generateId('entry');
       await sql`
-        INSERT INTO deck_cards (deck_id, card_id, card_data, quantity, is_sideboard)
-        VALUES (${newDeckId}, ${card.card_id}, ${card.card_data}, ${card.quantity}, ${card.is_sideboard})
+        INSERT INTO deck_cards (entry_id, deck_id, card_id, card_data, quantity, category)
+        VALUES (${newEntryId}, ${newDeckId}, ${card.card_id}, ${card.card_data}, ${card.quantity}, ${card.category || 'main'})
       `;
     }
 
