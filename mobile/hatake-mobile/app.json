@@ -39,12 +39,6 @@
     },
     "plugins": [
       [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow Hatake.Social to access your camera to scan trading cards."
-        }
-      ],
-      [
         "expo-image-picker",
         {
           "photosPermission": "Allow Hatake.Social to access your photos to import card images."
