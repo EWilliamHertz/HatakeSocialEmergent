@@ -735,7 +735,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
     const price = getDisplayPrice(item);
     
     return (
-      <TouchableOpacity style={styles.card} onPress={() => openCardDetail(item)}>
+      <TouchableOpacity style={styles.card} onPress={() => openCollectionCardDetail(item)}>
         {imageUrl ? (
           <Image 
             source={{ uri: imageUrl }} 
