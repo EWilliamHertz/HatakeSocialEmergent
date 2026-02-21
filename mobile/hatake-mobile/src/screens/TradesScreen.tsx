@@ -37,9 +37,10 @@ interface TradesScreenProps {
   user: any;
   token: string;
   onClose: () => void;
+  onCreateTrade?: () => void;
 }
 
-export default function TradesScreen({ user, token, onClose }: TradesScreenProps) {
+export default function TradesScreen({ user, token, onClose, onCreateTrade }: TradesScreenProps) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
