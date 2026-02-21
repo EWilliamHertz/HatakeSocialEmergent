@@ -151,7 +151,7 @@ export default function LoginScreen({ navigation }: any) {
 
             <Button
               title={isRegister ? 'Sign Up' : 'Sign In'}
-              onPress={handleSubmit}
+              onPress={onButtonPress}
               loading={isLoading}
               fullWidth
               size="large"
