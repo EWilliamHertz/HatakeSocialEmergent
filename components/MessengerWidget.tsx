@@ -620,7 +620,11 @@ export default function MessengerWidget() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  <div 
+                    ref={messagesContainerRef}
+                    className="flex-1 overflow-y-auto p-3 space-y-2"
+                    onScroll={handleMessagesScroll}
+                  >
                     {messages.map((msg, index) => {
                       const prevMsg = index > 0 ? messages[index - 1] : null;
                       const showDateSeparator = needsDateSeparator(msg, prevMsg);
