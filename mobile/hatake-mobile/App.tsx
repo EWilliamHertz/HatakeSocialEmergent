@@ -24,6 +24,7 @@ import CreateTradeScreen from './src/screens/CreateTradeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import DrawerMenu from './src/components/DrawerMenu';
 import IncomingCallNotification from './src/components/IncomingCallNotification';
+import MessengerWidget from './src/components/MessengerWidget';
 import { API_URL } from './src/config';
 
 const Tab = createBottomTabNavigator();
