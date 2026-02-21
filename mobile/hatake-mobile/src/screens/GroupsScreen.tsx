@@ -374,7 +374,7 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </Container>
   );
 }
 
