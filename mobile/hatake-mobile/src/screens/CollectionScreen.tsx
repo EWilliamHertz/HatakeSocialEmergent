@@ -392,6 +392,18 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                item.card_data?.image_uris?.small ||
                item.card_data?.card_faces?.[0]?.image_uris?.normal;
       } else {
+        // TCGdex stores image as a direct URL string, not images.large/small
+        // Format: https://assets.tcgdex.net/en/set/num - append /high.webp for high-res
+        const imageUrl = item.card_data?.image;
+        if (imageUrl) {
+          // If it's already a full URL with file extension, use as-is
+          if (imageUrl.includes('.png') || imageUrl.includes('.webp') || imageUrl.includes('.jpg')) {
+            return imageUrl;
+          }
+          // Otherwise append /high.webp for TCGdex format
+          return `${imageUrl}/high.webp`;
+        }
+        // Fallback to legacy format
         return item.card_data?.images?.large || item.card_data?.images?.small;
       }
     } catch {
