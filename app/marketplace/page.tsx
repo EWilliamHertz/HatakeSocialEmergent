@@ -93,6 +93,12 @@ export default function MarketplacePage() {
     }
   }, [gameFilter, sortBy]);
 
+  useEffect(() => {
+    if (activeTab === 'shop') {
+      loadShopProducts();
+    }
+  }, [activeTab, shopCategory]);
+
   const loadListings = async () => {
     setLoading(true);
     try {
@@ -111,6 +117,22 @@ export default function MarketplacePage() {
       console.error('Load listings error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadShopProducts = async () => {
+    setShopLoading(true);
+    try {
+      const params = shopCategory !== 'All' ? `?category=${shopCategory}` : '';
+      const res = await fetch(`/api/shop${params}`);
+      const data = await res.json();
+      if (data.success) {
+        setShopProducts(data.products || []);
+      }
+    } catch (error) {
+      console.error('Load shop products error:', error);
+    } finally {
+      setShopLoading(false);
     }
   };
 
