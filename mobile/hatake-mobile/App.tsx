@@ -295,6 +295,62 @@ export default function App() {
               onNavigate={handleNavigate}
               onLogout={handleLogout}
             />
+
+            {/* Friends Modal */}
+            <Modal
+              visible={showFriends}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => setShowFriends(false)}
+            >
+              <FriendsScreen
+                user={user}
+                token={token}
+                onClose={() => setShowFriends(false)}
+                onOpenChat={handleOpenChat}
+              />
+            </Modal>
+
+            {/* Messages Modal */}
+            <Modal
+              visible={showMessages}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => {
+                setShowMessages(false);
+                setMessageRecipient(null);
+              }}
+            >
+              <MessagesScreen
+                user={user}
+                token={token}
+                onClose={() => {
+                  setShowMessages(false);
+                  setMessageRecipient(null);
+                }}
+                initialRecipient={messageRecipient}
+                onStartCall={handleStartCall}
+              />
+            </Modal>
+
+            {/* Video Call Modal */}
+            <Modal
+              visible={callState.active}
+              animationType="fade"
+              presentationStyle="fullScreen"
+              onRequestClose={handleEndCall}
+            >
+              {callState.recipient && (
+                <VideoCallScreen
+                  user={user}
+                  token={token}
+                  recipient={callState.recipient}
+                  callType={callState.callType}
+                  isIncoming={callState.isIncoming}
+                  onClose={handleEndCall}
+                />
+              )}
+            </Modal>
           </>
         ) : (
           <LoginScreen onLoginSuccess={handleLoginSuccess} />
