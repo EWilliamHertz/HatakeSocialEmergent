@@ -347,7 +347,7 @@ export default function SealedProductsPage() {
               <span className="text-sm text-gray-500 dark:text-gray-400">Total Invested</span>
             </div>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              ${Number(totals.total_invested || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              €{Number(totals.total_invested || 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
             </p>
           </div>
 
@@ -357,7 +357,7 @@ export default function SealedProductsPage() {
               <span className="text-sm text-gray-500 dark:text-gray-400">Current Value</span>
             </div>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              ${Number(totals.total_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              €{Number(totals.total_value || 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
             </p>
           </div>
 
@@ -371,7 +371,7 @@ export default function SealedProductsPage() {
               <span className="text-sm text-gray-500 dark:text-gray-400">Profit/Loss</span>
             </div>
             <p className={`text-3xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {totalProfit >= 0 ? '+' : ''}${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {totalProfit >= 0 ? '+' : ''}€{totalProfit.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
             </p>
             <p className={`text-sm ${totalProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {totalProfit >= 0 ? '+' : ''}{profitPercentage}%
