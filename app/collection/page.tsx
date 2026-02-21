@@ -52,6 +52,7 @@ export default function CollectionPage() {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [showBulkMenu, setShowBulkMenu] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'binder'>('grid'); // New State
+  const [activeTab, setActiveTab] = useState<'cards' | 'sealed' | 'wishlist'>('cards'); // Tab state
   // Edit State
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
