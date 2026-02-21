@@ -399,6 +399,8 @@ const styles = StyleSheet.create({
   memberCount: { fontSize: 12, color: '#6B7280' },
   roleBadge: { backgroundColor: '#DBEAFE', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginLeft: 8 },
   roleText: { fontSize: 11, fontWeight: '500', color: '#3B82F6', textTransform: 'capitalize' },
+  memberActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  chatButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#3B82F6', alignItems: 'center', justifyContent: 'center' },
   joinButton: { backgroundColor: '#3B82F6', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' },
   joinButtonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 },
   leaveButton: { padding: 8, alignSelf: 'flex-start' },
