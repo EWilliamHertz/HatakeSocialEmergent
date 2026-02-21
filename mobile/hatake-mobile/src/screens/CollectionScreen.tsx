@@ -29,6 +29,12 @@ interface CollectionItem {
   game: string;
   quantity: number;
   condition: string;
+  foil?: boolean;
+  finish?: string;
+  is_signed?: boolean;
+  is_graded?: boolean;
+  grading_company?: string;
+  grade_value?: string;
 }
 
 interface SearchResult {
@@ -36,13 +42,18 @@ interface SearchResult {
   name: string;
   image: string;
   set_name: string;
+  set_code: string;
+  collector_number: string;
+  price?: string;
   game: 'mtg' | 'pokemon';
+  rarity?: string;
   data: any;
 }
 
 interface CollectionScreenProps {
   user: any;
   token: string;
+  sessionCookie?: string;
 }
 
 export default function CollectionScreen({ user, token }: CollectionScreenProps) {
@@ -55,12 +66,23 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   // Add Card Modal State
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [setCodeQuery, setSetCodeQuery] = useState('');
+  const [collectorNumQuery, setCollectorNumQuery] = useState('');
   const [searchGame, setSearchGame] = useState<'mtg' | 'pokemon'>('mtg');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  
+  // Card Detail Modal State
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [quantity, setQuantity] = useState('1');
   const [condition, setCondition] = useState('Near Mint');
+  const [isFoil, setIsFoil] = useState(false);
+  const [isSigned, setIsSigned] = useState(false);
+  const [isGraded, setIsGraded] = useState(false);
+  const [gradingCompany, setGradingCompany] = useState('PSA');
+  const [gradeValue, setGradeValue] = useState('10');
+  const [finish, setFinish] = useState('Normal'); // For Pokemon: Normal, Holo, Reverse Holo, etc.
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
@@ -75,16 +97,19 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         : `${API_URL}/api/collection?game=${filter}`;
       
       const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include',
       });
       const data = await response.json();
       
       if (data.success && Array.isArray(data.items)) {
         setItems(data.items);
-      } else if (data.items) {
+      } else if (Array.isArray(data.items)) {
         setItems(data.items);
       } else {
         setItems([]);
+        if (data.error) {
+          setError(data.error);
+        }
       }
     } catch (err: any) {
       console.error('Failed to fetch collection:', err);
@@ -101,50 +126,128 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   };
 
   const searchCards = async () => {
-    if (!searchQuery.trim()) return;
-    
     setSearching(true);
     setSearchResults([]);
     
     try {
       if (searchGame === 'mtg') {
-        const response = await fetch(
-          `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(searchQuery)}&unique=prints`
-        );
-        const data = await response.json();
+        let query = '';
         
-        if (data.data) {
-          setSearchResults(data.data.slice(0, 20).map((card: any) => ({
-            id: card.id,
-            name: card.name,
-            image: card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '',
-            set_name: card.set_name,
-            game: 'mtg' as const,
-            data: card,
-          })));
+        // Build Scryfall query
+        if (setCodeQuery && collectorNumQuery) {
+          // Direct lookup by set and collector number
+          try {
+            const response = await fetch(
+              `${SCRYFALL_API}/cards/${setCodeQuery.toLowerCase()}/${collectorNumQuery}`
+            );
+            if (response.ok) {
+              const card = await response.json();
+              setSearchResults([{
+                id: card.id,
+                name: card.name,
+                image: card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '',
+                set_name: card.set_name,
+                set_code: card.set.toUpperCase(),
+                collector_number: card.collector_number,
+                price: card.prices?.usd || card.prices?.eur || 'N/A',
+                rarity: card.rarity,
+                game: 'mtg',
+                data: card,
+              }]);
+              setSearching(false);
+              return;
+            }
+          } catch (e) {
+            // Fall through to regular search
+          }
+        }
+        
+        // Regular name search
+        if (searchQuery.trim()) {
+          query = searchQuery;
+        } else if (setCodeQuery) {
+          query = `set:${setCodeQuery}`;
+        }
+        
+        if (!query) {
+          setSearching(false);
+          return;
+        }
+        
+        const response = await fetch(
+          `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data) {
+            setSearchResults(data.data.slice(0, 30).map((card: any) => ({
+              id: card.id,
+              name: card.name,
+              image: card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '',
+              set_name: card.set_name,
+              set_code: card.set.toUpperCase(),
+              collector_number: card.collector_number,
+              price: card.prices?.usd || card.prices?.eur || 'N/A',
+              rarity: card.rarity,
+              game: 'mtg' as const,
+              data: card,
+            })));
+          }
         }
       } else {
-        const response = await fetch(
-          `${TCGDEX_API}/cards?name=${encodeURIComponent(searchQuery)}`
-        );
-        const data = await response.json();
+        // Pokemon search
+        let results: any[] = [];
         
-        if (Array.isArray(data)) {
-          setSearchResults(data.slice(0, 20).map((card: any) => ({
-            id: card.id,
-            name: card.name,
-            image: card.image ? `${card.image}/high.webp` : '',
-            set_name: card.set?.name || '',
-            game: 'pokemon' as const,
-            data: card,
-          })));
+        if (setCodeQuery && collectorNumQuery) {
+          // Direct lookup
+          try {
+            const response = await fetch(`${TCGDEX_API}/cards/${setCodeQuery}-${collectorNumQuery}`);
+            if (response.ok) {
+              const card = await response.json();
+              results = [card];
+            }
+          } catch (e) {
+            // Fall through
+          }
         }
+        
+        if (results.length === 0 && searchQuery.trim()) {
+          const response = await fetch(`${TCGDEX_API}/cards?name=${encodeURIComponent(searchQuery)}`);
+          if (response.ok) {
+            const data = await response.json();
+            results = Array.isArray(data) ? data.slice(0, 30) : [];
+          }
+        }
+        
+        setSearchResults(results.map((card: any) => ({
+          id: card.id,
+          name: card.name,
+          image: card.image ? `${card.image}/high.webp` : '',
+          set_name: card.set?.name || '',
+          set_code: card.set?.id?.toUpperCase() || '',
+          collector_number: card.localId || card.id?.split('-')[1] || '',
+          rarity: card.rarity,
+          game: 'pokemon' as const,
+          data: card,
+        })));
       }
     } catch (err) {
       console.error('Search failed:', err);
     }
     
     setSearching(false);
+  };
+
+  const openCardDetail = (card: SearchResult) => {
+    setSelectedCard(card);
+    setQuantity('1');
+    setCondition('Near Mint');
+    setIsFoil(false);
+    setIsSigned(false);
+    setIsGraded(false);
+    setFinish('Normal');
+    setShowDetailModal(true);
   };
 
   const addCardToCollection = async () => {
@@ -155,8 +258,8 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
     try {
       const response = await fetch(`${API_URL}/api/collection`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -165,18 +268,25 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
           card_data: selectedCard.data,
           quantity: parseInt(quantity) || 1,
           condition: condition,
+          foil: isFoil,
+          finish: finish,
+          is_signed: isSigned,
+          is_graded: isGraded,
+          grading_company: isGraded ? gradingCompany : null,
+          grade_value: isGraded ? gradeValue : null,
         }),
       });
       
       const data = await response.json();
       
       if (data.success) {
-        // Close modal and refresh
+        setShowDetailModal(false);
         setShowAddModal(false);
         setSelectedCard(null);
         setSearchQuery('');
+        setSetCodeQuery('');
+        setCollectorNumQuery('');
         setSearchResults([]);
-        setQuantity('1');
         fetchCollection();
         
         if (Platform.OS === 'web') {
@@ -219,6 +329,15 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
     }
   };
 
+  const getPokemonFinishes = () => {
+    // Common Pokemon finishes
+    return ['Normal', 'Holo', 'Reverse Holo', 'Pokeball Holo', 'Masterball Holo', 'Full Art', 'Alt Art'];
+  };
+
+  const getMagicFinishes = () => {
+    return ['Normal', 'Foil', 'Etched Foil', 'Gilded Foil'];
+  };
+
   const renderItem = ({ item }: { item: CollectionItem }) => {
     const imageUrl = getCardImage(item);
     
@@ -240,38 +359,16 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
             {item.card_data?.name || 'Unknown Card'}
           </Text>
           <Text style={styles.cardMeta}>
-            {(item.game || '').toUpperCase()} • Qty: {item.quantity}
+            {item.game === 'mtg' ? 'Magic' : 'Pokémon'} • Qty: {item.quantity}
           </Text>
           <Text style={styles.cardCondition}>{item.condition}</Text>
+          {item.finish && item.finish !== 'Normal' && (
+            <Text style={styles.cardFinish}>{item.finish}</Text>
+          )}
         </View>
       </TouchableOpacity>
     );
   };
-
-  const renderSearchResult = ({ item }: { item: SearchResult }) => (
-    <TouchableOpacity 
-      style={[
-        styles.searchResult,
-        selectedCard?.id === item.id && styles.searchResultSelected
-      ]}
-      onPress={() => setSelectedCard(item)}
-    >
-      {item.image ? (
-        <Image source={{ uri: item.image }} style={styles.searchResultImage} />
-      ) : (
-        <View style={styles.searchResultImagePlaceholder}>
-          <Ionicons name="image-outline" size={24} color="#9CA3AF" />
-        </View>
-      )}
-      <View style={styles.searchResultInfo}>
-        <Text style={styles.searchResultName} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.searchResultSet} numberOfLines={1}>{item.set_name}</Text>
-      </View>
-      {selectedCard?.id === item.id && (
-        <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
-      )}
-    </TouchableOpacity>
-  );
 
   if (loading) {
     return (
@@ -309,7 +406,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
             onPress={() => setFilter(f)}
           >
             <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-              {f === 'all' ? 'All' : f.toUpperCase()}
+              {f === 'all' ? 'All' : f === 'mtg' ? 'Magic' : 'Pokémon'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -349,7 +446,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         />
       )}
 
-      {/* Add Card Modal */}
+      {/* Search Modal */}
       <Modal
         visible={showAddModal}
         animationType="slide"
@@ -369,15 +466,15 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
             <View style={styles.gameSelector}>
               <TouchableOpacity
                 style={[styles.gameButton, searchGame === 'mtg' && styles.gameButtonActive]}
-                onPress={() => { setSearchGame('mtg'); setSearchResults([]); setSelectedCard(null); }}
+                onPress={() => { setSearchGame('mtg'); setSearchResults([]); }}
               >
                 <Text style={[styles.gameButtonText, searchGame === 'mtg' && styles.gameButtonTextActive]}>
-                  Magic: The Gathering
+                  Magic
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.gameButton, searchGame === 'pokemon' && styles.gameButtonActive]}
-                onPress={() => { setSearchGame('pokemon'); setSearchResults([]); setSelectedCard(null); }}
+                onPress={() => { setSearchGame('pokemon'); setSearchResults([]); }}
               >
                 <Text style={[styles.gameButtonText, searchGame === 'pokemon' && styles.gameButtonTextActive]}>
                   Pokémon
@@ -385,43 +482,61 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               </TouchableOpacity>
             </View>
 
-            {/* Search Input */}
-            <View style={styles.searchRow}>
+            {/* Search by Name */}
+            <Text style={styles.inputLabel}>Search by Name</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Card name..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+              onSubmitEditing={searchCards}
+            />
+
+            {/* Search by Set Code & Collector Number */}
+            <Text style={styles.inputLabel}>Or search by Set Code & Number</Text>
+            <View style={styles.setSearchRow}>
               <TextInput
-                style={styles.searchInput}
-                placeholder="Search for a card..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={searchCards}
-                returnKeyType="search"
+                style={[styles.searchInput, { flex: 1 }]}
+                placeholder="Set code (e.g. NEO)"
+                value={setCodeQuery}
+                onChangeText={setSetCodeQuery}
+                autoCapitalize="characters"
               />
-              <TouchableOpacity 
-                style={styles.searchButton}
-                onPress={searchCards}
-                disabled={searching}
-              >
-                {searching ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Ionicons name="search" size={20} color="#fff" />
-                )}
-              </TouchableOpacity>
+              <TextInput
+                style={[styles.searchInput, { flex: 1 }]}
+                placeholder="Number (e.g. 123)"
+                value={collectorNumQuery}
+                onChangeText={setCollectorNumQuery}
+              />
             </View>
+
+            <TouchableOpacity 
+              style={styles.searchButton}
+              onPress={searchCards}
+              disabled={searching}
+            >
+              {searching ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="search" size={20} color="#fff" />
+                  <Text style={styles.searchButtonText}>Search</Text>
+                </>
+              )}
+            </TouchableOpacity>
 
             {/* Search Results */}
             {searchResults.length > 0 && (
               <View style={styles.searchResultsContainer}>
                 <Text style={styles.searchResultsTitle}>
-                  Select a card ({searchResults.length} results)
+                  Results ({searchResults.length})
                 </Text>
                 {searchResults.map((item) => (
                   <TouchableOpacity 
                     key={item.id}
-                    style={[
-                      styles.searchResult,
-                      selectedCard?.id === item.id && styles.searchResultSelected
-                    ]}
-                    onPress={() => setSelectedCard(item)}
+                    style={styles.searchResult}
+                    onPress={() => openCardDetail(item)}
                   >
                     {item.image ? (
                       <Image source={{ uri: item.image }} style={styles.searchResultImage} />
@@ -432,31 +547,66 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                     )}
                     <View style={styles.searchResultInfo}>
                       <Text style={styles.searchResultName} numberOfLines={1}>{item.name}</Text>
-                      <Text style={styles.searchResultSet} numberOfLines={1}>{item.set_name}</Text>
+                      <Text style={styles.searchResultSet} numberOfLines={1}>
+                        {item.set_name} ({item.set_code}) #{item.collector_number}
+                      </Text>
+                      {item.game === 'mtg' && item.price && item.price !== 'N/A' && (
+                        <Text style={styles.searchResultPrice}>${item.price}</Text>
+                      )}
+                      {item.rarity && (
+                        <Text style={styles.searchResultRarity}>{item.rarity}</Text>
+                      )}
                     </View>
-                    {selectedCard?.id === item.id && (
-                      <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
-                    )}
+                    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                   </TouchableOpacity>
                 ))}
               </View>
             )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
 
-            {/* Selected Card Details */}
+      {/* Card Detail Modal */}
+      <Modal
+        visible={showDetailModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowDetailModal(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowDetailModal(false)}>
+              <Ionicons name="arrow-back" size={28} color="#1F2937" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Add to Collection</Text>
+            <View style={{ width: 28 }} />
+          </View>
+
+          <ScrollView style={styles.modalContent}>
             {selectedCard && (
-              <View style={styles.selectedCardSection}>
-                <Text style={styles.sectionTitle}>Card Details</Text>
-                
-                <View style={styles.selectedCardPreview}>
+              <>
+                {/* Card Preview */}
+                <View style={styles.cardPreviewContainer}>
                   {selectedCard.image && (
-                    <Image source={{ uri: selectedCard.image }} style={styles.selectedCardImage} />
+                    <Image 
+                      source={{ uri: selectedCard.image }} 
+                      style={styles.cardPreviewImage}
+                      resizeMode="contain"
+                    />
                   )}
-                  <View style={styles.selectedCardInfo}>
-                    <Text style={styles.selectedCardName}>{selectedCard.name}</Text>
-                    <Text style={styles.selectedCardSet}>{selectedCard.set_name}</Text>
-                  </View>
                 </View>
 
+                <View style={styles.cardPreviewInfo}>
+                  <Text style={styles.cardPreviewName}>{selectedCard.name}</Text>
+                  <Text style={styles.cardPreviewSet}>
+                    {selectedCard.set_name} ({selectedCard.set_code}) #{selectedCard.collector_number}
+                  </Text>
+                  {selectedCard.game === 'mtg' && selectedCard.price && selectedCard.price !== 'N/A' && (
+                    <Text style={styles.cardPreviewPrice}>Market Price: ${selectedCard.price}</Text>
+                  )}
+                </View>
+
+                {/* Quantity */}
                 <Text style={styles.inputLabel}>Quantity</Text>
                 <TextInput
                   style={styles.input}
@@ -466,21 +616,104 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                   placeholder="1"
                 />
 
+                {/* Condition */}
                 <Text style={styles.inputLabel}>Condition</Text>
-                <View style={styles.conditionSelector}>
+                <View style={styles.optionRow}>
                   {['Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played'].map((c) => (
                     <TouchableOpacity
                       key={c}
-                      style={[styles.conditionButton, condition === c && styles.conditionButtonActive]}
+                      style={[styles.optionButton, condition === c && styles.optionButtonActive]}
                       onPress={() => setCondition(c)}
                     >
-                      <Text style={[styles.conditionText, condition === c && styles.conditionTextActive]}>
-                        {c}
+                      <Text style={[styles.optionText, condition === c && styles.optionTextActive]}>
+                        {c.replace(' ', '\n')}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
 
+                {/* Finish (different options for Magic vs Pokemon) */}
+                <Text style={styles.inputLabel}>Finish / Variant</Text>
+                <View style={styles.optionRow}>
+                  {(selectedCard.game === 'mtg' ? getMagicFinishes() : getPokemonFinishes()).map((f) => (
+                    <TouchableOpacity
+                      key={f}
+                      style={[styles.optionButton, finish === f && styles.optionButtonActive]}
+                      onPress={() => setFinish(f)}
+                    >
+                      <Text style={[styles.optionText, finish === f && styles.optionTextActive]}>
+                        {f}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Magic-specific: Signed */}
+                {selectedCard.game === 'mtg' && (
+                  <>
+                    <Text style={styles.inputLabel}>Special</Text>
+                    <TouchableOpacity
+                      style={[styles.checkboxRow, isSigned && styles.checkboxRowActive]}
+                      onPress={() => setIsSigned(!isSigned)}
+                    >
+                      <Ionicons 
+                        name={isSigned ? "checkbox" : "square-outline"} 
+                        size={24} 
+                        color={isSigned ? "#3B82F6" : "#9CA3AF"} 
+                      />
+                      <Text style={styles.checkboxText}>Signed by Artist</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                {/* Grading */}
+                <Text style={styles.inputLabel}>Grading</Text>
+                <TouchableOpacity
+                  style={[styles.checkboxRow, isGraded && styles.checkboxRowActive]}
+                  onPress={() => setIsGraded(!isGraded)}
+                >
+                  <Ionicons 
+                    name={isGraded ? "checkbox" : "square-outline"} 
+                    size={24} 
+                    color={isGraded ? "#3B82F6" : "#9CA3AF"} 
+                  />
+                  <Text style={styles.checkboxText}>Graded Card</Text>
+                </TouchableOpacity>
+
+                {isGraded && (
+                  <View style={styles.gradingSection}>
+                    <View style={styles.gradingRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.inputLabelSmall}>Company</Text>
+                        <View style={styles.gradingOptions}>
+                          {['PSA', 'BGS', 'CGC'].map((company) => (
+                            <TouchableOpacity
+                              key={company}
+                              style={[styles.gradingButton, gradingCompany === company && styles.gradingButtonActive]}
+                              onPress={() => setGradingCompany(company)}
+                            >
+                              <Text style={[styles.gradingButtonText, gradingCompany === company && styles.gradingButtonTextActive]}>
+                                {company}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.inputLabelSmall}>Grade</Text>
+                        <TextInput
+                          style={styles.gradeInput}
+                          value={gradeValue}
+                          onChangeText={setGradeValue}
+                          placeholder="10"
+                          keyboardType="decimal-pad"
+                        />
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {/* Add Button */}
                 <TouchableOpacity
                   style={[styles.addToCollectionButton, adding && styles.buttonDisabled]}
                   onPress={addCardToCollection}
@@ -495,7 +728,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                     </>
                   )}
                 </TouchableOpacity>
-              </View>
+              </>
             )}
           </ScrollView>
         </SafeAreaView>
@@ -605,6 +838,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#9CA3AF',
   },
+  cardFinish: {
+    fontSize: 10,
+    color: '#8B5CF6',
+    fontWeight: '500',
+  },
   centered: {
     flex: 1,
     alignItems: 'center',
@@ -665,7 +903,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
   },
@@ -689,35 +927,55 @@ const styles = StyleSheet.create({
     backgroundColor: '#3B82F6',
   },
   gameButtonText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     color: '#4B5563',
   },
   gameButtonTextActive: {
     color: '#fff',
   },
-  searchRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  inputLabelSmall: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B7280',
+    marginBottom: 4,
   },
   searchInput: {
-    flex: 1,
     backgroundColor: '#F3F4F6',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
+    marginBottom: 8,
+  },
+  setSearchRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
   searchButton: {
-    backgroundColor: '#3B82F6',
-    width: 48,
-    borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    paddingVertical: 14,
+    gap: 8,
+    marginTop: 8,
+  },
+  searchButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   searchResultsContainer: {
-    marginBottom: 16,
+    marginTop: 16,
   },
   searchResultsTitle: {
     fontSize: 14,
@@ -728,15 +986,10 @@ const styles = StyleSheet.create({
   searchResult: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
+    padding: 10,
     backgroundColor: '#F9FAFB',
     borderRadius: 8,
     marginBottom: 8,
-  },
-  searchResultSelected: {
-    backgroundColor: '#DBEAFE',
-    borderWidth: 2,
-    borderColor: '#3B82F6',
   },
   searchResultImage: {
     width: 50,
@@ -762,55 +1015,54 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   searchResultSet: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
     marginTop: 2,
   },
-  selectedCardSection: {
-    marginTop: 16,
-    padding: 16,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-  },
-  sectionTitle: {
-    fontSize: 16,
+  searchResultPrice: {
+    fontSize: 12,
     fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 12,
+    color: '#059669',
+    marginTop: 2,
   },
-  selectedCardPreview: {
-    flexDirection: 'row',
+  searchResultRarity: {
+    fontSize: 10,
+    color: '#8B5CF6',
+    textTransform: 'capitalize',
+  },
+  // Card Detail Modal
+  cardPreviewContainer: {
+    alignItems: 'center',
     marginBottom: 16,
   },
-  selectedCardImage: {
-    width: 80,
-    height: 112,
-    borderRadius: 6,
+  cardPreviewImage: {
+    width: 200,
+    height: 280,
+    borderRadius: 8,
   },
-  selectedCardInfo: {
-    flex: 1,
-    marginLeft: 12,
-    justifyContent: 'center',
+  cardPreviewInfo: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  selectedCardName: {
-    fontSize: 16,
-    fontWeight: '600',
+  cardPreviewName: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#1F2937',
+    textAlign: 'center',
   },
-  selectedCardSet: {
+  cardPreviewSet: {
     fontSize: 14,
     color: '#6B7280',
     marginTop: 4,
   },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 6,
-    marginTop: 12,
+  cardPreviewPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#059669',
+    marginTop: 8,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F3F4F6',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -818,38 +1070,98 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  conditionSelector: {
+  optionRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  conditionButton: {
+  optionButton: {
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 6,
-    backgroundColor: '#fff',
+    backgroundColor: '#F3F4F6',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    minWidth: 70,
+    alignItems: 'center',
   },
-  conditionButtonActive: {
+  optionButtonActive: {
     backgroundColor: '#3B82F6',
     borderColor: '#3B82F6',
   },
-  conditionText: {
+  optionText: {
+    fontSize: 11,
+    color: '#4B5563',
+    textAlign: 'center',
+  },
+  optionTextActive: {
+    color: '#fff',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    gap: 10,
+  },
+  checkboxRowActive: {
+    backgroundColor: '#DBEAFE',
+  },
+  checkboxText: {
+    fontSize: 14,
+    color: '#374151',
+  },
+  gradingSection: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+  },
+  gradingRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  gradingOptions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  gradingButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+  },
+  gradingButtonActive: {
+    backgroundColor: '#3B82F6',
+  },
+  gradingButtonText: {
     fontSize: 12,
+    fontWeight: '500',
     color: '#4B5563',
   },
-  conditionTextActive: {
+  gradingButtonTextActive: {
     color: '#fff',
+  },
+  gradeInput: {
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    width: 80,
   },
   addToCollectionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#059669',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 8,
-    marginTop: 20,
+    marginTop: 24,
+    marginBottom: 40,
     gap: 8,
   },
   addToCollectionText: {
