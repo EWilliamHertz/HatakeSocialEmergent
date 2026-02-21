@@ -646,11 +646,96 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
 
   const stats = calculateCollectionStats();
 
+  // State for card detail modal
+  const [selectedCard, setSelectedCard] = useState<CollectionItem | null>(null);
+  const [editingQuantity, setEditingQuantity] = useState('1');
+  const [editingFinish, setEditingFinish] = useState('Normal');
+  const [editingCondition, setEditingCondition] = useState('Near Mint');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const openCardDetail = (item: CollectionItem) => {
+    setSelectedCard(item);
+    setEditingQuantity(String(item.quantity || 1));
+    setEditingFinish(item.finish || 'Normal');
+    setEditingCondition(item.condition || 'Near Mint');
+  };
+
+  const updateCard = async () => {
+    if (!selectedCard) return;
+    setSavingEdit(true);
+    try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      const response = await fetch(`${API_URL}/api/collection`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          item_id: selectedCard.item_id || selectedCard.id,
+          quantity: parseInt(editingQuantity) || 1,
+          finish: editingFinish,
+          condition: editingCondition,
+        }),
+      });
+      if (response.ok) {
+        fetchCollection();
+        setSelectedCard(null);
+      } else {
+        const err = await response.text();
+        Alert.alert('Error', 'Failed to update card');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to update card');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const deleteCard = async (item: CollectionItem) => {
+    Alert.alert(
+      'Delete Card',
+      `Are you sure you want to remove ${item.card_data?.name || 'this card'} from your collection?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+              const itemId = item.item_id || item.id;
+              const response = await fetch(`${API_URL}/api/collection?id=${itemId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+              });
+              if (response.ok) {
+                fetchCollection();
+                setSelectedCard(null);
+              } else {
+                Alert.alert('Error', 'Failed to delete card');
+              }
+            } catch (err) {
+              Alert.alert('Error', 'Failed to delete card');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Get card price for display
+  const getDisplayPrice = (item: CollectionItem): string => {
+    const price = getCardPrice(item);
+    return price > 0 ? `€${price.toFixed(2)}` : 'N/A';
+  };
+
   const renderItem = ({ item }: { item: CollectionItem }) => {
     const imageUrl = getCardImage(item);
+    const price = getDisplayPrice(item);
     
     return (
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity style={styles.card} onPress={() => openCardDetail(item)}>
         {imageUrl ? (
           <Image 
             source={{ uri: imageUrl }} 
@@ -666,10 +751,10 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
           <Text style={styles.cardName} numberOfLines={2}>
             {item.card_data?.name || 'Unknown Card'}
           </Text>
+          <Text style={styles.cardPrice}>{price}</Text>
           <Text style={styles.cardMeta}>
-            {item.game === 'mtg' ? 'Magic' : 'Pokémon'} • Qty: {item.quantity}
+            {item.game === 'mtg' ? 'Magic' : 'Pokémon'} • x{item.quantity}
           </Text>
-          <Text style={styles.cardCondition}>{item.condition}</Text>
           {item.finish && item.finish !== 'Normal' && (
             <Text style={styles.cardFinish}>{item.finish}</Text>
           )}
