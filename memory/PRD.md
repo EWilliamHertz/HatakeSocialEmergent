@@ -19,7 +19,6 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 - Zustand (State Management)
 - Native fetch (API Client)
 - Expo SecureStore (Token Storage)
-- Expo Camera (Card Scanner)
 
 ## Test Credentials
 - **Test User**: test@test.com / password (admin)
@@ -29,71 +28,29 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES
 
-### Session 2026-02-21 (Latest)
+### Session 2026-02-21 - Bug Fixes
 
-#### Mobile App Bug Fixes
-1. **Pokemon Card Images Fixed**
-   - Fixed `getCardImage` function to handle TCGdex API format
-   - TCGdex returns `image` as direct URL string, not `images.large/small`
-   - Appends `/high.webp` for high-res images
+#### Web App Fixes
+1. **Navbar Simplified** - Removed Sealed and Wishlists icons from header (accessible via Collection page tabs)
+2. **Sealed Price Input Fixed** - Leading zero bug fixed with onFocus handler
+3. **CSV Import Uncapped** - Full CSV now stored and used for import (supports 151+ cards)
+4. **Messenger Scroll Fixed** - Added scroll position tracking to prevent auto-scroll when reading old messages
 
-2. **Marketplace Images Fixed**
-   - Same Pokemon image fix applied
-   - MTG cards continue to use Scryfall `image_uris` format
+#### Mobile App Fixes
+1. **Feed Username Display** - Fixed Post interface to use correct API field names (name/picture)
+2. **Pokemon Set Code Translation** - Added POKEMON_SET_ALIASES mapping (sv09→jtg, etc.)
+3. **Search Results Increased** - Limit raised from 30 to 50 results
+4. **Pokemon Prices Added** - getCardPrice helper extracts cardmarket/tcgplayer prices
+5. **Collection Value Stats** - Added total value, MTG value, Pokemon value display
+6. **MTG Search Working** - Scryfall API search confirmed functional
 
-3. **Feed Screen Card Images Fixed**
-   - Added `getCardImageUrl` helper to handle both MTG and Pokemon formats
-
-4. **Drawer Menu Enhanced**
-   - Added Wishlists navigation item
-   - Implemented `handleNavigate` with Coming Soon alerts for unimplemented screens
-   - Proper navigation handling for bottom tab screens
-
-5. **Auth/Me Bearer Token Support**
-   - Fixed `/api/auth/me` to support Bearer token authentication
-   - Mobile app can now verify token validity on startup
-
-6. **Web Build Verified**
-   - Confirmed `yarn build` passes successfully
-   - No blocking build errors
-
-#### Previous Features (Maintained)
+### Previous Features (Maintained)
 - Sealed Product Management (Pokemon + MTG)
 - Deck Builder Import/Export (MTGA, Archidekt)
 - Deck Builder Playtesting
 - Individual card sale pricing (% of market)
 - Deck format validation (MTG + Pokemon)
 - Wishlists, Trade Reputation
-
----
-
-## MOBILE APP STRUCTURE
-
-```
-/app/mobile/hatake-mobile/
-├── App.tsx                 # Main entry point with navigation
-├── app.json               # Expo configuration
-├── package.json           # Dependencies
-├── src/
-│   ├── components/        # Reusable UI components
-│   │   ├── DrawerMenu.tsx # Hamburger drawer with navigation
-│   │   ├── Button.tsx
-│   │   ├── CardItem.tsx
-│   │   ├── GameFilter.tsx
-│   │   └── SearchBar.tsx
-│   ├── config.ts          # API URL configuration
-│   ├── navigation/        # React Navigation config
-│   │   └── AppNavigator.tsx
-│   ├── screens/           # Screen components
-│   │   ├── LoginScreen.tsx
-│   │   ├── CollectionScreen.tsx
-│   │   ├── FeedScreen.tsx
-│   │   ├── MarketplaceScreen.tsx
-│   │   ├── ProfileScreen.tsx
-│   │   └── ScannerScreen.tsx
-│   ├── services/          # API services
-│   └── store/             # Zustand state
-```
 
 ---
 
@@ -108,6 +65,7 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 ### Collection
 - `GET /api/collection` - Get user's card collection (Bearer token auth)
 - `POST /api/collection` - Add card to collection
+- `POST /api/collection/import` - CSV import (preview/import actions)
 - `DELETE /api/collection?id=` - Remove card from collection
 
 ### Marketplace
@@ -118,6 +76,12 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 ### Feed
 - `GET /api/feed` - Get posts (supports Bearer token auth)
 - `POST /api/feed` - Create post
+
+### Sealed Products
+- `GET /api/sealed` - Get user's sealed products
+- `POST /api/sealed` - Add sealed product
+- `PATCH /api/sealed/{id}` - Update sealed product
+- `DELETE /api/sealed/{id}` - Remove sealed product
 
 ---
 
@@ -135,43 +99,29 @@ Use PriceCharting API for pricing data (paid subscription required), or implemen
 
 ---
 
-## DATABASE SCHEMA
-
-### Key Tables
-- `users` - User accounts with is_admin flag
-- `collection_items` - User card collections
-- `marketplace_listings` - Cards for sale (with price_percentage)
-- `trades` - Trade offers between users
-- `trade_ratings` - Trade reputation system
-- `wishlists` - User wishlists
-- `wishlist_items` - Cards in wishlists
-- `sealed_products` - Sealed product tracking
-
----
-
 ## TEST REPORTS
-- Latest: `/app/test_reports/iteration_12.json` - All 13 tests passed
-- Mobile app features verified: Login, Collection, Marketplace, Drawer Menu
+- Latest: `/app/test_reports/iteration_13.json` - All 10 bugs verified fixed
+- Previous: `/app/test_reports/iteration_12.json` - Mobile app features verified
 
 ---
 
 ## NEXT STEPS
 
-### Immediate (P0)
-- User verification of mobile app functionality on iPad Safari
-- Confirm web build deploys to Vercel successfully
+### User Verification Needed
+- Test Messenger widget scroll behavior (can now scroll up to read old messages)
+- Test CSV import with 151+ card file
+- Test mobile app feed shows usernames correctly
+- Test mobile Pokemon search with sv09 set code
 
 ### High Priority (P1)
 1. **Mobile App Phase 2:**
    - Implement Trades screen
    - Implement Friends screen
    - Implement Wishlists screen
-   - Full Deck Builder functionality
 
 2. **Sealed Products:**
    - Integrate PriceCharting API (if user provides subscription)
-   - OR build manual entry system for sealed products
-   - Add sealed products tab to web Collection page
+   - OR enhance manual entry system
 
 ### Medium Priority (P2)
 1. Mobile App real-time messaging
@@ -180,14 +130,13 @@ Use PriceCharting API for pricing data (paid subscription required), or implemen
 
 ### Future (P3)
 - Card Recognition ML integration
-- Biometric authentication
 - Apple/Google Play store publishing
 
 ---
 
 ## KNOWN ISSUES
+- Mobile app TypeScript has pre-existing type errors (don't affect runtime)
 - Some MTG test cards (CSV import) show placeholder icons due to missing Scryfall image_uris
-- Mobile app drawer menu navigation shows "Coming Soon" for unimplemented screens
 
 ---
 
