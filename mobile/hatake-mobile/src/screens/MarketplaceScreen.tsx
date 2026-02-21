@@ -55,9 +55,12 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
     try {
       const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
       
-      const url = filter === 'all'
-        ? `${API_URL}/api/marketplace`
-        : `${API_URL}/api/marketplace?game=${filter}`;
+      let url = `${API_URL}/api/marketplace`;
+      if (filter === 'mine') {
+        url = `${API_URL}/api/marketplace/my-listings`;
+      } else if (filter !== 'all') {
+        url = `${API_URL}/api/marketplace?game=${filter}`;
+      }
       
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${authToken}` },
@@ -79,6 +82,57 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
     }
     setLoading(false);
     setRefreshing(false);
+  };
+
+  const handleDeleteListing = async (listingId: string) => {
+    const confirmDelete = () => {
+      if (Platform.OS === 'web') {
+        return window.confirm('Are you sure you want to delete this listing?');
+      }
+      return new Promise<boolean>((resolve) => {
+        Alert.alert(
+          'Delete Listing',
+          'Are you sure you want to delete this listing?',
+          [
+            { text: 'Cancel', onPress: () => resolve(false), style: 'cancel' },
+            { text: 'Delete', onPress: () => resolve(true), style: 'destructive' },
+          ]
+        );
+      });
+    };
+
+    const confirmed = await confirmDelete();
+    if (!confirmed) return;
+
+    setDeletingId(listingId);
+    try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      const response = await fetch(`${API_URL}/api/marketplace/${listingId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setListings(prev => prev.filter(l => l.listing_id !== listingId));
+      } else {
+        const errorMsg = data.error || 'Failed to delete listing';
+        if (Platform.OS === 'web') {
+          alert(errorMsg);
+        } else {
+          Alert.alert('Error', errorMsg);
+        }
+      }
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      const errorMsg = err.message || 'Failed to delete listing';
+      if (Platform.OS === 'web') {
+        alert(errorMsg);
+      } else {
+        Alert.alert('Error', errorMsg);
+      }
+    }
+    setDeletingId(null);
   };
 
   const onRefresh = () => {
