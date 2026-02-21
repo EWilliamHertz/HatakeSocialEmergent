@@ -31,8 +31,7 @@ class AuthService {
   // Login with email/password
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await api.post(API_ENDPOINTS.LOGIN, credentials);
-      const data = response.data;
+      const data = await api.post<any>(API_ENDPOINTS.LOGIN, credentials);
       
       if (data.success && data.token) {
         await setToken(data.token);
@@ -44,7 +43,7 @@ class AuthService {
     } catch (error: any) {
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Network error' 
+        error: error.message || 'Network error' 
       };
     }
   }
@@ -52,8 +51,7 @@ class AuthService {
   // Register new user
   async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await api.post(API_ENDPOINTS.REGISTER, data);
-      const result = response.data;
+      const result = await api.post<any>(API_ENDPOINTS.REGISTER, data);
       
       if (result.success && result.token) {
         await setToken(result.token);
@@ -65,7 +63,7 @@ class AuthService {
     } catch (error: any) {
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Network error' 
+        error: error.message || 'Network error' 
       };
     }
   }
@@ -90,10 +88,10 @@ class AuthService {
   // Get current user from API
   async getCurrentUser(): Promise<User | null> {
     try {
-      const response = await api.get(API_ENDPOINTS.ME);
-      if (response.data.user) {
-        await setStoredUser(response.data.user);
-        return response.data.user;
+      const response = await api.get<any>(API_ENDPOINTS.ME);
+      if (response.user) {
+        await setStoredUser(response.user);
+        return response.user;
       }
       return null;
     } catch {
