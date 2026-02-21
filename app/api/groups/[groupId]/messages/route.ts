@@ -27,17 +27,17 @@ export async function GET(
       return NextResponse.json({ error: 'Not a member of this group' }, { status: 403 });
     }
 
-    // Fetch messages with sender info
+    // Fetch messages with sender info (table uses user_id not sender_id)
     const messages = await sql`
       SELECT 
         gm.message_id,
-        gm.sender_id,
+        gm.user_id as sender_id,
         gm.content,
         gm.created_at,
         u.name as sender_name,
         u.picture as sender_picture
       FROM group_messages gm
-      JOIN users u ON gm.sender_id = u.user_id
+      JOIN users u ON gm.user_id = u.user_id
       WHERE gm.group_id = ${groupId}
       ORDER BY gm.created_at ASC
       LIMIT 200
