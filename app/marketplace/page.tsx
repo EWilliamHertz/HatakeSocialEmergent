@@ -18,8 +18,8 @@ interface Listing {
   quantity: number;
   description: string;
   user_id: string;
-  name: string;
-  picture?: string;
+  seller_name: string;
+  seller_picture?: string;
   created_at: string;
 }
 
