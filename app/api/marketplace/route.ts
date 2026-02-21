@@ -49,11 +49,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const user = await getSessionUser(sessionToken);
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
-
     const {
       cardId,
       game,
