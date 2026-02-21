@@ -23,11 +23,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#3B82F6"
       },
-      "package": "social.hatake.app",
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE"
-      ]
+      "package": "social.hatake.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
