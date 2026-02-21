@@ -70,6 +70,7 @@ export default function App() {
   const [showWishlists, setShowWishlists] = useState(false);
   const [showCreateTrade, setShowCreateTrade] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [messengerWidgetEnabled, setMessengerWidgetEnabled] = useState(true);
   const [messageRecipient, setMessageRecipient] = useState<any>(null);
   const [callState, setCallState] = useState<CallState>({
     active: false,
