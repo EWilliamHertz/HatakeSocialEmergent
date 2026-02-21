@@ -18,6 +18,73 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL, SCRYFALL_API, TCGDEX_API } from '../config';
 
+// Pokemon TCG set code mappings (common export codes -> TCGdex codes)
+// User's CSV might use different codes than TCGdex expects
+const POKEMON_SET_ALIASES: Record<string, string> = {
+  // Scarlet & Violet Era - Map common codes to TCGdex format
+  'sv09': 'sv09', 'jtg': 'sv09', 'journeytogether': 'sv09',  // Journey Together
+  'sv08': 'sv08', 'ssp': 'sv08', 'surgingsparks': 'sv08',   // Surging Sparks
+  'sv07': 'sv07', 'scr': 'sv07', 'stellarcrown': 'sv07',    // Stellar Crown
+  'sv06': 'sv06', 'twm': 'sv06', 'twilightmasquerade': 'sv06', // Twilight Masquerade
+  'sv05': 'sv05', 'tef': 'sv05', 'temporalforces': 'sv05',  // Temporal Forces
+  'sv04': 'sv04', 'par': 'sv04', 'paradoxrift': 'sv04',     // Paradox Rift
+  'sv03': 'sv03', 'obf': 'sv03', 'obsidianflames': 'sv03',  // Obsidian Flames
+  'sv02': 'sv02', 'pal': 'sv02', 'paldeaevolved': 'sv02',   // Paldea Evolved
+  'sv01': 'sv01', 'svi': 'sv01', 'scarletviolet': 'sv01',   // Scarlet & Violet Base
+  'svp': 'svp', // SV Promo
+  
+  // Sword & Shield Era
+  'swsh12': 'swsh12', 'crs': 'swsh12', 'sil': 'swsh12', 'crownzenith': 'swsh12', 'silvertempest': 'swsh12',
+  'swsh11': 'swsh11', 'loi': 'swsh11', 'lor': 'swsh11', 'lostorigin': 'swsh11',
+  'swsh10': 'swsh10', 'asr': 'swsh10', 'astralradiance': 'swsh10',
+  'swsh9': 'swsh9', 'brs': 'swsh9', 'brilliantstars': 'swsh9',
+  'swsh8': 'swsh8', 'fus': 'swsh8', 'fsn': 'swsh8', 'fusionstrike': 'swsh8',
+  'swsh7': 'swsh7', 'evs': 'swsh7', 'evolvingskies': 'swsh7',
+  'swsh6': 'swsh6', 'cre': 'swsh6', 'chillingreign': 'swsh6',
+  'swsh5': 'swsh5', 'bst': 'swsh5', 'battlestyles': 'swsh5',
+  'swsh4': 'swsh4', 'viv': 'swsh4', 'vividvoltage': 'swsh4',
+  'swsh3': 'swsh3', 'dab': 'swsh3', 'darknessablaze': 'swsh3',
+  'swsh2': 'swsh2', 'reb': 'swsh2', 'rebelclash': 'swsh2',
+  'swsh1': 'swsh1', 'swordshield': 'swsh1',
+  'swshp': 'swshp',
+  
+  // Sun & Moon Era
+  'sm12': 'sm12', 'cec': 'sm12', 'cosmiceclipse': 'sm12',
+  'sm11': 'sm11', 'unm': 'sm11', 'unifiedminds': 'sm11',
+  'sm10': 'sm10', 'unb': 'sm10', 'unbrokenbonds': 'sm10',
+  'sm9': 'sm9', 'det': 'sm9', 'detectivepikachu': 'sm9',
+  'sm8': 'sm8', 'lot': 'sm8', 'lostthunder': 'sm8',
+  'sm7': 'sm7', 'cel': 'sm7', 'celestialstorm': 'sm7',
+  'sm6': 'sm6', 'fli': 'sm6', 'forbiddenlight': 'sm6',
+  'sm5': 'sm5', 'ula': 'sm5', 'ultraprism': 'sm5',
+  'sm4': 'sm4', 'cri': 'sm4', 'crimsoninvasion': 'sm4',
+  'sm3': 'sm3', 'bus': 'sm3', 'burningshadows': 'sm3',
+  'sm2': 'sm2', 'gri': 'sm2', 'guardiansrising': 'sm2',
+  'sm1': 'sm1', 'sunmoon': 'sm1',
+  'smp': 'smp',
+  
+  // XY Era
+  'xy12': 'xy12', 'evo': 'xy12', 'evolutions': 'xy12',
+  'xy11': 'xy11', 'stc': 'xy11', 'steamsiege': 'xy11',
+  'xy10': 'xy10', 'fco': 'xy10', 'fatescollide': 'xy10',
+  'xy9': 'xy9', 'bkp': 'xy9', 'breakpoint': 'xy9',
+  'xy8': 'xy8', 'bkt': 'xy8', 'breakthrough': 'xy8',
+  'xy7': 'xy7', 'aor': 'xy7', 'ancientorigins': 'xy7',
+  'xy6': 'xy6', 'ros': 'xy6', 'roaringskies': 'xy6',
+  'xy5': 'xy5', 'prc': 'xy5', 'primalclash': 'xy5',
+  'xy4': 'xy4', 'phf': 'xy4', 'phantomforces': 'xy4',
+  'xy3': 'xy3', 'ffi': 'xy3', 'furiousfists': 'xy3',
+  'xy2': 'xy2', 'flf': 'xy2', 'flashfire': 'xy2',
+  'xy1': 'xy1', 'xybase': 'xy1',
+  'xyp': 'xyp',
+};
+
+// Map a set code from user input to TCGdex format
+function mapPokemonSetCode(setCode: string): string {
+  const code = setCode.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return POKEMON_SET_ALIASES[code] || code;
+}
+
 interface CollectionItem {
   id: number;
   item_id?: string;
