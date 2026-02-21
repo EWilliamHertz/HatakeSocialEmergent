@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-
-const API_URL = 'https://www.hatake.eu';
+import { API_URL } from '../config';
 
 interface Listing {
   id: number;
