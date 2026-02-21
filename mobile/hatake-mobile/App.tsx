@@ -145,15 +145,27 @@ export default function App() {
       return;
     }
     
+    // Handle Friends screen
+    if (screen === 'friends') {
+      setDrawerOpen(false);
+      setShowFriends(true);
+      return;
+    }
+    
+    // Handle Messages screen
+    if (screen === 'messages') {
+      setDrawerOpen(false);
+      setShowMessages(true);
+      return;
+    }
+    
     // Show coming soon for screens not yet implemented in mobile
-    const comingSoonScreens = ['trades', 'wishlists', 'friends', 'groups', 'messages', 'deckbuilder', 'settings'];
+    const comingSoonScreens = ['trades', 'wishlists', 'groups', 'deckbuilder', 'settings'];
     if (comingSoonScreens.includes(screen)) {
       const screenNames: Record<string, string> = {
         'trades': 'Trades',
         'wishlists': 'Wishlists',
-        'friends': 'Friends',
         'groups': 'Groups',
-        'messages': 'Messages',
         'deckbuilder': 'Deck Builder',
         'settings': 'Settings',
       };
@@ -174,6 +186,30 @@ export default function App() {
     
     console.log('Navigate to:', screen);
     setDrawerOpen(false);
+  };
+
+  const handleOpenChat = (friend: any) => {
+    setShowFriends(false);
+    setMessageRecipient(friend);
+    setShowMessages(true);
+  };
+
+  const handleStartCall = (recipient: any, callType: 'audio' | 'video') => {
+    setCallState({
+      active: true,
+      recipient,
+      callType,
+      isIncoming: false,
+    });
+  };
+
+  const handleEndCall = () => {
+    setCallState({
+      active: false,
+      recipient: null,
+      callType: 'audio',
+      isIncoming: false,
+    });
   };
 
   if (loading) {
