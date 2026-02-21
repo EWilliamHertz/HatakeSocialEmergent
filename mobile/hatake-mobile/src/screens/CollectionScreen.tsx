@@ -1753,6 +1753,51 @@ const styles = StyleSheet.create({
     color: '#8B5CF6',
     textTransform: 'capitalize',
   },
+  // MTG Edition Picker
+  mtgCardGroup: {
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  editionPickerContainer: {
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    backgroundColor: '#F9FAFB',
+  },
+  editionLabel: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  editionScroll: {
+    flexGrow: 0,
+  },
+  editionChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 16,
+    marginRight: 8,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  editionChipActive: {
+    backgroundColor: '#3B82F6',
+  },
+  editionChipText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#4B5563',
+  },
+  editionChipTextActive: {
+    color: '#FFFFFF',
+  },
+  editionChipPrice: {
+    fontSize: 9,
+    color: '#059669',
+    marginTop: 2,
+  },
   // Card Detail Modal
   cardPreviewContainer: {
     alignItems: 'center',
