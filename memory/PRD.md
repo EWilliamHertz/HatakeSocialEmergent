@@ -27,7 +27,35 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
-### Latest Batch: Push Notifications & Trading Reputation (Current Session)
+### Session 3 Updates - Group Chat, Settings, Feed Groups
+
+1. **Group Chat (Web + Mobile)** ✅
+   - Full chat functionality within groups
+   - Real-time message polling
+   - Push notifications to group members
+   - `/api/groups/[groupId]/messages` endpoint
+
+2. **Settings Screen Enhanced (Web + Mobile)** ✅
+   - Swedish payment fields: Swish, Clearing, Kontonummer
+   - International payment: IBAN, BIC/SWIFT
+   - Shipping address
+   - All fields saved to user profile
+
+3. **Feed Groups Tab Improved (Web + Mobile)** ✅
+   - Dropdown to select specific group
+   - Post directly to a group
+   - Group posts visible to members only
+
+4. **Notification Icon (Mobile)** ✅
+   - Top-right notification bell now opens NotificationsScreen
+
+5. **Collection Modal Menu (Mobile)** ✅
+   - Hamburger menu available in Add Card modal
+
+6. **Pokémon Card Prices Fixed** ✅
+   - TCGdex pricing now correctly parsed from `pricing.cardmarket.avg`
+
+### Session 2 Updates - Push Notifications & Trading Reputation
 
 1. **Push Notifications (Mobile)** ✅
    - Expo Push Notifications integration
