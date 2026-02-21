@@ -10,9 +10,9 @@ import LoginScreen from './src/screens/LoginScreen';
 import CollectionScreen from './src/screens/CollectionScreen';
 import MarketplaceScreen from './src/screens/MarketplaceScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import { API_URL } from './src/config';
 
 const Tab = createBottomTabNavigator();
-const API_URL = 'https://www.hatake.eu';
 
 interface User {
   user_id: string;
