@@ -306,17 +306,20 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
 
       {/* Filters */}
       <View style={styles.filters}>
-        {(['all', 'mtg', 'pokemon'] as const).map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filterButton, filter === f && styles.filterActive]}
-            onPress={() => setFilter(f)}
-          >
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-              {f === 'all' ? 'All' : f === 'mtg' ? 'Magic' : 'Pokémon'}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
+          {(['all', 'mine', 'mtg', 'pokemon'] as const).map((f) => (
+            <TouchableOpacity
+              key={f}
+              style={[styles.filterButton, filter === f && styles.filterActive]}
+              onPress={() => setFilter(f)}
+              data-testid={`filter-${f}`}
+            >
+              <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                {f === 'all' ? 'All' : f === 'mine' ? 'My Listings' : f === 'mtg' ? 'Magic' : 'Pokémon'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {error ? (
