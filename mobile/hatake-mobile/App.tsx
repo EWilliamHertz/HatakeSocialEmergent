@@ -451,11 +451,13 @@ export default function App() {
               presentationStyle="fullScreen"
               onRequestClose={() => setShowNotifications(false)}
             >
-              <NotificationsScreen
-                user={user}
-                token={token}
-                onClose={() => setShowNotifications(false)}
-              />
+              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                <NotificationsScreen
+                  user={user}
+                  token={token}
+                  onClose={() => setShowNotifications(false)}
+                />
+              </View>
             </Modal>
 
             {/* Reputation Modal */}
@@ -465,11 +467,13 @@ export default function App() {
               presentationStyle="fullScreen"
               onRequestClose={() => setShowReputation(false)}
             >
-              <ReputationScreen
-                user={user}
-                token={token}
-                onClose={() => setShowReputation(false)}
-              />
+              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                <ReputationScreen
+                  user={user}
+                  token={token}
+                  onClose={() => setShowReputation(false)}
+                />
+              </View>
             </Modal>
 
             {/* Wishlists Modal */}
@@ -479,11 +483,13 @@ export default function App() {
               presentationStyle="fullScreen"
               onRequestClose={() => setShowWishlists(false)}
             >
-              <WishlistScreen
-                user={user}
-                token={token}
-                onClose={() => setShowWishlists(false)}
-              />
+              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                <WishlistScreen
+                  user={user}
+                  token={token}
+                  onClose={() => setShowWishlists(false)}
+                />
+              </View>
             </Modal>
 
             {/* Create Trade Modal */}
@@ -493,13 +499,14 @@ export default function App() {
               presentationStyle="fullScreen"
               onRequestClose={() => setShowCreateTrade(false)}
             >
-              <CreateTradeScreen
-                user={user}
-                token={token}
-                onClose={() => setShowCreateTrade(false)}
-                onTradeCreated={() => {
-                  setShowCreateTrade(false);
-                  setShowTrades(true);
+              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                <CreateTradeScreen
+                  user={user}
+                  token={token}
+                  onClose={() => setShowCreateTrade(false)}
+                  onTradeCreated={() => {
+                    setShowCreateTrade(false);
+                    setShowTrades(true);
                 }}
               />
             </Modal>
