@@ -711,43 +711,60 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   };
 
   const deleteCard = async (item: CollectionItem) => {
-    Alert.alert(
-      'Delete Card',
-      `Are you sure you want to remove ${item.card_data?.name || 'this card'} from your collection?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
-              // Use 'id' field as that's what the API expects
-              const itemId = item.id;
-              console.log('Deleting card with ID:', itemId);
-              const response = await fetch(`${API_URL}/api/collection?id=${itemId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${authToken}` },
-              });
-              const result = await response.json();
-              console.log('Delete response:', result);
-              if (response.ok && result.success) {
-                fetchCollection();
-                setDetailCard(null);
-                if (Platform.OS === 'web') {
-                  alert('Card deleted successfully');
-                }
-              } else {
-                Alert.alert('Error', result.error || 'Failed to delete card');
-              }
-            } catch (err) {
-              console.error('Delete error:', err);
-              Alert.alert('Error', 'Failed to delete card');
-            }
-          },
-        },
-      ]
-    );
+    const confirmDelete = () => {
+      return new Promise<boolean>((resolve) => {
+        if (Platform.OS === 'web') {
+          resolve(window.confirm(`Are you sure you want to remove ${item.card_data?.name || 'this card'} from your collection?`));
+        } else {
+          Alert.alert(
+            'Delete Card',
+            `Are you sure you want to remove ${item.card_data?.name || 'this card'} from your collection?`,
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+            ]
+          );
+        }
+      });
+    };
+
+    const confirmed = await confirmDelete();
+    if (!confirmed) return;
+
+    try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      // Use 'id' field as that's what the API expects
+      const itemId = item.id;
+      console.log('Deleting card with ID:', itemId);
+      const response = await fetch(`${API_URL}/api/collection?id=${itemId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const result = await response.json();
+      console.log('Delete response:', result);
+      if (response.ok && result.success) {
+        fetchCollection();
+        setDetailCard(null);
+        if (Platform.OS === 'web') {
+          alert('Card deleted successfully');
+        } else {
+          Alert.alert('Success', 'Card deleted successfully');
+        }
+      } else {
+        if (Platform.OS === 'web') {
+          alert(result.error || 'Failed to delete card');
+        } else {
+          Alert.alert('Error', result.error || 'Failed to delete card');
+        }
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      if (Platform.OS === 'web') {
+        alert('Failed to delete card');
+      } else {
+        Alert.alert('Error', 'Failed to delete card');
+      }
+    }
   };
 
   // Get card price for display
