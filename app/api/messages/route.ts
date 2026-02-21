@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { generateId } from '@/lib/utils';
+import { sendNewMessageEmail } from '@/lib/email';
 import sql from '@/lib/db';
 
 export async function GET(request: NextRequest) {
@@ -71,11 +72,13 @@ export async function POST(request: NextRequest) {
     `;
 
     let conversationId;
+    let isNewConversation = false;
 
     if (existing.length > 0) {
       conversationId = existing[0].conversation_id;
     } else {
       // Create new conversation
+      isNewConversation = true;
       conversationId = generateId('conv');
       await sql`
         INSERT INTO conversations (conversation_id)
@@ -100,6 +103,23 @@ export async function POST(request: NextRequest) {
       SET updated_at = NOW()
       WHERE conversation_id = ${conversationId}
     `;
+
+    // Send email notification to recipient (only for first message or after long gap)
+    // Don't spam with emails for every message in an active conversation
+    if (content && isNewConversation) {
+      const recipientResult = await sql`
+        SELECT email, name FROM users WHERE user_id = ${recipientId}
+      `;
+      if (recipientResult.length > 0) {
+        const recipient = recipientResult[0];
+        sendNewMessageEmail(
+          recipient.email,
+          recipient.name,
+          user.name || 'Someone',
+          content
+        ).catch(err => console.error('Failed to send message email:', err));
+      }
+    }
 
     return NextResponse.json({ success: true, conversationId, messageId });
   } catch (error) {
