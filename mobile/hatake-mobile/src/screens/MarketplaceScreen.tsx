@@ -313,7 +313,53 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
     );
   };
 
-  if (loading) {
+  const renderShopProduct = ({ item }: { item: ShopProduct }) => {
+    return (
+      <TouchableOpacity style={styles.card} data-testid={`product-${item.id}`}>
+        <View style={styles.cardImageContainer}>
+          {item.image ? (
+            <Image 
+              source={{ uri: item.image }} 
+              style={styles.cardImage}
+              resizeMode="contain"
+            />
+          ) : (
+            <View style={styles.cardPlaceholder}>
+              <Ionicons name="bag-outline" size={30} color="#9CA3AF" />
+            </View>
+          )}
+          {item.stock < 5 && item.stock > 0 && (
+            <View style={styles.lowStockBadge}>
+              <Text style={styles.lowStockText}>Low Stock</Text>
+            </View>
+          )}
+          {item.stock === 0 && (
+            <View style={styles.soldOutBadge}>
+              <Text style={styles.soldOutText}>Sold Out</Text>
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.cardInfo}>
+          <Text style={styles.cardName} numberOfLines={2}>
+            {item.name}
+          </Text>
+          <Text style={styles.cardSet} numberOfLines={1}>
+            {item.category}
+          </Text>
+          <Text style={styles.price}>
+            {item.currency === 'SEK' ? `${item.price.toFixed(0)} kr` : `€${item.price.toFixed(2)}`}
+          </Text>
+          <View style={styles.hatakeBadgeRow}>
+            <Ionicons name="shield-checkmark" size={12} color="#10B981" />
+            <Text style={styles.hatakeBadgeText}>Official Hatake</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading && activeTab === 'cards') {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
