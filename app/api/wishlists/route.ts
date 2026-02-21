@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 import { generateId } from '@/lib/utils';
 
@@ -10,9 +10,8 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId');
     const publicOnly = searchParams.get('public') === 'true';
     
-    // Get current user for filtering private wishlists
-    const sessionToken = request.cookies.get('session_token')?.value;
-    const currentUser = sessionToken ? await getSessionUser(sessionToken) : null;
+    // Get current user for filtering private wishlists (supports both cookie and Bearer token)
+    const currentUser = await getUserFromRequest(request);
 
     let wishlists;
     
