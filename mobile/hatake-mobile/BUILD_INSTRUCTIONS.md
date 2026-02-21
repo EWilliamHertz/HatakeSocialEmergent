@@ -1,82 +1,70 @@
-# Hatake.Social Mobile App - Quick Start Guide
+# Hatake.Social Mobile App - Build & Testing Instructions
 
-## 🌐 OPTION 1: Web Preview (Recommended for your situation)
+## Testing on Web Preview (Cloud Shell)
 
-Since you're using Google Cloud Shell and Safari, here's the simplest way:
-
+### Step 1: Navigate to the mobile app directory
 ```bash
-# In Google Cloud Shell:
-cd ~/HatakeSocialEmergent/mobile/hatake-mobile
-
-# Install dependencies (use --legacy-peer-deps if you get errors)
-npm install --legacy-peer-deps
-
-# Start web server
-npx expo start --web --port 8080
-
-# Cloud Shell will show you can preview on port 8080
-# Click "Web Preview" button in Cloud Shell toolbar (top right)
-# Select "Preview on port 8080"
+cd /app/mobile/hatake-mobile
 ```
 
-## 🔧 OPTION 2: Fix dependency issues
-
-If you get npm errors, run:
+### Step 2: Start the web preview
 ```bash
-rm -rf node_modules package-lock.json
-npm install --legacy-peer-deps
+npx expo start --web
 ```
 
-## 📱 OPTION 3: Build APK via EAS
+### Step 3: Access the app
+- The app will be available at: http://localhost:8081
+- Use Cloud Shell's "Web Preview" feature on port 8081
+
+### Test Credentials
+- **Email:** test@test.com
+- **Password:** password
+
+---
+
+## APK for Android Emulators
+
+### Download APK
+**Direct Download:** https://expo.dev/artifacts/eas/dTxeWN2gueqgCMnWbPRrby.apk
+
+### Testing on Appetize.io
+Note: Safari on iPad may have issues selecting APK files directly. Try these alternatives:
+
+1. **Use a different browser** if available
+2. **Copy the APK URL** and paste directly into Appetize.io's "Upload via URL" option
+3. **Alternative emulators:** 
+   - https://www.appetize.io (paste the APK URL directly)
+   - https://app.browserstack.com/
+   - https://www.lambdatest.com/mobile-app-testing
+
+---
+
+## API Configuration
+
+The app connects to:
+- **Backend API:** https://trading-cards-6.preview.emergentagent.com
+
+---
+
+## Troubleshooting
+
+### Web Preview Not Working
+1. Make sure the backend is running (supervisor should handle this)
+2. Check if port 8081 is accessible
+3. Clear browser cache/localStorage
+
+### Login Issues
+- Ensure you're using the correct credentials
+- Check the on-screen error messages
+- The API URL is shown at the bottom of the login screen
+
+---
+
+## Building a New APK
 
 ```bash
-cd ~/HatakeSocialEmergent/mobile/hatake-mobile
-npm install --legacy-peer-deps
-eas build -p android --profile preview
+cd /app/mobile/hatake-mobile
+npx eas build --platform android --profile preview
 ```
 
-When build completes, EAS will give you a download link for the APK.
-
-## 🎯 What the Mobile App Does
-
-1. **Login Screen** - Sign in with email/password
-2. **Collection** - View your card collection
-3. **Marketplace** - Browse cards for sale
-4. **Trades** - Manage trade offers
-5. **Profile** - Your account settings
-6. **Card Scanner** - Take photos to search cards
-
-## 📋 Test Credentials
-
-- Email: `test@test.com`
-- Password: `password`
-
-## 🔗 API Configuration
-
-The app connects to: `https://trading-cards-6.preview.emergentagent.com`
-
-This is your existing Hatake.Social backend.
-
-## ❓ Troubleshooting
-
-### "peer dependency" errors
-Use: `npm install --legacy-peer-deps`
-
-### "Cannot find module" errors
-Run:
-```bash
-rm -rf node_modules
-npm install --legacy-peer-deps
-npx expo install --fix
-```
-
-### Web preview not loading
-Make sure you're on port 8080:
-```bash
-npx expo start --web --port 8080
-```
-
-### EAS build fails
-Check logs at the URL provided, common fixes:
-- Run `npx expo doctor --fix-dependencies`
-- Make sure app.json has correct projectId
+The build takes approximately 5-10 minutes. Once complete, download the APK from the provided URL.
