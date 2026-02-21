@@ -296,7 +296,7 @@ export default function MarketplacePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Price ($)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Price (€)</label>
                   <input
                     type="number"
                     value={priceMax}
