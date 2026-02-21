@@ -528,56 +528,56 @@ export default function MarketplacePage() {
                   >
                     Clear filters
                   </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filteredListings.map((listing) => (
-              <div 
-                key={listing.listing_id} 
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition relative group"
-                data-testid={`listing-${listing.listing_id}`}
-              >
-                {/* Delete button for owner or admin */}
-                {(listing.user_id === currentUserId || isAdmin) && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); deleteListing(listing.listing_id); }}
-                    className="absolute top-2 right-2 z-10 p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition opacity-0 group-hover:opacity-100"
-                    title={isAdmin && listing.user_id !== currentUserId ? 'Delete (Admin)' : 'Delete your listing'}
-                    data-testid={`delete-listing-${listing.listing_id}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 )}
-                
-                <div className="relative aspect-[2/3]">
-                  <Image
-                    src={getCardImage(listing)}
-                    alt={listing.card_data.name}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                  {listing.foil && (
-                    <div className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">
-                      FOIL
-                    </div>
-                  )}
-                  {listing.quantity > 1 && (
-                    <div className="absolute bottom-2 left-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                      x{listing.quantity}
-                    </div>
-                  )}
-                </div>
-                <div className="p-3">
-                  <h3 className="font-semibold text-sm mb-1 truncate dark:text-white">{listing.card_data.name}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{listing.condition}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-green-600">
-                      €{Number(listing.price).toFixed(2)}
-                    </span>
-                    {listing.user_id !== currentUserId && (
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {filteredListings.map((listing) => (
+                  <div 
+                    key={listing.listing_id} 
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition relative group"
+                    data-testid={`listing-${listing.listing_id}`}
+                  >
+                    {/* Delete button for owner or admin */}
+                    {(listing.user_id === currentUserId || isAdmin) && (
                       <button
+                        onClick={(e) => { e.stopPropagation(); deleteListing(listing.listing_id); }}
+                        className="absolute top-2 right-2 z-10 p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition opacity-0 group-hover:opacity-100"
+                        title={isAdmin && listing.user_id !== currentUserId ? 'Delete (Admin)' : 'Delete your listing'}
+                        data-testid={`delete-listing-${listing.listing_id}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    
+                    <div className="relative aspect-[2/3]">
+                      <Image
+                        src={getCardImage(listing)}
+                        alt={listing.card_data.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                      {listing.foil && (
+                        <div className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">
+                          FOIL
+                        </div>
+                      )}
+                      {listing.quantity > 1 && (
+                        <div className="absolute bottom-2 left-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                          x{listing.quantity}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-semibold text-sm mb-1 truncate dark:text-white">{listing.card_data.name}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{listing.condition}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-green-600">
+                          €{Number(listing.price).toFixed(2)}
+                        </span>
+                        {listing.user_id !== currentUserId && (
+                          <button
                         onClick={() => contactSeller(listing)}
                         className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                         title="Contact seller"
