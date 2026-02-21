@@ -1,94 +1,82 @@
-# How to Build Hatake.Social APK
+# Hatake.Social Mobile App - Quick Start Guide
 
-## Option 1: EAS Build (Recommended - Builds in Cloud)
+## 🌐 OPTION 1: Web Preview (Recommended for your situation)
 
-Run these commands in Google Cloud Shell:
+Since you're using Google Cloud Shell and Safari, here's the simplest way:
 
 ```bash
-# 1. Navigate to the mobile app directory
+# In Google Cloud Shell:
 cd ~/HatakeSocialEmergent/mobile/hatake-mobile
 
-# 2. Pull latest changes from GitHub
-git pull origin main
+# Install dependencies (use --legacy-peer-deps if you get errors)
+npm install --legacy-peer-deps
 
-# 3. Install dependencies
-npm install
+# Start web server
+npx expo start --web --port 8080
 
-# 4. Make sure you're logged into EAS
-eas login
-# Use: ernst@hatake.eu
+# Cloud Shell will show you can preview on port 8080
+# Click "Web Preview" button in Cloud Shell toolbar (top right)
+# Select "Preview on port 8080"
+```
 
-# 5. Build Android APK (builds on Expo's cloud servers)
+## 🔧 OPTION 2: Fix dependency issues
+
+If you get npm errors, run:
+```bash
+rm -rf node_modules package-lock.json
+npm install --legacy-peer-deps
+```
+
+## 📱 OPTION 3: Build APK via EAS
+
+```bash
+cd ~/HatakeSocialEmergent/mobile/hatake-mobile
+npm install --legacy-peer-deps
 eas build -p android --profile preview
-
-# 6. When build completes, download the APK from the URL provided
 ```
 
-## Option 2: Web Preview (No APK needed)
+When build completes, EAS will give you a download link for the APK.
 
-If you just want to test the app in a browser:
+## 🎯 What the Mobile App Does
 
-```bash
-# 1. Navigate to the mobile app directory
-cd ~/HatakeSocialEmergent/mobile/hatake-mobile
+1. **Login Screen** - Sign in with email/password
+2. **Collection** - View your card collection
+3. **Marketplace** - Browse cards for sale
+4. **Trades** - Manage trade offers
+5. **Profile** - Your account settings
+6. **Card Scanner** - Take photos to search cards
 
-# 2. Install web dependencies
-npm install
-npx expo install react-dom react-native-web
+## 📋 Test Credentials
 
-# 3. Start web server
-npx expo start --web
+- Email: `test@test.com`
+- Password: `password`
 
-# 4. Press 'w' to open in browser
-# Or visit the URL shown (usually http://localhost:8081)
-```
+## 🔗 API Configuration
 
-## Option 3: Use Snack (Online IDE)
+The app connects to: `https://trader-hub-61.preview.emergentagent.com`
 
-1. Go to https://snack.expo.dev
-2. Create a new snack
-3. Copy the code from this project
-4. Run directly in browser or download APK
+This is your existing Hatake.Social backend.
 
-## Troubleshooting
+## ❓ Troubleshooting
 
-### "Expo SDK < 41" error
-The app is configured for SDK 52. Make sure package.json has:
-```json
-"expo": "~52.0.0"
-```
+### "peer dependency" errors
+Use: `npm install --legacy-peer-deps`
 
-### "Failed to resolve plugin" error
-Run:
-```bash
-npm install
-npx expo install --fix
-```
-
-### Build fails with dependency errors
+### "Cannot find module" errors
 Run:
 ```bash
 rm -rf node_modules
-rm package-lock.json
-npm install
-npx expo doctor --fix-dependencies
+npm install --legacy-peer-deps
+npx expo install --fix
 ```
 
-## After Build Succeeds
+### Web preview not loading
+Make sure you're on port 8080:
+```bash
+npx expo start --web --port 8080
+```
 
-1. EAS will show: "Build successful!"
-2. You'll see a download URL for the APK
-3. Open that URL in Safari to download the APK
-4. Share the APK to an Android device to install
-
-## Important Files
-
-- `app.json` - App configuration (name, icon, permissions)
-- `eas.json` - Build configuration (APK vs AAB)
-- `package.json` - Dependencies
-
-## Your EAS Project
-
-- Project ID: 00c4480b-bf3f-4e5b-a2b5-0eecbd89be00
-- Owner: hatakehugo
-- Slug: hatakesocial
+### EAS build fails
+Check logs at the URL provided, common fixes:
+- Run `npx expo doctor --fix-dependencies`
+- Make sure app.json has correct projectId
