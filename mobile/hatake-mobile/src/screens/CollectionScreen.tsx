@@ -119,14 +119,6 @@ export default function CollectionScreen({ navigation }: any) {
           </View>
         }
       />
-
-      {/* Scan Button */}
-      <TouchableOpacity 
-        style={styles.scanButton}
-        onPress={() => navigation.navigate('Scanner')}
-      >
-        <Ionicons name="camera" size={28} color="#fff" />
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }
