@@ -459,6 +459,52 @@ export default function App() {
               />
             </Modal>
 
+            {/* Reputation Modal */}
+            <Modal
+              visible={showReputation}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => setShowReputation(false)}
+            >
+              <ReputationScreen
+                user={user}
+                token={token}
+                onClose={() => setShowReputation(false)}
+              />
+            </Modal>
+
+            {/* Wishlists Modal */}
+            <Modal
+              visible={showWishlists}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => setShowWishlists(false)}
+            >
+              <WishlistScreen
+                user={user}
+                token={token}
+                onClose={() => setShowWishlists(false)}
+              />
+            </Modal>
+
+            {/* Create Trade Modal */}
+            <Modal
+              visible={showCreateTrade}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => setShowCreateTrade(false)}
+            >
+              <CreateTradeScreen
+                user={user}
+                token={token}
+                onClose={() => setShowCreateTrade(false)}
+                onTradeCreated={() => {
+                  setShowCreateTrade(false);
+                  setShowTrades(true);
+                }}
+              />
+            </Modal>
+
             {/* Video Call Modal */}
             <Modal
               visible={callState.active}
