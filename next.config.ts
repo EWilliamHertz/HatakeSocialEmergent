@@ -6,22 +6,8 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  // Exclude mobile app from Next.js compilation
-  webpack: (config) => {
-    config.watchOptions = {
-      ...config.watchOptions,
-      ignored: ['**/mobile/**', '**/node_modules/**'],
-    };
-    return config;
-  },
-  // Exclude mobile folder from TypeScript compilation
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-  eslint: {
-    ignoreDuringBuilds: false,
-    dirs: ['app', 'components', 'lib'],
-  },
+  // Use Turbopack (Next.js 16 default)
+  turbopack: {},
   images: {
     remotePatterns: [
       {
