@@ -52,9 +52,10 @@ interface FeedScreenProps {
   user: any;
   token: string;
   onOpenMenu: () => void;
+  onOpenNotifications?: () => void;
 }
 
-export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps) {
+export default function FeedScreen({ user, token, onOpenMenu, onOpenNotifications }: FeedScreenProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -64,6 +65,31 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
   const [posting, setPosting] = useState(false);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
   const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null);
+  
+  // Groups for posting
+  const [myGroups, setMyGroups] = useState<any[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [showGroupPicker, setShowGroupPicker] = useState(false);
+
+  useEffect(() => {
+    fetchPosts();
+    fetchMyGroups();
+  }, [activeTab]);
+
+  const fetchMyGroups = async () => {
+    try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      const res = await fetch(`${API_URL}/api/groups`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMyGroups(data.myGroups || []);
+      }
+    } catch (err) {
+      console.log('Failed to fetch groups:', err);
+    }
+  };
 
   const fetchPosts = async () => {
     try {
