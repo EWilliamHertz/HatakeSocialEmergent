@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
+import GroupChatScreen from './GroupChatScreen';
 
 interface Group {
   group_id: string;
@@ -40,6 +41,7 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
   const [tab, setTab] = useState<'my' | 'discover'>('my');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   
   // Create form
   const [newName, setNewName] = useState('');
