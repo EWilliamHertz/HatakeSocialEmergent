@@ -21,9 +21,9 @@ import NotificationsScreen from './src/screens/NotificationsScreen';
 import ReputationScreen from './src/screens/ReputationScreen';
 import WishlistScreen from './src/screens/WishlistScreen';
 import CreateTradeScreen from './src/screens/CreateTradeScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import DrawerMenu from './src/components/DrawerMenu';
 import IncomingCallNotification from './src/components/IncomingCallNotification';
-import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { API_URL } from './src/config';
 
 const Tab = createBottomTabNavigator();
