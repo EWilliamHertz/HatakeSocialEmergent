@@ -130,14 +130,13 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
     
     try {
       if (searchGame === 'mtg') {
-        let query = '';
+        // Magic: The Gathering search
         
-        // Build Scryfall query
-        if (setCodeQuery && collectorNumQuery) {
-          // Direct lookup by set and collector number
+        // Direct lookup by set and collector number (most precise)
+        if (setCodeQuery.trim() && collectorNumQuery.trim()) {
           try {
             const response = await fetch(
-              `${SCRYFALL_API}/cards/${setCodeQuery.toLowerCase()}/${collectorNumQuery}`
+              `${SCRYFALL_API}/cards/${setCodeQuery.toLowerCase().trim()}/${collectorNumQuery.trim()}`
             );
             if (response.ok) {
               const card = await response.json();
@@ -157,15 +156,20 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               return;
             }
           } catch (e) {
-            // Fall through to regular search
+            console.log('Direct lookup failed, trying search...');
           }
         }
         
-        // Regular name search
+        // Build search query
+        let query = '';
         if (searchQuery.trim()) {
-          query = searchQuery;
-        } else if (setCodeQuery) {
-          query = `set:${setCodeQuery}`;
+          query = `name:${searchQuery.trim()}`;
+        }
+        if (setCodeQuery.trim()) {
+          query += (query ? ' ' : '') + `set:${setCodeQuery.toLowerCase().trim()}`;
+        }
+        if (collectorNumQuery.trim() && !setCodeQuery.trim()) {
+          query += (query ? ' ' : '') + `cn:${collectorNumQuery.trim()}`;
         }
         
         if (!query) {
@@ -193,43 +197,101 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               data: card,
             })));
           }
+        } else {
+          console.log('Search failed:', await response.text());
         }
       } else {
         // Pokemon search
-        let results: any[] = [];
         
-        if (setCodeQuery && collectorNumQuery) {
-          // Direct lookup
+        // Direct lookup by set code and collector number
+        if (setCodeQuery.trim() && collectorNumQuery.trim()) {
           try {
-            const response = await fetch(`${TCGDEX_API}/cards/${setCodeQuery}-${collectorNumQuery}`);
+            const cardId = `${setCodeQuery.toLowerCase().trim()}-${collectorNumQuery.trim()}`;
+            const response = await fetch(`${TCGDEX_API}/cards/${cardId}`);
             if (response.ok) {
               const card = await response.json();
-              results = [card];
+              if (card && card.id) {
+                setSearchResults([{
+                  id: card.id,
+                  name: card.name,
+                  image: card.image ? `${card.image}/high.webp` : '',
+                  set_name: card.set?.name || '',
+                  set_code: card.set?.id?.toUpperCase() || setCodeQuery.toUpperCase(),
+                  collector_number: card.localId || collectorNumQuery,
+                  rarity: card.rarity,
+                  game: 'pokemon' as const,
+                  data: card,
+                }]);
+                setSearching(false);
+                return;
+              }
             }
           } catch (e) {
-            // Fall through
+            console.log('Pokemon direct lookup failed');
           }
         }
         
-        if (results.length === 0 && searchQuery.trim()) {
-          const response = await fetch(`${TCGDEX_API}/cards?name=${encodeURIComponent(searchQuery)}`);
+        // Name search
+        if (searchQuery.trim()) {
+          const response = await fetch(`${TCGDEX_API}/cards?name=${encodeURIComponent(searchQuery.trim())}`);
           if (response.ok) {
             const data = await response.json();
-            results = Array.isArray(data) ? data.slice(0, 30) : [];
+            let results = Array.isArray(data) ? data : [];
+            
+            // Filter by set code if provided
+            if (setCodeQuery.trim()) {
+              results = results.filter((card: any) => 
+                card.set?.id?.toLowerCase() === setCodeQuery.toLowerCase().trim() ||
+                card.id?.toLowerCase().startsWith(setCodeQuery.toLowerCase().trim())
+              );
+            }
+            
+            // Filter by collector number if provided
+            if (collectorNumQuery.trim()) {
+              results = results.filter((card: any) => 
+                card.localId === collectorNumQuery.trim() ||
+                card.id?.endsWith(`-${collectorNumQuery.trim()}`)
+              );
+            }
+            
+            setSearchResults(results.slice(0, 30).map((card: any) => ({
+              id: card.id,
+              name: card.name,
+              image: card.image ? `${card.image}/high.webp` : '',
+              set_name: card.set?.name || '',
+              set_code: card.set?.id?.toUpperCase() || '',
+              collector_number: card.localId || card.id?.split('-')[1] || '',
+              rarity: card.rarity,
+              game: 'pokemon' as const,
+              data: card,
+            })));
+          }
+        } else if (setCodeQuery.trim()) {
+          // Search by set only
+          const response = await fetch(`${TCGDEX_API}/sets/${setCodeQuery.toLowerCase().trim()}`);
+          if (response.ok) {
+            const setData = await response.json();
+            if (setData.cards) {
+              let cards = setData.cards;
+              if (collectorNumQuery.trim()) {
+                cards = cards.filter((card: any) => 
+                  card.localId === collectorNumQuery.trim()
+                );
+              }
+              setSearchResults(cards.slice(0, 30).map((card: any) => ({
+                id: card.id,
+                name: card.name,
+                image: card.image ? `${card.image}/high.webp` : '',
+                set_name: setData.name || '',
+                set_code: setData.id?.toUpperCase() || '',
+                collector_number: card.localId || '',
+                rarity: card.rarity,
+                game: 'pokemon' as const,
+                data: { ...card, set: { id: setData.id, name: setData.name } },
+              })));
+            }
           }
         }
-        
-        setSearchResults(results.map((card: any) => ({
-          id: card.id,
-          name: card.name,
-          image: card.image ? `${card.image}/high.webp` : '',
-          set_name: card.set?.name || '',
-          set_code: card.set?.id?.toUpperCase() || '',
-          collector_number: card.localId || card.id?.split('-')[1] || '',
-          rarity: card.rarity,
-          game: 'pokemon' as const,
-          data: card,
-        })));
       }
     } catch (err) {
       console.error('Search failed:', err);
