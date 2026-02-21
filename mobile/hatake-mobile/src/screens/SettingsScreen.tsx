@@ -93,7 +93,10 @@ export default function SettingsScreen({ user, token, onClose, onLogout }: Setti
           name: name.trim(),
           shipping_address: shippingAddress.trim(),
           payment_swish: paymentSwish.trim(),
-          payment_account: paymentAccount.trim(),
+          payment_clearing: paymentClearing.trim(),
+          payment_kontonummer: paymentKontonummer.trim(),
+          payment_iban: paymentIban.trim(),
+          payment_swift: paymentSwift.trim(),
         }),
       });
       
