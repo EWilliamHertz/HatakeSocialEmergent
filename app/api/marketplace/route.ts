@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
 import { generateId } from '@/lib/utils';
 import sql from '@/lib/db';
 
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     let query = sql`
-      SELECT l.*, u.name, u.picture
+      SELECT l.*, u.name as seller_name, u.picture as seller_picture
       FROM marketplace_listings l
       JOIN users u ON l.user_id = u.user_id
       WHERE l.status = 'active'
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     if (game) {
       query = sql`
-        SELECT l.*, u.name, u.picture
+        SELECT l.*, u.name as seller_name, u.picture as seller_picture
         FROM marketplace_listings l
         JOIN users u ON l.user_id = u.user_id
         WHERE l.status = 'active' AND l.game = ${game}
@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
