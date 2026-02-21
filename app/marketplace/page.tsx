@@ -111,7 +111,7 @@ export default function MarketplacePage() {
         credentials: 'include',
         body: JSON.stringify({
           recipientId: listing.user_id,
-          content: `Hi! I'm interested in your listing: ${listing.card_data.name} for $${Number(listing.price).toFixed(2)}`
+          content: `Hi! I'm interested in your listing: ${listing.card_data.name} for €${Number(listing.price).toFixed(2)}`
         })
       });
       router.push('/messages');
