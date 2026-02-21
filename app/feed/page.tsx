@@ -86,10 +86,11 @@ export default function FeedPage() {
 
   const loadMyGroups = async () => {
     try {
-      const res = await fetch('/api/groups', { credentials: 'include' });
+      const res = await fetch('/api/groups?type=my', { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
-        setMyGroups(data.myGroups || []);
+        // API returns 'groups' not 'myGroups'
+        setMyGroups(data.groups || []);
       }
     } catch (e) {
       console.log('Failed to load groups:', e);
