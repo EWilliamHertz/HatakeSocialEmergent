@@ -567,33 +567,28 @@ export default function CollectionPage() {
       }
       if (card.tcgplayer?.prices) {
         const prices = card.tcgplayer.prices;
-        return { value: prices.holofoil?.market || prices.normal?.market || 0, currency: 'USD' };
+        // Convert USD to EUR for consistency
+        const usdPrice = prices.holofoil?.market || prices.normal?.market || 0;
+        return { value: usdPrice * 0.92, currency: 'EUR' };
       }
       return { value: 0, currency: 'EUR' };
     } else if (item.game === 'mtg') {
+      // Prefer EUR prices, convert USD to EUR if needed
       if (card.prices?.eur) return { value: parseFloat(card.prices.eur), currency: 'EUR' };
       if (card.prices?.eur_foil && item.foil) return { value: parseFloat(card.prices.eur_foil), currency: 'EUR' };
-      if (card.prices?.usd) return { value: parseFloat(card.prices.usd), currency: 'USD' };
-      if (card.prices?.usd_foil && item.foil) return { value: parseFloat(card.prices.usd_foil), currency: 'USD' };
+      if (card.prices?.usd) return { value: parseFloat(card.prices.usd) * 0.92, currency: 'EUR' };
+      if (card.prices?.usd_foil && item.foil) return { value: parseFloat(card.prices.usd_foil) * 0.92, currency: 'EUR' };
     }
     return { value: 0, currency: 'EUR' };
   };
   
   const calculateTotalValue = () => {
     let totalEUR = 0;
-    let totalUSD = 0;
     items.forEach(item => {
       const price = getCardPrice(item);
-      if (price.currency === 'EUR') {
-        totalEUR += price.value * item.quantity;
-      } else {
-        totalUSD += price.value * item.quantity;
-      }
+      totalEUR += price.value * item.quantity;
     });
-    const parts = [];
-    if (totalUSD > 0) parts.push(`$${totalUSD.toFixed(2)}`);
-    if (totalEUR > 0) parts.push(`€${totalEUR.toFixed(2)}`);
-    return parts.length > 0 ? parts.join(' + ') : '$0.00';
+    return totalEUR > 0 ? `€${totalEUR.toFixed(2)}` : '€0.00';
   };
 
   const filteredItems = items.filter(item => {
