@@ -1653,6 +1653,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  menuButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    marginHorizontal: 12,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
