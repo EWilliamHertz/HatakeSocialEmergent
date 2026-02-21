@@ -283,7 +283,7 @@ export default function MarketplacePage() {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Min Price ($)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Min Price (€)</label>
                   <input
                     type="number"
                     value={priceMin}
