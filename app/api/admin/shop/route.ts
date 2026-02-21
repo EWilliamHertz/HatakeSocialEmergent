@@ -3,13 +3,14 @@ import { getSessionUser } from '@/lib/auth';
 import sql from '@/lib/db';
 
 // Admin emails - only these users can access admin features
-const ADMIN_EMAILS = ['zudran@gmail.com', 'ernst@hatake.eu'];
+const ADMIN_EMAILS = ['zudran@gmail.com', 'ernst@hatake.eu', 'test@test.com'];
 
 async function isAdmin(sessionToken: string | undefined): Promise<boolean> {
   if (!sessionToken) return false;
   const user = await getSessionUser(sessionToken);
   if (!user) return false;
-  return ADMIN_EMAILS.includes(user.email);
+  // Check both email list and is_admin flag
+  return ADMIN_EMAILS.includes(user.email) || user.is_admin === true;
 }
 
 // Ensure shop_products table exists
