@@ -401,6 +401,14 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
           fetchPosts();
         }}
       />
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        visible={!!viewProfileUserId}
+        onClose={() => setViewProfileUserId(null)}
+        userId={viewProfileUserId || ''}
+        token={token}
+      />
     </SafeAreaView>
   );
 }
