@@ -15,17 +15,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
 
 interface Post {
-  id: number;
+  post_id?: string;
+  id?: number | string;
   user_id: string;
-  user_name: string;
-  user_picture?: string;
+  name: string;           // API returns 'name' 
+  picture?: string;       // API returns 'picture'
   content: string;
-  image_url?: string;
+  image?: string;         // API returns 'image'
+  image_url?: string;     // Legacy field
   card_data?: any;
-  likes_count: number;
-  comments_count: number;
+  card_id?: string;
+  game?: string;
+  like_count: number;     // API returns 'like_count'
+  comment_count: number;  // API returns 'comment_count'
+  likes_count?: number;   // Legacy field
+  comments_count?: number; // Legacy field
   created_at: string;
-  is_liked?: boolean;
+  liked?: boolean;        // API returns 'liked'
+  is_liked?: boolean;     // Legacy field
 }
 
 interface FeedScreenProps {
