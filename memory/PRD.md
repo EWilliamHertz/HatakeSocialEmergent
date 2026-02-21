@@ -27,51 +27,126 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
-### Latest Features (Current Session)
+### Batch 2: Full Mobile Feature Parity
 
-1. **Delete Marketplace Listings** ✅ (Both Platforms)
-   - Delete button visible on own listings
-   - "My Listings" filter tab in mobile marketplace
-   - Admin can delete any listing
-   - Confirmation dialog before deletion
-   - Mobile: Uses Bearer token auth
+1. **Deck Builder (Mobile)** ✅
+   - View all user decks with card counts
+   - Create new decks (MTG/Pokemon, format selection)
+   - View deck contents (main deck + sideboard)
+   - Delete decks
+   - Note: Adding cards to decks requires web app
 
-2. **LiveKit Video/Audio Calls Integration** ✅
-   - Full LiveKit React Native SDK installed
-   - Screen sharing support built-in
-   - Call controls: mute, camera toggle, speaker, screen share
-   - Graceful fallback in Expo Go (shows "native build required")
-   - app.json configured with camera/microphone permissions
-   - BUILD_GUIDE.md created with EAS build instructions
+2. **Trades (Mobile)** ✅
+   - View all trades (incoming/outgoing)
+   - Filter by status (all, pending, completed)
+   - Trade detail view with user info
+   - Accept/Decline incoming trades
+   - Cancel pending outgoing trades
+   - Cash addition display
 
-3. **Updated Call Screen Features** ✅
-   - HD quality indicator when LiveKit is available
-   - Screen share button during video calls
-   - Better control labels and UI
-   - LiveKit room connection on call accept
+3. **Groups/Communities (Mobile)** ✅
+   - View "My Groups" and "Discover" tabs
+   - Create new groups (public/private)
+   - Join public groups
+   - Leave groups
+   - Member counts and role badges
 
-### Previous Session Features
+4. **Notifications (Mobile)** ✅
+   - View all notifications with icons
+   - Mark individual as read
+   - Mark all as read
+   - Delete individual notifications
+   - Clear all notifications
+   - Unread badge count
 
-4. **Email Verification System** ✅
-   - Verification email sent on signup
-   - 24-hour expiration on verification links
-   - Web page for email verification (`/verify-email`)
+5. **All Backend APIs Updated for Bearer Auth** ✅
+   - `/api/decks` - List/Create decks
+   - `/api/decks/[deckId]/cards` - GET/POST/DELETE/PATCH
+   - `/api/trades` - List trades
+   - `/api/trades/[id]` - GET/PATCH (accept/decline/cancel)
+   - `/api/groups` - List/Create groups
+   - `/api/groups/[groupId]/join` - Join groups
+   - `/api/groups/[groupId]/leave` - Leave groups (new)
+   - `/api/notifications` - GET/PATCH/DELETE
 
-5. **Email Notifications** ✅
-   - Friend Requests, New Messages, Reactions
-   - Beautiful HTML email templates
+### Batch 1: Core Features
 
-6. **Incoming Call Notifications** ✅
-   - Global call listener
-   - Visual overlay with Accept/Decline
+6. **Delete Marketplace Listings** ✅
+7. **LiveKit Video/Audio Calls Integration** ✅
+8. **Email Verification System** ✅
+9. **Email Notifications** ✅
+10. **Incoming Call Notifications** ✅
+11. **Friends System** ✅
+12. **Messaging System** ✅
 
-7. **Friends System** ✅ (Mobile)
-   - Search, Add, Accept, Remove friends
-   - Three tabs: Friends, Requests, Search
+---
 
-8. **Messaging System** ✅ (Mobile)
-   - Conversations list
-   - Real-time chat with polling
+## MOBILE APP FEATURES STATUS
+
+| Feature | Status |
+|---------|--------|
+| Authentication | ✅ Complete |
+| Collection View | ✅ Complete |
+| Add Cards (MTG + Pokemon) | ✅ Complete |
+| Bulk Delete | ✅ Complete |
+| Feed View | ✅ Complete |
+| Like/Emoji Posts | ✅ Complete |
+| Comments | ✅ Complete |
+| Comment Reactions | ✅ Complete |
+| View User Profiles | ✅ Complete |
+| View User Collections | ✅ Complete |
+| Marketplace View | ✅ Complete |
+| **Delete Own Listings** | ✅ Complete |
+| Profile Screen | ✅ Complete |
+| Hamburger Menu (All Pages) | ✅ Complete |
+| **Friends System** | ✅ Complete |
+| **Messaging** | ✅ Complete |
+| **Video/Voice Call UI** | ✅ Complete |
+| **Incoming Call Notifications** | ✅ Complete |
+| **Deck Builder** | ✅ Complete |
+| **Trades** | ✅ Complete |
+| **Groups/Communities** | ✅ Complete |
+| **Notifications** | ✅ Complete |
+| Wishlists | ⏳ Not started |
+| Settings | ⏳ Not started |
+
+---
+
+## NEXT STEPS
+
+### High Priority (P1)
+1. **Native Expo Build** - For full LiveKit video/audio streaming
+2. **Push Notifications** - Firebase Cloud Messaging / APNs
+3. **Trading Reputation System** - Rate completed trades
+
+### Medium Priority (P2)
+1. Wishlists mobile screen
+2. Settings mobile screen
+3. Create trades from mobile
+
+---
+
+## FILES REFERENCE
+
+### New Mobile Screens (This Session)
+- `mobile/hatake-mobile/src/screens/DecksScreen.tsx` - Deck management
+- `mobile/hatake-mobile/src/screens/TradesScreen.tsx` - Trade management
+- `mobile/hatake-mobile/src/screens/GroupsScreen.tsx` - Community management
+- `mobile/hatake-mobile/src/screens/NotificationsScreen.tsx` - Notification center
+
+### Updated Backend APIs
+- `app/api/decks/route.ts` - Bearer auth
+- `app/api/decks/[deckId]/cards/route.ts` - Added GET, Bearer auth
+- `app/api/trades/route.ts` - Bearer auth
+- `app/api/trades/[id]/route.ts` - Bearer auth, improved PATCH
+- `app/api/groups/route.ts` - Bearer auth
+- `app/api/groups/[groupId]/join/route.ts` - Bearer auth
+- `app/api/groups/[groupId]/leave/route.ts` - New endpoint
+- `app/api/notifications/route.ts` - Bearer auth
+
+---
+
+*Last Updated: February 22, 2026*
 
 4. **Friends System** ✅
    - Full Friends screen accessible from hamburger menu
