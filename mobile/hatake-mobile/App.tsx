@@ -378,16 +378,18 @@ export default function App() {
                 setMessageRecipient(null);
               }}
             >
-              <MessagesScreen
-                user={user}
-                token={token}
-                onClose={() => {
-                  setShowMessages(false);
-                  setMessageRecipient(null);
-                }}
-                initialRecipient={messageRecipient}
-                onStartCall={handleStartCall}
-              />
+              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                <MessagesScreen
+                  user={user}
+                  token={token}
+                  onClose={() => {
+                    setShowMessages(false);
+                    setMessageRecipient(null);
+                  }}
+                  initialRecipient={messageRecipient}
+                  onStartCall={handleStartCall}
+                />
+              </View>
             </Modal>
 
             {/* Decks Modal */}
