@@ -493,6 +493,21 @@ export default function App() {
               />
             </Modal>
 
+            {/* Settings Modal */}
+            <Modal
+              visible={showSettings}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => setShowSettings(false)}
+            >
+              <SettingsScreen
+                user={user}
+                token={token}
+                onClose={() => setShowSettings(false)}
+                onLogout={handleLogout}
+              />
+            </Modal>
+
             {/* Video Call Modal */}
             <Modal
               visible={callState.active}
