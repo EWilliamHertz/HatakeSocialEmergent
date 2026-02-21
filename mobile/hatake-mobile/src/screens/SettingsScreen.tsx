@@ -428,6 +428,10 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 13, fontWeight: '500', color: '#374151', marginBottom: 6, marginTop: 12 },
   input: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, padding: 12, fontSize: 15, color: '#1F2937' },
   textArea: { minHeight: 80, textAlignVertical: 'top' },
+  sectionDivider: { fontSize: 14, fontWeight: '600', color: '#1F2937', marginTop: 20, marginBottom: 4, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
+  inputRow: { flexDirection: 'row', gap: 12 },
+  inputHalf: { width: 100 },
+  inputFlex: { flex: 1 },
   
   saveButton: { backgroundColor: '#3B82F6', borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 16 },
   saveButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
