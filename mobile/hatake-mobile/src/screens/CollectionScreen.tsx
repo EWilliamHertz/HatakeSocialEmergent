@@ -1189,6 +1189,90 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                 ))}
               </View>
             )}
+
+            {/* MTG Grouped Results with Edition Picker */}
+            {mtgCardGroups.length > 0 && (
+              <View style={styles.searchResultsContainer}>
+                <Text style={styles.searchResultsTitle}>
+                  Cards Found ({mtgCardGroups.length})
+                </Text>
+                {mtgCardGroups.map((group, groupIndex) => {
+                  const selectedCard = group.editions[group.selectedEdition];
+                  return (
+                    <View key={group.name} style={styles.mtgCardGroup}>
+                      {/* Card Image and Info */}
+                      <TouchableOpacity 
+                        style={styles.searchResult}
+                        onPress={() => openCardDetail(selectedCard)}
+                      >
+                        {selectedCard.image ? (
+                          <Image source={{ uri: selectedCard.image }} style={styles.searchResultImage} />
+                        ) : (
+                          <View style={styles.searchResultImagePlaceholder}>
+                            <Ionicons name="image-outline" size={24} color="#9CA3AF" />
+                          </View>
+                        )}
+                        <View style={styles.searchResultInfo}>
+                          <Text style={styles.searchResultName} numberOfLines={1}>{selectedCard.name}</Text>
+                          <Text style={styles.searchResultSet} numberOfLines={1}>
+                            {selectedCard.set_name} #{selectedCard.collector_number}
+                          </Text>
+                          {selectedCard.price && selectedCard.price !== 'N/A' && (
+                            <Text style={styles.searchResultPrice}>{selectedCard.price}</Text>
+                          )}
+                          {selectedCard.rarity && (
+                            <Text style={styles.searchResultRarity}>{selectedCard.rarity}</Text>
+                          )}
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                      </TouchableOpacity>
+                      
+                      {/* Edition Picker - only show if multiple editions */}
+                      {group.editions.length > 1 && (
+                        <View style={styles.editionPickerContainer}>
+                          <Text style={styles.editionLabel}>
+                            Edition ({group.editions.length} available):
+                          </Text>
+                          <ScrollView 
+                            horizontal 
+                            showsHorizontalScrollIndicator={false}
+                            style={styles.editionScroll}
+                          >
+                            {group.editions.map((edition, edIndex) => (
+                              <TouchableOpacity
+                                key={edition.id}
+                                style={[
+                                  styles.editionChip,
+                                  group.selectedEdition === edIndex && styles.editionChipActive
+                                ]}
+                                onPress={() => {
+                                  const newGroups = [...mtgCardGroups];
+                                  newGroups[groupIndex].selectedEdition = edIndex;
+                                  setMtgCardGroups(newGroups);
+                                }}
+                              >
+                                <Text 
+                                  style={[
+                                    styles.editionChipText,
+                                    group.selectedEdition === edIndex && styles.editionChipTextActive
+                                  ]}
+                                  numberOfLines={1}
+                                >
+                                  {edition.set_code} #{edition.collector_number}
+                                </Text>
+                                {edition.price && edition.price !== 'N/A' && (
+                                  <Text style={styles.editionChipPrice}>{edition.price}</Text>
+                                )}
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
           </ScrollView>
         </SafeAreaView>
       </Modal>
