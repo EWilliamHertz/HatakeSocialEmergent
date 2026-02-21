@@ -609,6 +609,7 @@ export default function CollectionPage() {
     setImportStatus('preview');
     try {
       const text = await file.text();
+      setOriginalCsvContent(text); // Store original CSV for full import
       const res = await fetch('/api/collection/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -618,6 +619,7 @@ export default function CollectionPage() {
       const data = await res.json();
       if (data.success) {
         setImportCards(data.cards);
+        setTotalCardsToImport(data.totalCards || data.cards.length); // Store total count from backend
       } else {
         alert('Failed to parse CSV: ' + (data.error || 'Unknown error'));
         setImportStatus('idle');
@@ -635,16 +637,12 @@ export default function CollectionPage() {
     setImportLoading(true);
     setImportStatus('importing');
     try {
-      const headers = 'Name,Set code,Set name,Collector number,Foil,Rarity,Quantity,ManaBox ID,Scryfall ID,Purchase price,Misprint,Altered,Condition,Language,Purchase price currency';
-      const csvLines = importCards.map(c => 
-        `"${c.name}",${c.setCode},"${c.setName}",${c.collectorNumber},${c.foil ? 'foil' : 'normal'},${c.rarity},${c.quantity},,${c.scryfallId},${c.purchasePrice},false,${c.altered || false},${c.condition},${c.language || 'English'},${c.currency}`
-      );
-      const csvContent = [headers, ...csvLines].join('\n');
+      // Use original CSV content for full import (not reconstructed from preview)
       const res = await fetch('/api/collection/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ csvContent, action: 'import', gameType: importGameType })
+        body: JSON.stringify({ csvContent: originalCsvContent, action: 'import', gameType: importGameType })
       });
       const data = await res.json();
       setImportResult(data);
