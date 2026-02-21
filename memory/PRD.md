@@ -11,11 +11,13 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 - PostgreSQL (Neon)
 - Cloudinary (image storage)
 - TCGdex API (Pokemon), Scryfall API (MTG)
+- **Resend** (email notifications)
 
 ### Mobile Application
 - React Native with Expo
 - React Navigation (Native Stack + Bottom Tabs)
 - Native fetch (API Client)
+- **LiveKit** (planned for video calls)
 
 ## Test Credentials
 - **Test User**: test@test.com / password (admin)
@@ -26,7 +28,28 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ### Latest Features (This Session)
 
-1. **Friends System** ✅
+1. **Email Verification System** ✅
+   - Verification email sent on signup
+   - 24-hour expiration on verification links
+   - Web page for email verification (`/verify-email`)
+   - Resend verification email option
+   - Database columns: `verification_token`, `verification_expires`
+
+2. **Email Notifications** ✅
+   - **Friend Requests**: Email when someone sends you a friend request
+   - **New Messages**: Email when you receive a first message from someone
+   - **Reactions**: Email when someone reacts to your post
+   - Beautiful HTML email templates with Hatake branding
+   - Non-blocking email sending (doesn't slow down API responses)
+
+3. **Incoming Call Notifications** ✅
+   - Global call listener running across all screens
+   - Visual notification overlay when receiving a call
+   - Accept/Decline buttons
+   - Vibration feedback on mobile devices
+   - Auto-detection of caller info (name, picture)
+
+4. **Friends System** ✅
    - Full Friends screen accessible from hamburger menu
    - Three tabs: Friends list, Pending Requests, Search/Find users
    - Send/Accept/Reject friend requests
@@ -34,40 +57,53 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
    - Search users by name or email
    - Chat button to message friends directly
 
-2. **Messaging System** ✅
+5. **Messaging System** ✅
    - Full messaging screen with conversations list
    - Real-time chat with friends
    - Message polling for updates (every 3 seconds)
    - Time formatting (today, yesterday, date)
    - Unread message badges
-   - Direct chat from Friends screen
 
-3. **Video/Voice Call UI** ✅
+6. **Video/Voice Call UI** ✅
    - Audio and Video call buttons in chat header
    - Full-screen call interface
    - Call states: connecting, ringing, connected, ended
    - Call controls: mute, camera toggle, speaker, end call
-   - Call duration timer
-   - Animated pulse ring during ringing
    - Note: Full WebRTC streaming requires native build
 
-4. **Backend API Updates** ✅
-   - All messaging APIs now support Bearer token auth
-   - All call/signaling APIs support Bearer token auth
-   - LiveKit token API supports Bearer token auth
-   - User search API supports Bearer token auth
+---
 
-### Previous Session Features
-- Hamburger Menu on All Pages
-- Comment Reactions (Emoji)
-- View User Collections
-- MTG Search with Edition Picker
-- Feed Comments System
-- Bulk Card Selection & Delete
+## EMAIL SETUP GUIDE
+
+### Resend Configuration
+The platform uses **Resend** for transactional emails.
+
+**Current Setup:**
+- API Key: Configured in `.env` as `RESEND_API_KEY`
+- Sender: `noreply@hatake.social`
+
+**To use your own domain:**
+1. Go to https://resend.com/domains
+2. Add your domain (e.g., `hatake.social`)
+3. Add the required DNS records (SPF, DKIM, DMARC)
+4. Verify the domain
+5. Update `SENDER_EMAIL` in `.env` to use your domain
+
+**Email Types Sent:**
+- Verification emails on signup
+- Friend request notifications
+- New message notifications  
+- Reaction notifications
 
 ---
 
 ## KEY API ENDPOINTS
+
+### Authentication
+- `POST /api/auth/signup` - Register (sends verification email)
+- `POST /api/auth/login` - Login
+- `GET /api/auth/verify-email?token=` - Verify email
+- `POST /api/auth/verify-email` - Resend verification email
 
 ### Friends System
 - `GET /api/friends` - Get friends list
@@ -85,17 +121,6 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 - `GET /api/calls` - Poll for call signals
 - `POST /api/calls` - Send call signal
 - `DELETE /api/calls` - End call
-
-### Collection Management
-- `GET /api/collection` - Get own collection
-- `GET /api/users/{userId}/collection` - View user's collection
-- `POST /api/collection` - Add card
-- `DELETE /api/collection?id={id}` - Delete card
-
-### Feed & Social
-- `GET /api/feed` - Get posts with reactions
-- `POST /api/feed/{postId}/comments` - Add comment
-- `GET /api/feed/{postId}/comments` - Get comments
 
 ---
 
@@ -119,6 +144,7 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 | **Friends System** | ✅ Complete |
 | **Messaging** | ✅ Complete |
 | **Video/Voice Call UI** | ✅ Complete |
+| **Incoming Call Notifications** | ✅ Complete |
 | Trading | ⏳ Not started |
 
 ---
@@ -126,7 +152,7 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 ## NEXT STEPS
 
 ### High Priority (P1)
-1. LiveKit native integration for real video/audio streaming (requires Expo development build)
+1. **Native Expo Build** - For full LiveKit video/audio streaming
 2. Trading functionality
 3. Notifications display screen
 
@@ -139,19 +165,38 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## FILES REFERENCE
 
+### Email System
+- `lib/email.ts` - Email service with Resend + templates
+- `app/api/auth/verify-email/route.ts` - Verification API
+- `app/verify-email/page.tsx` - Web verification page
+
 ### Mobile Screens
-- `mobile/hatake-mobile/App.tsx` - Main app with modals for Friends/Messages/Calls
+- `mobile/hatake-mobile/App.tsx` - Main app with modals + incoming call handler
 - `mobile/hatake-mobile/src/screens/FriendsScreen.tsx` - Friends management
 - `mobile/hatake-mobile/src/screens/MessagesScreen.tsx` - Messaging/Chat
 - `mobile/hatake-mobile/src/screens/VideoCallScreen.tsx` - Voice/Video call UI
+- `mobile/hatake-mobile/src/components/IncomingCallNotification.tsx` - Incoming call overlay
 
-### Backend APIs (Updated for Bearer auth)
-- `app/api/messages/route.ts` - Conversations list & send message
-- `app/api/messages/[conversationId]/route.ts` - Get messages
-- `app/api/friends/route.ts` - Friends actions
-- `app/api/calls/route.ts` - Call signaling
-- `app/api/livekit/token/route.ts` - LiveKit token generation
-- `app/api/users/search/route.ts` - User search
+### Backend APIs (Updated)
+- `app/api/auth/signup/route.ts` - Now sends verification email
+- `app/api/friends/route.ts` - Now sends friend request email
+- `app/api/messages/route.ts` - Now sends new message email
+- `app/api/feed/[postId]/reactions/route.ts` - Now sends reaction email
+
+---
+
+## Environment Variables
+
+```env
+# Email (Resend)
+RESEND_API_KEY=re_xxxxx
+SENDER_EMAIL=noreply@hatake.social
+
+# LiveKit (Video Calls)
+LIVEKIT_URL=wss://xxxxx.livekit.cloud
+LIVEKIT_API_KEY=xxxxx
+LIVEKIT_API_SECRET=xxxxx
+```
 
 ---
 
