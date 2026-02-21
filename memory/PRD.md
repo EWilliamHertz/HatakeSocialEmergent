@@ -13,11 +13,11 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 - Cloudinary (image storage)
 - TCGdex API (Pokemon), Scryfall API (MTG)
 
-### Mobile Application (NEW)
+### Mobile Application
 - React Native with Expo
 - React Navigation (Native Stack + Bottom Tabs)
 - Zustand (State Management)
-- Axios (API Client)
+- Native fetch (API Client)
 - Expo SecureStore (Token Storage)
 - Expo Camera (Card Scanner)
 
@@ -29,50 +29,33 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES
 
-### Session 2026-02-19 (Latest)
+### Session 2026-02-21 (Latest)
 
-#### Mobile App Development ✅
-Complete React Native mobile application with:
+#### Mobile App Bug Fixes
+1. **Pokemon Card Images Fixed**
+   - Fixed `getCardImage` function to handle TCGdex API format
+   - TCGdex returns `image` as direct URL string, not `images.large/small`
+   - Appends `/high.webp` for high-res images
 
-1. **Authentication**
-   - Email/password login & registration
-   - Session persistence with SecureStore
-   - Auto-login on app restart
+2. **Marketplace Images Fixed**
+   - Same Pokemon image fix applied
+   - MTG cards continue to use Scryfall `image_uris` format
 
-2. **Collection Management**
-   - View collection with grid layout
-   - Filter by game (MTG/Pokémon)
-   - Search within collection
-   - Collection stats (total cards, unique, value)
-   - Add/remove cards
+3. **Feed Screen Card Images Fixed**
+   - Added `getCardImageUrl` helper to handle both MTG and Pokemon formats
 
-3. **Card Search**
-   - Search MTG via Scryfall API
-   - Search Pokémon via TCGdex API
-   - Quick-add to collection
+4. **Drawer Menu Enhanced**
+   - Added Wishlists navigation item
+   - Implemented `handleNavigate` with Coming Soon alerts for unimplemented screens
+   - Proper navigation handling for bottom tab screens
 
-4. **Card Scanner**
-   - Camera-based card capture
-   - Game selection (MTG/Pokémon)
-   - Card frame guide overlay
-   - Photo library import
-   - Match results with quick-add
+5. **Auth/Me Bearer Token Support**
+   - Fixed `/api/auth/me` to support Bearer token authentication
+   - Mobile app can now verify token validity on startup
 
-5. **Marketplace**
-   - Browse listings with filters
-   - View listing details
-   - Seller information
-   - Price display with foil badges
-
-6. **Trading System**
-   - View trades (all/pending/completed)
-   - Trade status badges
-   - Trade summary (cards + cash)
-
-7. **Profile**
-   - User stats display
-   - Menu navigation
-   - Logout functionality
+6. **Web Build Verified**
+   - Confirmed `yarn build` passes successfully
+   - No blocking build errors
 
 #### Previous Features (Maintained)
 - Sealed Product Management (Pokemon + MTG)
@@ -88,71 +71,73 @@ Complete React Native mobile application with:
 
 ```
 /app/mobile/hatake-mobile/
-├── App.tsx                 # Main entry point
+├── App.tsx                 # Main entry point with navigation
 ├── app.json               # Expo configuration
 ├── package.json           # Dependencies
-├── README.md              # Documentation
 ├── src/
 │   ├── components/        # Reusable UI components
+│   │   ├── DrawerMenu.tsx # Hamburger drawer with navigation
 │   │   ├── Button.tsx
 │   │   ├── CardItem.tsx
 │   │   ├── GameFilter.tsx
 │   │   └── SearchBar.tsx
+│   ├── config.ts          # API URL configuration
 │   ├── navigation/        # React Navigation config
 │   │   └── AppNavigator.tsx
 │   ├── screens/           # Screen components
 │   │   ├── LoginScreen.tsx
 │   │   ├── CollectionScreen.tsx
-│   │   ├── SearchScreen.tsx
+│   │   ├── FeedScreen.tsx
 │   │   ├── MarketplaceScreen.tsx
-│   │   ├── TradesScreen.tsx
 │   │   ├── ProfileScreen.tsx
 │   │   └── ScannerScreen.tsx
 │   ├── services/          # API services
-│   │   ├── api.ts
-│   │   ├── auth.ts
-│   │   ├── collection.ts
-│   │   ├── marketplace.ts
-│   │   ├── search.ts
-│   │   ├── trades.ts
-│   │   └── config.ts
 │   └── store/             # Zustand state
-│       └── index.ts
 ```
 
 ---
 
-## RUNNING THE MOBILE APP
+## KEY API ENDPOINTS
 
-```bash
-# Navigate to mobile directory
-cd /app/mobile/hatake-mobile
+### Authentication
+- `POST /api/auth/login` - Login with email/password, returns JWT token
+- `POST /api/auth/signup` - Register new user
+- `GET /api/auth/me` - Get current user (supports Bearer token + cookie)
+- `POST /api/auth/logout` - Logout user
 
-# Install dependencies (already done)
-npm install
+### Collection
+- `GET /api/collection` - Get user's card collection (Bearer token auth)
+- `POST /api/collection` - Add card to collection
+- `DELETE /api/collection?id=` - Remove card from collection
 
-# Start Expo development server
-npm start
+### Marketplace
+- `GET /api/marketplace` - Get listings (supports Bearer token auth)
+- `POST /api/marketplace` - Create listing
+- `DELETE /api/marketplace/{id}` - Remove listing
 
-# Or run on specific platform
-npm run ios      # iOS Simulator
-npm run android  # Android Emulator
-```
+### Feed
+- `GET /api/feed` - Get posts (supports Bearer token auth)
+- `POST /api/feed` - Create post
 
 ---
 
-## API CONFIGURATION
+## SEALED TCG PRODUCT OPTIONS
 
-The mobile app is pre-configured to use:
-```typescript
-API_BASE_URL = 'https://deck-builder-69.preview.emergentagent.com'
-```
+### API Options Researched
+| Provider | Access | Features |
+|----------|--------|----------|
+| **PriceCharting API** | Paid (Legendary subscription) | Sealed TCG prices by ID/UPC/ASIN, demo token available |
+| **TCGplayer** | Partner access required | Extensive database, requires partnership |
+| **Manual Entry** | Free | Custom database with user-entered data |
+
+### Recommendation
+Use PriceCharting API for pricing data (paid subscription required), or implement a manual entry system for sealed products.
 
 ---
 
 ## DATABASE SCHEMA
 
-### Tables
+### Key Tables
 - `users` - User accounts with is_admin flag
 - `collection_items` - User card collections
 - `marketplace_listings` - Cards for sale (with price_percentage)
@@ -165,23 +150,45 @@ API_BASE_URL = 'https://deck-builder-69.preview.emergentagent.com'
 ---
 
 ## TEST REPORTS
-- Latest: `/app/test_reports/iteration_11.json` - All 23 tests passed
+- Latest: `/app/test_reports/iteration_12.json` - All 13 tests passed
+- Mobile app features verified: Login, Collection, Marketplace, Drawer Menu
 
 ---
 
 ## NEXT STEPS
 
-### Mobile App Enhancements
-1. **Push Notifications** - Trade updates, messages, price alerts
-2. **Card Recognition ML** - Integrate Google Vision or custom model
-3. **Offline Mode** - SQLite caching for offline collection viewing
-4. **Biometric Auth** - Face ID / Fingerprint login
+### Immediate (P0)
+- User verification of mobile app functionality on iPad Safari
+- Confirm web build deploys to Vercel successfully
 
-### Publishing
-- Apple Developer Account needed for iOS
-- Google Play Developer Account needed for Android
-- EAS Build for app distribution
+### High Priority (P1)
+1. **Mobile App Phase 2:**
+   - Implement Trades screen
+   - Implement Friends screen
+   - Implement Wishlists screen
+   - Full Deck Builder functionality
+
+2. **Sealed Products:**
+   - Integrate PriceCharting API (if user provides subscription)
+   - OR build manual entry system for sealed products
+   - Add sealed products tab to web Collection page
+
+### Medium Priority (P2)
+1. Mobile App real-time messaging
+2. Push notifications for trade updates
+3. Offline mode with SQLite caching
+
+### Future (P3)
+- Card Recognition ML integration
+- Biometric authentication
+- Apple/Google Play store publishing
 
 ---
 
-*Last Updated: February 19, 2026*
+## KNOWN ISSUES
+- Some MTG test cards (CSV import) show placeholder icons due to missing Scryfall image_uris
+- Mobile app drawer menu navigation shows "Coming Soon" for unimplemented screens
+
+---
+
+*Last Updated: February 21, 2026*
