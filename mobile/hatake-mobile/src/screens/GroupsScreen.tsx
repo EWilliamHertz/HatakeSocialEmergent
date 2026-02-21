@@ -10,11 +10,15 @@ import {
   RefreshControl,
   TextInput,
   Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
 import GroupChatScreen from './GroupChatScreen';
+
+// Use regular View on web to avoid SafeAreaView issues
+const Container = Platform.OS === 'web' ? View : SafeAreaView;
 
 interface Group {
   group_id: string;
