@@ -9,14 +9,12 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 - Next.js 16+ with App Router
 - TypeScript, Tailwind CSS, shadcn/ui
 - PostgreSQL (Neon)
-- LiveKit (video calls)
 - Cloudinary (image storage)
 - TCGdex API (Pokemon), Scryfall API (MTG)
 
 ### Mobile Application
 - React Native with Expo
 - React Navigation (Native Stack + Bottom Tabs)
-- Zustand (State Management)
 - Native fetch (API Client)
 
 ## Test Credentials
@@ -26,62 +24,55 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-21
 
-### Latest Fixes & Features
+### Latest Features
 
-1. **MTG Search with Edition Picker** ✅
-   - Created `/api/scryfall` backend proxy to fix iOS network issues
-   - Fetches up to 3 pages (~175 cards) from Scryfall
-   - Groups cards by name, shows edition picker
-   - Horizontal scrollable chips to select set/edition
-   - Shows price for each edition
+1. **Hamburger Menu on All Pages** ✅
+   - Menu button now appears in top-left of ALL screens:
+     - Feed, Collection, Marketplace, Profile
+   - Consistent navigation experience across the app
 
-2. **Feed Emoji Reactions Layout** ✅
-   - Fixed vertical stacking issue
-   - Reactions now display horizontally with proper styling
+2. **Comment Reactions (Emoji)** ✅
+   - Like, React buttons on every comment
+   - Emoji picker: 👍 ❤️ 😂 😮 😢 🔥
+   - Reactions display inline with count
+   - Toggle reaction by tapping again
+   - Works on both parent comments and replies
 
-3. **Mobile Bulk Selection & Delete** ✅
-   - Long-press a card to enter selection mode
-   - Checkboxes appear on all cards
-   - "Select All" and "Clear" buttons
-   - Floating delete bar at bottom
-   - Confirmation before bulk delete
+3. **View User Collections** ✅
+   - Tap username in feed → View profile
+   - "View Collection" button on profile
+   - Tap card count in stats to view collection
+   - Collection grid shows all user's cards
+   - Anyone can view anyone's collection (social platform)
 
-4. **Profile Screen** ✅
-   - Already implemented with:
-     - User avatar and info
-     - Settings, Notifications, Privacy menu items
-     - Help Center, Terms of Service
-     - App version info
-     - Sign Out button
-
-### Previous Session Completions
-- Euro currency conversion
-- Pokemon search improvements
-- Collection value stats
-- Shop tab on marketplace
-- Multi-image upload in admin panel
-- Single card delete fix
-- Feed like/emoji reactions
+### Previous Features
+- MTG Search with Edition Picker
+- Feed Comments System (view, reply, add)
+- Bulk Card Selection & Delete
+- Profile Screen
+- Euro currency prices
 
 ---
 
 ## KEY API ENDPOINTS
 
 ### Collection Management
-- `GET /api/collection` - Get user's collection
+- `GET /api/collection` - Get own collection
+- `GET /api/users/{userId}/collection` - View user's collection
 - `POST /api/collection` - Add card
-- `PATCH /api/collection` - Update card
 - `DELETE /api/collection?id={id}` - Delete card
 
 ### Feed & Social
 - `GET /api/feed` - Get posts with reactions
-- `POST /api/feed` - Create post
-- `POST /api/feed/{postId}/like` - Toggle like
-- `POST /api/feed/{postId}/reactions` - Emoji reaction
+- `POST /api/feed/{postId}/comments` - Add comment
+- `GET /api/feed/{postId}/comments` - Get comments
 
-### Scryfall Proxy (NEW)
-- `GET /api/scryfall?q={query}` - Search MTG cards
-- `GET /api/scryfall?set={code}&cn={num}` - Direct lookup
+### Comment Reactions
+- `POST /api/comments/{commentId}/reactions` - Toggle emoji reaction
+- `GET /api/comments/{commentId}/reactions` - Get reactions
+
+### User Profiles
+- `GET /api/users/{userId}` - Get profile with stats
 
 ---
 
@@ -91,51 +82,34 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 |---------|--------|
 | Authentication | ✅ Complete |
 | Collection View | ✅ Complete |
-| Add Pokemon Cards | ✅ Complete |
-| Add MTG Cards | ✅ Complete (with edition picker) |
-| Single Card Delete | ✅ Complete |
-| Bulk Card Delete | ✅ Complete |
-| Card Detail Modal | ✅ Complete |
+| Add Cards (MTG + Pokemon) | ✅ Complete |
+| Bulk Delete | ✅ Complete |
 | Feed View | ✅ Complete |
-| Like Posts | ✅ Complete |
-| Emoji Reactions | ✅ Complete |
-| Comments | ⏳ Placeholder only |
+| Like/Emoji Posts | ✅ Complete |
+| Comments | ✅ Complete |
+| Comment Reactions | ✅ Complete |
+| View User Profiles | ✅ Complete |
+| View User Collections | ✅ Complete |
 | Marketplace View | ✅ Complete |
 | Profile Screen | ✅ Complete |
-| Settings Page | ⏳ Placeholder |
+| Hamburger Menu (All Pages) | ✅ Complete |
+| Add Friend | ⏳ Placeholder |
+| Messages | ⏳ Placeholder |
+| Trading | ⏳ Not started |
 
 ---
 
 ## NEXT STEPS
 
 ### High Priority (P1)
-1. **Comments System:**
-   - View comments on posts
-   - Add new comments
-   - Reply to comments
-
-2. **Marketplace Features:**
-   - Delete own listings
-   - Create new listings from collection
+1. Friends System (send/accept requests)
+2. Messaging (friend-to-friend chat)
+3. Trading functionality
 
 ### Medium Priority (P2)
-1. Search results pagination
-2. Friends system & messaging
-3. Trading functionality
-4. Push notifications
-
-### Future (P3)
-- Deck Builder
-- Card Recognition ML
-- App store publishing
-
----
-
-## KNOWN BEHAVIORS
-
-1. **Cards without prices** - Show "N/A" (cards added before price tracking)
-2. **Shop products without images** - Show package placeholder
-3. **Comments** - Currently show "Coming soon" placeholder
+1. Delete own marketplace listings
+2. Create listings from collection
+3. Push notifications
 
 ---
 
