@@ -201,13 +201,31 @@ export default function App() {
                 )}
               </Tab.Screen>
               <Tab.Screen name="Collection">
-                {() => <CollectionScreen user={user} token={token} />}
+                {() => (
+                  <CollectionScreen 
+                    user={user} 
+                    token={token} 
+                    onOpenMenu={() => setDrawerOpen(true)} 
+                  />
+                )}
               </Tab.Screen>
               <Tab.Screen name="Marketplace">
-                {() => <MarketplaceScreen user={user} token={token} />}
+                {() => (
+                  <MarketplaceScreen 
+                    user={user} 
+                    token={token} 
+                    onOpenMenu={() => setDrawerOpen(true)} 
+                  />
+                )}
               </Tab.Screen>
               <Tab.Screen name="Profile">
-                {() => <ProfileScreen user={user} onLogout={handleLogout} />}
+                {() => (
+                  <ProfileScreen 
+                    user={user} 
+                    onLogout={handleLogout} 
+                    onOpenMenu={() => setDrawerOpen(true)} 
+                  />
+                )}
               </Tab.Screen>
             </Tab.Navigator>
             
