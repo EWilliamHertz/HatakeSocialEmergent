@@ -248,9 +248,13 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         }
         
         // Build search query - combine all provided fields
+        // Note: Scryfall uses full-text search by default, name: prefix requires exact word match
+        // For better partial matching, we use the card name directly without the name: prefix
         const queryParts: string[] = [];
         if (searchQuery.trim()) {
-          queryParts.push(`name:${searchQuery.trim()}`);
+          // Use the search term directly for partial matching
+          // Scryfall's full-text search handles this better than name: prefix
+          queryParts.push(searchQuery.trim());
         }
         if (setCodeQuery.trim()) {
           queryParts.push(`set:${setCodeQuery.toLowerCase().trim()}`);
