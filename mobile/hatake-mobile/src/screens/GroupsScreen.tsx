@@ -231,7 +231,7 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
   const currentGroups = tab === 'my' ? myGroups : discoverGroups;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Container style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
