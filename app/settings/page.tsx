@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { User, Bell, Shield, Moon, Sun, Trash2, Eye, EyeOff, Save, Check } from 'lucide-react';
+import { User, Bell, Shield, Moon, Sun, Trash2, Eye, EyeOff, Save, Check, CreditCard, MapPin } from 'lucide-react';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -19,6 +19,16 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Shipping
+  const [shippingAddress, setShippingAddress] = useState('');
+  
+  // Payment settings
+  const [paymentSwish, setPaymentSwish] = useState('');
+  const [paymentClearing, setPaymentClearing] = useState('');
+  const [paymentKontonummer, setPaymentKontonummer] = useState('');
+  const [paymentIban, setPaymentIban] = useState('');
+  const [paymentSwift, setPaymentSwift] = useState('');
   
   // Notifications
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -39,20 +49,47 @@ export default function SettingsPage() {
           setUser(data.user);
           setName(data.user.name || '');
           setEmail(data.user.email || '');
+          // Fetch full profile for payment info
+          fetchProfile();
         }
       })
       .catch(() => router.push('/auth/login'))
       .finally(() => setLoading(false));
   }, [router]);
 
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch('/api/profile', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setShippingAddress(data.user.shipping_address || '');
+        setPaymentSwish(data.user.payment_swish || '');
+        setPaymentClearing(data.user.payment_clearing || '');
+        setPaymentKontonummer(data.user.payment_kontonummer || '');
+        setPaymentIban(data.user.payment_iban || '');
+        setPaymentSwift(data.user.payment_swift || '');
+      }
+    } catch (e) {
+      console.error('Failed to fetch profile:', e);
+    }
+  };
+
   const saveProfile = async () => {
     setSaving(true);
     try {
       const res = await fetch('/api/profile', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ 
+          name,
+          shipping_address: shippingAddress,
+          payment_swish: paymentSwish,
+          payment_clearing: paymentClearing,
+          payment_kontonummer: paymentKontonummer,
+          payment_iban: paymentIban,
+          payment_swift: paymentSwift,
+        })
       });
       if (res.ok) {
         setSaved(true);
