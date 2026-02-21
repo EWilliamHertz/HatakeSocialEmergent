@@ -145,9 +145,12 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 | **Incoming Call Notifications** | ✅ Complete |
 | **Deck Builder** | ✅ Complete |
 | **Trades** | ✅ Complete |
+| **Create Trades** | ✅ Complete |
 | **Groups/Communities** | ✅ Complete |
 | **Notifications** | ✅ Complete |
-| Wishlists | ⏳ Not started |
+| **Wishlists** | ✅ Complete |
+| **Push Notifications** | ✅ Complete |
+| **Trade Reputation** | ✅ Complete |
 | Settings | ⏳ Not started |
 
 ---
@@ -155,14 +158,14 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 ## NEXT STEPS
 
 ### High Priority (P1)
-1. **Native Expo Build** - For full LiveKit video/audio streaming
-2. **Push Notifications** - Firebase Cloud Messaging / APNs
-3. **Trading Reputation System** - Rate completed trades
+1. **Native Expo Build** - Required for full LiveKit video/audio and push notifications
+2. **Group Chat** - Multi-user chat within communities
+3. **Pokémon Card Prices** - Fix price display (TCGdex integration issue)
 
 ### Medium Priority (P2)
-1. Wishlists mobile screen
-2. Settings mobile screen
-3. Create trades from mobile
+1. Settings mobile screen
+2. Deck playtesting
+3. Advanced deck format validation
 
 ---
 
