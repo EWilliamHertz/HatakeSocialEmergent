@@ -272,4 +272,30 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#374151',
   },
+  errorBox: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  statusBox: {
+    backgroundColor: '#DBEAFE',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  statusText: {
+    color: '#2563EB',
+    fontSize: 14,
+    textAlign: 'center',
+  },
 });
