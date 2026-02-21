@@ -290,6 +290,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         if (response.ok) {
           const data = await response.json();
           console.log('MTG search found:', data.data?.length || 0, 'cards');
+          setSearchError(`Found ${data.data?.length || 0} MTG cards`);
           if (data.data && data.data.length > 0) {
             setSearchResults(data.data.slice(0, 50).map((card: any) => {
               // Prefer EUR prices for European users
@@ -310,8 +311,10 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                 data: card,
               };
             }));
+            setSearchError('');
           } else {
             console.log('No MTG results found');
+            setSearchError('No Magic cards found');
             if (Platform.OS === 'web') {
               alert('No Magic cards found with that search.');
             } else {
@@ -321,14 +324,17 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         } else {
           const errorText = await response.text();
           console.log('Scryfall search failed:', response.status, errorText);
+          setSearchError(`Scryfall error: ${response.status}`);
           // Scryfall returns 404 for no results
           if (response.status === 404) {
+            setSearchError('No Magic cards found (404)');
             if (Platform.OS === 'web') {
               alert('No Magic cards found with that search.');
             } else {
               Alert.alert('No Results', 'No Magic cards found with that search.');
             }
           } else {
+            setSearchError(`Search failed: ${response.status}`);
             if (Platform.OS === 'web') {
               alert('Search failed. Please try again.');
             } else {
