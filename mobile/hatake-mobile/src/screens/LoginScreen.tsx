@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
   ScrollView,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -41,16 +41,19 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
   const checkExistingSession = async () => {
     try {
-      if (typeof localStorage !== 'undefined') {
-        const token = localStorage.getItem('auth_token');
-        const userData = localStorage.getItem('user_data');
-        if (token && userData) {
-          const user = JSON.parse(userData);
-          onLoginSuccess(user, token);
+      const response = await fetch(`${API_URL}/api/auth/me`, {
+        credentials: 'include',
+      });
+      const data = await response.json();
+      
+      if (data.user) {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('user_data', JSON.stringify(data.user));
         }
+        onLoginSuccess(data.user, 'cookie-auth');
       }
     } catch (e) {
-      // No stored session
+      // No existing session
     }
   };
 
@@ -78,18 +81,21 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        credentials: 'include', // Important: this stores the session cookie
       });
       
       const data = await response.json();
       
-      if (data.success && data.token) {
-        // Store credentials
+      if (data.success && data.user) {
+        // Store user data in localStorage for offline access
         if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('auth_token', data.token);
           localStorage.setItem('user_data', JSON.stringify(data.user));
+          if (data.token) {
+            localStorage.setItem('auth_token', data.token);
+          }
         }
         setStatus('Success!');
-        onLoginSuccess(data.user, data.token);
+        onLoginSuccess(data.user, data.token || 'cookie-auth');
       } else {
         setError(data.error || 'Authentication failed');
         setStatus('');
