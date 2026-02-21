@@ -91,6 +91,18 @@ export default function LoginScreen({ navigation }: any) {
               {isRegister ? 'Create Account' : 'Welcome Back'}
             </Text>
 
+            {/* Status/Error Messages */}
+            {errorMessage ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            ) : null}
+            {statusMessage ? (
+              <View style={styles.statusBox}>
+                <Text style={styles.statusText}>{statusMessage}</Text>
+              </View>
+            ) : null}
+
             {isRegister && (
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Name</Text>
