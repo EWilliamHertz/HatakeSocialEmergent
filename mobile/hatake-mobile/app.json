@@ -16,11 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "social.hatake.app",
-      "infoPlist": {
-        "NSCameraUsageDescription": "We need camera access to scan your trading cards",
-        "NSPhotoLibraryUsageDescription": "We need photo library access to import card images"
-      }
+      "bundleIdentifier": "social.hatake.app"
     },
     "android": {
       "adaptiveIcon": {
