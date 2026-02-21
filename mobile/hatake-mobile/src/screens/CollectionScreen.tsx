@@ -158,6 +158,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState(''); // For debugging search issues
+  const [mtgCardGroups, setMtgCardGroups] = useState<CardGroup[]>([]); // Grouped MTG results
   
   // Card Detail Modal State
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null);
