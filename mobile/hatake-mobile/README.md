@@ -4,21 +4,25 @@ A React Native mobile application for the Hatake.Social TCG trading platform.
 
 ## Features
 
-### MVP Features
+### Core Features
 - **Authentication**: Email/password login and registration
 - **Collection Management**: View, add, edit, and remove cards from your collection
 - **Card Search**: Search for MTG and Pokémon cards from Scryfall/TCGdex
 - **Card Scanner**: Camera-based card recognition for quick collection adds
 - **Marketplace**: Browse and create listings to buy/sell cards
 - **Trading System**: Create and manage card trades with other users
-- **Push Notifications**: Stay updated on trades, messages, and price alerts
+- **Push Notifications**: Real-time notifications for trades, messages, friend requests
+- **Video/Voice Calls**: Real-time communication with LiveKit
+- **Friends & Messaging**: Social features with direct messaging
+- **Wishlists**: Track cards you want
+- **Trade Reputation**: Rating system for completed trades
 
 ### Tech Stack
-- **Framework**: React Native with Expo
+- **Framework**: React Native with Expo SDK 52
 - **Navigation**: React Navigation (Native Stack + Bottom Tabs)
-- **State Management**: Zustand
-- **API Client**: Axios
-- **Storage**: Expo SecureStore for tokens, AsyncStorage for data
+- **Video Calls**: LiveKit React Native
+- **Push Notifications**: Expo Notifications
+- **Storage**: Expo SecureStore for tokens
 - **Camera**: Expo Camera for card scanning
 - **Icons**: @expo/vector-icons (Ionicons)
 
@@ -28,6 +32,7 @@ A React Native mobile application for the Hatake.Social TCG trading platform.
 - Node.js 18+
 - npm or yarn
 - Expo CLI (`npm install -g expo-cli`)
+- EAS CLI for native builds (`npm install -g eas-cli`)
 - iOS Simulator (Mac) or Android Emulator
 
 ### Installation
@@ -45,6 +50,8 @@ npm start
 
 ### Running on Devices
 
+**Note**: Some features (video calls, push notifications) require a native build and won't work in Expo Go.
+
 ```bash
 # iOS Simulator
 npm run ios
@@ -52,99 +59,123 @@ npm run ios
 # Android Emulator
 npm run android
 
-# Web (for testing)
+# Web (for testing basic features)
 npm run web
 ```
 
-### Using Expo Go
-1. Install Expo Go on your phone
-2. Scan the QR code from the terminal
-3. The app will load on your device
+## Building Native Apps (Required for Full Features)
+
+### Prerequisites
+1. Create an Expo account at https://expo.dev
+2. Install EAS CLI: `npm install -g eas-cli`
+3. Login: `eas login`
+
+### Android Build
+
+```bash
+# Configure EAS (first time only)
+eas build:configure
+
+# Build development version
+eas build --platform android --profile development
+
+# Build production APK
+eas build --platform android --profile preview
+
+# Build production AAB (for Play Store)
+eas build --platform android --profile production
+```
+
+### iOS Build
+
+```bash
+# Requires Apple Developer Account
+eas build --platform ios --profile development
+
+# Build for TestFlight
+eas build --platform ios --profile production
+```
+
+### Push Notifications Setup
+
+1. **Android**: No additional setup needed - Expo handles FCM configuration
+2. **iOS**: Add your Apple Push Notification certificates in Expo dashboard
+
+The app automatically:
+- Requests notification permissions on first launch
+- Registers push tokens with the backend
+- Displays notifications for:
+  - New friend requests
+  - Direct messages
+  - Trade offers and updates
+  - Post reactions
 
 ## Project Structure
 
 ```
 src/
-├── components/       # Reusable UI components
-│   ├── Button.tsx
-│   ├── CardItem.tsx
-│   ├── GameFilter.tsx
-│   └── SearchBar.tsx
-├── navigation/       # Navigation configuration
-│   └── AppNavigator.tsx
-├── screens/          # Screen components
+├── components/         # Reusable UI components
+│   ├── DrawerMenu.tsx
+│   └── IncomingCallNotification.tsx
+├── hooks/              # React hooks
+│   └── usePushNotifications.ts
+├── screens/            # Screen components
 │   ├── LoginScreen.tsx
+│   ├── FeedScreen.tsx
 │   ├── CollectionScreen.tsx
-│   ├── SearchScreen.tsx
 │   ├── MarketplaceScreen.tsx
-│   ├── TradesScreen.tsx
 │   ├── ProfileScreen.tsx
-│   └── ScannerScreen.tsx
-├── services/         # API services
-│   ├── api.ts        # Axios instance
-│   ├── auth.ts       # Authentication
-│   ├── collection.ts # Collection API
-│   ├── search.ts     # Card search
-│   ├── marketplace.ts # Marketplace API
-│   ├── trades.ts     # Trades API
-│   └── config.ts     # API configuration
-├── store/            # Zustand state management
-│   └── index.ts
-├── types/            # TypeScript types
-└── utils/            # Utility functions
+│   ├── FriendsScreen.tsx
+│   ├── MessagesScreen.tsx
+│   ├── VideoCallScreen.tsx
+│   ├── TradesScreen.tsx
+│   ├── CreateTradeScreen.tsx
+│   ├── ReputationScreen.tsx
+│   ├── WishlistScreen.tsx
+│   ├── DecksScreen.tsx
+│   ├── GroupsScreen.tsx
+│   └── NotificationsScreen.tsx
+└── config.ts           # API configuration
 ```
 
 ## API Configuration
 
-Update `src/services/config.ts` with your backend URL:
+Update `src/config.ts` with your backend URL:
 
 ```typescript
-export const API_BASE_URL = 'https://your-api-url.com';
+export const API_URL = 'https://www.hatake.eu';  // Production
+// or
+export const API_URL = 'https://your-preview-url.preview.emergentagent.com';  // Preview
 ```
 
-## Card Scanner
+## Google Play Store Deployment
 
-The card scanner feature currently uses a text-based search as a fallback. For production, integrate with a card recognition API:
+### Prerequisites
+1. Google Play Developer Account ($25 one-time fee)
+2. App signing key generated by EAS
 
-### Recommended APIs
-1. **Google Cloud Vision** - OCR for card name detection
-2. **AWS Rekognition** - Image classification
-3. **Custom ML Model** - Train on card images using TensorFlow
+### Steps
 
-## Building for Production
+1. **Build Production AAB**:
+   ```bash
+   eas build --platform android --profile production
+   ```
 
-### iOS
-```bash
-# Build for iOS
-eas build --platform ios
+2. **Download the AAB** from Expo dashboard
 
-# Submit to App Store
-eas submit --platform ios
-```
+3. **Create App in Play Console**:
+   - Go to https://play.google.com/console
+   - Create new app, fill in details
+   - Upload AAB to "Production" or "Internal testing" track
 
-### Android
-```bash
-# Build for Android
-eas build --platform android
+4. **Complete Store Listing**:
+   - App icon (512x512 PNG)
+   - Screenshots (phone + tablet recommended)
+   - Feature graphic (1024x500)
+   - Privacy policy URL
+   - App description
 
-# Submit to Play Store
-eas submit --platform android
-```
-
-## Environment Variables
-
-Create an `.env` file:
-
-```
-API_BASE_URL=https://your-api.com
-```
-
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Test on both iOS and Android
-4. Submit a pull request
+5. **Submit for Review**
 
 ## License
 
