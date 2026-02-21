@@ -245,6 +245,114 @@ export default function SettingsPage() {
           </div>
         </div>
         
+        {/* Shipping Address */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <MapPin className="w-6 h-6 text-orange-600" />
+            <h2 className="text-lg font-semibold dark:text-white">Shipping Address</h2>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Address</label>
+              <textarea
+                value={shippingAddress}
+                onChange={(e) => setShippingAddress(e.target.value)}
+                rows={3}
+                placeholder="Street, City, Postal Code, Country"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Settings */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <CreditCard className="w-6 h-6 text-indigo-600" />
+            <h2 className="text-lg font-semibold dark:text-white">Payment Information</h2>
+          </div>
+          
+          <div className="space-y-6">
+            {/* Swish */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Swish Number</label>
+              <input
+                type="tel"
+                value={paymentSwish}
+                onChange={(e) => setPaymentSwish(e.target.value)}
+                placeholder="070-XXX XX XX"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+              />
+            </div>
+
+            {/* Swedish Bank Account */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Swedish Bank Account</label>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Clearing</label>
+                  <input
+                    type="text"
+                    value={paymentClearing}
+                    onChange={(e) => setPaymentClearing(e.target.value)}
+                    placeholder="XXXX"
+                    maxLength={4}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Kontonummer</label>
+                  <input
+                    type="text"
+                    value={paymentKontonummer}
+                    onChange={(e) => setPaymentKontonummer(e.target.value)}
+                    placeholder="XXX XXX XXXX"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* International */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">International Transfer</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">IBAN</label>
+                  <input
+                    type="text"
+                    value={paymentIban}
+                    onChange={(e) => setPaymentIban(e.target.value.toUpperCase())}
+                    placeholder="SE00 0000 0000 0000 0000 0000"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">BIC/SWIFT</label>
+                  <input
+                    type="text"
+                    value={paymentSwift}
+                    onChange={(e) => setPaymentSwift(e.target.value.toUpperCase())}
+                    placeholder="XXXXXXXX"
+                    maxLength={11}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={saveProfile}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+              {saved ? 'Saved!' : (saving ? 'Saving...' : 'Save Payment Info')}
+            </button>
+          </div>
+        </div>
+        
         {/* Notifications */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
