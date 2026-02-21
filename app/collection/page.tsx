@@ -868,7 +868,6 @@ export default function CollectionPage() {
           </div>
           )}
         </div>
-      </div>
 
         {/* Tab Content */}
         {activeTab === 'cards' && (
@@ -923,10 +922,10 @@ export default function CollectionPage() {
                     Search Cards
                   </button>
                 )}
-              </div>
-            ) : (
-              <>
-                {/* GRID VIEW (Your existing layout) */}
+          </div>
+        ) : (
+          <>
+            {/* GRID VIEW (Your existing layout) */}
             {viewMode === 'grid' && (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {filteredItems.map((item) => (
@@ -1086,6 +1085,9 @@ export default function CollectionPage() {
             )}
           </>
         )}
+      </div>
+      </>
+      )}
 
       {/* Sealed Products Tab Content */}
       {activeTab === 'sealed' && (
