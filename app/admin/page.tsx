@@ -530,8 +530,12 @@ export default function AdminPage() {
                         <tr key={product.product_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              {product.image_url ? (
-                                <img src={product.image_url} alt={product.name} className="w-12 h-12 object-cover rounded-lg" />
+                              {(product.image_url || (product.gallery_images && product.gallery_images.length > 0)) ? (
+                                <img 
+                                  src={product.image_url || product.gallery_images[0]} 
+                                  alt={product.name} 
+                                  className="w-12 h-12 object-cover rounded-lg" 
+                                />
                               ) : (
                                 <div className="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
                                   <ImageIcon className="w-6 h-6 text-gray-400" />
