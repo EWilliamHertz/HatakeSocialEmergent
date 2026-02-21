@@ -411,15 +411,17 @@ export default function App() {
               presentationStyle="fullScreen"
               onRequestClose={() => setShowTrades(false)}
             >
-              <TradesScreen
-                user={user}
-                token={token}
-                onClose={() => setShowTrades(false)}
-                onCreateTrade={() => {
-                  setShowTrades(false);
-                  setShowCreateTrade(true);
-                }}
-              />
+              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                <TradesScreen
+                  user={user}
+                  token={token}
+                  onClose={() => setShowTrades(false)}
+                  onCreateTrade={() => {
+                    setShowTrades(false);
+                    setShowCreateTrade(true);
+                  }}
+                />
+              </View>
             </Modal>
 
             {/* Groups Modal */}
