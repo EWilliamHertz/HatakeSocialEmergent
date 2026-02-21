@@ -27,6 +27,32 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Session 5 Updates - UI Improvements & Marketplace (2026-02-22)
+
+1. **Feed Group Badge** ✅
+   - Posts now show "@ GROUP_NAME" badge when posted to a group
+   - Both web and mobile display the group affiliation
+   - Blue badge styling for clear visibility
+
+2. **Messenger Widget Fixed** ✅
+   - Fixed API endpoint (was calling non-existent `/api/messages/conversations`)
+   - Now correctly fetches from `/api/messages` endpoint
+
+3. **Collection Card Display Enhanced (Mobile)** ✅
+   - Added set code and collector number display
+   - Foil/Holo overlay effects for special cards
+   - Pokeball/Masterball finish indicators
+   - Visual badge for card finish type
+   - Quantity badge styling improved
+
+4. **Marketplace "Hatake Products" Tab** ✅
+   - New second tab showing official Hatake products
+   - Tab labels: "Card Listings" | "Hatake Products"
+   - Mobile marketplace now has same dual-tab layout
+   - Shop products from admin/shop displayed
+   - Stock indicators (low stock, sold out)
+   - "Official Hatake" verification badge
+
 ### Session 4 Updates - Bug Fixes & Enhancements (2026-02-21)
 
 1. **Feed Groups Tab Fixed (Web + Mobile)** ✅
