@@ -62,7 +62,10 @@ export async function POST(
       
       // Get post owner to send notification
       const posts = await sql`
-        SELECT user_id FROM posts WHERE post_id = ${postId}
+        SELECT p.user_id, p.content, u.email, u.name as owner_name 
+        FROM posts p
+        JOIN users u ON p.user_id = u.user_id
+        WHERE p.post_id = ${postId}
       `;
       
       if (posts.length > 0 && posts[0].user_id !== user.user_id) {
@@ -74,6 +77,16 @@ export async function POST(
             message: `${user.name} reacted ${emoji} to your post`,
             link: `/feed#${postId}`,
           });
+          
+          // Send email notification
+          sendReactionEmail(
+            posts[0].email,
+            posts[0].owner_name,
+            user.name || 'Someone',
+            emoji,
+            'post',
+            posts[0].content || 'your post'
+          ).catch(err => console.error('Failed to send reaction email:', err));
         } catch (e) {
           console.error('Failed to send reaction notification:', e);
         }
