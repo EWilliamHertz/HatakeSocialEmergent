@@ -28,6 +28,7 @@ export default function LoginScreen({ navigation }: any) {
   const { login, register, isLoading } = useStore();
 
   const handleSubmit = async () => {
+    // Prevent any default behaviors
     setErrorMessage('');
     setStatusMessage('Connecting...');
     
@@ -59,9 +60,17 @@ export default function LoginScreen({ navigation }: any) {
         setStatusMessage('Success! Redirecting...');
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Network error occurred');
+      setErrorMessage('Error: ' + (err?.message || JSON.stringify(err) || 'Unknown error'));
       setStatusMessage('');
     }
+  };
+
+  // Wrapper to prevent form submission on web
+  const onButtonPress = () => {
+    // Using setTimeout to escape any event bubbling issues on web
+    setTimeout(() => {
+      handleSubmit();
+    }, 0);
   };
 
   return (
