@@ -55,18 +55,34 @@ export async function POST(request: NextRequest) {
         ON CONFLICT (user_id, friend_id) DO NOTHING
       `;
       
-      // Send email notification to recipient (don't block)
+      // Get recipient info for notifications
       const recipientResult = await sql`
         SELECT email, name FROM users WHERE user_id = ${friendId}
       `;
+      
       if (recipientResult.length > 0) {
         const recipient = recipientResult[0];
+        
+        // Send email notification (don't block)
         sendFriendRequestEmail(
           recipient.email,
           recipient.name,
           user.name || 'Someone',
           user.picture || null
         ).catch(err => console.error('Failed to send friend request email:', err));
+        
+        // Send push notification (don't block)
+        const pushTokens = await sql`
+          SELECT token FROM push_tokens 
+          WHERE user_id = ${friendId} AND is_active = true
+        `;
+        if (pushTokens.length > 0) {
+          const notif = getFriendRequestNotification(user.name || 'Someone');
+          for (const pt of pushTokens) {
+            sendPushNotification(pt.token, notif.title, notif.body, notif.data)
+              .catch(err => console.error('Push notification error:', err));
+          }
+        }
       }
     } else if (action === 'accept') {
       // Accept friend request
