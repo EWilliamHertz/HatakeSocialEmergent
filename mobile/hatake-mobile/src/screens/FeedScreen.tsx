@@ -138,59 +138,69 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
     return cardData.images?.small || '';
   };
 
-  const renderPost = ({ item }: { item: Post }) => (
-    <View style={styles.post}>
-      <View style={styles.postHeader}>
-        {item.user_picture ? (
-          <Image source={{ uri: item.user_picture }} style={styles.avatar} />
-        ) : (
-          <View style={styles.avatarPlaceholder}>
-            <Ionicons name="person" size={16} color="#9CA3AF" />
+  const renderPost = ({ item }: { item: Post }) => {
+    // Handle both old and new API field names
+    const userName = item.name || '';
+    const userPicture = item.picture;
+    const imageUrl = item.image || item.image_url;
+    const likeCount = item.like_count ?? item.likes_count ?? 0;
+    const commentCount = item.comment_count ?? item.comments_count ?? 0;
+    const isLiked = item.liked ?? item.is_liked ?? false;
+
+    return (
+      <View style={styles.post}>
+        <View style={styles.postHeader}>
+          {userPicture ? (
+            <Image source={{ uri: userPicture }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatarPlaceholder}>
+              <Ionicons name="person" size={16} color="#9CA3AF" />
+            </View>
+          )}
+          <View style={styles.postHeaderInfo}>
+            <Text style={styles.userName}>{userName}</Text>
+            <Text style={styles.postTime}>{formatDate(item.created_at)}</Text>
+          </View>
+        </View>
+        
+        <Text style={styles.postContent}>{item.content}</Text>
+        
+        {imageUrl && (
+          <Image source={{ uri: imageUrl }} style={styles.postImage} />
+        )}
+        
+        {item.card_data && (
+          <View style={styles.cardPreview}>
+            <Image 
+              source={{ uri: getCardImageUrl(item.card_data) }} 
+              style={styles.cardPreviewImage} 
+            />
+            <Text style={styles.cardPreviewName}>{item.card_data.name}</Text>
           </View>
         )}
-        <View style={styles.postHeaderInfo}>
-          <Text style={styles.userName}>{item.user_name}</Text>
-          <Text style={styles.postTime}>{formatDate(item.created_at)}</Text>
+        
+        <View style={styles.postActions}>
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons 
+              name={isLiked ? "heart" : "heart-outline"} 
+              size={20} 
+              color={isLiked ? "#EF4444" : "#6B7280"} 
+            />
+            <Text style={styles.actionText}>{likeCount}</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
+            <Text style={styles.actionText}>{commentCount}</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons name="share-outline" size={20} color="#6B7280" />
+          </TouchableOpacity>
         </View>
       </View>
-      
-      <Text style={styles.postContent}>{item.content}</Text>
-      
-      {item.image_url && (
-        <Image source={{ uri: item.image_url }} style={styles.postImage} />
-      )}
-      
-      {item.card_data && (
-        <View style={styles.cardPreview}>
-          <Image 
-            source={{ uri: getCardImageUrl(item.card_data) }} 
-            style={styles.cardPreviewImage} 
-          />
-          <Text style={styles.cardPreviewName}>{item.card_data.name}</Text>
-        </View>
-      )}
-      
-      <View style={styles.postActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons 
-            name={item.is_liked ? "heart" : "heart-outline"} 
-            size={20} 
-            color={item.is_liked ? "#EF4444" : "#6B7280"} 
-          />
-          <Text style={styles.actionText}>{item.likes_count || 0}</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
-          <Text style={styles.actionText}>{item.comments_count || 0}</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="share-outline" size={20} color="#6B7280" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
