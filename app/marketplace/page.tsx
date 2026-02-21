@@ -244,20 +244,59 @@ export default function MarketplacePage() {
 
   const hasActiveFilters = searchQuery || priceMin || priceMax || conditionFilter !== 'All' || foilOnly || gameFilter !== 'all' || expansionFilter !== 'All' || rarityFilter !== 'All';
 
+  // Filter shop products by search
+  const filteredShopProducts = shopProducts.filter(p => {
+    if (!searchQuery) return true;
+    return p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           p.description.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 dark:text-white">Marketplace</h1>
-              <p className="text-gray-600 dark:text-gray-400">Buy and sell cards with the community</p>
-            </div>
+        {/* Header with Tabs */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm mb-6">
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => setActiveTab('cards')}
+              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold transition border-b-2 -mb-px ${
+                activeTab === 'cards'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <ShoppingBag className="w-5 h-5" />
+              Card Listings
+            </button>
+            <button
+              onClick={() => setActiveTab('shop')}
+              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-semibold transition border-b-2 -mb-px ${
+                activeTab === 'shop'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Store className="w-5 h-5" />
+              Shop Products
+            </button>
+          </div>
+          
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold mb-2 dark:text-white">
+                  {activeTab === 'cards' ? 'Marketplace' : 'Hatake Shop'}
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {activeTab === 'cards' ? 'Buy and sell cards with the community' : 'Official Hatake.Social accessories and supplies'}
+                </p>
+              </div>
+              {activeTab === 'cards' && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 flex items-center gap-2"
               data-testid="create-listing-btn"
             >
