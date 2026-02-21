@@ -92,12 +92,14 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   const fetchCollection = async () => {
     setError('');
     try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      
       const url = filter === 'all' 
         ? `${API_URL}/api/collection`
         : `${API_URL}/api/collection?game=${filter}`;
       
       const response = await fetch(url, {
-        credentials: 'include',
+        headers: { 'Authorization': `Bearer ${authToken}` },
       });
       const data = await response.json();
       
