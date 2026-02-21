@@ -5,7 +5,7 @@ export const API_BASE_URL = 'https://trading-cards-6.preview.emergentagent.com';
 export const API_ENDPOINTS = {
   // Auth
   LOGIN: '/api/auth/login',
-  REGISTER: '/api/auth/register',
+  REGISTER: '/api/auth/signup',  // Backend uses 'signup' not 'register'
   LOGOUT: '/api/auth/logout',
   ME: '/api/auth/me',
   GOOGLE_AUTH: '/api/auth/google',
