@@ -365,6 +365,15 @@ export default function App() {
                 />
               )}
             </Modal>
+
+            {/* Incoming Call Notification - Always listening */}
+            {!callState.active && (
+              <IncomingCallNotification
+                user={user}
+                token={token}
+                onAcceptCall={handleIncomingCall}
+              />
+            )}
           </>
         ) : (
           <LoginScreen onLoginSuccess={handleLoginSuccess} />
