@@ -1161,8 +1161,8 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                       <Text style={styles.searchResultSet} numberOfLines={1}>
                         {item.set_name} ({item.set_code}) #{item.collector_number}
                       </Text>
-                      {item.game === 'mtg' && item.price && item.price !== 'N/A' && (
-                        <Text style={styles.searchResultPrice}>${item.price}</Text>
+                      {item.price && item.price !== 'N/A' && (
+                        <Text style={styles.searchResultPrice}>{item.price}</Text>
                       )}
                       {item.rarity && (
                         <Text style={styles.searchResultRarity}>{item.rarity}</Text>
