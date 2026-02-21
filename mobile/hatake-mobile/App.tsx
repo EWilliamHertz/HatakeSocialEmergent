@@ -309,7 +309,8 @@ export default function App() {
                   <FeedScreen 
                     user={user} 
                     token={token} 
-                    onOpenMenu={() => setDrawerOpen(true)} 
+                    onOpenMenu={() => setDrawerOpen(true)}
+                    onOpenNotifications={() => setShowNotifications(true)}
                   />
                 )}
               </Tab.Screen>
