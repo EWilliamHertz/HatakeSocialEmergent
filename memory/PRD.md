@@ -171,21 +171,29 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## FILES REFERENCE
 
-### New Mobile Screens (This Session)
+### New Files (This Session)
+- `lib/push-notifications.ts` - Expo push notification service
+- `app/api/push-tokens/route.ts` - Push token registration
+- `app/api/reputation/route.ts` - Trade reputation API
+- `mobile/hatake-mobile/src/hooks/usePushNotifications.ts` - Push notifications hook
+- `mobile/hatake-mobile/src/screens/ReputationScreen.tsx` - Trade reputation UI
+- `mobile/hatake-mobile/src/screens/WishlistScreen.tsx` - Wishlists UI
+- `mobile/hatake-mobile/src/screens/CreateTradeScreen.tsx` - Trade creation flow
+- `migrations/add_push_and_ratings.sql` - Database migration
+
+### New Mobile Screens (Previous Session)
 - `mobile/hatake-mobile/src/screens/DecksScreen.tsx` - Deck management
 - `mobile/hatake-mobile/src/screens/TradesScreen.tsx` - Trade management
 - `mobile/hatake-mobile/src/screens/GroupsScreen.tsx` - Community management
 - `mobile/hatake-mobile/src/screens/NotificationsScreen.tsx` - Notification center
 
-### Updated Backend APIs
-- `app/api/decks/route.ts` - Bearer auth
-- `app/api/decks/[deckId]/cards/route.ts` - Added GET, Bearer auth
-- `app/api/trades/route.ts` - Bearer auth
-- `app/api/trades/[id]/route.ts` - Bearer auth, improved PATCH
-- `app/api/groups/route.ts` - Bearer auth
-- `app/api/groups/[groupId]/join/route.ts` - Bearer auth
-- `app/api/groups/[groupId]/leave/route.ts` - New endpoint
-- `app/api/notifications/route.ts` - Bearer auth
+### Updated Backend APIs (Push Notifications)
+- `app/api/friends/route.ts` - Push on friend request
+- `app/api/messages/route.ts` - Push on new message
+- `app/api/trades/route.ts` - Push on new trade
+- `app/api/trades/[id]/route.ts` - Push on trade status change
+- `app/api/wishlists/route.ts` - Bearer auth
+- `app/api/wishlists/[wishlistId]/route.ts` - Bearer auth
 
 ---
 
