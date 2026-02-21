@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
 import CommentsModal from '../components/CommentsModal';
+import UserProfileModal from '../components/UserProfileModal';
 
 interface Reaction {
   emoji: string;
