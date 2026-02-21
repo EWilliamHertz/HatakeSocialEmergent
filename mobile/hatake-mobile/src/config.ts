@@ -1,6 +1,6 @@
 // Central API Configuration
 // Change this to 'https://www.hatake.eu' when deployed to production
-export const API_URL = 'https://deck-builder-69.preview.emergentagent.com';
+export const API_URL = 'https://card-social-staging.preview.emergentagent.com';
 
 // External APIs
 export const SCRYFALL_API = 'https://api.scryfall.com';
