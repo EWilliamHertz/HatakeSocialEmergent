@@ -351,7 +351,12 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade }: Tr
           <Text style={styles.title}>Trades</Text>
           <Text style={styles.subtitle}>{trades.length} total trades</Text>
         </View>
-        <View style={styles.backButton} />
+        {onCreateTrade && (
+          <TouchableOpacity onPress={onCreateTrade} style={styles.createTradeBtn} data-testid="create-trade-btn">
+            <Ionicons name="add" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+        {!onCreateTrade && <View style={styles.backButton} />}
       </View>
 
       {/* Filters */}
