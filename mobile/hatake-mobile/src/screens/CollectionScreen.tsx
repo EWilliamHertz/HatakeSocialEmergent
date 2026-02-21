@@ -1090,6 +1090,17 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
     const price = getDisplayPrice(item);
     const isSelected = selectedIds.has(item.id);
     
+    // Get set code and collector number
+    const setCode = item.card_data?.set?.code || item.card_data?.set_code || item.card_data?.set?.id || '';
+    const collectorNumber = item.card_data?.collector_number || item.card_data?.localId || '';
+    
+    // Determine finish/foil type for styling
+    const finish = item.finish || 'Normal';
+    const isFoil = finish !== 'Normal';
+    const isHolo = finish.toLowerCase().includes('holo');
+    const isPokeball = finish.toLowerCase().includes('pokeball');
+    const isMasterball = finish.toLowerCase().includes('masterball');
+    
     const handlePress = () => {
       if (selectionMode) {
         toggleSelection(item.id);
@@ -1118,27 +1129,69 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
             </View>
           </View>
         )}
-        {imageUrl ? (
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={styles.cardImage}
-            resizeMode="contain"
-          />
-        ) : (
-          <View style={styles.cardPlaceholder}>
-            <Ionicons name="image-outline" size={40} color="#9CA3AF" />
-          </View>
-        )}
+        <View style={styles.cardImageWrapper}>
+          {imageUrl ? (
+            <Image 
+              source={{ uri: imageUrl }} 
+              style={styles.cardImage}
+              resizeMode="contain"
+            />
+          ) : (
+            <View style={styles.cardPlaceholder}>
+              <Ionicons name="image-outline" size={40} color="#9CA3AF" />
+            </View>
+          )}
+          {/* Foil/Holo overlay effect */}
+          {isFoil && (
+            <View style={[
+              styles.foilOverlay,
+              isHolo && styles.holoOverlay,
+              isPokeball && styles.pokeballOverlay,
+              isMasterball && styles.masterballOverlay,
+            ]} />
+          )}
+          {/* Finish badge */}
+          {isFoil && (
+            <View style={[
+              styles.finishBadge,
+              isPokeball && styles.pokeballBadge,
+              isMasterball && styles.masterballBadge,
+            ]}>
+              <Ionicons 
+                name={isPokeball ? 'ellipse' : isMasterball ? 'ellipse' : 'sparkles'} 
+                size={10} 
+                color="#FFFFFF" 
+              />
+              <Text style={styles.finishBadgeText}>
+                {isPokeball ? 'PB' : isMasterball ? 'MB' : 'FOIL'}
+              </Text>
+            </View>
+          )}
+        </View>
         <View style={styles.cardInfo}>
           <Text style={styles.cardName} numberOfLines={2}>
             {item.card_data?.name || 'Unknown Card'}
           </Text>
+          {/* Set code and collector number */}
+          <View style={styles.setInfoRow}>
+            <Text style={styles.setCode}>{setCode.toUpperCase()}</Text>
+            {collectorNumber && (
+              <Text style={styles.collectorNum}>#{collectorNumber}</Text>
+            )}
+          </View>
           <Text style={styles.cardPrice}>{price}</Text>
-          <Text style={styles.cardMeta}>
-            {item.game === 'mtg' ? 'Magic' : 'Pokémon'} • x{item.quantity}
-          </Text>
+          <View style={styles.cardMetaRow}>
+            <Text style={styles.cardMeta}>
+              {item.game === 'mtg' ? 'MTG' : 'PKM'}
+            </Text>
+            <Text style={styles.cardQuantity}>x{item.quantity}</Text>
+          </View>
           {item.finish && item.finish !== 'Normal' && (
-            <Text style={styles.cardFinish}>{item.finish}</Text>
+            <Text style={[
+              styles.cardFinish, 
+              isPokeball && styles.pokeballText,
+              isMasterball && styles.masterballText,
+            ]}>{item.finish}</Text>
           )}
         </View>
       </TouchableOpacity>
