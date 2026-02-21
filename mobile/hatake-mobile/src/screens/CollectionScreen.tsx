@@ -980,7 +980,13 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View>
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={onOpenMenu}
+          >
+            <Ionicons name="menu" size={26} color="#1F2937" />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
             <Text style={styles.title}>My Collection</Text>
             <Text style={styles.subtitle}>{items.length} cards</Text>
           </View>
