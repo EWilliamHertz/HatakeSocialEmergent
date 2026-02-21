@@ -221,10 +221,10 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
     );
   };
 
-  // If viewing a group chat
+  // If viewing a group detail page
   if (selectedGroup) {
     return (
-      <GroupChatScreen
+      <GroupDetailScreen
         user={user}
         token={token}
         group={selectedGroup}
