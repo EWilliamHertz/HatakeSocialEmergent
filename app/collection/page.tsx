@@ -1007,7 +1007,7 @@ export default function CollectionPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500 dark:text-gray-400">{item.condition || 'Near Mint'}</span>
                         <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                          {getCardPrice(item).currency === 'EUR' ? '€' : '$'}{getCardPrice(item).value.toFixed(2)}
+                          €{getCardPrice(item).value.toFixed(2)}
                         </span>
                       </div>
                     </div>
