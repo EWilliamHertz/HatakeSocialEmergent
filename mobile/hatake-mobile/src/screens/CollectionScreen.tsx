@@ -2176,12 +2176,60 @@ const styles = StyleSheet.create({
     height: 140,
     backgroundColor: '#F3F4F6',
   },
+  cardImageWrapper: {
+    position: 'relative',
+  },
   cardPlaceholder: {
     width: '100%',
     height: 140,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  foilOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+  },
+  holoOverlay: {
+    backgroundColor: 'rgba(147, 197, 253, 0.2)',
+    borderColor: 'rgba(59, 130, 246, 0.5)',
+  },
+  pokeballOverlay: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+  },
+  masterballOverlay: {
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    borderColor: 'rgba(139, 92, 246, 0.5)',
+  },
+  finishBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(245, 158, 11, 0.9)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    gap: 2,
+  },
+  pokeballBadge: {
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+  },
+  masterballBadge: {
+    backgroundColor: 'rgba(139, 92, 246, 0.9)',
+  },
+  finishBadgeText: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   cardInfo: {
     padding: 8,
@@ -2191,10 +2239,44 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F2937',
   },
+  setInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+    gap: 4,
+  },
+  setCode: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#3B82F6',
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
+  },
+  collectorNum: {
+    fontSize: 10,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  cardMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 2,
+  },
   cardMeta: {
     fontSize: 10,
     color: '#6B7280',
-    marginTop: 2,
+  },
+  cardQuantity: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#374151',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
   },
   cardCondition: {
     fontSize: 10,
@@ -2204,6 +2286,13 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#8B5CF6',
     fontWeight: '500',
+    marginTop: 2,
+  },
+  pokeballText: {
+    color: '#EF4444',
+  },
+  masterballText: {
+    color: '#8B5CF6',
   },
   centered: {
     flex: 1,
