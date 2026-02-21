@@ -108,14 +108,16 @@ export default function App() {
     
     if (bottomTabScreens.includes(screen)) {
       // Map to correct tab name with proper casing
-      const tabMap: Record<string, string> = {
+      const tabMap: Record<string, keyof RootTabParamList> = {
         'feed': 'Feed',
         'collection': 'Collection',
         'marketplace': 'Marketplace',
         'profile': 'Profile',
       };
-      // Note: Navigation would need a ref to the navigator to programmatically navigate
-      // For now, close drawer and let user tap the tab
+      const tabName = tabMap[screen];
+      if (tabName && navigationRef.current) {
+        navigationRef.current.navigate(tabName);
+      }
       setDrawerOpen(false);
       return;
     }
