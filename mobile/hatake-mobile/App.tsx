@@ -168,14 +168,39 @@ export default function App() {
       return;
     }
     
+    // Handle Decks screen
+    if (screen === 'deckbuilder') {
+      setDrawerOpen(false);
+      setShowDecks(true);
+      return;
+    }
+    
+    // Handle Trades screen
+    if (screen === 'trades') {
+      setDrawerOpen(false);
+      setShowTrades(true);
+      return;
+    }
+    
+    // Handle Groups screen
+    if (screen === 'groups') {
+      setDrawerOpen(false);
+      setShowGroups(true);
+      return;
+    }
+    
+    // Handle Notifications
+    if (screen === 'notifications') {
+      setDrawerOpen(false);
+      setShowNotifications(true);
+      return;
+    }
+    
     // Show coming soon for screens not yet implemented in mobile
-    const comingSoonScreens = ['trades', 'wishlists', 'groups', 'deckbuilder', 'settings'];
+    const comingSoonScreens = ['wishlists', 'settings'];
     if (comingSoonScreens.includes(screen)) {
       const screenNames: Record<string, string> = {
-        'trades': 'Trades',
         'wishlists': 'Wishlists',
-        'groups': 'Groups',
-        'deckbuilder': 'Deck Builder',
         'settings': 'Settings',
       };
       const name = screenNames[screen] || screen;
