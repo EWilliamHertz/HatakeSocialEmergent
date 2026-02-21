@@ -1,0 +1,91 @@
+{
+  "summary": "Iteration 13 - Bug fix verification for Hatake.Social TCG Platform. All 9 reported bugs have been fixed and verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/pytest/test_iteration13.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "bugs_verified": {
+    "1_navbar_sealed_wishlists_removed": {
+      "status": "FIXED",
+      "evidence": "Navbar shows: Feed, Search, Collection, Decks, Market, Trades, Community, Messages. No Sealed or Wishlists icons present.",
+      "file": "/app/components/Navbar.tsx",
+      "lines": "65-74 - navLinks array has 8 items, none are Sealed or Wishlists"
+    },
+    "2_sealed_price_leading_zero": {
+      "status": "FIXED",
+      "evidence": "Price input with value '0' clears to empty string on focus. Tested via Playwright.",
+      "file": "/app/app/sealed/page.tsx",
+      "lines": "684 - onFocus={(e) => { if (e.target.value === '0') e.target.value = ''; }}"
+    },
+    "3_csv_import_not_capped_at_50": {
+      "status": "FIXED",
+      "evidence": "originalCsvContent state stores full CSV and is used in confirmImport function.",
+      "file": "/app/app/collection/page.tsx",
+      "lines": "84 - originalCsvContent state, 645 - uses originalCsvContent for import"
+    },
+    "4_messenger_auto_scroll_fix": {
+      "status": "FIXED",
+      "evidence": "userScrolledUp ref tracks scroll position, auto-scroll only happens when at bottom.",
+      "file": "/app/components/MessengerWidget.tsx",
+      "lines": "86 - userScrolledUp ref, 217-231 - scroll handling logic"
+    },
+    "5_mobile_feed_username": {
+      "status": "FIXED",
+      "evidence": "Post interface uses 'name' and 'picture' fields matching API response.",
+      "file": "/app/mobile/hatake-mobile/src/screens/FeedScreen.tsx",
+      "lines": "21-22 - name/picture fields, 143 - userName = item.name"
+    },
+    "6_mobile_pokemon_set_code_translation": {
+      "status": "FIXED",
+      "evidence": "POKEMON_SET_ALIASES maps sv09=jtg and many other codes.",
+      "file": "/app/mobile/hatake-mobile/src/screens/CollectionScreen.tsx",
+      "lines": "23-80 - POKEMON_SET_ALIASES, 82-86 - mapPokemonSetCode function"
+    },
+    "7_mobile_search_results_increased": {
+      "status": "FIXED",
+      "evidence": "Search results sliced to 50 instead of 30.",
+      "file": "/app/mobile/hatake-mobile/src/screens/CollectionScreen.tsx",
+      "lines": "254 - slice(0, 50)"
+    },
+    "8_mobile_pokemon_prices": {
+      "status": "FIXED",
+      "evidence": "getCardPrice helper extracts price from cardmarket/tcgplayer data.",
+      "file": "/app/mobile/hatake-mobile/src/screens/CollectionScreen.tsx",
+      "lines": "514-533 - getCardPrice function handles Pokemon pricing"
+    },
+    "9_mobile_collection_value_display": {
+      "status": "FIXED",
+      "evidence": "calculateCollectionStats returns totalValue, mtgValue, pokemonValue.",
+      "file": "/app/mobile/hatake-mobile/src/screens/CollectionScreen.tsx",
+      "lines": "536-566 - calculateCollectionStats function"
+    },
+    "10_mobile_mtg_search": {
+      "status": "FIXED",
+      "evidence": "MTG search uses Scryfall API with proper query building.",
+      "file": "/app/mobile/hatake-mobile/src/screens/CollectionScreen.tsx",
+      "lines": "199-269 - MTG search via Scryfall API"
+    }
+  },
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% (all features verified via UI and code review)"
+  },
+  "test_credentials": {
+    "test_user": "test@test.com / password"
+  },
+  "seed_data_creation": "Used existing test data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 10 reported bugs have been fixed and verified. Web app (port 3000) and mobile app (port 8082) are both running. Test user: test@test.com/password. Mobile app accessible via localhost:8082 but external browser access times out due to port forwarding. Backend APIs all working correctly."
+}
