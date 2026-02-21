@@ -1,15 +1,6 @@
-import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from './config';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-});
 
 // Token storage keys
 const TOKEN_KEY = 'auth_token';
@@ -82,33 +73,54 @@ export const removeStoredUser = async (): Promise<void> => {
   await storage.removeItem(USER_KEY);
 };
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  async (config) => {
-    const token = await getToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      // Also set cookie for session-based auth
-      config.headers.Cookie = `session_token=${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// API request helper using native fetch
+interface RequestOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  body?: any;
+  headers?: Record<string, string>;
+}
 
-// Response interceptor to handle errors
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid, clear storage
-      await removeToken();
-      await removeStoredUser();
-    }
-    return Promise.reject(error);
+async function apiRequest<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+  const token = await getToken();
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
-);
+  
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: options.method || 'GET',
+    headers,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+    credentials: 'include',
+  });
+  
+  if (response.status === 401) {
+    // Token expired or invalid, clear storage
+    await removeToken();
+    await removeStoredUser();
+  }
+  
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed with status ${response.status}`);
+  }
+  
+  return data;
+}
+
+// API methods
+const api = {
+  get: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'GET' }),
+  post: <T>(endpoint: string, body?: any) => apiRequest<T>(endpoint, { method: 'POST', body }),
+  put: <T>(endpoint: string, body?: any) => apiRequest<T>(endpoint, { method: 'PUT', body }),
+  delete: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'DELETE' }),
+  patch: <T>(endpoint: string, body?: any) => apiRequest<T>(endpoint, { method: 'PATCH', body }),
+};
 
 export default api;
