@@ -508,6 +508,8 @@ export default function App() {
                 token={token}
                 onClose={() => setShowSettings(false)}
                 onLogout={handleLogout}
+                messengerWidgetEnabled={messengerWidgetEnabled}
+                onToggleMessengerWidget={() => setMessengerWidgetEnabled(!messengerWidgetEnabled)}
               />
             </Modal>
 
