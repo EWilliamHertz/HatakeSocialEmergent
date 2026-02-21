@@ -361,17 +361,25 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                   card.localId === collectorNumQuery.trim()
                 );
               }
-              setSearchResults(cards.slice(0, 30).map((card: any) => ({
-                id: card.id,
-                name: card.name,
-                image: card.image ? `${card.image}/high.webp` : '',
-                set_name: setData.name || '',
-                set_code: setData.id?.toUpperCase() || '',
-                collector_number: card.localId || '',
-                rarity: card.rarity,
-                game: 'pokemon' as const,
-                data: { ...card, set: { id: setData.id, name: setData.name } },
-              })));
+              setSearchResults(cards.slice(0, 50).map((card: any) => {
+                // TCGdex provides pricing in the card data
+                const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
+                const tcgPrice = card.tcgplayer?.prices?.holofoil?.market || card.tcgplayer?.prices?.normal?.market;
+                const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : tcgPrice ? `$${tcgPrice.toFixed(2)}` : 'N/A';
+                
+                return {
+                  id: card.id,
+                  name: card.name,
+                  image: card.image ? `${card.image}/high.webp` : '',
+                  set_name: setData.name || '',
+                  set_code: setData.id?.toUpperCase() || '',
+                  collector_number: card.localId || '',
+                  price: displayPrice,
+                  rarity: card.rarity,
+                  game: 'pokemon' as const,
+                  data: { ...card, set: { id: setData.id, name: setData.name } },
+                };
+              }));
             }
           }
         }
