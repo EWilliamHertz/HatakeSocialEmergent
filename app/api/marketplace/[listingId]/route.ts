@@ -1,20 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ listingId: string }> }
+) {
+  try {
+    const { listingId } = await params;
+
+    const listings = await sql`
+      SELECT l.*, u.name as seller_name, u.picture as seller_picture
+      FROM marketplace_listings l
+      JOIN users u ON l.user_id = u.user_id
+      WHERE l.listing_id = ${listingId}
+    `;
+
+    if (listings.length === 0) {
+      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, listing: listings[0] });
+  } catch (error) {
+    console.error('Get listing error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ listingId: string }> }
 ) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { listingId } = await params;
