@@ -94,8 +94,52 @@ export default function App() {
   };
 
   const handleNavigate = (screen: string) => {
-    // TODO: Implement navigation to different screens
+    // Handle navigation - these screens are in bottom tabs
+    const bottomTabScreens = ['feed', 'collection', 'marketplace', 'profile'];
+    
+    if (bottomTabScreens.includes(screen)) {
+      // Map to correct tab name with proper casing
+      const tabMap: Record<string, string> = {
+        'feed': 'Feed',
+        'collection': 'Collection',
+        'marketplace': 'Marketplace',
+        'profile': 'Profile',
+      };
+      // Note: Navigation would need a ref to the navigator to programmatically navigate
+      // For now, close drawer and let user tap the tab
+      setDrawerOpen(false);
+      return;
+    }
+    
+    // Show coming soon for screens not yet implemented in mobile
+    const comingSoonScreens = ['trades', 'wishlists', 'friends', 'groups', 'messages', 'deckbuilder', 'settings'];
+    if (comingSoonScreens.includes(screen)) {
+      const screenNames: Record<string, string> = {
+        'trades': 'Trades',
+        'wishlists': 'Wishlists',
+        'friends': 'Friends',
+        'groups': 'Groups',
+        'messages': 'Messages',
+        'deckbuilder': 'Deck Builder',
+        'settings': 'Settings',
+      };
+      const name = screenNames[screen] || screen;
+      
+      if (Platform.OS === 'web') {
+        alert(`${name} - Coming soon to the mobile app! Available now on the web version.`);
+      } else {
+        Alert.alert(
+          `${name}`,
+          'Coming soon to the mobile app! Available now on the web version.',
+          [{ text: 'OK' }]
+        );
+      }
+      setDrawerOpen(false);
+      return;
+    }
+    
     console.log('Navigate to:', screen);
+    setDrawerOpen(false);
   };
 
   if (loading) {
