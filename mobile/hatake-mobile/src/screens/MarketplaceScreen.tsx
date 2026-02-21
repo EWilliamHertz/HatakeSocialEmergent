@@ -44,7 +44,7 @@ export default function MarketplaceScreen({ user, token }: MarketplaceScreenProp
     setError('');
     try {
       const response = await fetch(`${API_URL}/api/marketplace`, {
-        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include',
       });
       const data = await response.json();
       
