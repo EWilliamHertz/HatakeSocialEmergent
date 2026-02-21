@@ -142,7 +142,7 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
       {item.card_data && (
         <View style={styles.cardPreview}>
           <Image 
-            source={{ uri: item.card_data.image_uris?.small || item.card_data.images?.small }} 
+            source={{ uri: getCardImageUrl(item.card_data) }} 
             style={styles.cardPreviewImage} 
           />
           <Text style={styles.cardPreviewName}>{item.card_data.name}</Text>
