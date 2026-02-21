@@ -78,22 +78,28 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const user = await getSessionUser(sessionToken);
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
-
+    const body = await request.json();
     const { 
-      cardId, game, cardData, quantity, condition, foil, notes,
-      finish, isSigned, isGraded, gradingCompany, gradeValue, customImageUrl
-    } = await request.json();
+      card_id, cardId, game, card_data, cardData, quantity, condition, foil, notes,
+      finish, is_signed, isSigned, is_graded, isGraded, grading_company, gradingCompany, 
+      grade_value, gradeValue, custom_image_url, customImageUrl
+    } = body;
+    
+    // Support both snake_case (mobile) and camelCase (web)
+    const finalCardId = card_id || cardId;
+    const finalCardData = card_data || cardData;
+    const finalIsSigned = is_signed || isSigned;
+    const finalIsGraded = is_graded || isGraded;
+    const finalGradingCompany = grading_company || gradingCompany;
+    const finalGradeValue = grade_value || gradeValue;
+    const finalCustomImageUrl = custom_image_url || customImageUrl;
 
-    if (!cardId || !game) {
+    if (!finalCardId || !game) {
       return NextResponse.json(
         { error: 'Missing required fields (cardId, game)' },
         { status: 400 }
@@ -101,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure cardData is at least an empty object
-    const safeCardData = cardData || { id: cardId, name: 'Unknown Card' };
+    const safeCardData = finalCardData || { id: finalCardId, name: 'Unknown Card' };
 
     await sql`
       INSERT INTO collection_items (
@@ -110,14 +116,14 @@ export async function POST(request: NextRequest) {
       )
       VALUES (
         ${user.user_id},
-        ${cardId},
+        ${finalCardId},
         ${game},
         ${JSON.stringify(safeCardData)},
         ${quantity || 1},
         ${condition || 'Near Mint'},
         ${foil || false},
         ${finish || 'Normal'},
-        ${isSigned || false},
+        ${finalIsSigned || false},
         ${isGraded || false},
         ${gradingCompany || null},
         ${gradeValue || null},
