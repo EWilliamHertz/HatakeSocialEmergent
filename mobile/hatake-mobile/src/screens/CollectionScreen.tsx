@@ -520,8 +520,8 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
               console.log(`After number filter: ${results.length} results`);
             }
             
-            // Fetch full details for each card to get prices (limit to first 20)
-            const limitedResults = results.slice(0, 20);
+            // Fetch full details for each card to get prices (limit to first 100)
+            const limitedResults = results.slice(0, 100);
             const detailedResults = await Promise.all(
               limitedResults.map(async (card: any) => {
                 try {
