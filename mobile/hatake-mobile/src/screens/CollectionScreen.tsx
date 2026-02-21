@@ -150,6 +150,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   const [searchGame, setSearchGame] = useState<'mtg' | 'pokemon'>('mtg');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(''); // For debugging search issues
   
   // Card Detail Modal State
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null);
