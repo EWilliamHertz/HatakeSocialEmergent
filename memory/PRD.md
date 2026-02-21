@@ -147,25 +147,26 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 | **Trades** | ✅ Complete |
 | **Create Trades** | ✅ Complete |
 | **Groups/Communities** | ✅ Complete |
+| **Group Chat** | ✅ Complete |
 | **Notifications** | ✅ Complete |
 | **Wishlists** | ✅ Complete |
 | **Push Notifications** | ✅ Complete |
 | **Trade Reputation** | ✅ Complete |
-| Settings | ⏳ Not started |
+| **Settings** | ✅ Complete |
+| Pokémon Card Prices | ✅ Fixed |
 
 ---
 
 ## NEXT STEPS
 
 ### High Priority (P1)
-1. **Native Expo Build** - Required for full LiveKit video/audio and push notifications
-2. **Group Chat** - Multi-user chat within communities
-3. **Pokémon Card Prices** - Fix price display (TCGdex integration issue)
+1. **Native Expo Build** - Required for push notifications and video calls to work on device
+2. **Google Play Store Deployment** - Guide the user through publishing
 
 ### Medium Priority (P2)
-1. Settings mobile screen
-2. Deck playtesting
-3. Advanced deck format validation
+1. Deck playtesting features
+2. Advanced deck format validation
+3. Price alerts and notifications
 
 ---
 
