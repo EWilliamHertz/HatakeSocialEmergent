@@ -34,23 +34,30 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Check for existing session on mount
   useEffect(() => {
     checkExistingSession();
   }, []);
 
   const checkExistingSession = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/me`, {
-        credentials: 'include',
-      });
-      const data = await response.json();
-      
-      if (data.user) {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('user_data', JSON.stringify(data.user));
+      if (typeof localStorage !== 'undefined') {
+        const storedToken = localStorage.getItem('auth_token');
+        const storedUser = localStorage.getItem('user_data');
+        if (storedToken && storedUser) {
+          // Verify token is still valid
+          const response = await fetch(`${API_URL}/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${storedToken}` },
+          });
+          const data = await response.json();
+          
+          if (data.user) {
+            onLoginSuccess(data.user, storedToken);
+          } else {
+            // Token expired, clear storage
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_data');
+          }
         }
-        onLoginSuccess(data.user, 'cookie-auth');
       }
     } catch (e) {
       // No existing session
@@ -81,21 +88,18 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-        credentials: 'include', // Important: this stores the session cookie
       });
       
       const data = await response.json();
       
-      if (data.success && data.user) {
-        // Store user data in localStorage for offline access
+      if (data.success && data.user && data.token) {
+        // Store token and user data
         if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('auth_token', data.token);
           localStorage.setItem('user_data', JSON.stringify(data.user));
-          if (data.token) {
-            localStorage.setItem('auth_token', data.token);
-          }
         }
         setStatus('Success!');
-        onLoginSuccess(data.user, data.token || 'cookie-auth');
+        onLoginSuccess(data.user, data.token);
       } else {
         setError(data.error || 'Authentication failed');
         setStatus('');
