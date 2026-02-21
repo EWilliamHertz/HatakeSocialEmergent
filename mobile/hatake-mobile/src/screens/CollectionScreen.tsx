@@ -289,22 +289,24 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         }
       } else {
         // Pokemon search
+        console.log('Pokemon search with:', { name: searchQuery, setCode: setCodeQuery, num: collectorNumQuery });
         
-        // Direct lookup by set code and collector number
-        if (setCodeQuery.trim() && collectorNumQuery.trim()) {
+        // Map user's set code to TCGdex format
+        const mappedSetCode = setCodeQuery.trim() ? mapPokemonSetCode(setCodeQuery.trim()) : '';
+        console.log('Mapped set code:', mappedSetCode);
+        
+        // Strategy 1: Direct lookup by set code and collector number
+        if (mappedSetCode && collectorNumQuery.trim()) {
           try {
-            // Map user's set code to TCGdex format (e.g., sv09 -> sv09, jtg -> sv09)
-            const mappedSetCode = mapPokemonSetCode(setCodeQuery.trim());
             const cardId = `${mappedSetCode}-${collectorNumQuery.trim()}`;
-            console.log(`Trying Pokemon lookup: ${cardId} (from ${setCodeQuery})`);
+            console.log(`Trying Pokemon direct lookup: ${cardId}`);
             const response = await fetch(`${TCGDEX_API}/cards/${cardId}`);
             if (response.ok) {
               const card = await response.json();
               if (card && card.id) {
-                // Extract pricing from TCGdex response
+                // Prefer European cardmarket prices
                 const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
-                const tcgPrice = card.tcgplayer?.prices?.holofoil?.market || card.tcgplayer?.prices?.normal?.market;
-                const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : tcgPrice ? `$${tcgPrice.toFixed(2)}` : 'N/A';
+                const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : 'N/A';
                 
                 setSearchResults([{
                   id: card.id,
@@ -323,23 +325,28 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               }
             }
           } catch (e) {
-            console.log('Pokemon direct lookup failed');
+            console.log('Pokemon direct lookup failed, trying search...');
           }
         }
         
-        // Name search
+        // Strategy 2: Search by name (with optional set/number filter)
         if (searchQuery.trim()) {
+          console.log('Trying name search:', searchQuery);
           const response = await fetch(`${TCGDEX_API}/cards?name=${encodeURIComponent(searchQuery.trim())}`);
           if (response.ok) {
             const data = await response.json();
             let results = Array.isArray(data) ? data : [];
+            console.log(`Found ${results.length} results for name search`);
             
-            // Filter by set code if provided
-            if (setCodeQuery.trim()) {
-              results = results.filter((card: any) => 
-                card.set?.id?.toLowerCase() === setCodeQuery.toLowerCase().trim() ||
-                card.id?.toLowerCase().startsWith(setCodeQuery.toLowerCase().trim())
-              );
+            // Filter by mapped set code if provided
+            if (mappedSetCode) {
+              results = results.filter((card: any) => {
+                const cardSetId = card.set?.id?.toLowerCase() || '';
+                const cardIdPrefix = card.id?.toLowerCase().split('-')[0] || '';
+                return cardSetId === mappedSetCode.toLowerCase() || 
+                       cardIdPrefix === mappedSetCode.toLowerCase();
+              });
+              console.log(`After set filter: ${results.length} results`);
             }
             
             // Filter by collector number if provided
@@ -348,24 +355,23 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                 card.localId === collectorNumQuery.trim() ||
                 card.id?.endsWith(`-${collectorNumQuery.trim()}`)
               );
+              console.log(`After number filter: ${results.length} results`);
             }
             
             setSearchResults(results.slice(0, 50).map((card: any) => {
-              // Parse set code from card ID (format: setcode-number)
               const idParts = card.id?.split('-') || [];
               const setCode = idParts.length > 1 ? idParts.slice(0, -1).join('-').toUpperCase() : '';
               const collectorNum = card.localId || idParts[idParts.length - 1] || '';
               
-              // TCGdex provides pricing in the card data (cardmarket/tcgplayer)
+              // Prefer European cardmarket prices
               const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
-              const tcgPrice = card.tcgplayer?.prices?.holofoil?.market || card.tcgplayer?.prices?.normal?.market;
-              const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : tcgPrice ? `$${tcgPrice.toFixed(2)}` : 'N/A';
+              const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : 'N/A';
               
               return {
                 id: card.id,
                 name: card.name,
                 image: card.image ? `${card.image}/high.webp` : '',
-                set_name: card.set?.name || setCode, // Use set code if no set name
+                set_name: card.set?.name || setCode,
                 set_code: card.set?.id?.toUpperCase() || setCode,
                 collector_number: collectorNum,
                 price: displayPrice,
@@ -374,24 +380,31 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                 data: card,
               };
             }));
+            setSearching(false);
+            return;
           }
-        } else if (setCodeQuery.trim()) {
-          // Search by set only
-          const response = await fetch(`${TCGDEX_API}/sets/${setCodeQuery.toLowerCase().trim()}`);
+        }
+        
+        // Strategy 3: Search by set only (browse all cards in set)
+        if (mappedSetCode && !searchQuery.trim()) {
+          console.log('Trying set browse:', mappedSetCode);
+          const response = await fetch(`${TCGDEX_API}/sets/${mappedSetCode}`);
           if (response.ok) {
             const setData = await response.json();
             if (setData.cards) {
               let cards = setData.cards;
+              console.log(`Found ${cards.length} cards in set`);
+              
+              // Filter by collector number if provided
               if (collectorNumQuery.trim()) {
                 cards = cards.filter((card: any) => 
                   card.localId === collectorNumQuery.trim()
                 );
               }
+              
               setSearchResults(cards.slice(0, 50).map((card: any) => {
-                // TCGdex provides pricing in the card data
                 const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
-                const tcgPrice = card.tcgplayer?.prices?.holofoil?.market || card.tcgplayer?.prices?.normal?.market;
-                const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : tcgPrice ? `$${tcgPrice.toFixed(2)}` : 'N/A';
+                const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : 'N/A';
                 
                 return {
                   id: card.id,
@@ -406,8 +419,20 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                   data: { ...card, set: { id: setData.id, name: setData.name } },
                 };
               }));
+              setSearching(false);
+              return;
             }
+          } else {
+            console.log('Set lookup failed:', await response.text());
           }
+        }
+        
+        // No results found
+        if (Platform.OS === 'web') {
+          alert('No cards found. Try a different search.');
+        } else {
+          Alert.alert('No Results', 'No cards found. Try a different search.');
+        }
         }
       }
     } catch (err) {
