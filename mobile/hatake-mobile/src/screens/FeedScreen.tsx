@@ -1,0 +1,456 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  TextInput,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { API_URL } from '../config';
+
+interface Post {
+  id: number;
+  user_id: string;
+  user_name: string;
+  user_picture?: string;
+  content: string;
+  image_url?: string;
+  card_data?: any;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  is_liked?: boolean;
+}
+
+interface FeedScreenProps {
+  user: any;
+  token: string;
+  onOpenMenu: () => void;
+}
+
+export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps) {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'friends' | 'groups' | 'public'>('public');
+  const [newPostText, setNewPostText] = useState('');
+  const [posting, setPosting] = useState(false);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [activeTab]);
+
+  const fetchPosts = async () => {
+    try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      
+      const response = await fetch(`${API_URL}/api/feed?type=${activeTab}`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.posts)) {
+        setPosts(data.posts);
+      } else {
+        // Show some placeholder posts if API doesn't exist yet
+        setPosts([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch posts:', err);
+      setPosts([]);
+    }
+    setLoading(false);
+    setRefreshing(false);
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchPosts();
+  };
+
+  const createPost = async () => {
+    if (!newPostText.trim()) return;
+    
+    setPosting(true);
+    try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      
+      const response = await fetch(`${API_URL}/api/feed`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: newPostText }),
+      });
+      
+      if (response.ok) {
+        setNewPostText('');
+        fetchPosts();
+      }
+    } catch (err) {
+      console.error('Failed to create post:', err);
+    }
+    setPosting(false);
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diff = now.getTime() - date.getTime();
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(hours / 24);
+      
+      if (hours < 1) return 'Just now';
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      return date.toLocaleDateString();
+    } catch {
+      return '';
+    }
+  };
+
+  const renderPost = ({ item }: { item: Post }) => (
+    <View style={styles.post}>
+      <View style={styles.postHeader}>
+        {item.user_picture ? (
+          <Image source={{ uri: item.user_picture }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <Ionicons name="person" size={16} color="#9CA3AF" />
+          </View>
+        )}
+        <View style={styles.postHeaderInfo}>
+          <Text style={styles.userName}>{item.user_name}</Text>
+          <Text style={styles.postTime}>{formatDate(item.created_at)}</Text>
+        </View>
+      </View>
+      
+      <Text style={styles.postContent}>{item.content}</Text>
+      
+      {item.image_url && (
+        <Image source={{ uri: item.image_url }} style={styles.postImage} />
+      )}
+      
+      {item.card_data && (
+        <View style={styles.cardPreview}>
+          <Image 
+            source={{ uri: item.card_data.image_uris?.small || item.card_data.images?.small }} 
+            style={styles.cardPreviewImage} 
+          />
+          <Text style={styles.cardPreviewName}>{item.card_data.name}</Text>
+        </View>
+      )}
+      
+      <View style={styles.postActions}>
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons 
+            name={item.is_liked ? "heart" : "heart-outline"} 
+            size={20} 
+            color={item.is_liked ? "#EF4444" : "#6B7280"} 
+          />
+          <Text style={styles.actionText}>{item.likes_count || 0}</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
+          <Text style={styles.actionText}>{item.comments_count || 0}</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="share-outline" size={20} color="#6B7280" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header with menu button */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={onOpenMenu} style={styles.menuButton}>
+          <Ionicons name="menu" size={24} color="#1F2937" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Feed</Text>
+        <TouchableOpacity style={styles.notifButton}>
+          <Ionicons name="notifications-outline" size={24} color="#1F2937" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Tab Navigation */}
+      <View style={styles.tabs}>
+        {(['friends', 'groups', 'public'] as const).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tab, activeTab === tab && styles.tabActive]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Ionicons 
+              name={tab === 'friends' ? 'people' : tab === 'groups' ? 'chatbubbles' : 'globe'} 
+              size={18} 
+              color={activeTab === tab ? '#3B82F6' : '#9CA3AF'} 
+            />
+            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* New Post Input */}
+      <View style={styles.newPostContainer}>
+        <View style={styles.newPostRow}>
+          <TextInput
+            style={styles.newPostInput}
+            placeholder="Share something with your community..."
+            value={newPostText}
+            onChangeText={setNewPostText}
+            multiline
+          />
+          <TouchableOpacity 
+            style={[styles.postButton, (!newPostText.trim() || posting) && styles.postButtonDisabled]}
+            onPress={createPost}
+            disabled={!newPostText.trim() || posting}
+          >
+            {posting ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Ionicons name="send" size={18} color="#fff" />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#3B82F6" />
+        </View>
+      ) : posts.length === 0 ? (
+        <View style={styles.centered}>
+          <Ionicons name="newspaper-outline" size={64} color="#D1D5DB" />
+          <Text style={styles.emptyText}>No posts yet</Text>
+          <Text style={styles.emptySubtext}>
+            {activeTab === 'friends' 
+              ? 'Follow friends to see their posts here' 
+              : activeTab === 'groups'
+              ? 'Join groups to see group posts'
+              : 'Be the first to post something!'}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          renderItem={renderPost}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  menuButton: {
+    padding: 4,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  notifButton: {
+    padding: 4,
+  },
+  tabs: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    gap: 6,
+  },
+  tabActive: {
+    backgroundColor: '#DBEAFE',
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#9CA3AF',
+  },
+  tabTextActive: {
+    color: '#3B82F6',
+  },
+  newPostContainer: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  newPostRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  newPostInput: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 14,
+    maxHeight: 100,
+  },
+  postButton: {
+    backgroundColor: '#3B82F6',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  postButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  list: {
+    padding: 12,
+  },
+  post: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  avatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  postHeaderInfo: {
+    marginLeft: 10,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  postTime: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  postContent: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+  },
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  cardPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 12,
+  },
+  cardPreviewImage: {
+    width: 40,
+    height: 56,
+    borderRadius: 4,
+  },
+  cardPreviewName: {
+    marginLeft: 10,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#1F2937',
+  },
+  postActions: {
+    flexDirection: 'row',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    gap: 24,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+});
