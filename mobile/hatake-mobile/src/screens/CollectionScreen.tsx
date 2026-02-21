@@ -172,10 +172,109 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
   const [gradeValue, setGradeValue] = useState('10');
   const [finish, setFinish] = useState('Normal'); // For Pokemon: Normal, Holo, Reverse Holo, etc.
   const [adding, setAdding] = useState(false);
+  
+  // Bulk selection state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchCollection();
   }, [filter]);
+
+  // Exit selection mode when leaving screen
+  useEffect(() => {
+    return () => {
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+    };
+  }, []);
+
+  const toggleSelection = (id: number) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const selectAll = () => {
+    const filtered = getFilteredItems();
+    setSelectedIds(new Set(filtered.map(item => item.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const bulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    const confirmMsg = `Are you sure you want to delete ${selectedIds.size} card(s) from your collection?`;
+    
+    const confirmed = await new Promise<boolean>((resolve) => {
+      if (Platform.OS === 'web') {
+        resolve(window.confirm(confirmMsg));
+      } else {
+        Alert.alert(
+          'Delete Cards',
+          confirmMsg,
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+          ]
+        );
+      }
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      let successCount = 0;
+      let failCount = 0;
+
+      // Delete cards one by one
+      for (const id of selectedIds) {
+        try {
+          const response = await fetch(`${API_URL}/api/collection?id=${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${authToken}` },
+          });
+          if (response.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch {
+          failCount++;
+        }
+      }
+
+      // Refresh and exit selection mode
+      fetchCollection();
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+
+      const msg = failCount > 0 
+        ? `Deleted ${successCount} cards. ${failCount} failed.`
+        : `Successfully deleted ${successCount} cards.`;
+      
+      if (Platform.OS === 'web') {
+        alert(msg);
+      } else {
+        Alert.alert('Done', msg);
+      }
+    } catch (err) {
+      console.error('Bulk delete error:', err);
+      if (Platform.OS === 'web') {
+        alert('Failed to delete cards');
+      } else {
+        Alert.alert('Error', 'Failed to delete cards');
+      }
+    }
+  };
 
   const fetchCollection = async () => {
     setError('');
