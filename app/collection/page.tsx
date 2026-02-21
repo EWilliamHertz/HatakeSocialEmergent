@@ -800,15 +800,14 @@ export default function CollectionPage() {
             </div>
           )}
           
-          {/* Search & Bulk Actions - Only for Cards tab */}
-          {activeTab === 'cards' && (
-            <div className="flex items-center gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+          {/* Search & Bulk Actions */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search your collection..."
                 className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                 data-testid="collection-search"
@@ -866,62 +865,58 @@ export default function CollectionPage() {
               </div>
             )}
           </div>
-          )}
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'cards' && (
-          <>
-            {/* 1. NEW DASHBOARD STATS */}
-            <CollectionDashboard items={items} />
+        {/* 1. NEW DASHBOARD STATS */}
+        <CollectionDashboard items={items} />
 
-            {/* View Toggles */}
-            <div className="flex justify-end mb-4">
-               <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                 <button
-                   onClick={() => setViewMode('grid')}
-                   className={`p-2 rounded-md transition ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                   title="Grid View"
-                 >
-                   <LayoutGrid className="w-4 h-4" />
-                 </button>
-                 <button
-                   onClick={() => setViewMode('binder')}
-                   className={`p-2 rounded-md transition ${viewMode === 'binder' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                   title="Binder View"
-                 >
-                   <BookOpen className="w-4 h-4" />
-                 </button>
-                 <button
-                   onClick={() => setViewMode('list')}
-                   className={`p-2 rounded-md transition ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                   title="List View"
-                 >
-                   <ListIcon className="w-4 h-4" />
-                 </button>
-               </div>
-            </div>
+        {/* View Toggles */}
+        <div className="flex justify-end mb-4">
+           <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+             <button
+               onClick={() => setViewMode('grid')}
+               className={`p-2 rounded-md transition ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+               title="Grid View"
+             >
+               <LayoutGrid className="w-4 h-4" />
+             </button>
+             <button
+               onClick={() => setViewMode('binder')}
+               className={`p-2 rounded-md transition ${viewMode === 'binder' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+               title="Binder View"
+             >
+               <BookOpen className="w-4 h-4" />
+             </button>
+             <button
+               onClick={() => setViewMode('list')}
+               className={`p-2 rounded-md transition ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+               title="List View"
+             >
+               <ListIcon className="w-4 h-4" />
+             </button>
+           </div>
+        </div>
 
-            {/* Collection Content */}
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              </div>
-            ) : filteredItems.length === 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
-                <Package className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  {items.length === 0 ? 'Your collection is empty' : 'No cards match your search'}
-                </p>
-                {items.length === 0 && (
-                  <button
-                    onClick={() => router.push('/search')}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-                    data-testid="search-cards-btn"
-                  >
-                    Search Cards
-                  </button>
-                )}
+        {/* Collection Content */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+            <Package className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {items.length === 0 ? 'Your collection is empty' : 'No cards match your search'}
+            </p>
+            {items.length === 0 && (
+              <button
+                onClick={() => router.push('/search')}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+                data-testid="search-cards-btn"
+              >
+                Search Cards
+              </button>
+            )}
           </div>
         ) : (
           <>
