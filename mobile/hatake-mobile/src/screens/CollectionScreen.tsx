@@ -277,9 +277,12 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
           `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`
         );
         
+        console.log('MTG search response status:', response.status);
+        
         if (response.ok) {
           const data = await response.json();
-          if (data.data) {
+          console.log('MTG search found:', data.data?.length || 0, 'cards');
+          if (data.data && data.data.length > 0) {
             setSearchResults(data.data.slice(0, 50).map((card: any) => {
               // Prefer EUR prices for European users
               const eurPrice = card.prices?.eur;
@@ -300,13 +303,24 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               };
             }));
           } else {
-            console.log('No results found');
+            console.log('No MTG results found');
+            if (Platform.OS === 'web') {
+              alert('No Magic cards found with that search.');
+            } else {
+              Alert.alert('No Results', 'No Magic cards found with that search.');
+            }
           }
         } else {
           const errorText = await response.text();
-          console.log('Scryfall search failed:', errorText);
-          // Scryfall returns 404 for no results, which is normal
-          if (response.status !== 404) {
+          console.log('Scryfall search failed:', response.status, errorText);
+          // Scryfall returns 404 for no results
+          if (response.status === 404) {
+            if (Platform.OS === 'web') {
+              alert('No Magic cards found with that search.');
+            } else {
+              Alert.alert('No Results', 'No Magic cards found with that search.');
+            }
+          } else {
             if (Platform.OS === 'web') {
               alert('Search failed. Please try again.');
             } else {
