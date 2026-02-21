@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser, getUserFromRequest } from '@/lib/auth';
 import { sendFriendRequestEmail } from '@/lib/email';
+import { sendPushNotification, getFriendRequestNotification } from '@/lib/push-notifications';
 import sql from '@/lib/db';
 
 export async function GET(request: NextRequest) {
