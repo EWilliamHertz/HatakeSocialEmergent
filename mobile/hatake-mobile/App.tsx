@@ -36,6 +36,7 @@ export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const navigationRef = useRef<NavigationContainerRef<RootTabParamList>>(null);
 
   useEffect(() => {
     checkSession();
