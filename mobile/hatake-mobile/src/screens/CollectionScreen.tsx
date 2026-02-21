@@ -251,7 +251,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         if (response.ok) {
           const data = await response.json();
           if (data.data) {
-            setSearchResults(data.data.slice(0, 30).map((card: any) => ({
+            setSearchResults(data.data.slice(0, 50).map((card: any) => ({
               id: card.id,
               name: card.name,
               image: card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '',
