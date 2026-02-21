@@ -1148,6 +1148,13 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               )}
             </TouchableOpacity>
 
+            {/* Debug Info - Show search status */}
+            {searchError !== '' && (
+              <View style={styles.debugBox}>
+                <Text style={styles.debugText}>Debug: {searchError}</Text>
+              </View>
+            )}
+
             {/* Search Results */}
             {searchResults.length > 0 && (
               <View style={styles.searchResultsContainer}>
