@@ -698,7 +698,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>MTG</Text>
                 <Text style={[styles.statValue, styles.mtgColor]}>
-                  ${stats.mtgValue.toFixed(2)}
+                  €{stats.mtgValue.toFixed(2)}
                 </Text>
               </View>
             )}
