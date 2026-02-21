@@ -1,20 +1,22 @@
 {
   "expo": {
     "name": "Hatake.Social",
-    "slug": "hatake-social",
+    "slug": "hatakesocial",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#3B82F6"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hatakesocial.app",
+      "bundleIdentifier": "social.hatake.app",
       "infoPlist": {
         "NSCameraUsageDescription": "We need camera access to scan your trading cards",
         "NSPhotoLibraryUsageDescription": "We need photo library access to import card images"
@@ -25,11 +27,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#3B82F6"
       },
-      "package": "com.hatakesocial.app",
+      "package": "social.hatake.app",
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -49,12 +50,14 @@
           "photosPermission": "Allow Hatake.Social to access your photos to import card images."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-router"
     ],
     "extra": {
       "eas": {
-        "projectId": "hatake-social"
+        "projectId": "00c4480b-bf3f-4e5b-a2b5-0eecbd89be00"
       }
-    }
+    },
+    "owner": "hatakehugo"
   }
 }
