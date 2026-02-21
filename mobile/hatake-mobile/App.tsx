@@ -65,6 +65,9 @@ export default function App() {
   const [showTrades, setShowTrades] = useState(false);
   const [showGroups, setShowGroups] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showReputation, setShowReputation] = useState(false);
+  const [showWishlists, setShowWishlists] = useState(false);
+  const [showCreateTrade, setShowCreateTrade] = useState(false);
   const [messageRecipient, setMessageRecipient] = useState<any>(null);
   const [callState, setCallState] = useState<CallState>({
     active: false,
@@ -73,6 +76,9 @@ export default function App() {
     isIncoming: false,
   });
   const navigationRef = useRef<NavigationContainerRef<RootTabParamList>>(null);
+  
+  // Initialize push notifications
+  const { expoPushToken, notification } = usePushNotifications(token || '');
 
   useEffect(() => {
     checkSession();
