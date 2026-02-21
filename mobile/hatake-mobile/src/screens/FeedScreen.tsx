@@ -159,6 +159,7 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
     const commentCount = item.comment_count ?? item.comments_count ?? 0;
     const isLiked = item.liked ?? item.is_liked ?? false;
     const userId = item.user_id;
+    const postId = String(item.post_id || item.id);
 
     const handleUserPress = () => {
       // Show alert with user info (profile navigation not yet implemented)
@@ -173,14 +174,45 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
       // Toggle like - API call
       try {
         const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
-        const postId = item.post_id || item.id;
-        await fetch(`${API_URL}/api/feed/${postId}/like`, {
+        const response = await fetch(`${API_URL}/api/feed/${postId}/like`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${authToken}` },
         });
-        fetchPosts(); // Refresh to get updated count
+        const result = await response.json();
+        if (result.success) {
+          fetchPosts(); // Refresh to get updated count
+        }
       } catch (err) {
         console.log('Like error:', err);
+      }
+    };
+
+    const handleReaction = async (emoji: string) => {
+      try {
+        const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+        const response = await fetch(`${API_URL}/api/feed/${postId}/reactions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ emoji }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          setShowEmojiPicker(null);
+          fetchPosts(); // Refresh to get updated reactions
+        }
+      } catch (err) {
+        console.log('Reaction error:', err);
+      }
+    };
+
+    const handleComment = () => {
+      if (Platform.OS === 'web') {
+        alert('Comments - Coming soon!');
+      } else {
+        Alert.alert('Comments', 'Comments feature coming soon!');
       }
     };
 
@@ -215,6 +247,22 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
             <Text style={styles.cardPreviewName}>{item.card_data.name}</Text>
           </View>
         )}
+
+        {/* Emoji Reactions Display */}
+        {item.reactions && item.reactions.length > 0 && (
+          <View style={styles.reactionsRow}>
+            {item.reactions.map((r, idx) => (
+              <TouchableOpacity 
+                key={idx} 
+                style={[styles.reactionBadge, r.userReacted && styles.reactionBadgeActive]}
+                onPress={() => handleReaction(r.emoji)}
+              >
+                <Text style={styles.reactionEmoji}>{r.emoji}</Text>
+                <Text style={styles.reactionCount}>{r.count}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
         
         <View style={styles.postActions}>
           <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
@@ -226,15 +274,37 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
             <Text style={styles.actionText}>{likeCount}</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
             <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
             <Text style={styles.actionText}>{commentCount}</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={() => setShowEmojiPicker(showEmojiPicker === postId ? null : postId)}
+          >
+            <Ionicons name="happy-outline" size={20} color="#6B7280" />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="share-outline" size={20} color="#6B7280" />
           </TouchableOpacity>
         </View>
+
+        {/* Emoji Picker */}
+        {showEmojiPicker === postId && (
+          <View style={styles.emojiPicker}>
+            {EMOJI_OPTIONS.map((emoji) => (
+              <TouchableOpacity 
+                key={emoji} 
+                style={styles.emojiOption}
+                onPress={() => handleReaction(emoji)}
+              >
+                <Text style={styles.emojiText}>{emoji}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     );
   };
