@@ -1874,6 +1874,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  csvButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
   // Selection Mode Styles
   selectionBar: {
     flexDirection: 'row',
