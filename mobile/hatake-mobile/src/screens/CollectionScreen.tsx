@@ -273,7 +273,10 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         // Direct lookup by set code and collector number
         if (setCodeQuery.trim() && collectorNumQuery.trim()) {
           try {
-            const cardId = `${setCodeQuery.toLowerCase().trim()}-${collectorNumQuery.trim()}`;
+            // Map user's set code to TCGdex format (e.g., sv09 -> sv09, jtg -> sv09)
+            const mappedSetCode = mapPokemonSetCode(setCodeQuery.trim());
+            const cardId = `${mappedSetCode}-${collectorNumQuery.trim()}`;
+            console.log(`Trying Pokemon lookup: ${cardId} (from ${setCodeQuery})`);
             const response = await fetch(`${TCGDEX_API}/cards/${cardId}`);
             if (response.ok) {
               const card = await response.json();
@@ -283,7 +286,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                   name: card.name,
                   image: card.image ? `${card.image}/high.webp` : '',
                   set_name: card.set?.name || '',
-                  set_code: card.set?.id?.toUpperCase() || setCodeQuery.toUpperCase(),
+                  set_code: card.set?.id?.toUpperCase() || mappedSetCode.toUpperCase(),
                   collector_number: card.localId || collectorNumQuery,
                   rarity: card.rarity,
                   game: 'pokemon' as const,
