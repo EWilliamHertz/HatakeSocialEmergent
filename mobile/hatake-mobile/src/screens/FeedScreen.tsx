@@ -63,6 +63,7 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
   const [newPostText, setNewPostText] = useState('');
   const [posting, setPosting] = useState(false);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null);
 
   const fetchPosts = async () => {
     try {
