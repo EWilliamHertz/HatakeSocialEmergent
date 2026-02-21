@@ -324,11 +324,16 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
               );
             }
             
-            setSearchResults(results.slice(0, 30).map((card: any) => {
+            setSearchResults(results.slice(0, 50).map((card: any) => {
               // Parse set code from card ID (format: setcode-number)
               const idParts = card.id?.split('-') || [];
               const setCode = idParts.length > 1 ? idParts.slice(0, -1).join('-').toUpperCase() : '';
               const collectorNum = card.localId || idParts[idParts.length - 1] || '';
+              
+              // TCGdex provides pricing in the card data (cardmarket/tcgplayer)
+              const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
+              const tcgPrice = card.tcgplayer?.prices?.holofoil?.market || card.tcgplayer?.prices?.normal?.market;
+              const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : tcgPrice ? `$${tcgPrice.toFixed(2)}` : 'N/A';
               
               return {
                 id: card.id,
@@ -337,6 +342,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                 set_name: card.set?.name || setCode, // Use set code if no set name
                 set_code: card.set?.id?.toUpperCase() || setCode,
                 collector_number: collectorNum,
+                price: displayPrice,
                 rarity: card.rarity,
                 game: 'pokemon' as const,
                 data: card,
