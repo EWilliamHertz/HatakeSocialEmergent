@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { generateId } from '@/lib/utils';
 import { sendNewMessageEmail } from '@/lib/email';
+import { sendPushNotification, getMessageNotification } from '@/lib/push-notifications';
 import sql from '@/lib/db';
 
 export async function GET(request: NextRequest) {
