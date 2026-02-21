@@ -61,10 +61,6 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
   const [newPostText, setNewPostText] = useState('');
   const [posting, setPosting] = useState(false);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [activeTab]);
-
   const fetchPosts = async () => {
     try {
       const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
@@ -87,6 +83,10 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
     setLoading(false);
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    fetchPosts();
+  }, [activeTab]);
 
   const onRefresh = () => {
     setRefreshing(true);
