@@ -380,6 +380,62 @@ export default function App() {
               />
             </Modal>
 
+            {/* Decks Modal */}
+            <Modal
+              visible={showDecks}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => setShowDecks(false)}
+            >
+              <DecksScreen
+                user={user}
+                token={token}
+                onClose={() => setShowDecks(false)}
+              />
+            </Modal>
+
+            {/* Trades Modal */}
+            <Modal
+              visible={showTrades}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => setShowTrades(false)}
+            >
+              <TradesScreen
+                user={user}
+                token={token}
+                onClose={() => setShowTrades(false)}
+              />
+            </Modal>
+
+            {/* Groups Modal */}
+            <Modal
+              visible={showGroups}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => setShowGroups(false)}
+            >
+              <GroupsScreen
+                user={user}
+                token={token}
+                onClose={() => setShowGroups(false)}
+              />
+            </Modal>
+
+            {/* Notifications Modal */}
+            <Modal
+              visible={showNotifications}
+              animationType="slide"
+              presentationStyle="fullScreen"
+              onRequestClose={() => setShowNotifications(false)}
+            >
+              <NotificationsScreen
+                user={user}
+                token={token}
+                onClose={() => setShowNotifications(false)}
+              />
+            </Modal>
+
             {/* Video Call Modal */}
             <Modal
               visible={callState.active}
