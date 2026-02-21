@@ -9,9 +9,10 @@ import {
   Image,
   Modal,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { Camera, CameraType } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { searchService, CardSearchResult } from '../services/search';
@@ -19,20 +20,23 @@ import { useStore } from '../store';
 import Button from '../components/Button';
 
 export default function ScannerScreen({ navigation }: any) {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [facing, setFacing] = useState<CameraType>('back');
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [type, setType] = useState(CameraType.back);
   const [scanning, setScanning] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [matchedCards, setMatchedCards] = useState<CardSearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const [selectedGame, setSelectedGame] = useState<'mtg' | 'pokemon'>('mtg');
-  const cameraRef = useRef<any>(null);
+  const cameraRef = useRef<Camera>(null);
   const { addToCollection } = useStore();
 
   useEffect(() => {
-    if (!permission?.granted) {
-      requestPermission();
-    }
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
   }, []);
 
   const takePicture = async () => {
@@ -42,36 +46,33 @@ export default function ScannerScreen({ navigation }: any) {
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
-        base64: true,
       });
       
       setCapturedImage(photo.uri);
-      
-      // In a real app, you would send the image to a card recognition API
-      // For now, we'll simulate by asking the user to enter the card name
-      Alert.prompt(
-        'Card Name',
-        'Enter the card name to search (camera recognition coming soon)',
-        [
-          { text: 'Cancel', onPress: () => setScanning(false), style: 'cancel' },
-          { 
-            text: 'Search', 
-            onPress: async (cardName: string | undefined) => {
-              if (cardName) {
-                const results = await searchService.searchCards(cardName, selectedGame);
-                setMatchedCards(results.slice(0, 5)); // Show top 5 matches
-                setShowResults(true);
-              }
-              setScanning(false);
-            }
-          },
-        ],
-        'plain-text'
-      );
+      setScanning(false);
+      setShowSearchModal(true);
     } catch (error) {
       console.error('Camera error:', error);
       Alert.alert('Error', 'Failed to take picture');
       setScanning(false);
+    }
+  };
+
+  const searchCard = async () => {
+    if (!searchText.trim()) return;
+    
+    setShowSearchModal(false);
+    setScanning(true);
+    
+    try {
+      const results = await searchService.searchCards(searchText, selectedGame);
+      setMatchedCards(results.slice(0, 5));
+      setShowResults(true);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to search');
+    } finally {
+      setScanning(false);
+      setSearchText('');
     }
   };
 
@@ -83,25 +84,7 @@ export default function ScannerScreen({ navigation }: any) {
 
     if (!result.canceled) {
       setCapturedImage(result.assets[0].uri);
-      // Same simulation as above
-      Alert.prompt(
-        'Card Name',
-        'Enter the card name to search',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Search', 
-            onPress: async (cardName: string | undefined) => {
-              if (cardName) {
-                const results = await searchService.searchCards(cardName, selectedGame);
-                setMatchedCards(results.slice(0, 5));
-                setShowResults(true);
-              }
-            }
-          },
-        ],
-        'plain-text'
-      );
+      setShowSearchModal(true);
     }
   };
 
@@ -124,7 +107,7 @@ export default function ScannerScreen({ navigation }: any) {
     }
   };
 
-  if (!permission) {
+  if (hasPermission === null) {
     return (
       <SafeAreaView style={styles.container}>
         <ActivityIndicator size="large" color="#3B82F6" />
@@ -132,10 +115,10 @@ export default function ScannerScreen({ navigation }: any) {
     );
   }
 
-  if (!permission.granted) {
+  if (hasPermission === false) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.permissionContainer}>
+      <SafeAreaView style={styles.permissionContainer}>
+        <View style={styles.permissionContent}>
           <Ionicons name="camera-outline" size={64} color="#D1D5DB" />
           <Text style={styles.permissionText}>Camera access is required</Text>
           <Text style={styles.permissionSubtext}>
@@ -143,7 +126,10 @@ export default function ScannerScreen({ navigation }: any) {
           </Text>
           <Button 
             title="Grant Permission" 
-            onPress={requestPermission}
+            onPress={async () => {
+              const { status } = await Camera.requestCameraPermissionsAsync();
+              setHasPermission(status === 'granted');
+            }}
             size="large"
           />
         </View>
@@ -186,10 +172,10 @@ export default function ScannerScreen({ navigation }: any) {
 
       {/* Camera View */}
       <View style={styles.cameraContainer}>
-        <CameraView
+        <Camera
           ref={cameraRef}
           style={styles.camera}
-          facing={facing}
+          type={type}
         >
           {/* Card Frame Guide */}
           <View style={styles.frameContainer}>
@@ -203,7 +189,7 @@ export default function ScannerScreen({ navigation }: any) {
               Position card within frame
             </Text>
           </View>
-        </CameraView>
+        </Camera>
 
         {scanning && (
           <View style={styles.scanningOverlay}>
@@ -217,7 +203,7 @@ export default function ScannerScreen({ navigation }: any) {
       <View style={styles.controls}>
         <TouchableOpacity 
           style={styles.flipButton}
-          onPress={() => setFacing(f => f === 'back' ? 'front' : 'back')}
+          onPress={() => setType(t => t === CameraType.back ? CameraType.front : CameraType.back)}
         >
           <Ionicons name="camera-reverse" size={24} color="#fff" />
         </TouchableOpacity>
@@ -232,6 +218,43 @@ export default function ScannerScreen({ navigation }: any) {
         
         <View style={{ width: 50 }} />
       </View>
+
+      {/* Search Modal */}
+      <Modal
+        visible={showSearchModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowSearchModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.searchModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Enter Card Name</Text>
+              <TouchableOpacity onPress={() => setShowSearchModal(false)}>
+                <Ionicons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <TextInput
+              style={styles.searchInput}
+              value={searchText}
+              onChangeText={setSearchText}
+              placeholder="Type the card name..."
+              placeholderTextColor="#9CA3AF"
+              autoFocus
+              returnKeyType="search"
+              onSubmitEditing={searchCard}
+            />
+            
+            <Button
+              title="Search"
+              onPress={searchCard}
+              fullWidth
+              size="large"
+            />
+          </View>
+        </View>
+      </Modal>
 
       {/* Results Modal */}
       <Modal
@@ -289,6 +312,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  permissionContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  permissionContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
   },
   header: {
     flexDirection: 'row',
@@ -425,12 +458,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     backgroundColor: '#fff',
   },
-  permissionContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
   permissionText: {
     fontSize: 18,
     fontWeight: '600',
@@ -448,6 +475,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
+  },
+  searchModalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+  },
+  searchInput: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#1F2937',
+    marginBottom: 16,
   },
   modalContent: {
     backgroundColor: '#fff',
