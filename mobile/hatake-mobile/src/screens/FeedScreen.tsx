@@ -211,11 +211,7 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
     };
 
     const handleComment = () => {
-      if (Platform.OS === 'web') {
-        alert('Comments - Coming soon!');
-      } else {
-        Alert.alert('Comments', 'Comments feature coming soon!');
-      }
+      setCommentsPostId(postId);
     };
 
     return (
