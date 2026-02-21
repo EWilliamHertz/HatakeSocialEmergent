@@ -164,7 +164,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         {user && token ? (
           <>
             <Tab.Navigator
