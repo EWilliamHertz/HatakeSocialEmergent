@@ -90,6 +90,19 @@ export async function POST(request: NextRequest) {
       )
     `;
 
+    // Send push notification to recipient
+    const pushTokens = await sql`
+      SELECT token FROM push_tokens 
+      WHERE user_id = ${recipientId} AND is_active = true
+    `;
+    if (pushTokens.length > 0) {
+      const notif = getTradeNotification(user.name || 'Someone', 'new');
+      for (const pt of pushTokens) {
+        sendPushNotification(pt.token, notif.title, notif.body, notif.data)
+          .catch(err => console.error('Push notification error:', err));
+      }
+    }
+
     return NextResponse.json({ success: true, tradeId });
   } catch (error) {
     console.error('Create trade error:', error);
