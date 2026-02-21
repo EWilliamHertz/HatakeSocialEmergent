@@ -212,6 +212,12 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
     setSearchResults([]);
     setSearchError('');
     
+    // Scryfall requires a User-Agent header
+    const headers = {
+      'User-Agent': 'HatakeSocial/1.0',
+      'Accept': 'application/json',
+    };
+    
     try {
       if (searchGame === 'mtg') {
         // Magic: The Gathering search
@@ -223,7 +229,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
           try {
             const directUrl = `${SCRYFALL_API}/cards/${setCodeQuery.toLowerCase().trim()}/${collectorNumQuery.trim()}`;
             console.log('Trying direct lookup:', directUrl);
-            const response = await fetch(directUrl);
+            const response = await fetch(directUrl, { headers });
             console.log('Direct lookup response:', response.status);
             if (response.ok) {
               const card = await response.json();
@@ -283,7 +289,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         console.log('MTG Search URL:', searchUrl);
         setSearchError(`Searching: ${query}`);
         
-        const response = await fetch(searchUrl);
+        const response = await fetch(searchUrl, { headers });
         console.log('MTG search response status:', response.status);
         setSearchError(`Response: ${response.status}`);
         
