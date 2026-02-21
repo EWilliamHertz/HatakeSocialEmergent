@@ -15,9 +15,10 @@ const logoImage = require('../../assets/icon.png');
 interface ProfileScreenProps {
   user: any;
   onLogout: () => void;
+  onOpenMenu?: () => void;
 }
 
-export default function ProfileScreen({ user, onLogout }: ProfileScreenProps) {
+export default function ProfileScreen({ user, onLogout, onOpenMenu }: ProfileScreenProps) {
   const handleLogout = () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('auth_token');
@@ -28,6 +29,18 @@ export default function ProfileScreen({ user, onLogout }: ProfileScreenProps) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header with menu */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity 
+          style={styles.menuButton}
+          onPress={onOpenMenu}
+        >
+          <Ionicons name="menu" size={26} color="#1F2937" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <View style={styles.menuButton} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           {user.picture ? (
