@@ -165,19 +165,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#3B82F6',
-    justifyContent: 'center',
-    alignItems: 'center',
+  logoImage: {
+    width: 100,
+    height: 100,
     marginBottom: 16,
   },
-  logoText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#fff',
   },
   title: {
     fontSize: 28,
