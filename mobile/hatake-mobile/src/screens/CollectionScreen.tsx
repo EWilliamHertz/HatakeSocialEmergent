@@ -672,20 +672,24 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
           'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-          item_id: detailCard.item_id || detailCard.id,
+          id: detailCard.id, // Use 'id' as that's what the API expects
           quantity: parseInt(editingQuantity) || 1,
           finish: editingFinish,
           condition: editingCondition,
         }),
       });
-      if (response.ok) {
+      const result = await response.json();
+      if (response.ok && result.success) {
         fetchCollection();
         setDetailCard(null);
+        if (Platform.OS === 'web') {
+          alert('Card updated successfully');
+        }
       } else {
-        const err = await response.text();
-        Alert.alert('Error', 'Failed to update card');
+        Alert.alert('Error', result.error || 'Failed to update card');
       }
     } catch (err) {
+      console.error('Update error:', err);
       Alert.alert('Error', 'Failed to update card');
     } finally {
       setSavingEdit(false);
