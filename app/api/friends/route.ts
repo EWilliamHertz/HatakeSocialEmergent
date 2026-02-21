@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser, getUserFromRequest } from '@/lib/auth';
+import { sendFriendRequestEmail } from '@/lib/email';
 import sql from '@/lib/db';
 
 export async function GET(request: NextRequest) {
@@ -52,6 +53,20 @@ export async function POST(request: NextRequest) {
         VALUES (${user.user_id}, ${friendId}, 'pending')
         ON CONFLICT (user_id, friend_id) DO NOTHING
       `;
+      
+      // Send email notification to recipient (don't block)
+      const recipientResult = await sql`
+        SELECT email, name FROM users WHERE user_id = ${friendId}
+      `;
+      if (recipientResult.length > 0) {
+        const recipient = recipientResult[0];
+        sendFriendRequestEmail(
+          recipient.email,
+          recipient.name,
+          user.name || 'Someone',
+          user.picture || null
+        ).catch(err => console.error('Failed to send friend request email:', err));
+      }
     } else if (action === 'accept') {
       // Accept friend request
       await sql`
