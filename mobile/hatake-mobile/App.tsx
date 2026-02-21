@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StyleSheet, View, ActivityIndicator, Text, Alert, Platform } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text, Alert, Platform, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import LoginScreen from './src/screens/LoginScreen';
@@ -11,6 +11,9 @@ import FeedScreen from './src/screens/FeedScreen';
 import CollectionScreen from './src/screens/CollectionScreen';
 import MarketplaceScreen from './src/screens/MarketplaceScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import FriendsScreen from './src/screens/FriendsScreen';
+import MessagesScreen from './src/screens/MessagesScreen';
+import VideoCallScreen from './src/screens/VideoCallScreen';
 import DrawerMenu from './src/components/DrawerMenu';
 import { API_URL } from './src/config';
 
