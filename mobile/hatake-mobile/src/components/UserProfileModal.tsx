@@ -95,10 +95,70 @@ export default function UserProfileModal({
     }
   };
 
+  const fetchUserCollection = async () => {
+    try {
+      setLoadingCollection(true);
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      
+      const response = await fetch(`${API_URL}/api/users/${userId}/collection`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && Array.isArray(data.items)) {
+          setCollection(data.items);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch collection:', err);
+    } finally {
+      setLoadingCollection(false);
+    }
+  };
+
+  const handleViewCollection = () => {
+    setShowCollection(true);
+    if (collection.length === 0) {
+      fetchUserCollection();
+    }
+  };
+
+  const getCardImage = (item: CollectionItem): string => {
+    const cardData = item.card_data;
+    if (!cardData) return '';
+    
+    // MTG cards
+    if (item.game === 'mtg') {
+      return cardData.image_uris?.normal || cardData.card_faces?.[0]?.image_uris?.normal || '';
+    }
+    
+    // Pokemon cards
+    if (cardData.image) {
+      return `${cardData.image}/high.webp`;
+    }
+    return cardData.images?.large || cardData.images?.small || '';
+  };
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+
+  const renderCollectionItem = ({ item }: { item: CollectionItem }) => {
+    const imageUrl = getCardImage(item);
+    return (
+      <View style={styles.collectionCard}>
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} style={styles.collectionCardImage} />
+        ) : (
+          <View style={styles.collectionCardPlaceholder}>
+            <Ionicons name="image-outline" size={24} color="#9CA3AF" />
+          </View>
+        )}
+      </View>
+    );
   };
 
   return (
@@ -111,10 +171,18 @@ export default function UserProfileModal({
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+          <TouchableOpacity onPress={() => {
+            if (showCollection) {
+              setShowCollection(false);
+            } else {
+              onClose();
+            }
+          }} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>
+            {showCollection ? `${profile?.name}'s Collection` : 'Profile'}
+          </Text>
           <View style={styles.headerRight} />
         </View>
 
@@ -126,6 +194,28 @@ export default function UserProfileModal({
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
             <Text style={styles.errorText}>Could not load profile</Text>
+          </View>
+        ) : showCollection ? (
+          /* Collection View */
+          <View style={styles.collectionContainer}>
+            {loadingCollection ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#3B82F6" />
+              </View>
+            ) : collection.length === 0 ? (
+              <View style={styles.emptySection}>
+                <Ionicons name="albums-outline" size={48} color="#D1D5DB" />
+                <Text style={styles.emptySectionText}>No cards in collection</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={collection}
+                renderItem={renderCollectionItem}
+                keyExtractor={(item) => String(item.id)}
+                numColumns={3}
+                contentContainerStyle={styles.collectionGrid}
+              />
+            )}
           </View>
         ) : (
           <ScrollView style={styles.content}>
