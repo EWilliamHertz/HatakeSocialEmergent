@@ -661,6 +661,8 @@ export default function CollectionPage() {
     setImportCards([]);
     setImportStatus('idle');
     setImportResult(null);
+    setOriginalCsvContent('');
+    setTotalCardsToImport(0);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
