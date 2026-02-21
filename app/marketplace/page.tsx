@@ -454,7 +454,7 @@ export default function MarketplacePage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{listing.condition}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-green-600">
-                      ${Number(listing.price).toFixed(2)}
+                      €{Number(listing.price).toFixed(2)}
                     </span>
                     {listing.user_id !== currentUserId && (
                       <button
