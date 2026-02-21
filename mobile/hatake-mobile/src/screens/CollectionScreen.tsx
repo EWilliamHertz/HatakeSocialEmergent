@@ -869,26 +869,26 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
 
       {/* Card Detail Modal */}
       <Modal
-        visible={selectedCard !== null}
+        visible={detailCard !== null}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setSelectedCard(null)}
+        onRequestClose={() => setDetailCard(null)}
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Card Details</Text>
-            <TouchableOpacity onPress={() => setSelectedCard(null)}>
+            <TouchableOpacity onPress={() => setDetailCard(null)}>
               <Ionicons name="close" size={28} color="#1F2937" />
             </TouchableOpacity>
           </View>
 
-          {selectedCard && (
+          {detailCard && (
             <ScrollView style={styles.modalContent}>
               {/* Card Image */}
               <View style={styles.detailImageContainer}>
-                {getCardImage(selectedCard) ? (
+                {getCardImage(detailCard) ? (
                   <Image 
-                    source={{ uri: getCardImage(selectedCard)! }} 
+                    source={{ uri: getCardImage(detailCard)! }} 
                     style={styles.detailImage}
                     resizeMode="contain"
                   />
@@ -901,16 +901,16 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
 
               {/* Card Info */}
               <View style={styles.detailInfo}>
-                <Text style={styles.detailName}>{selectedCard.card_data?.name || 'Unknown Card'}</Text>
-                <Text style={styles.detailPrice}>{getDisplayPrice(selectedCard)}</Text>
+                <Text style={styles.detailName}>{detailCard.card_data?.name || 'Unknown Card'}</Text>
+                <Text style={styles.detailPrice}>{getDisplayPrice(detailCard)}</Text>
                 <Text style={styles.detailMeta}>
-                  {selectedCard.game === 'mtg' ? 'Magic: The Gathering' : 'Pokémon TCG'}
+                  {detailCard.game === 'mtg' ? 'Magic: The Gathering' : 'Pokémon TCG'}
                 </Text>
                 <Text style={styles.detailMeta}>
-                  Set: {selectedCard.card_data?.set?.name || selectedCard.card_data?.set_name || 'Unknown'}
+                  Set: {detailCard.card_data?.set?.name || detailCard.card_data?.set_name || 'Unknown'}
                 </Text>
-                {selectedCard.card_data?.rarity && (
-                  <Text style={styles.detailMeta}>Rarity: {selectedCard.card_data.rarity}</Text>
+                {detailCard.card_data?.rarity && (
+                  <Text style={styles.detailMeta}>Rarity: {detailCard.card_data.rarity}</Text>
                 )}
               </View>
 
@@ -947,7 +947,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                 <View style={styles.editRow}>
                   <Text style={styles.editLabel}>Finish</Text>
                   <View style={styles.finishOptions}>
-                    {(selectedCard.game === 'mtg' ? getMagicFinishes() : getPokemonFinishes()).map((f) => (
+                    {(detailCard.game === 'mtg' ? getMagicFinishes() : getPokemonFinishes()).map((f) => (
                       <TouchableOpacity
                         key={f}
                         style={[styles.finishOption, editingFinish === f && styles.finishOptionActive]}
@@ -999,7 +999,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
 
                 <TouchableOpacity
                   style={styles.deleteButton}
-                  onPress={() => deleteCard(selectedCard)}
+                  onPress={() => deleteCard(detailCard)}
                 >
                   <Ionicons name="trash-outline" size={20} color="#fff" />
                   <Text style={styles.deleteButtonText}>Delete Card</Text>
