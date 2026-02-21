@@ -16,6 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
 
+interface Reaction {
+  emoji: string;
+  count: number;
+  userReacted: boolean;
+}
+
 interface Post {
   post_id?: string;
   id?: number | string;
@@ -35,7 +41,10 @@ interface Post {
   created_at: string;
   liked?: boolean;        // API returns 'liked'
   is_liked?: boolean;     // Legacy field
+  reactions?: Reaction[]; // Emoji reactions
 }
+
+const EMOJI_OPTIONS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
 
 interface FeedScreenProps {
   user: any;
@@ -48,6 +57,7 @@ export default function FeedScreen({ user, token, onOpenMenu }: FeedScreenProps)
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'friends' | 'groups' | 'public'>('public');
+  const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const [newPostText, setNewPostText] = useState('');
   const [posting, setPosting] = useState(false);
 
