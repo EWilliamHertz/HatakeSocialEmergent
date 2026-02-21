@@ -51,16 +51,7 @@
           "photosPermission": "Allow Hatake.Social to access your photos to import card images."
         }
       ],
-      "expo-secure-store",
-      "@livekit/react-native-webrtc",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#3B82F6",
-          "sounds": []
-        }
-      ]
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {
