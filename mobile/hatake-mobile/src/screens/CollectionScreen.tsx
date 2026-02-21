@@ -79,10 +79,25 @@ const POKEMON_SET_ALIASES: Record<string, string> = {
   'xyp': 'xyp',
 };
 
-// Map a set code from user input to TCGdex format
+// Map a set code from user input to TCGdex format (case-insensitive)
 function mapPokemonSetCode(setCode: string): string {
   const code = setCode.toLowerCase().replace(/[^a-z0-9]/g, '');
   return POKEMON_SET_ALIASES[code] || code;
+}
+
+// Normalize collector number - remove leading zeros for TCGdex lookup
+// but try both formats (with and without leading zeros)
+function normalizeCollectorNumber(num: string): string[] {
+  const trimmed = num.trim();
+  const withoutLeadingZeros = trimmed.replace(/^0+/, '') || '0';
+  const withLeadingZeros = trimmed.padStart(3, '0');
+  
+  // Return unique values to try
+  const variants = [trimmed, withoutLeadingZeros];
+  if (withLeadingZeros !== trimmed && withLeadingZeros !== withoutLeadingZeros) {
+    variants.push(withLeadingZeros);
+  }
+  return [...new Set(variants)];
 }
 
 interface CollectionItem {
