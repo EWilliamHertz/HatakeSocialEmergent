@@ -52,16 +52,41 @@ interface MarketplaceScreenProps {
 }
 
 export default function MarketplaceScreen({ user, token, onOpenMenu }: MarketplaceScreenProps) {
+  const [activeTab, setActiveTab] = useState<'cards' | 'hatake'>('cards');
   const [listings, setListings] = useState<Listing[]>([]);
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shopLoading, setShopLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'mtg' | 'pokemon' | 'mine'>('all');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchListings();
-  }, [filter]);
+    if (activeTab === 'cards') {
+      fetchListings();
+    } else {
+      fetchShopProducts();
+    }
+  }, [filter, activeTab]);
+
+  const fetchShopProducts = async () => {
+    setShopLoading(true);
+    try {
+      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+      const response = await fetch(`${API_URL}/api/shop`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setShopProducts(data.products || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch shop products:', err);
+    } finally {
+      setShopLoading(false);
+    }
+  };
 
   const fetchListings = async () => {
     setError('');
