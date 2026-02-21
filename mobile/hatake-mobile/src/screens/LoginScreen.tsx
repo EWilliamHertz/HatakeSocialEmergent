@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,112 +7,143 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const API_URL = 'https://www.hatake.eu';
 const logoImage = require('../../assets/icon.png');
 
-export default function LoginScreen() {
-  const [email, setEmail] = useState('test@test.com');
-  const [password, setPassword] = useState('password');
-  const [status, setStatus] = useState('Ready to login');
+interface User {
+  user_id: string;
+  email: string;
+  name: string;
+  picture?: string;
+}
+
+interface LoginScreenProps {
+  onLoginSuccess: (user: User, token: string) => void;
+}
+
+export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegister, setIsRegister] = useState(false);
+  const [name, setName] = useState('');
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
+
+  // Check for existing session on mount
+  useEffect(() => {
+    checkExistingSession();
+  }, []);
+
+  const checkExistingSession = async () => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const token = localStorage.getItem('auth_token');
+        const userData = localStorage.getItem('user_data');
+        if (token && userData) {
+          const user = JSON.parse(userData);
+          onLoginSuccess(user, token);
+        }
+      }
+    } catch (e) {
+      // No stored session
+    }
+  };
 
   const doLogin = async () => {
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+    if (isRegister && !name) {
+      setError('Please enter your name');
+      return;
+    }
+
     setLoading(true);
-    setStatus('Starting login...');
+    setError('');
+    setStatus(isRegister ? 'Creating account...' : 'Signing in...');
     
     try {
-      setStatus('Sending request to ' + API_URL + '/api/auth/login');
-      
-      const response = await fetch(API_URL + '/api/auth/login', {
+      const endpoint = isRegister ? '/api/auth/signup' : '/api/auth/login';
+      const body = isRegister 
+        ? { email, password, name }
+        : { email, password };
+
+      const response = await fetch(API_URL + endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
       
-      setStatus('Got response, status: ' + response.status);
+      const data = await response.json();
       
-      const text = await response.text();
-      setStatus('Response text length: ' + text.length);
-      
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        setStatus('Failed to parse JSON: ' + text.substring(0, 100));
-        setLoading(false);
-        return;
-      }
-      
-      if (data.success) {
-        setStatus('LOGIN SUCCESS! User: ' + data.user.email);
-        setUserData(data.user);
-        setLoggedIn(true);
-        // Store token
+      if (data.success && data.token) {
+        // Store credentials
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('auth_token', data.token);
           localStorage.setItem('user_data', JSON.stringify(data.user));
         }
+        setStatus('Success!');
+        onLoginSuccess(data.user, data.token);
       } else {
-        setStatus('Login failed: ' + (data.error || 'Unknown error'));
+        setError(data.error || 'Authentication failed');
+        setStatus('');
       }
     } catch (err: any) {
-      setStatus('ERROR: ' + (err.message || String(err)));
+      setError('Network error: ' + (err.message || String(err)));
+      setStatus('');
     }
     
     setLoading(false);
   };
 
-  if (loggedIn && userData) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <Image source={logoImage} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.title}>Welcome!</Text>
-          <Text style={styles.successText}>Logged in as: {userData.email}</Text>
-          <Text style={styles.successText}>Name: {userData.name}</Text>
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={() => {
-              setLoggedIn(false);
-              setUserData(null);
-              setStatus('Logged out');
-              if (typeof localStorage !== 'undefined') {
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_data');
-              }
-            }}
-          >
-            <Text style={styles.buttonText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <Image source={logoImage} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>Hatake.Social</Text>
         <Text style={styles.subtitle}>TCG Trading Platform</Text>
         
-        <View style={styles.statusBox}>
-          <Text style={styles.statusText}>{status}</Text>
-        </View>
+        <Text style={styles.formTitle}>
+          {isRegister ? 'Create Account' : 'Welcome Back'}
+        </Text>
+
+        {error ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
+        
+        {status ? (
+          <View style={styles.statusBox}>
+            <Text style={styles.statusText}>{status}</Text>
+          </View>
+        ) : null}
+
+        {isRegister && (
+          <>
+            <Text style={styles.label}>Name</Text>
+            <TextInput
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
+              placeholder="Your name"
+              autoCapitalize="words"
+            />
+          </>
+        )}
         
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
           value={email}
           onChangeText={setEmail}
-          placeholder="Email"
+          placeholder="your@email.com"
           autoCapitalize="none"
           keyboardType="email-address"
         />
@@ -134,12 +165,23 @@ export default function LoginScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={styles.buttonText}>
+              {isRegister ? 'Sign Up' : 'Sign In'}
+            </Text>
           )}
         </TouchableOpacity>
-        
-        <Text style={styles.apiText}>API: {API_URL}</Text>
-      </View>
+
+        <TouchableOpacity
+          style={styles.switchButton}
+          onPress={() => setIsRegister(!isRegister)}
+        >
+          <Text style={styles.switchText}>
+            {isRegister
+              ? 'Already have an account? Sign In'
+              : "Don't have an account? Sign Up"}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -149,8 +191,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     padding: 24,
     justifyContent: 'center',
   },
@@ -170,17 +212,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: '#6B7280',
-    marginBottom: 24,
+    marginBottom: 32,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#1F2937',
+    marginBottom: 20,
+  },
+  errorBox: {
+    backgroundColor: '#FEE2E2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#DC2626',
+    textAlign: 'center',
   },
   statusBox: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#DBEAFE',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
   },
   statusText: {
-    fontSize: 12,
-    color: '#374151',
+    color: '#2563EB',
     textAlign: 'center',
   },
   label: {
@@ -192,7 +250,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#F3F4F6',
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
     fontSize: 16,
     marginBottom: 12,
   },
@@ -211,23 +269,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  apiText: {
-    marginTop: 24,
-    fontSize: 10,
-    color: '#9CA3AF',
-    textAlign: 'center',
-  },
-  successText: {
-    fontSize: 16,
-    color: '#059669',
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  logoutButton: {
-    backgroundColor: '#EF4444',
-    borderRadius: 8,
-    padding: 16,
+  switchButton: {
+    marginTop: 16,
     alignItems: 'center',
-    marginTop: 24,
+  },
+  switchText: {
+    color: '#3B82F6',
+    fontSize: 14,
   },
 });
