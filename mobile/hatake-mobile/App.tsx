@@ -507,8 +507,9 @@ export default function App() {
                   onTradeCreated={() => {
                     setShowCreateTrade(false);
                     setShowTrades(true);
-                }}
-              />
+                  }}
+                />
+              </View>
             </Modal>
 
             {/* Settings Modal */}
@@ -518,14 +519,16 @@ export default function App() {
               presentationStyle="fullScreen"
               onRequestClose={() => setShowSettings(false)}
             >
-              <SettingsScreen
-                user={user}
-                token={token}
-                onClose={() => setShowSettings(false)}
-                onLogout={handleLogout}
-                messengerWidgetEnabled={messengerWidgetEnabled}
-                onToggleMessengerWidget={() => setMessengerWidgetEnabled(!messengerWidgetEnabled)}
-              />
+              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                <SettingsScreen
+                  user={user}
+                  token={token}
+                  onClose={() => setShowSettings(false)}
+                  onLogout={handleLogout}
+                  messengerWidgetEnabled={messengerWidgetEnabled}
+                  onToggleMessengerWidget={() => setMessengerWidgetEnabled(!messengerWidgetEnabled)}
+                />
+              </View>
             </Modal>
 
             {/* Video Call Modal */}
