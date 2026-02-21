@@ -26,12 +26,7 @@ async function ensureTable() {
 // GET - Poll for incoming signals
 export async function GET(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
@@ -91,12 +86,7 @@ export async function GET(request: NextRequest) {
 // POST - Send a signal
 export async function POST(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
@@ -146,12 +136,7 @@ export async function POST(request: NextRequest) {
 // DELETE - End a call / clear signals
 export async function DELETE(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
