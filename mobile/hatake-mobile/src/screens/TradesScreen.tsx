@@ -416,7 +416,8 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: '#F9FAFB',
-    ...(Platform.OS === 'web' ? { paddingTop: 20 } : {}),
+    width: '100%',
+    height: '100%',
   },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
