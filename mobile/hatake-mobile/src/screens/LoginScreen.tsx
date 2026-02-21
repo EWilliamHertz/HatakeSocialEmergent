@@ -192,7 +192,7 @@ export default function LoginScreen({ navigation }: any) {
 
           {/* Debug info */}
           <Text style={styles.debugText}>
-            API: https://trading-cards-6.preview.emergentagent.com
+            API: https://www.hatake.eu
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
