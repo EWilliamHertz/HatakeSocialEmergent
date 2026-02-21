@@ -286,7 +286,7 @@ export default function MessagesScreen({
   // Chat view
   if (selectedConversation) {
     return (
-      <SafeAreaView style={styles.container}>
+      <Container style={styles.container}>
         {/* Chat Header */}
         <View style={styles.chatHeader}>
           <TouchableOpacity 
@@ -384,13 +384,13 @@ export default function MessagesScreen({
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </Container>
     );
   }
 
   // Conversations list view
   return (
-    <SafeAreaView style={styles.container}>
+    <Container style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
@@ -424,7 +424,7 @@ export default function MessagesScreen({
           }
         />
       )}
-    </SafeAreaView>
+    </Container>
   );
 }
 
