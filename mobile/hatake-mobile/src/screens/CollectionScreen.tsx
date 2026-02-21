@@ -757,6 +757,162 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
     return ['Normal', 'Foil', 'Etched Foil', 'Gilded Foil'];
   };
 
+  // CSV Import functionality
+  const parseCSV = (text: string): { setCode: string; collectorNumber: string; quantity: number }[] => {
+    const lines = text.trim().split('\n');
+    const results: { setCode: string; collectorNumber: string; quantity: number }[] = [];
+    
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      
+      // Try different CSV formats
+      // Format 1: "set_code,collector_number,quantity" (e.g., "sv09,123,2")
+      // Format 2: "quantity set_code collector_number" (e.g., "2 sv09 123")
+      // Format 3: "set_code collector_number quantity" (e.g., "sv09 123 2")
+      
+      let parts = line.split(',').map(p => p.trim().replace(/"/g, ''));
+      
+      if (parts.length >= 2) {
+        // CSV format with commas
+        const setCode = parts[0].toLowerCase();
+        const collectorNumber = parts[1];
+        const quantity = parts[2] ? parseInt(parts[2]) || 1 : 1;
+        
+        if (setCode && collectorNumber) {
+          results.push({ setCode, collectorNumber, quantity });
+        }
+      } else {
+        // Space-separated format
+        parts = line.split(/\s+/).map(p => p.trim());
+        if (parts.length >= 2) {
+          // Check if first part is a number (quantity first format)
+          const firstNum = parseInt(parts[0]);
+          if (!isNaN(firstNum) && parts.length >= 3) {
+            // Format: quantity set_code collector_number
+            results.push({
+              setCode: parts[1].toLowerCase(),
+              collectorNumber: parts[2],
+              quantity: firstNum
+            });
+          } else {
+            // Format: set_code collector_number [quantity]
+            results.push({
+              setCode: parts[0].toLowerCase(),
+              collectorNumber: parts[1],
+              quantity: parts[2] ? parseInt(parts[2]) || 1 : 1
+            });
+          }
+        }
+      }
+    }
+    
+    return results;
+  };
+
+  const importFromCSV = async () => {
+    if (!csvText.trim()) {
+      Alert.alert('Error', 'Please paste your card list');
+      return;
+    }
+    
+    const cards = parseCSV(csvText);
+    if (cards.length === 0) {
+      Alert.alert('Error', 'Could not parse any cards from the input');
+      return;
+    }
+    
+    setImporting(true);
+    setImportProgress({ current: 0, total: cards.length, success: 0, failed: 0 });
+    setImportLog([]);
+    
+    const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+    let successCount = 0;
+    let failedCount = 0;
+    const logs: string[] = [];
+    
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      setImportProgress(prev => ({ ...prev, current: i + 1 }));
+      
+      try {
+        let cardData: any = null;
+        let game = csvGame;
+        
+        // Map set code using aliases if needed (for Pokemon)
+        const mappedSetCode = csvGame === 'pokemon' 
+          ? (POKEMON_SET_ALIASES[card.setCode] || card.setCode)
+          : card.setCode;
+        
+        if (csvGame === 'mtg') {
+          // Search Scryfall by set and collector number
+          const url = `${SCRYFALL_API}/cards/${mappedSetCode}/${card.collectorNumber}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            cardData = await res.json();
+          }
+        } else {
+          // Search TCGdex by set and number
+          const url = `${TCGDEX_API}/sets/${mappedSetCode}/${card.collectorNumber}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            cardData = await res.json();
+          }
+        }
+        
+        if (!cardData) {
+          logs.push(`❌ ${card.setCode}/${card.collectorNumber}: Not found`);
+          failedCount++;
+          continue;
+        }
+        
+        // Add to collection
+        const response = await fetch(`${API_URL}/api/collection`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            card_id: cardData.id,
+            game: csvGame,
+            quantity: card.quantity,
+            condition: 'Near Mint',
+            finish: 'Normal',
+            card_data: cardData,
+          }),
+        });
+        
+        if (response.ok) {
+          logs.push(`✅ ${cardData.name || card.collectorNumber} x${card.quantity}`);
+          successCount++;
+        } else {
+          logs.push(`❌ ${card.setCode}/${card.collectorNumber}: Failed to add`);
+          failedCount++;
+        }
+      } catch (err) {
+        logs.push(`❌ ${card.setCode}/${card.collectorNumber}: Error`);
+        failedCount++;
+      }
+      
+      setImportProgress(prev => ({ ...prev, success: successCount, failed: failedCount }));
+      setImportLog([...logs]);
+      
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    setImporting(false);
+    
+    if (successCount > 0) {
+      fetchCollection();
+    }
+    
+    Alert.alert(
+      'Import Complete',
+      `Successfully imported ${successCount} cards.\n${failedCount} cards failed.`
+    );
+  };
+
   // Get price from card data - handles both MTG and Pokemon formats
   // All prices returned in EUR
   const getCardPrice = (item: CollectionItem): number => {
