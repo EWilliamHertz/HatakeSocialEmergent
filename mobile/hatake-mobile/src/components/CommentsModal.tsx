@@ -449,6 +449,56 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
   },
+  actionLink: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
+  reactionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 6,
+    marginLeft: 8,
+    gap: 6,
+  },
+  reactionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  reactionBadgeActive: {
+    backgroundColor: '#DBEAFE',
+  },
+  reactionEmoji: {
+    fontSize: 12,
+  },
+  reactionCount: {
+    fontSize: 11,
+    color: '#6B7280',
+  },
+  emojiPicker: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    paddingVertical: 8,
+    marginTop: 4,
+    marginLeft: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    gap: 4,
+    paddingHorizontal: 8,
+  },
+  emojiOption: {
+    padding: 6,
+  },
+  emojiText: {
+    fontSize: 18,
+  },
   replyIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
