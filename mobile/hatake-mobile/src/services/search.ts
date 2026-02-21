@@ -1,7 +1,6 @@
-import axios from 'axios';
 import { SCRYFALL_API, TCGDEX_API } from './config';
-import api from './api';
-import { API_ENDPOINTS } from './config';
+import { API_ENDPOINTS, API_BASE_URL } from './config';
+import { getToken } from './api';
 
 export interface CardSearchResult {
   id: string;
@@ -27,16 +26,31 @@ export interface CardSearchResult {
   game: 'mtg' | 'pokemon';
 }
 
+// Helper to make API calls with fetch
+async function fetchJson(url: string, options?: RequestInit): Promise<any> {
+  const response = await fetch(url, options);
+  return response.json();
+}
+
 class SearchService {
   // Search cards using the backend API (recommended)
   async searchCards(query: string, game: 'mtg' | 'pokemon' = 'mtg'): Promise<CardSearchResult[]> {
     try {
-      const response = await api.get(API_ENDPOINTS.SEARCH, {
-        params: { q: query, game }
-      });
+      const token = await getToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       
-      if (response.data.success) {
-        return response.data.results.map((card: any) => ({
+      const response = await fetchJson(
+        `${API_BASE_URL}${API_ENDPOINTS.SEARCH}?q=${encodeURIComponent(query)}&game=${game}`,
+        { headers }
+      );
+      
+      if (response.success) {
+        return response.results.map((card: any) => ({
           ...card,
           game
         }));
@@ -51,11 +65,11 @@ class SearchService {
   // Search MTG cards directly from Scryfall
   async searchMTG(query: string): Promise<CardSearchResult[]> {
     try {
-      const response = await axios.get(`${SCRYFALL_API}/cards/search`, {
-        params: { q: query }
-      });
+      const response = await fetchJson(
+        `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(query)}`
+      );
       
-      return response.data.data.map((card: any) => ({
+      return (response.data || []).map((card: any) => ({
         id: card.id,
         name: card.name,
         image_uris: card.image_uris || card.card_faces?.[0]?.image_uris,
@@ -76,11 +90,11 @@ class SearchService {
   // Search Pokemon cards directly from TCGdex
   async searchPokemon(query: string): Promise<CardSearchResult[]> {
     try {
-      const response = await axios.get(`${TCGDEX_API}/cards`, {
-        params: { name: query }
-      });
+      const response = await fetchJson(
+        `${TCGDEX_API}/cards?name=${encodeURIComponent(query)}`
+      );
       
-      const cards = Array.isArray(response.data) ? response.data : [response.data];
+      const cards = Array.isArray(response) ? response : [response];
       
       return cards.filter(Boolean).map((card: any) => ({
         id: card.id,
@@ -104,8 +118,7 @@ class SearchService {
   async getCardById(id: string, game: 'mtg' | 'pokemon'): Promise<CardSearchResult | null> {
     try {
       if (game === 'mtg') {
-        const response = await axios.get(`${SCRYFALL_API}/cards/${id}`);
-        const card = response.data;
+        const card = await fetchJson(`${SCRYFALL_API}/cards/${id}`);
         return {
           id: card.id,
           name: card.name,
@@ -119,8 +132,7 @@ class SearchService {
           game: 'mtg'
         };
       } else {
-        const response = await axios.get(`${TCGDEX_API}/cards/${id}`);
-        const card = response.data;
+        const card = await fetchJson(`${TCGDEX_API}/cards/${id}`);
         return {
           id: card.id,
           name: card.name,
