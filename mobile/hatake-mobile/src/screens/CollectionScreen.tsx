@@ -178,6 +178,14 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
+  // CSV Import state
+  const [showCsvModal, setShowCsvModal] = useState(false);
+  const [csvText, setCsvText] = useState('');
+  const [csvGame, setCsvGame] = useState<'mtg' | 'pokemon'>('mtg');
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0, success: 0, failed: 0 });
+  const [importLog, setImportLog] = useState<string[]>([]);
+
   useEffect(() => {
     fetchCollection();
   }, [filter]);
