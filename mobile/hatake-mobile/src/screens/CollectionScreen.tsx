@@ -445,7 +445,6 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         } else {
           Alert.alert('No Results', 'No cards found. Try a different search.');
         }
-        }
       }
     } catch (err) {
       console.error('Search failed:', err);
