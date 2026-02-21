@@ -27,6 +27,46 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Latest Batch: Push Notifications & Trading Reputation (Current Session)
+
+1. **Push Notifications (Mobile)** ✅
+   - Expo Push Notifications integration
+   - Automatic push token registration on login
+   - Notifications for friend requests, messages, trades
+   - Android notification channel configured
+   - Backend sends push via Expo Push API
+   - Push token management endpoint (`/api/push-tokens`)
+
+2. **Trading Reputation System** ✅
+   - New `trade_ratings` database table
+   - Rate completed trades (1-5 stars + comment)
+   - Reputation screen with stats (avg rating, distribution)
+   - View recent reviews
+   - New endpoint (`/api/reputation`)
+   - Push notifications when rated
+
+3. **Wishlists (Mobile)** ✅
+   - View all wishlists
+   - Create new wishlists (public/private)
+   - View wishlist contents
+   - Delete wishlists
+   - Backend APIs updated for Bearer auth
+
+4. **Create Trades (Mobile)** ✅
+   - 3-step trade creation flow
+   - Select recipient (friends or search)
+   - Select cards from collection
+   - Review and send trade offer
+   - Optional cash addition
+   - Push notification to recipient
+
+5. **Backend Push Notification Integration** ✅
+   - Friend requests trigger push
+   - New messages trigger push  
+   - Trade offers trigger push
+   - Trade status updates trigger push
+   - Rating submissions trigger push
+
 ### Batch 2: Full Mobile Feature Parity
 
 1. **Deck Builder (Mobile)** ✅
