@@ -228,7 +228,7 @@ export default function SettingsScreen({ user, token, onClose, onLogout }: Setti
                   numberOfLines={3}
                 />
                 
-                <Text style={styles.inputLabel}>Swish Number (SE)</Text>
+                <Text style={styles.inputLabel}>Swish Number</Text>
                 <TextInput
                   style={styles.input}
                   value={paymentSwish}
@@ -236,13 +236,52 @@ export default function SettingsScreen({ user, token, onClose, onLogout }: Setti
                   placeholder="070-XXX XX XX"
                   keyboardType="phone-pad"
                 />
+
+                <Text style={styles.sectionDivider}>Swedish Bank Account</Text>
                 
-                <Text style={styles.inputLabel}>Bank Account / IBAN</Text>
+                <View style={styles.inputRow}>
+                  <View style={styles.inputHalf}>
+                    <Text style={styles.inputLabel}>Clearing</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={paymentClearing}
+                      onChangeText={setPaymentClearing}
+                      placeholder="XXXX"
+                      keyboardType="number-pad"
+                      maxLength={4}
+                    />
+                  </View>
+                  <View style={styles.inputFlex}>
+                    <Text style={styles.inputLabel}>Kontonummer</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={paymentKontonummer}
+                      onChangeText={setPaymentKontonummer}
+                      placeholder="XXX XXX XXXX"
+                      keyboardType="number-pad"
+                    />
+                  </View>
+                </View>
+
+                <Text style={styles.sectionDivider}>International Transfer</Text>
+                
+                <Text style={styles.inputLabel}>IBAN</Text>
                 <TextInput
                   style={styles.input}
-                  value={paymentAccount}
-                  onChangeText={setPaymentAccount}
-                  placeholder="SEXX XXXX XXXX XXXX"
+                  value={paymentIban}
+                  onChangeText={setPaymentIban}
+                  placeholder="SE00 0000 0000 0000 0000 0000"
+                  autoCapitalize="characters"
+                />
+                
+                <Text style={styles.inputLabel}>BIC/SWIFT</Text>
+                <TextInput
+                  style={styles.input}
+                  value={paymentSwift}
+                  onChangeText={setPaymentSwift}
+                  placeholder="XXXXXXXX"
+                  autoCapitalize="characters"
+                  maxLength={11}
                 />
                 
                 <TouchableOpacity
