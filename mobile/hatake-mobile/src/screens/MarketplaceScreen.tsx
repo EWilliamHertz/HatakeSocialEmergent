@@ -32,6 +32,19 @@ interface Listing {
   created_at?: string;
 }
 
+interface ShopProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: string;
+  image: string;
+  gallery_images?: string[];
+  features: string[];
+  category: string;
+  stock: number;
+}
+
 interface MarketplaceScreenProps {
   user: any;
   token: string;
