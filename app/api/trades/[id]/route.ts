@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 
 export async function GET(
@@ -7,14 +7,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -70,18 +65,14 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const user = await getSessionUser(sessionToken);
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
-
     const { id } = await params;
-    const { action } = await request.json();
+    const body = await request.json();
+    const action = body.action || body.status; // Support both action and status
 
     // Verify user is involved in the trade
     const trades = await sql`
@@ -96,30 +87,33 @@ export async function PATCH(
 
     const trade = trades[0];
 
-    if (action === 'accept' && trade.receiver_id === user.user_id) {
+    // Handle different status updates
+    if ((action === 'accept' || action === 'accepted') && trade.receiver_id === user.user_id) {
       await sql`
         UPDATE trades
         SET status = 'accepted', updated_at = NOW()
         WHERE trade_id = ${id}
       `;
-    } else if (action === 'reject' && trade.receiver_id === user.user_id) {
+    } else if ((action === 'reject' || action === 'rejected' || action === 'decline' || action === 'declined') && trade.receiver_id === user.user_id) {
       await sql`
         UPDATE trades
-        SET status = 'rejected', updated_at = NOW()
+        SET status = 'declined', updated_at = NOW()
         WHERE trade_id = ${id}
       `;
-    } else if (action === 'complete' && trade.status === 'accepted') {
+    } else if ((action === 'complete' || action === 'completed') && trade.status === 'accepted') {
       await sql`
         UPDATE trades
         SET status = 'completed', updated_at = NOW()
         WHERE trade_id = ${id}
       `;
-    } else if (action === 'cancel' && trade.initiator_id === user.user_id && trade.status === 'pending') {
+    } else if ((action === 'cancel' || action === 'cancelled') && trade.initiator_id === user.user_id && trade.status === 'pending') {
       await sql`
         UPDATE trades
         SET status = 'cancelled', updated_at = NOW()
         WHERE trade_id = ${id}
       `;
+    } else {
+      return NextResponse.json({ error: 'Invalid action or not authorized' }, { status: 400 });
     }
 
     return NextResponse.json({ success: true });
