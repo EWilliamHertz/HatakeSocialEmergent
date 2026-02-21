@@ -23,7 +23,7 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: string;
+          let iconName: keyof typeof Ionicons.glyphMap;
 
           switch (route.name) {
             case 'Collection':
@@ -42,7 +42,7 @@ function MainTabs() {
               iconName = 'ellipse';
           }
 
-          return <Ionicons name={iconName as any} size={size} color={color} />;
+          return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#3B82F6',
         tabBarInactiveTintColor: '#9CA3AF',
@@ -73,7 +73,7 @@ export default function AppNavigator() {
   const { isAuthenticated, isLoading } = useStore();
 
   if (isLoading) {
-    return null; // Or a loading screen
+    return null;
   }
 
   return (
