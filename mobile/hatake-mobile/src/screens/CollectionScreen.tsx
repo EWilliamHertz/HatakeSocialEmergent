@@ -212,94 +212,66 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
     setSearchResults([]);
     setSearchError('');
     
-    // Scryfall requires a User-Agent header
-    const headers = {
-      'User-Agent': 'HatakeSocial/1.0',
-      'Accept': 'application/json',
-    };
-    
     try {
       if (searchGame === 'mtg') {
-        // Magic: The Gathering search
+        // Magic: The Gathering search - use backend proxy to avoid iOS network issues
         console.log('Starting MTG search...');
         console.log('Search params:', { name: searchQuery, set: setCodeQuery, num: collectorNumQuery });
         
+        const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
+        
+        // Build query params for our proxy
+        const params = new URLSearchParams();
+        
         // Direct lookup by set and collector number (most precise)
         if (setCodeQuery.trim() && collectorNumQuery.trim()) {
-          try {
-            const directUrl = `${SCRYFALL_API}/cards/${setCodeQuery.toLowerCase().trim()}/${collectorNumQuery.trim()}`;
-            console.log('Trying direct lookup:', directUrl);
-            const response = await fetch(directUrl, { headers });
-            console.log('Direct lookup response:', response.status);
-            if (response.ok) {
-              const card = await response.json();
-              console.log('Direct lookup success:', card.name);
-              // Prefer EUR prices for European users
-              const eurPrice = card.prices?.eur;
-              const usdPrice = card.prices?.usd;
-              const displayPrice = eurPrice ? `€${parseFloat(eurPrice).toFixed(2)}` : 
-                                   usdPrice ? `€${(parseFloat(usdPrice) * 0.92).toFixed(2)}` : 'N/A';
-              setSearchResults([{
-                id: card.id,
-                name: card.name,
-                image: card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '',
-                set_name: card.set_name,
-                set_code: card.set.toUpperCase(),
-                collector_number: card.collector_number,
-                price: displayPrice,
-                rarity: card.rarity,
-                game: 'mtg',
-                data: card,
-              }]);
-              setSearching(false);
-              return;
+          params.set('set', setCodeQuery.toLowerCase().trim());
+          params.set('cn', collectorNumQuery.trim());
+        } else {
+          // Build search query
+          const queryParts: string[] = [];
+          if (searchQuery.trim()) {
+            queryParts.push(searchQuery.trim());
+          }
+          if (setCodeQuery.trim()) {
+            queryParts.push(`set:${setCodeQuery.toLowerCase().trim()}`);
+          }
+          if (collectorNumQuery.trim()) {
+            queryParts.push(`cn:${collectorNumQuery.trim()}`);
+          }
+          
+          const query = queryParts.join(' ');
+          
+          if (!query) {
+            setSearchError('Please enter a card name, set code, or collector number');
+            if (Platform.OS === 'web') {
+              alert('Please enter a card name, set code, or collector number');
+            } else {
+              Alert.alert('Search', 'Please enter a card name, set code, or collector number');
             }
-          } catch (e: any) {
-            console.log('Direct lookup failed:', e);
-            setSearchError(`Direct lookup error: ${e.message}`);
+            setSearching(false);
+            return;
           }
+          
+          params.set('q', query);
         }
         
-        // Build search query - combine all provided fields
-        const queryParts: string[] = [];
-        if (searchQuery.trim()) {
-          queryParts.push(searchQuery.trim());
-        }
-        if (setCodeQuery.trim()) {
-          queryParts.push(`set:${setCodeQuery.toLowerCase().trim()}`);
-        }
-        if (collectorNumQuery.trim()) {
-          queryParts.push(`cn:${collectorNumQuery.trim()}`);
-        }
-        
-        const query = queryParts.join(' ');
-        
-        if (!query) {
-          setSearchError('Please enter a card name, set code, or collector number');
-          if (Platform.OS === 'web') {
-            alert('Please enter a card name, set code, or collector number');
-          } else {
-            Alert.alert('Search', 'Please enter a card name, set code, or collector number');
-          }
-          setSearching(false);
-          return;
-        }
-        
-        const searchUrl = `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released`;
+        const searchUrl = `${API_URL}/api/scryfall?${params.toString()}`;
         console.log('MTG Search URL:', searchUrl);
-        setSearchError(`Searching: ${query}`);
+        setSearchError(`Searching MTG...`);
         
-        const response = await fetch(searchUrl, { headers });
+        const response = await fetch(searchUrl, {
+          headers: { 'Authorization': `Bearer ${authToken}` },
+        });
         console.log('MTG search response status:', response.status);
-        setSearchError(`Response: ${response.status}`);
         
         if (response.ok) {
           const data = await response.json();
-          console.log('MTG search found:', data.data?.length || 0, 'cards');
-          setSearchError(`Found ${data.data?.length || 0} MTG cards`);
-          if (data.data && data.data.length > 0) {
-            setSearchResults(data.data.slice(0, 50).map((card: any) => {
-              // Prefer EUR prices for European users
+          console.log('MTG search found:', data.cards?.length || 0, 'cards');
+          setSearchError(`Found ${data.cards?.length || 0} MTG cards`);
+          
+          if (data.cards && data.cards.length > 0) {
+            setSearchResults(data.cards.slice(0, 50).map((card: any) => {
               const eurPrice = card.prices?.eur;
               const usdPrice = card.prices?.usd;
               const displayPrice = eurPrice ? `€${parseFloat(eurPrice).toFixed(2)}` : 
@@ -309,7 +281,7 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
                 name: card.name,
                 image: card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '',
                 set_name: card.set_name,
-                set_code: card.set.toUpperCase(),
+                set_code: card.set?.toUpperCase() || '',
                 collector_number: card.collector_number,
                 price: displayPrice,
                 rarity: card.rarity,
@@ -328,24 +300,13 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
             }
           }
         } else {
-          const errorText = await response.text();
-          console.log('Scryfall search failed:', response.status, errorText);
-          setSearchError(`Scryfall error: ${response.status}`);
-          // Scryfall returns 404 for no results
-          if (response.status === 404) {
-            setSearchError('No Magic cards found (404)');
-            if (Platform.OS === 'web') {
-              alert('No Magic cards found with that search.');
-            } else {
-              Alert.alert('No Results', 'No Magic cards found with that search.');
-            }
+          const errorData = await response.json().catch(() => ({}));
+          console.log('MTG search failed:', response.status, errorData);
+          setSearchError(`Search failed: ${errorData.error || response.status}`);
+          if (Platform.OS === 'web') {
+            alert('Search failed. Please try again.');
           } else {
-            setSearchError(`Search failed: ${response.status}`);
-            if (Platform.OS === 'web') {
-              alert('Search failed. Please try again.');
-            } else {
-              Alert.alert('Error', 'Search failed. Please try again.');
-            }
+            Alert.alert('Error', 'Search failed. Please try again.');
           }
         }
       } else {
