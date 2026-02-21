@@ -29,7 +29,7 @@ export async function GET(
 
     // Get collection count
     const collectionCount = await sql`
-      SELECT COUNT(*) as count FROM collections WHERE user_id = ${userId}
+      SELECT COUNT(*) as count FROM collection_items WHERE user_id = ${userId}
     `;
 
     // Get post count
