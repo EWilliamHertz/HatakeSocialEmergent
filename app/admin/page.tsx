@@ -336,6 +336,55 @@ export default function AdminPage() {
     }
   };
 
+  // Upload multiple gallery images at once
+  const handleMultipleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingImage(true);
+    const uploadedUrls: string[] = [];
+    
+    try {
+      // Upload all files sequentially
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (data.success && data.url) {
+          uploadedUrls.push(data.url);
+        }
+      }
+
+      // Update state with all uploaded images
+      if (uploadedUrls.length > 0) {
+        setGalleryImages(prev => [...prev, ...uploadedUrls]);
+        setEditingProduct(prev => prev ? {
+          ...prev,
+          gallery_images: [...(prev.gallery_images || []), ...uploadedUrls]
+        } : null);
+      }
+
+      if (uploadedUrls.length < files.length) {
+        alert(`Uploaded ${uploadedUrls.length} of ${files.length} images. Some failed.`);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload images');
+    } finally {
+      setUploadingImage(false);
+      // Reset the input
+      e.target.value = '';
+    }
+  };
+
   const removeGalleryImage = (index: number) => {
     setGalleryImages(prev => prev.filter((_, i) => i !== index));
     setEditingProduct(prev => prev ? {
