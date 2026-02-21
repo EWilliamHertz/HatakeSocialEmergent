@@ -580,9 +580,25 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
                 );
               }
               
-              setSearchResults(cards.slice(0, 50).map((card: any) => {
-                const cmPrice = card.cardmarket?.prices?.averageSellPrice || card.cardmarket?.prices?.trendPrice;
-                const displayPrice = cmPrice ? `€${cmPrice.toFixed(2)}` : 'N/A';
+              // Fetch full details to get prices
+              const detailedCards = await Promise.all(
+                cards.slice(0, 50).map(async (card: any) => {
+                  try {
+                    const detailRes = await fetch(`${TCGDEX_API}/cards/${card.id}`);
+                    if (detailRes.ok) {
+                      return await detailRes.json();
+                    }
+                    return card;
+                  } catch {
+                    return card;
+                  }
+                })
+              );
+              
+              setSearchResults(detailedCards.map((card: any) => {
+                // TCGdex uses pricing.cardmarket.avg for prices
+                const cmPrice = card.pricing?.cardmarket?.avg || card.pricing?.cardmarket?.trend || 0;
+                const displayPrice = cmPrice > 0 ? `€${cmPrice.toFixed(2)}` : 'N/A';
                 
                 return {
                   id: card.id,
