@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 
 // GET - Fetch groups (my groups or discover)
 export async function GET(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -22,7 +17,6 @@ export async function GET(request: NextRequest) {
     let groups;
     
     if (type === 'my') {
-      // Fetch groups the user is a member of
       groups = await sql`
         SELECT 
           g.group_id,
@@ -39,7 +33,6 @@ export async function GET(request: NextRequest) {
         ORDER BY g.created_at DESC
       `;
     } else {
-      // Fetch public groups the user is NOT a member of
       groups = await sql`
         SELECT 
           g.group_id,
@@ -72,14 +65,9 @@ export async function GET(request: NextRequest) {
 // POST - Create a new group
 export async function POST(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { name, description, privacy = 'public', image } = await request.json();
