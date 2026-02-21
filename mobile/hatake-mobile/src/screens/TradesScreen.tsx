@@ -38,6 +38,7 @@ interface TradesScreenProps {
   token: string;
   onClose: () => void;
   onCreateTrade?: () => void;
+  onOpenMenu?: () => void;
 }
 
 export default function TradesScreen({ user, token, onClose, onCreateTrade }: TradesScreenProps) {
