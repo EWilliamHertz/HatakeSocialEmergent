@@ -144,14 +144,6 @@ export default function CollectionPage() {
   const gradingCompanies = ['PSA', 'BGS', 'CGC', 'SGC', 'PCG', 'Ace'];
   const gradeValues = ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5.5', '5', '4', '3', '2', '1'];
 
-  // Wishlist state
-  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
-  const [loadingWishlist, setLoadingWishlist] = useState(false);
-  
-  // Sealed products state
-  const [sealedProducts, setSealedProducts] = useState<any[]>([]);
-  const [loadingSealed, setLoadingSealed] = useState(false);
-
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
