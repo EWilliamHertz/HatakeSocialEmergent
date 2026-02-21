@@ -248,6 +248,7 @@ export default function AdminPage() {
 
   const openEditProduct = (product: Product) => {
     setEditingProduct({ ...product });
+    setGalleryImages(product.gallery_images || []);
     setShowProductModal(true);
   };
 
