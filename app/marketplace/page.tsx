@@ -297,48 +297,50 @@ export default function MarketplacePage() {
               {activeTab === 'cards' && (
                 <button
                   onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 flex items-center gap-2"
-              data-testid="create-listing-btn"
-            >
-              <Plus className="w-4 h-4" />
-              Sell Card
-            </button>
-          </div>
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 flex items-center gap-2"
+                  data-testid="create-listing-btn"
+                >
+                  <Plus className="w-4 h-4" />
+                  Sell Card
+                </button>
+              )}
+            </div>
           
-          {/* Search & Filter Bar */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex-1 min-w-64 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search listings..."
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-                data-testid="marketplace-search"
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <button
-                onClick={() => setGameFilter('all')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${gameFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setGameFilter('pokemon')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${gameFilter === 'pokemon' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-              >
-                Pokemon
-              </button>
-              <button
-                onClick={() => setGameFilter('mtg')}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${gameFilter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-              >
-                Magic
-              </button>
-            </div>
+            {/* Search & Filter Bar - Cards Tab */}
+            {activeTab === 'cards' && (
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex-1 min-w-64 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search listings..."
+                    className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                    data-testid="marketplace-search"
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setGameFilter('all')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${gameFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setGameFilter('pokemon')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${gameFilter === 'pokemon' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                  >
+                    Pokemon
+                  </button>
+                  <button
+                    onClick={() => setGameFilter('mtg')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${gameFilter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                  >
+                    Magic
+                  </button>
+                </div>
             
             <button
               onClick={() => setShowFilters(!showFilters)}
