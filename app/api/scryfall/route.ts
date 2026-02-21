@@ -41,29 +41,30 @@ export async function GET(request: NextRequest) {
       const maxPages = 3; // Limit to 3 pages (175 cards max) to avoid timeout
       
       while (nextPageUrl && pageCount < maxPages) {
-        const response = await fetch(nextPageUrl, {
+        const currentUrl = nextPageUrl;
+        const fetchResponse: Response = await fetch(currentUrl, {
           headers: {
             'User-Agent': 'HatakeSocial/1.0',
             'Accept': 'application/json',
           },
         });
 
-        if (response.ok) {
-          const data = await response.json();
+        if (fetchResponse.ok) {
+          const data = await fetchResponse.json();
           if (data.data) {
             allCards.push(...data.data);
           }
           // Check if there's a next page
           nextPageUrl = data.has_more ? data.next_page : null;
           pageCount++;
-        } else if (response.status === 404) {
+        } else if (fetchResponse.status === 404) {
           break;
         } else {
-          const errorText = await response.text();
-          console.error('Scryfall search error:', response.status, errorText);
+          const errorText = await fetchResponse.text();
+          console.error('Scryfall search error:', fetchResponse.status, errorText);
           return NextResponse.json(
-            { error: `Scryfall error: ${response.status}` },
-            { status: response.status }
+            { error: `Scryfall error: ${fetchResponse.status}` },
+            { status: fetchResponse.status }
           );
         }
       }
