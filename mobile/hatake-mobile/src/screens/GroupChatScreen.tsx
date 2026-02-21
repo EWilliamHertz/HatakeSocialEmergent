@@ -15,6 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
 
+// Use regular View on web to avoid SafeAreaView issues
+const Container = Platform.OS === 'web' ? View : SafeAreaView;
+
 interface Message {
   message_id: string;
   sender_id: string;
