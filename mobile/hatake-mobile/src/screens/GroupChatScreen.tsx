@@ -31,7 +31,7 @@ interface GroupChatScreenProps {
     group_id: string;
     name: string;
     image?: string;
-    member_count: number;
+    member_count: number | string;
   };
   onClose: () => void;
 }
