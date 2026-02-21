@@ -12,6 +12,7 @@ import MarketplaceScreen from './src/screens/MarketplaceScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
+const API_URL = 'https://www.hatake.eu';
 
 interface User {
   user_id: string;
@@ -26,18 +27,36 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
     checkSession();
   }, []);
 
   const checkSession = async () => {
     try {
+      // First check localStorage
       if (typeof localStorage !== 'undefined') {
-        const storedToken = localStorage.getItem('auth_token');
         const storedUser = localStorage.getItem('user_data');
-        if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          
+          // Verify session is still valid by calling /api/auth/me
+          try {
+            const response = await fetch(`${API_URL}/api/auth/me`, {
+              credentials: 'include',
+            });
+            const data = await response.json();
+            
+            if (data.user) {
+              setUser(data.user);
+              setToken('cookie-auth');
+            } else {
+              // Session expired, clear localStorage
+              localStorage.removeItem('user_data');
+            }
+          } catch {
+            // Network error, use cached user
+            setUser(parsedUser);
+            setToken('cookie-auth');
+          }
         }
       }
     } catch (e) {
@@ -46,12 +65,26 @@ export default function App() {
     setLoading(false);
   };
 
-  const handleLoginSuccess = (loggedInUser: User, authToken: string) => {
+  const handleLoginSuccess = async (loggedInUser: User, authToken: string) => {
     setUser(loggedInUser);
     setToken(authToken);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (e) {
+      // Ignore logout errors
+    }
+    
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('user_data');
+      localStorage.removeItem('auth_token');
+    }
+    
     setUser(null);
     setToken(null);
   };
