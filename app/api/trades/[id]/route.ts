@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
+import { sendPushNotification, getTradeNotification } from '@/lib/push-notifications';
 import sql from '@/lib/db';
 
 export async function GET(
