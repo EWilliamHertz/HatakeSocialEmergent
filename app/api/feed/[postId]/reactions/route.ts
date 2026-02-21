@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser, getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
+import { createNotification } from '@/lib/notifications';
 
 // Ensure post_reactions table exists
 async function ensureTable() {
@@ -57,6 +58,26 @@ export async function POST(
         INSERT INTO post_reactions (post_id, user_id, emoji)
         VALUES (${postId}, ${user.user_id}, ${emoji})
       `;
+      
+      // Get post owner to send notification
+      const posts = await sql`
+        SELECT user_id FROM posts WHERE post_id = ${postId}
+      `;
+      
+      if (posts.length > 0 && posts[0].user_id !== user.user_id) {
+        try {
+          await createNotification({
+            userId: posts[0].user_id,
+            type: 'like', // Use 'like' type for reactions too
+            title: 'New Reaction',
+            message: `${user.name} reacted ${emoji} to your post`,
+            link: `/feed#${postId}`,
+          });
+        } catch (e) {
+          console.error('Failed to send reaction notification:', e);
+        }
+      }
+      
       return NextResponse.json({ success: true, action: 'added' });
     }
   } catch (error) {
