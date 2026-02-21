@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
 import { generateId } from '@/lib/utils';
 import sql from '@/lib/db';
 
@@ -26,14 +26,9 @@ export async function POST(
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const user = await getSessionUser(sessionToken);
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { content, parentCommentId } = await request.json();
@@ -60,7 +55,21 @@ export async function POST(
       VALUES (${commentId}, ${postId}, ${user.user_id}, ${content}, ${parentCommentId || null})
     `;
 
-    return NextResponse.json({ success: true, commentId });
+    return NextResponse.json({ 
+      success: true, 
+      commentId,
+      comment: {
+        comment_id: commentId,
+        post_id: postId,
+        user_id: user.user_id,
+        name: user.name,
+        picture: user.picture,
+        content,
+        parent_comment_id: parentCommentId || null,
+        created_at: new Date().toISOString(),
+        reactions: [],
+      }
+    });
   } catch (error) {
     console.error('Add comment error:', error);
     return NextResponse.json(
@@ -76,13 +85,8 @@ export async function GET(
 ) {
   try {
     const { postId } = await params;
-    const sessionToken = request.cookies.get('session_token')?.value;
-    let currentUserId = null;
-    
-    if (sessionToken) {
-      const user = await getSessionUser(sessionToken);
-      if (user) currentUserId = user.user_id;
-    }
+    const user = await getUserFromRequest(request);
+    const currentUserId = user?.user_id || null;
 
     await ensureReactionsTable();
 
@@ -103,7 +107,7 @@ export async function GET(
     `;
 
     // Get reactions for all comments
-    const commentIds = comments.map(c => c.comment_id);
+    const commentIds = comments.map((c: any) => c.comment_id);
     let reactions: any[] = [];
     
     if (commentIds.length > 0) {
@@ -117,7 +121,7 @@ export async function GET(
     }
 
     // Attach reactions to comments
-    const commentsWithReactions = comments.map(comment => ({
+    const commentsWithReactions = comments.map((comment: any) => ({
       ...comment,
       reactions: reactions
         .filter(r => r.comment_id === comment.comment_id)
