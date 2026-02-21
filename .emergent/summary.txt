@@ -4,200 +4,186 @@ The user's goal is to create a new, full-stack TCG (Trading Card Game) social pl
 **PRODUCT REQUIREMENTS:**
 1.  **Application:** A modern, full-stack Next.js web application and a companion React Native (Expo) mobile app.
 2.  **Core Features:**
-    *   **Authentication:** Google Sign-In and Email/Password.
-    *   **Card Management:** Search cards, manage a personal collection (with CSV import), and view collection pricing.
-    *   **Social:** A social feed, friends system, and groups/communities with chat.
-    *   **Messaging:** Real-time messaging with LiveKit for voice/video calls.
-    *   **Commerce:** A marketplace for buying/selling, a trade system, and a Shop page for sealed products.
-    *   **Profiles & Decks:** User profiles and a Deck Builder with analytics.
-    *   **Admin Panel:** A dashboard for site administration.
-    *   **New Features:** Wishlists, a trade reputation system, and sealed product management.
-3.  **Integrations:** Scryfall API (MTG), TCGdex API (Pokemon), PostgreSQL (Neon), LiveKit, and Cloudinary.
+    *   **Authentication:** Google Sign-In and Email/Password with email verification.
+    *   **Card Management:** Search, personal collection management, wishlists.
+    *   **Social:** Social feed, friends system, groups/communities with chat, and a trade reputation system.
+    *   **Messaging:** Real-time text, voice, and video messaging with screen sharing.
+    *   **Commerce:** A marketplace for buying/selling (with listing deletion), and a trade system.
+    *   **Profiles & Decks:** User profiles and a Deck Builder.
+    *   **Notifications:** In-app and push notifications.
+3.  **Integrations:** Scryfall API (MTG), TCGdex API (Pokemon), PostgreSQL (Neon), LiveKit, Cloudinary, Resend (for emails), and Expo Push Notifications.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The project is a monorepo containing a Next.js web app (with backend API routes) and a React Native (Expo) mobile app. A dual authentication system supports cookies for the web and Bearer Tokens for mobile. The agent has been focused on mobile app development, implementing new social features (comments, user profiles, collection viewing) and fixing a series of user-reported bugs related to search, UI, and navigation.
+The project is a monorepo with a Next.js web app (backend via API routes) and a React Native (Expo) mobile app. A dual authentication system (cookies for web, Bearer Tokens for mobile) is in place.
+
+In this session, the agent implemented several major features, primarily for the mobile app:
+- **Friends & Messaging:** Basic screens and backend APIs.
+- **Video Calls:** Integrated LiveKit for native mobile video/audio calls and screen sharing.
+- **Email System:** Added email verification and notifications for social interactions (friend requests, messages, reactions) using the Resend API.
+- **Marketplace:** Enabled users to delete their own listings from the mobile app.
+- **Foundation for other features:** Created placeholder screens and updated backend APIs (with Bearer token support) for Decks, Trades, Groups, and Notifications.
+
+A Vercel build error related to the Resend API key was also resolved.
 
 **Last working item**:
-    - Last item agent was working: The agent was beginning to implement the **Friends System** on the mobile app, as requested by the user. This involved updating the backend friend-related API routes to support Bearer Token authentication and creating a new  file.
-    - Status: IN PROGRESS
+    - Last item agent was working: The agent was planning the implementation of the next batch of features requested by the user, starting with Expo Push Notifications. The user has confirmed the plan to implement push notifications, a trading reputation system, wishlists, mobile trade creation, and group chat.
+    - Status: NOT STARTED
     - Agent Testing Done: N
     - Which testing method agent to use? Per user instruction, agent should NOT run tests. The agent should complete the implementation and then ask the user to test it.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Mobile - Select All button in collection bulk edit mode doesn't work. (P0)
-  - Issue 2: Mobile - Hamburger menu navigation is broken. Links either do nothing or just close the menu without navigating to the correct screen (e.g., Collection). (P0)
-  - Issue 3: Web - Build fails on Vercel due to a TypeScript error in . (P0)
-  - Issue 4: Mobile - Pokemon card prices are not displayed when adding a card from search results to the collection. (P1)
-  - Issue 5: Mobile - Users cannot view their profile from the hamburger menu. (P1)
-  
+  - Issue 1: Mobile - Pokemon card prices are not displayed when adding a card from search results to the collection. (P2)
+  - Issue 2: Mobile - The notification system backend exists, but the frontend  is just a placeholder and does not display any data. (P1)
+
   **Issues Detail:**
-  - **Issue 1: Mobile - Select All button in collection bulk edit mode doesn't work.**
-     - **Attempted fixes:** The agent identified that a  function was missing and added an implementation for it in . However, the user reported it is still not working.
+  - **Issue 1: Mobile - Pokemon card prices are not displayed.**
+     - **Attempted fixes:** None in this session. This is a recurring issue from a previous session. The user insists the TCGdex API was providing this data previously.
      - **Next debug checklist:**
-        1. Review the logic of the  and  functions in .
-        2. Ensure the state of filtered items is correctly read and that the  state is updated with all the correct card IDs.
-        3. Verify that the  array is populated correctly based on the current search and filter criteria.
-     - **Why fix this issue and what will be achieved with the fix?** This is a core part of the bulk management feature, which is currently incomplete.
-     - **Status:** IN PROGRESS
-     - **Is recurring issue?** Y
-     - **Should Test frontend/backend/both after fix?** frontend
-     - **Blocked on other issue:** None
-
-  - **Issue 2: Mobile - Hamburger menu navigation is broken.**
-     - **Attempted fixes:** The agent implemented a shared navigation reference () in  and updated the  function in the drawer component to use . This did not resolve the issue.
-     - **Next debug checklist:**
-        1. Investigate the interaction between  and .
-        2. Verify that the  is correctly attached and accessible when  is called.
-        3. Consider an alternative approach, such as passing the  prop down from the main navigator to the drawer component.
-     - **Why fix this issue and what will be achieved with the fix?** Basic app navigation is broken, preventing users from accessing key screens like Collection from the main menu.
-     - **Status:** IN PROGRESS
-     - **Is recurring issue?** Y
-     - **Should Test frontend/backend/both after fix?** frontend
-     - **Blocked on other issue:** None
-
-  - **Issue 3: Web - Build fails on Vercel due to a TypeScript error.**
-     - **Attempted fixes:** The agent identified a TypeScript error () in  and added a type annotation () to fix it.
-     - **Next debug checklist:**
-        1. The user needs to push the code changes to GitHub using the Save to GitHub feature. The agent has made the fix, but it's not live.
-        2. Confirm the fix with  locally.
-     - **Why fix this issue and what will be achieved with the fix?** This is a blocking build failure, preventing any new deployments of the web application.
-     - **Status:** RESOLVED (User action pending)
-     - **Is recurring issue?** N
-     - **Should Test frontend/backend/both after fix?** backend
-     - **Blocked on other issue:** None
-
-  - **Issue 4: Mobile - Pokemon card prices are not displayed when adding a card from search results to the collection.**
-     - **Attempted fixes:** The agent incorrectly assumed TCGdex API did not provide prices and attempted to use a different, non-functional API. The user corrected the agent, stating that prices were working previously. The agent stopped working on this, but the issue remains.
-     - **Next debug checklist:**
-        1. Re-examine the code that was working previously to fetch Pokemon card prices from TCGdex (likely via Cardmarket integration within the TCGdex response).
-        2. Trace the data flow in  from fetching search results, selecting a card, to calling .
-        3. Log the  object just before it's sent to the  endpoint to ensure price information is present.
+        1. Investigate the data structure returned by the TCGdex API to find the price information (likely under a Cardmarket key).
+        2. Trace the data flow in  when adding a Pokémon card to ensure the price data is not being dropped.
+        3. Log the  object just before it's sent to the  endpoint.
      - **Why fix this issue and what will be achieved with the fix?** Card pricing is a core feature for a TCG collection app.
-     - **Status:** IN PROGRESS
+     - **Status:** NOT STARTED
      - **Is recurring issue?** Y
      - **Should Test frontend/backend/both after fix?** frontend
+     - **Blocked on other issue:** None
+
+  - **Issue 2: Mobile - Frontend for notifications is not implemented.**
+     - **Attempted fixes:** A placeholder screen () was created.
+     - **Next debug checklist:**
+        1. Implement the UI for the  to display a list of notifications.
+        2. Create a data-fetching hook to call the  endpoint (which needs to be updated for Bearer token auth).
+        3. Add logic to mark notifications as read.
+     - **Why fix this issue and what will be achieved with the fix?** To complete the notification feature, allowing users to see alerts for reactions and other events.
+     - **Status:** NOT STARTED
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** both
      - **Blocked on other issue:** None
 
 **In progress Task List**:
-  - **Task 1: Implement Mobile Friends System**
-     - **Where to resume:** The agent has created  and updated the backend APIs ( and ). The next step is to add the  to the navigation (e.g., in the tab bar or hamburger menu) and build out the UI to list friends, pending requests, and allow users to search/add new friends.
-     - **What will be achieved with this?** Users will be able to manage their friends list, a prerequisite for messaging and other social features.
-     - **Status:** IN PROGRESS
+  - **Task 1: Implement Mobile Push Notifications (P0)**
+     - **Where to resume:** Use the  tool to get the implementation guide for Expo Push Notifications. This will involve setting up Expo Application Services (EAS), collecting user push tokens, and updating backend APIs to send notifications via Expo's service.
+     - **What will be achieved with this?** Users will receive native push notifications on their mobile devices for important events.
+     - **Status:** NOT STARTED
      - **Should Test frontend/backend/both after fix?** both
-     - **Blocked on something:** Hamburger menu navigation (Issue #2) needs to be fixed to make the screen accessible.
+     - **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **P0 (Mobile):** Implement a notification display system on the frontend to show users when they receive reactions or other alerts.
-    *   **P1 (Mobile):** Implement the full real-time messaging system for chatting with friends.
-    *   **P1 (Mobile):** Finish the feed's comment system by enabling replies to comments.
-    *   **P2 (Mobile):** Implement functionality for users to delete their own marketplace listings.
+    *   **P0 (Mobile):** Implement the Trading Reputation System. This will require database schema changes and new API endpoints.
+    *   **P0 (Mobile):** Implement Wishlists. As per the user, this should be a separate tab within the Collection screen.
+    *   **P0 (Mobile):** Implement the UI and logic to create trades from the mobile app.
+    *   **P1 (Web & Mobile):** Implement group chat functionality, allowing chats with more than one user.
+    *   **P2 (Mobile):** Fully implement the UI and logic for the placeholder screens: , , and .
 *   **Future Tasks:**
-    *   Deck Builder: Implement a playtesting feature and legal format validation.
-    *   Mobile App: Implement Trading functionality.
+    *   Provide the user with a comprehensive guide on how to build and publish the React Native app to the Google Play Store.
+    *   Deck Builder: Implement playtesting and format validation features.
 
 **Completed work in this session**
-- **Bug Fixes:**
-  - **Mobile:** Fixed the broken Magic: The Gathering search by creating a backend proxy (), bypassing mobile network issues.
-  - **Mobile:** Fixed the vertical layout of emoji reactions on feed posts.
-  - **Admin:** Fixed an issue where product images were not showing on the admin shop page by correcting the API authorization logic and updating the frontend to use gallery images as a fallback.
-  - **Web:** Resolved a TypeScript build error in the Scryfall API route (pending user push to Git).
-  - **Mobile:** Fixed a JSX syntax error in .
 - **Features Implemented:**
-  - **Mobile:** Improved MTG search UX by grouping results by name and adding an edition selection dropdown.
-  - **Mobile:** Implemented a bulk selection mode (long press) for the card collection screen.
-  - **Mobile:** Added emoji reactions to comments in the .
-  - **Mobile:** Implemented a feature to view a user's public card collection from their profile modal.
-  - **Mobile:** Created a shared  component to display the hamburger menu on all main screens.
-  - **Mobile:** Implemented a  to view user details from the feed.
-  - **Mobile:** Implemented the UI and backend logic for a comment modal on feed posts.
-  - **Backend:** Implemented a system to create notifications when users react to posts or comments.
-  - **Backend:** Updated numerous API endpoints (, , , ) to support Bearer token authentication for the mobile app.
+  - **Friends & Messaging System (Mobile):** Created  and  and updated backend APIs (, , ) to support Bearer token authentication.
+  - **Video/Audio Calls (Mobile):** Re-implemented  using the  SDK for native performance. Created an Expo config plugin () and a  with build instructions.
+  - **Email System (Backend):** Integrated Resend for sending emails.
+    - Implemented user email verification on signup, including a new API endpoint () and a web verification page ().
+    - Added email notifications for new friend requests, messages, and reactions.
+  - **Marketplace Deletion (Mobile):** Added functionality for users to delete their own listings in  and updated the backend API () for mobile auth.
+  - **Incoming Call UI (Mobile):** Created an  component to alert users of calls.
+  - **API Enhancements:** Updated numerous backend APIs to support Bearer token auth for the mobile app, including those for decks, trades, groups, and user listings.
+- **Bug Fixes:**
+  - **Vercel Build Failure:** Fixed a build error caused by the Resend SDK being initialized without an API key during the build process by lazy-loading the SDK instance.
 
 **Earlier issues found/mentioned but not fixed**
-   - **Issue 1: No frontend notification display.**
-     - **Debug checklist:** The agent implemented the backend logic to create notifications in the database when a user receives a reaction. However, there is no corresponding frontend component or screen in the mobile app to fetch and display these notifications to the user.
-     - **Why to solve this issue and what will be achieved with this?** The user explicitly mentioned not receiving notifications. This feature is incomplete without a way for users to see them.
-     - **Should Test frontend/backend/both after fix:** both
-     - **Is recurring issue?** N
+   - **Issue 1: Mobile - Pokemon card prices not displayed.** (Listed in All Pending/In progress Issue list)
 
 **Known issue recurrence from previous fork**
-  - MTG search on mobile was a recurring issue, which has been fixed in this session with a backend proxy.
-  - Card price display on mobile has regressed again, specifically for Pokémon cards.
+  - Pokémon card price display on mobile has regressed and remains unfixed.
 
 **Code Architecture**
 - **Structure:** Monorepo project with a Next.js web app at the root () and a React Native (Expo) app in .
 - **Backend:** Implemented as API routes within the Next.js application.
-- **Authentication:** A dual-auth model supports NextAuth.js cookies for the web and Bearer tokens for mobile, with a shared  helper for validation.
+- **Authentication:** Dual-auth model using NextAuth.js cookies (web) and Bearer tokens (mobile), with a shared  helper.
+- **Email:** A new email service was added in  using the Resend SDK.
+
+**key DB schema**
+- **users table:** Added  (DATETIME),  (TEXT),  (DATETIME) columns to support email verification.
 
 **All files of reference**
-- : File for collection management, bulk actions, and card search. Contains bugs related to Select All and Pokémon prices.
-- : Social feed. Contains logic for opening comment and user profile modals.
-- : Root of the mobile app. Contains the broken navigation logic with .
-- : Modal for viewing and adding comments and emoji reactions.
-- : Modal for viewing user profiles and their collections.
-- : New backend proxy for Scryfall API. Contained a build-breaking TS error.
-- : Admin page for managing shop products. Was fixed to show images correctly.
-- : API for the admin shop page. Was fixed to authorize users correctly.
-- : New, in-progress screen for the Friends system.
+- **New Files:**
+  - : Central service for sending emails via Resend.
+  - : Screen for user-to-user chat.
+  - : UI for incoming call alerts.
+  - , , , : Placeholder screens for future features.
+  - : Endpoint to handle email verification tokens.
+  - : Web page for users to complete email verification.
+  - : Endpoint for searching users (for friends feature).
+  - , : Endpoints for group management.
+  - : Expo config plugin for LiveKit native dependencies.
+  - : Instructions for building the native mobile app.
+- **Updated Files:**
+  - : Integrated new screens and modals.
+  - : Rewritten to use .
+  - : Added delete functionality.
+  - : Modified to send verification email.
+  - , , : Updated to send email notifications.
+  - Multiple API route files (, , , , root, etc.) updated to support Bearer token authentication.
 
 **key api endpoints**
-- : (New) Backend proxy to search for MTG cards.
-- : Get public user profile data.
-- : Get a user's public card collection.
-- : Post a comment.
-- : Add a reaction to a comment.
-- : Get shop products for the admin panel.
-- : Get a user's friends list.
-- : Send/accept/decline friend requests.
+- : Sends a verification email upon user registration.
+- : Verifies a user's email using a token.
+- : Searches for users by username or email.
+- : Deletes a marketplace listing.
+- , : Endpoints for joining/leaving groups.
 
 **Critical Info for New Agent**
-- **DO NOT TEST:** The user has explicitly requested that the agent should **not** run any automated tests or take screenshots for verification to save credits. Complete the implementation and ask the user to test the features.
-- **Pokémon Pricing:** The user insists that Pokémon card pricing from TCGdex (showing Cardmarket prices) was working before. Do not attempt to use another API. Investigate the regression in the existing TCGdex data flow.
-- **Hamburger Menu Bug:** The navigation from the hamburger menu is a persistent and tricky bug. The  approach failed. A new strategy is needed.
-- **User is the Admin:** The primary test user  needs to be treated as an admin. Some APIs were hardcoded with other admin emails; ensure logic checks the  database flag.
+- **User Testing:** The user prefers to test features manually. Do not run automated tests or take screenshots unless debugging a specific UI issue.
+- **LiveKit Native Build:** The video call and screen-sharing features rely on the  library, which requires a native build of the mobile app (using ). It will not work in the standard Expo Go client.
+- **Priorities:** The user's immediate priorities are mobile-focused: push notifications, trading reputation system, wishlists, and creating trades.
+- **Play Store Guide:** The user requested a *guide* on how to publish to the Google Play Store, not for the agent to perform the submission.
 
 **documents and test reports created in this job**
 -  (updated)
+-  (new)
 
-**Last 10 User Messages and any pending HUMAN messages** 
- - **LATEST:** User asks the agent to continue with mobile development. **Status: IN PROGRESS**
- - User reports a Vercel build failure and that notifications for emoji reactions are not working. Also confirms the admin shop fix has not been deployed. **Status: PARTIALLY ADDRESSED** (Build error fixed, notification backend created, frontend pending).
- - User confirms the mobile UI fixes for emojis work, but the admin shop error still exists. **Status: ADDRESSED** (Agent fixed admin shop bug).
- - User reports a build error in  and that images are not showing in the admin shop page. **Status: COMPLETED**
- - User requests new features: a global hamburger menu, emoji reactions for comments, and public viewing of friend collections. **Status: COMPLETED**
- - User confirms comments/profiles are working and requests the next batch of features. **Status: ADDRESSED**
- - User corrects the agent about Pokémon pricing, stating it was working before and to stick to the existing TCGdex implementation for European prices. **Status: ACKNOWLEDGED** (Issue remains pending).
- - User reports multiple mobile bugs: Select All is broken, hamburger menu links don't work, and the profile tab is inaccessible. Asks agent to work on profiles, messaging, and comments next. **Status: PARTIALLY ADDRESSED** (Fixes attempted but failed, new features started).
- - User confirms MTG search works but is paginated. Requests a better UX with an edition picker and asks the agent to continue with other tasks. **Status: COMPLETED**
- - User reports MTG search error: Load failed. **Status: COMPLETED** (Fixed with backend proxy).
+**Last 10 User Messages and any pending HUMAN messages**
+- **LATEST:** User confirms the next set of tasks: push notifications, trading reputation system, wishlists, creating trades from mobile, group chat, and a guide for Google Play Store deployment. **Status: IN PROGRESS**
+- User provides confirmation and clarifies requirements for the next batch of features (group chat, notifications, wishlists). **Status: ADDRESSED**
+- User asks agent to continue with the next features: push notifications, groups, trading reputation system, deck builder. **Status: ADDRESSED**
+- User confirms the Vercel build fix worked and asks to continue with other features, prioritizing friends, chat, mobile calls/video/screen share, deck builder, trades, and marketplace deletion. **Status: ADDRESSED**
+- User provides confirmation on plan for fixing the build and domain setup. **Status: ADDRESSED**
+- User reports a Vercel build failure related to the Resend API key and asks for help transferring a domain. **Status: ADDRESSED**
+- User asks for several new features: native build for video, incoming call notifications, email notifications, and email verification. **Status: COMPLETED**
+- User provides Resend API key and confirms choices for email features. **Status: ADDRESSED**
+- Agent asks clarifying questions about implementing new features. **Status: AWAITING_RESPONSE**
+- Agent provides a summary of the implemented Friends & Messaging system. **Status: ADDRESSED**
 
 **Project Health Check:**
 *   **Broken:**
-    - **Mobile Navigation:** Key screens are inaccessible from the main hamburger menu.
-    - **Mobile Bulk Actions:** The Select All functionality in the collection is non-functional.
-    - **Web Deployment:** The live web app is blocked from updating due to a build error (fix is ready but not deployed).
-*   **Mocked:** None.
+    - Mobile video calls are not functional without a native build (). They will fail in Expo Go.
+*   **Mocked:**
+    - The mobile screens for Decks, Trades, Groups, and Notifications are placeholders with no functionality.
 
 **3rd Party Integrations**
-*   **Scryfall API:** For Magic: The Gathering card data (proxied through the backend).
+*   **Scryfall API:** For Magic: The Gathering card data.
 *   **TCGdex API:** For Pokémon TCG card data.
 *   **PostgreSQL (Neon):** Primary database.
-*   **Cloudinary:** For image uploads and storage.
-*   **LiveKit:** For real-time video/voice calls (future feature).
+*   **Cloudinary:** For image uploads.
+*   **LiveKit:** For real-time video/voice calls (web and mobile native).  SDK added.
 *   **Expo:** Framework for the React Native mobile app.
+*   **Resend:** For transactional emails (verification, notifications).  SDK added.
+*   **Expo Push Notifications:** Planned for next implementation step.
 
 **Testing status**
   - Testing agent used after significant changes: NO (Per user request).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
-  - Known regressions: Pokémon card price display, hamburger menu navigation.
+  - Known regressions: Pokémon card price display.
 
 **Credentials to test flow:**
 *   **App User:**  /  (This user is also an admin).
 
 **What agent forgot to execute**
-- The agent implemented the backend logic for creating notifications but did not create any UI on the mobile app for the user to view these notifications. The user reported he didn’t get notifications of my reactions as a result.</analysis>
+- The agent has not addressed the recurring issue of Pokémon card prices not displaying on the mobile app.
+- While skeleton screens for several features (Decks, Trades, Groups, Notifications) were created, the full UI and data-fetching logic were not implemented, leaving them non-functional.</analysis>
