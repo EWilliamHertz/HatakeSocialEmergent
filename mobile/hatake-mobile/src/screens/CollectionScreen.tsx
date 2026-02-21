@@ -260,18 +260,25 @@ export default function CollectionScreen({ user, token }: CollectionScreenProps)
         if (response.ok) {
           const data = await response.json();
           if (data.data) {
-            setSearchResults(data.data.slice(0, 50).map((card: any) => ({
-              id: card.id,
-              name: card.name,
-              image: card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '',
-              set_name: card.set_name,
-              set_code: card.set.toUpperCase(),
-              collector_number: card.collector_number,
-              price: card.prices?.usd || card.prices?.eur || 'N/A',
-              rarity: card.rarity,
-              game: 'mtg' as const,
-              data: card,
-            })));
+            setSearchResults(data.data.slice(0, 50).map((card: any) => {
+              // Prefer EUR prices for European users
+              const eurPrice = card.prices?.eur;
+              const usdPrice = card.prices?.usd;
+              const displayPrice = eurPrice ? `€${parseFloat(eurPrice).toFixed(2)}` : 
+                                   usdPrice ? `€${(parseFloat(usdPrice) * 0.92).toFixed(2)}` : 'N/A';
+              return {
+                id: card.id,
+                name: card.name,
+                image: card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '',
+                set_name: card.set_name,
+                set_code: card.set.toUpperCase(),
+                collector_number: card.collector_number,
+                price: displayPrice,
+                rarity: card.rarity,
+                game: 'mtg' as const,
+                data: card,
+              };
+            }));
           } else {
             console.log('No results found');
           }
