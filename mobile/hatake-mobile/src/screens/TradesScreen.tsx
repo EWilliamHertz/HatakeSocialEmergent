@@ -41,7 +41,7 @@ interface TradesScreenProps {
   onOpenMenu?: () => void;
 }
 
-export default function TradesScreen({ user, token, onClose, onCreateTrade }: TradesScreenProps) {
+export default function TradesScreen({ user, token, onClose, onCreateTrade, onOpenMenu }: TradesScreenProps) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
