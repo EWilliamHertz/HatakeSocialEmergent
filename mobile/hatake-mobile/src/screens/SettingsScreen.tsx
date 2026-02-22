@@ -35,9 +35,6 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
   const [tradeNotifications, setTradeNotifications] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   
-  // Remove local dark mode state since we're using context now
-  const [darkMode, setDarkMode] = useState(false);
-  
   // Profile settings
   const [name, setName] = useState(user?.name || '');
   const [shippingAddress, setShippingAddress] = useState('');
@@ -52,28 +49,17 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
   // UI state
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<string | null>();
 
-  // Load dark mode setting
+  // Load sound setting
   useEffect(() => {
     try {
       if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
-        const saved = localStorage.getItem('darkMode');
-        if (saved !== null) setDarkMode(saved === 'true');
         const savedSound = localStorage.getItem('soundEnabled');
         if (savedSound !== null) setSoundEnabled(savedSound === 'true');
       }
     } catch (e) {}
   }, []);
-
-  const toggleDarkMode = (value: boolean) => {
-    setDarkMode(value);
-    try {
-      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
-        localStorage.setItem('darkMode', String(value));
-      }
-    } catch (e) {}
-  };
 
   const toggleSoundEnabled = (value: boolean) => {
     setSoundEnabled(value);
