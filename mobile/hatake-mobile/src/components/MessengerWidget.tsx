@@ -52,6 +52,7 @@ interface MessengerWidgetProps {
 }
 
 export default function MessengerWidget({ user, token, visible }: MessengerWidgetProps) {
+  const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedChat, setSelectedChat] = useState<Conversation | null>(null);
