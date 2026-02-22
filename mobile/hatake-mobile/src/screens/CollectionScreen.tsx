@@ -1227,13 +1227,13 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
     
     return (
       <TouchableOpacity 
-        style={[styles.card, isSelected && styles.cardSelected]} 
+        style={[styles.card, { backgroundColor: colors.surface }, isSelected && styles.cardSelected]} 
         onPress={handlePress}
         onLongPress={handleLongPress}
       >
         {selectionMode && (
           <View style={styles.checkboxContainer}>
-            <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
+            <View style={[styles.checkbox, { borderColor: colors.border, backgroundColor: colors.surface }, isSelected && styles.checkboxChecked]}>
               {isSelected && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
             </View>
           </View>
