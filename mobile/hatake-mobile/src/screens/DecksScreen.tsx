@@ -836,9 +836,8 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
               </View>
             </View>
           </Modal>
-        </>
-      )}
-      </SafeAreaView>
+        </SafeAreaView>
+      </>
     );
   }
 
