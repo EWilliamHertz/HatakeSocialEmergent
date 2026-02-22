@@ -53,6 +53,7 @@ export default function UserProfileModal({
   userId,
   token 
 }: UserProfileModalProps) {
+  const { colors } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ collections: 0, posts: 0, friends: 0 });
