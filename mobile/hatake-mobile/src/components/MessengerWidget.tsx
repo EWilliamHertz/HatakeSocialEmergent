@@ -181,6 +181,101 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
     }
   };
 
+  const pickMedia = async (type: 'image' | 'video') => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please allow access to your photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: type === 'image' 
+          ? ImagePicker.MediaTypeOptions.Images 
+          : ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await sendMediaMessage(result.assets[0].uri, type);
+      }
+    } catch (err) {
+      console.error('Pick media error:', err);
+      Alert.alert('Error', 'Failed to pick media');
+    }
+  };
+
+  const sendMediaMessage = async (uri: string, type: 'image' | 'video') => {
+    if (!selectedChat) return;
+    
+    setUploading(true);
+    try {
+      const authToken = getAuthToken();
+      
+      // First upload to Cloudinary via our API
+      const formData = new FormData();
+      const filename = uri.split('/').pop() || 'media';
+      const extension = filename.split('.').pop()?.toLowerCase() || (type === 'image' ? 'jpg' : 'mp4');
+      const mimeType = type === 'image' ? `image/${extension}` : `video/${extension}`;
+      
+      formData.append('file', {
+        uri,
+        name: filename,
+        type: mimeType,
+      } as any);
+
+      const uploadRes = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+        body: formData,
+      });
+      
+      const uploadData = await uploadRes.json();
+      
+      if (!uploadData.success || !uploadData.url) {
+        throw new Error('Upload failed');
+      }
+
+      // Send message with media
+      const res = await fetch(`${API_URL}/api/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipientId: selectedChat.user_id,
+          content: '',
+          messageType: type,
+          mediaUrl: uploadData.url,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      // Add message optimistically
+      setMessages(prev => [...prev, {
+        message_id: data.messageId || `temp-${Date.now()}`,
+        sender_id: user.user_id,
+        content: '',
+        message_type: type,
+        media_url: uploadData.url,
+        created_at: new Date().toISOString(),
+      }]);
+
+      // Update conversation_id if new
+      if (data.conversationId && !selectedChat.conversation_id) {
+        setSelectedChat(prev => prev ? { ...prev, conversation_id: data.conversationId } : null);
+      }
+    } catch (err) {
+      console.error('Send media error:', err);
+      Alert.alert('Error', 'Failed to send media');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const toggleWidget = () => {
     Animated.sequence([
       Animated.timing(scaleAnim, { toValue: 0.9, duration: 100, useNativeDriver: true }),
