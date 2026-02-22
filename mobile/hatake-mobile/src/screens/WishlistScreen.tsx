@@ -45,6 +45,7 @@ interface WishlistScreenProps {
 }
 
 export default function WishlistScreen({ user, token, onClose }: WishlistScreenProps) {
+  const { colors } = useTheme();
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [selectedWishlist, setSelectedWishlist] = useState<Wishlist | null>(null);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
