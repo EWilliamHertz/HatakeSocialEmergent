@@ -110,6 +110,30 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
     }
   };
 
+  // Calculate trade statistics
+  const tradeStats = trades.reduce((acc, trade) => {
+    const isInitiator = trade.initiator_id === user.user_id;
+    const myCards = isInitiator ? trade.initiator_cards : trade.receiver_cards;
+    const theirCards = isInitiator ? trade.receiver_cards : trade.initiator_cards;
+    
+    // Calculate € values
+    const myValue = myCards.reduce((sum: number, c: any) => sum + (c.value || 0), 0);
+    const theirValue = theirCards.reduce((sum: number, c: any) => sum + (c.value || 0), 0);
+    
+    // Cash adjustments
+    const cashOut = isInitiator ? (trade.cash_offered || 0) : (trade.cash_requested || 0);
+    const cashIn = isInitiator ? (trade.cash_requested || 0) : (trade.cash_offered || 0);
+    
+    if (trade.status === 'completed') {
+      acc.completed++;
+      acc.totalOut += myValue + cashOut;
+      acc.totalIn += theirValue + cashIn;
+    }
+    if (trade.status === 'pending') acc.pending++;
+    
+    return acc;
+  }, { completed: 0, pending: 0, totalIn: 0, totalOut: 0 });
+
   const filteredTrades = trades.filter(t => {
     if (filter === 'all') return true;
     if (filter === 'pending') return t.status === 'pending' || t.status === 'accepted';
