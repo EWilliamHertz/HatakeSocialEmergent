@@ -47,6 +47,7 @@ interface Post {
 }
 
 export default function GroupDetailScreen({ user, token, group, onClose }: GroupDetailScreenProps) {
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
   const [showChat, setShowChat] = useState(false);
