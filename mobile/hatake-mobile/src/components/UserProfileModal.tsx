@@ -151,12 +151,12 @@ export default function UserProfileModal({
   const renderCollectionItem = ({ item }: { item: CollectionItem }) => {
     const imageUrl = getCardImage(item);
     return (
-      <View style={styles.collectionCard}>
+      <View style={[styles.collectionCard, { backgroundColor: colors.surfaceSecondary }]}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.collectionCardImage} />
         ) : (
-          <View style={styles.collectionCardPlaceholder}>
-            <Ionicons name="image-outline" size={24} color="#9CA3AF" />
+          <View style={[styles.collectionCardPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <Ionicons name="image-outline" size={24} color={colors.textTertiary} />
           </View>
         )}
       </View>
@@ -170,9 +170,9 @@ export default function UserProfileModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => {
             if (showCollection) {
               setShowCollection(false);
@@ -180,9 +180,9 @@ export default function UserProfileModal({
               onClose();
             }
           }} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
             {showCollection ? `${profile?.name}'s Collection` : 'Profile'}
           </Text>
           <View style={styles.headerRight} />
@@ -190,7 +190,7 @@ export default function UserProfileModal({
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#3B82F6" />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : !profile ? (
           <View style={styles.errorContainer}>
@@ -202,12 +202,12 @@ export default function UserProfileModal({
           <View style={styles.collectionContainer}>
             {loadingCollection ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#3B82F6" />
+                <ActivityIndicator size="large" color={colors.primary} />
               </View>
             ) : collection.length === 0 ? (
-              <View style={styles.emptySection}>
-                <Ionicons name="albums-outline" size={48} color="#D1D5DB" />
-                <Text style={styles.emptySectionText}>No cards in collection</Text>
+              <View style={[styles.emptySection, { backgroundColor: colors.surfaceSecondary }]}>
+                <Ionicons name="albums-outline" size={48} color={colors.textTertiary} />
+                <Text style={[styles.emptySectionText, { color: colors.textTertiary }]}>No cards in collection</Text>
               </View>
             ) : (
               <FlatList
@@ -226,69 +226,69 @@ export default function UserProfileModal({
               {profile.picture ? (
                 <Image source={{ uri: profile.picture }} style={styles.avatar} />
               ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={48} color="#9CA3AF" />
+                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                  <Ionicons name="person" size={48} color={colors.textTertiary} />
                 </View>
               )}
-              <Text style={styles.name}>{profile.name}</Text>
+              <Text style={[styles.name, { color: colors.text }]}>{profile.name}</Text>
               {profile.bio && (
-                <Text style={styles.bio}>{profile.bio}</Text>
+                <Text style={[styles.bio, { color: colors.textSecondary }]}>{profile.bio}</Text>
               )}
               {profile.created_at && (
-                <Text style={styles.joinDate}>
-                  <Ionicons name="calendar-outline" size={14} color="#9CA3AF" />
+                <Text style={[styles.joinDate, { color: colors.textTertiary }]}>
+                  <Ionicons name="calendar-outline" size={14} color={colors.textTertiary} />
                   {' '}Joined {formatDate(profile.created_at)}
                 </Text>
               )}
             </View>
 
             {/* Stats */}
-            <View style={styles.statsContainer}>
+            <View style={[styles.statsContainer, { backgroundColor: colors.surfaceSecondary }]}>
               <TouchableOpacity style={styles.statItem} onPress={handleViewCollection}>
-                <Text style={styles.statValue}>{stats.collections}</Text>
-                <Text style={styles.statLabelLink}>Cards</Text>
-                <Ionicons name="chevron-forward" size={14} color="#3B82F6" />
+                <Text style={[styles.statValue, { color: colors.text }]}>{stats.collections}</Text>
+                <Text style={[styles.statLabelLink, { color: colors.primary }]}>Cards</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.primary} />
               </TouchableOpacity>
-              <View style={styles.statDivider} />
+              <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{stats.posts}</Text>
-                <Text style={styles.statLabel}>Posts</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{stats.posts}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Posts</Text>
               </View>
-              <View style={styles.statDivider} />
+              <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{stats.friends}</Text>
-                <Text style={styles.statLabel}>Friends</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{stats.friends}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Friends</Text>
               </View>
             </View>
 
             {/* View Collection Button */}
             <TouchableOpacity 
-              style={styles.viewCollectionButton}
+              style={[styles.viewCollectionButton, { backgroundColor: colors.primaryLight || colors.surfaceSecondary }]}
               onPress={handleViewCollection}
             >
-              <Ionicons name="albums-outline" size={20} color="#3B82F6" />
-              <Text style={styles.viewCollectionText}>View Collection</Text>
-              <Ionicons name="chevron-forward" size={20} color="#3B82F6" />
+              <Ionicons name="albums-outline" size={20} color={colors.primary} />
+              <Text style={[styles.viewCollectionText, { color: colors.primary }]}>View Collection</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.primary} />
             </TouchableOpacity>
 
             {/* Actions */}
             <View style={styles.actionsContainer}>
-              <TouchableOpacity style={styles.actionButton}>
-                <Ionicons name="person-add-outline" size={20} color="#3B82F6" />
-                <Text style={styles.actionButtonText}>Add Friend</Text>
+              <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.primaryLight || colors.surfaceSecondary }]}>
+                <Ionicons name="person-add-outline" size={20} color={colors.primary} />
+                <Text style={[styles.actionButtonText, { color: colors.primary }]}>Add Friend</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButtonSecondary}>
-                <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
-                <Text style={styles.actionButtonTextSecondary}>Message</Text>
+              <TouchableOpacity style={[styles.actionButtonSecondary, { backgroundColor: colors.surfaceSecondary }]}>
+                <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
+                <Text style={[styles.actionButtonTextSecondary, { color: colors.textSecondary }]}>Message</Text>
               </TouchableOpacity>
             </View>
 
             {/* Placeholder for user's recent activity */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Recent Activity</Text>
-              <View style={styles.emptySection}>
-                <Ionicons name="newspaper-outline" size={32} color="#D1D5DB" />
-                <Text style={styles.emptySectionText}>No recent activity</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Activity</Text>
+              <View style={[styles.emptySection, { backgroundColor: colors.surfaceSecondary }]}>
+                <Ionicons name="newspaper-outline" size={32} color={colors.textTertiary} />
+                <Text style={[styles.emptySectionText, { color: colors.textTertiary }]}>No recent activity</Text>
               </View>
             </View>
           </ScrollView>
