@@ -86,6 +86,11 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## KEY API ENDPOINTS
 
+### Referral
+- `GET /api/referral` - Get invite code + referral stats
+- `POST /api/referral` - Set custom invite code
+- `GET /api/invite/[code]` - Validate invite code, get inviter info
+
 ### Badges
 - `GET /api/badges?userId=` - Get user badges
 - `POST /api/badges` - Auto-check and award badges
