@@ -261,55 +261,57 @@ export async function POST(request: NextRequest) {
 
     const awardedBadges: string[] = [];
 
-    // Get user stats
+    // Get user stats (all in one query for efficiency)
     const [tradeStats] = await sql`
       SELECT 
-        COUNT(*) FILTER (WHERE status = 'completed') as completed_trades,
+        (SELECT COUNT(*) FROM trades WHERE (initiator_id = ${user.user_id} OR receiver_id = ${user.user_id}) AND status = 'completed') as completed_trades,
         (SELECT COUNT(*) FROM collection_items WHERE user_id = ${user.user_id}) as collection_size,
         (SELECT AVG(rating) FROM trade_ratings WHERE rated_user_id = ${user.user_id}) as avg_rating,
-        (SELECT created_at FROM users WHERE user_id = ${user.user_id}) as account_created
-      FROM trades 
-      WHERE initiator_id = ${user.user_id} OR receiver_id = ${user.user_id}
+        (SELECT created_at FROM users WHERE user_id = ${user.user_id}) as account_created,
+        (SELECT COUNT(*) FROM marketplace_listings WHERE user_id = ${user.user_id}) as listings_count,
+        (SELECT COUNT(*) FROM friendships WHERE (user_id = ${user.user_id} OR friend_id = ${user.user_id}) AND status = 'accepted') as friends_count,
+        (SELECT COUNT(*) FROM group_members WHERE user_id = ${user.user_id}) as groups_count,
+        (SELECT COUNT(*) FROM posts WHERE user_id = ${user.user_id}) as posts_count,
+        (SELECT COUNT(*) FROM decks WHERE user_id = ${user.user_id}) as decks_count
     `;
 
-    const completedTrades = parseInt(tradeStats?.completed_trades || '0');
-    const collectionSize = parseInt(tradeStats?.collection_size || '0');
-    const avgRating = parseFloat(tradeStats?.avg_rating || '0');
-    const accountAgeDays = tradeStats?.account_created 
-      ? Math.floor((Date.now() - new Date(tradeStats.account_created).getTime()) / (1000 * 60 * 60 * 24))
-      : 0;
+    const stats = {
+      completedTrades: parseInt(tradeStats?.completed_trades || '0'),
+      collectionSize: parseInt(tradeStats?.collection_size || '0'),
+      avgRating: parseFloat(tradeStats?.avg_rating || '0'),
+      accountAgeDays: tradeStats?.account_created 
+        ? Math.floor((Date.now() - new Date(tradeStats.account_created).getTime()) / (1000 * 60 * 60 * 24))
+        : 0,
+      listingsCount: parseInt(tradeStats?.listings_count || '0'),
+      friendsCount: parseInt(tradeStats?.friends_count || '0'),
+      groupsCount: parseInt(tradeStats?.groups_count || '0'),
+      postsCount: parseInt(tradeStats?.posts_count || '0'),
+      decksCount: parseInt(tradeStats?.decks_count || '0'),
+    };
 
     // Check each badge
     for (const [badgeType, definition] of Object.entries(BADGE_DEFINITIONS)) {
-      if (definition.manual) continue; // Skip manual badges
-      
-      const requirements = definition.requirements;
-      if (!requirements) continue;
+      if (definition.manual) continue;
+      const req = definition.requirements;
+      if (!req) continue;
 
       let qualified = true;
-
-      if (requirements.completed_trades && completedTrades < requirements.completed_trades) {
-        qualified = false;
-      }
-      if (requirements.collection_size && collectionSize < requirements.collection_size) {
-        qualified = false;
-      }
-      if (requirements.average_rating && avgRating < requirements.average_rating) {
-        qualified = false;
-      }
-      if (requirements.account_age_days && accountAgeDays < requirements.account_age_days) {
-        qualified = false;
-      }
+      if (req.completed_trades && stats.completedTrades < req.completed_trades) qualified = false;
+      if (req.collection_size && stats.collectionSize < req.collection_size) qualified = false;
+      if (req.average_rating && stats.avgRating < req.average_rating) qualified = false;
+      if (req.account_age_days && stats.accountAgeDays < req.account_age_days) qualified = false;
+      if (req.listings_count && stats.listingsCount < req.listings_count) qualified = false;
+      if (req.friends_count && stats.friendsCount < req.friends_count) qualified = false;
+      if (req.groups_count && stats.groupsCount < req.groups_count) qualified = false;
+      if (req.posts_count && stats.postsCount < req.posts_count) qualified = false;
+      if (req.decks_count && stats.decksCount < req.decks_count) qualified = false;
 
       if (qualified) {
-        // Check if already has badge
         const [existing] = await sql`
           SELECT 1 FROM user_badges 
           WHERE user_id = ${user.user_id} AND badge_type = ${badgeType}
         `;
-
         if (!existing) {
-          // Award badge
           await sql`
             INSERT INTO user_badges (user_id, badge_type, awarded_at)
             VALUES (${user.user_id}, ${badgeType}, NOW())
