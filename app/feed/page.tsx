@@ -60,6 +60,30 @@ export default function FeedPage() {
   const [myGroups, setMyGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [postMenu, setPostMenu] = useState<string | null>(null);
+
+  // Delete post function
+  const deletePost = async (postId: string) => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    
+    try {
+      const res = await fetch(`/api/feed/${postId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPosts(prev => prev.filter(p => p.post_id !== postId));
+      } else {
+        alert(data.error || 'Failed to delete post');
+      }
+    } catch (error) {
+      console.error('Delete post error:', error);
+      alert('Failed to delete post');
+    }
+    setPostMenu(null);
+  };
 
   useEffect(() => {
     fetch('/api/auth/me')
