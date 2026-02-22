@@ -16,9 +16,10 @@ interface ProfileScreenProps {
   user: any;
   onLogout: () => void;
   onOpenMenu?: () => void;
+  onSettings?: () => void;
 }
 
-export default function ProfileScreen({ user, onLogout, onOpenMenu }: ProfileScreenProps) {
+export default function ProfileScreen({ user, onLogout, onOpenMenu, onSettings }: ProfileScreenProps) {
   const handleLogout = () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('auth_token');
