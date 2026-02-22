@@ -101,15 +101,22 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
     }
   };
 
-  const fetchMessages = async (userId: string) => {
+  const fetchMessages = async (conversation: Conversation) => {
     try {
       const authToken = getAuthToken();
-      const res = await fetch(`${API_URL}/api/messages?userId=${userId}`, {
-        headers: { 'Authorization': `Bearer ${authToken}` },
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMessages(data.messages || []);
+      // If we have a conversation_id, use that; otherwise we need to get/create conversation first
+      if (conversation.conversation_id) {
+        const res = await fetch(`${API_URL}/api/messages/${conversation.conversation_id}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          setMessages(data.messages || []);
+        }
+      } else {
+        // No conversation yet, start with empty messages
+        // When user sends first message, conversation will be created
+        setMessages([]);
       }
     } catch (err) {
       console.log('Failed to fetch messages:', err);
