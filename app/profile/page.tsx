@@ -133,6 +133,24 @@ export default function MyProfilePage() {
     }
   };
 
+  const loadBadges = async (userId: string) => {
+    setBadgeLoading(true);
+    try {
+      // First, check & award any new badges
+      await fetch('/api/badges', { method: 'POST', credentials: 'include' });
+      // Then fetch all badges
+      const res = await fetch(`/api/badges?userId=${userId}`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setBadges(data.badges || []);
+      }
+    } catch (error) {
+      console.error('Load badges error:', error);
+    } finally {
+      setBadgeLoading(false);
+    }
+  };
+
   const getCardImage = (cardData: any) => {
     if (cardData?.image_uris?.small) return cardData.image_uris.small;
     if (cardData?.images?.small) return cardData.images.small;
