@@ -40,6 +40,13 @@ export default function SettingsPage() {
   const [publicProfile, setPublicProfile] = useState(true);
   const [showCollection, setShowCollection] = useState(true);
 
+  // Referral
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteCodeSaving, setInviteCodeSaving] = useState(false);
+  const [inviteCodeSaved, setInviteCodeSaved] = useState(false);
+  const [inviteCodeError, setInviteCodeError] = useState('');
+  const [referralCount, setReferralCount] = useState(0);
+
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then(res => res.json())
