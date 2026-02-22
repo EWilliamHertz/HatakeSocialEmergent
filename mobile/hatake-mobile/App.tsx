@@ -300,11 +300,11 @@ function AppContent() {
                   }
                   return <Ionicons name={iconName} size={size} color={color} />;
                 },
-                tabBarActiveTintColor: '#3B82F6',
-                tabBarInactiveTintColor: '#9CA3AF',
+                tabBarActiveTintColor: colors.primary,
+                tabBarInactiveTintColor: colors.textTertiary,
                 tabBarStyle: {
-                  backgroundColor: '#fff',
-                  borderTopColor: '#E5E7EB',
+                  backgroundColor: colors.surface,
+                  borderTopColor: colors.border,
                 },
               })}
             >
