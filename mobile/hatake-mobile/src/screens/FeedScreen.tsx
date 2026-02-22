@@ -44,6 +44,8 @@ interface Post {
   liked?: boolean;        // API returns 'liked'
   is_liked?: boolean;     // Legacy field
   reactions?: Reaction[]; // Emoji reactions
+  group_id?: string;      // Group post association
+  group_name?: string;    // Group name for display
 }
 
 const EMOJI_OPTIONS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
