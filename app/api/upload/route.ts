@@ -25,7 +25,12 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    const formData = await request.formData();
+    let formData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
     const file = formData.get('file') as File | null;
 
     if (!file) {
