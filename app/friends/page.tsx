@@ -268,14 +268,14 @@ export default function FriendsPage() {
 
         {/* Friend Requests */}
         {tab === 'requests' && (
-          <div className="bg-white rounded-xl shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
             {requests.length === 0 ? (
               <div className="p-12 text-center">
-                <UserPlus className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No pending friend requests</p>
+                <UserPlus className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">No pending friend requests</p>
               </div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y dark:divide-gray-700">
                 {requests.map((request) => (
                   <div key={request.user_id} className="p-4 flex items-center justify-between" data-testid={`request-${request.user_id}`}>
                     <div className="flex items-center gap-4">
@@ -287,21 +287,23 @@ export default function FriendsPage() {
                         </div>
                       )}
                       <div>
-                        <p className="font-semibold">{request.name}</p>
-                        <p className="text-sm text-gray-500">Wants to be your friend</p>
+                        <p className="font-semibold dark:text-white">{request.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Wants to be your friend</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => respondToRequest(request.user_id, 'accept')}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                        data-testid={`accept-request-${request.user_id}`}
                       >
                         <Check className="w-4 h-4" />
                         Accept
                       </button>
                       <button
                         onClick={() => respondToRequest(request.user_id, 'reject')}
-                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 flex items-center gap-2"
+                        className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2"
+                        data-testid={`decline-request-${request.user_id}`}
                       >
                         <X className="w-4 h-4" />
                         Decline
