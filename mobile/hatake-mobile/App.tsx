@@ -418,17 +418,21 @@ export default function App() {
                   right: 0, 
                   bottom: 0, 
                   backgroundColor: '#F9FAFB',
-                  zIndex: 100 
+                  zIndex: 100,
+                  flex: 1,
+                  display: 'flex',
                 }}>
-                  <TradesScreen
-                    user={user}
-                    token={token}
-                    onClose={() => setShowTrades(false)}
-                    onCreateTrade={() => {
-                      setShowTrades(false);
-                      setShowCreateTrade(true);
-                    }}
-                  />
+                  <View style={{ flex: 1, width: '100%', height: '100%' }}>
+                    <TradesScreen
+                      user={user}
+                      token={token}
+                      onClose={() => setShowTrades(false)}
+                      onCreateTrade={() => {
+                        setShowTrades(false);
+                        setShowCreateTrade(true);
+                      }}
+                    />
+                  </View>
                 </View>
               )
             ) : (
