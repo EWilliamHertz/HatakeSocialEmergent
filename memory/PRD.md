@@ -50,9 +50,20 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
    - Supports both main deck and sideboard
    - Works with Scryfall (MTG) and TCGdex (Pokemon)
 
-5. **Dark Mode - Additional Screens** ✅
-   - DrawerMenu - fully themed (sidebar menu)
-   - DecksScreen - fully themed (deck builder, filters, modals, cards)
+5. **Dark Mode - 100% Complete** ✅
+   - **Screens:**
+     - DrawerMenu (sidebar menu)
+     - DecksScreen (deck builder, filters, modals)
+     - GroupDetailScreen (full theme support)
+     - GroupChatScreen (messages, input, headers)
+     - CreateTradeScreen (all 3 steps themed)
+     - SearchScreen (headers, results, empty states)
+   - **Components:**
+     - CardItem (backgrounds, text, placeholders)
+     - SearchBar (input, icons)
+     - GameFilter (buttons, text)
+     - UserProfileModal (full theme support)
+     - CommentsModal (already had theme)
 
 6. **Web MessengerWidget Fix** ✅
    - Hidden MessengerWidget on /messages page to avoid redundancy
