@@ -27,6 +27,34 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Session 6 Updates - Bug Fixes (2026-02-22)
+
+1. **Sealed Products Currency Fix** ✅
+   - Fixed currency inconsistency in Add/Edit modal
+   - Both "Purchase Price" and "Current Value" now show € (was showing $ for Current Value)
+
+2. **Friend Requests Web Improvements** ✅
+   - Added proper error handling and feedback for friend request actions
+   - Added dark mode support to Requests tab and Search tab
+   - Added test IDs for Accept/Decline/Add Friend buttons
+   - Alert messages now show success/failure status
+
+3. **Mobile Trades Screen Fix** ✅
+   - Applied web-specific rendering fix (absolute View instead of Modal on web)
+   - This addresses the "flash then white" issue on Expo web build
+
+4. **Mobile MessengerWidget Fix** ✅
+   - Fixed FlatList rendering with proper flex styling
+   - Added z-index to chat window for proper layering
+   - Wrapped FlatList in View with flex: 1 for proper sizing
+
+5. **Mobile GroupsScreen Styles** ✅
+   - Added missing invite-related styles (inviteCard, inviteHeader, etc.)
+   - Fixed emptySubtext style that was missing
+
+6. **Mobile FeedScreen Type Fix** ✅
+   - Added group_id and group_name to Post interface
+
 ### Session 5 Updates - UI Improvements & Marketplace (2026-02-22)
 
 1. **Feed Group Badge** ✅
