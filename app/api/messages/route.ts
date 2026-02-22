@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const { recipientId, content, messageType, mediaUrl } = await request.json();
+    const { recipientId, content, messageType, mediaUrl, replyToId } = await request.json();
 
     if (!recipientId || (!content && !mediaUrl)) {
       return NextResponse.json(
@@ -91,11 +91,16 @@ export async function POST(request: NextRequest) {
       `;
     }
 
+    // Ensure reply_to column exists
+    try {
+      await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to VARCHAR(255)`;
+    } catch (e) {}
+
     // Send message
     const messageId = generateId('msg');
     await sql`
-      INSERT INTO messages (message_id, conversation_id, sender_id, content, message_type, media_url)
-      VALUES (${messageId}, ${conversationId}, ${user.user_id}, ${content || ''}, ${messageType || 'text'}, ${mediaUrl || null})
+      INSERT INTO messages (message_id, conversation_id, sender_id, content, message_type, media_url, reply_to)
+      VALUES (${messageId}, ${conversationId}, ${user.user_id}, ${content || ''}, ${messageType || 'text'}, ${mediaUrl || null}, ${replyToId || null})
     `;
 
     // Update conversation timestamp
