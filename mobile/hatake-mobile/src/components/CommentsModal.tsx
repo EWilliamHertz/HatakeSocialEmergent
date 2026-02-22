@@ -44,6 +44,7 @@ export default function CommentsModal({
   token,
   onCommentAdded 
 }: CommentsModalProps) {
+  const { colors } = useTheme();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
