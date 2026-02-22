@@ -42,7 +42,7 @@ Note: Safari on iPad may have issues selecting APK files directly. Try these alt
 ## API Configuration
 
 The app connects to:
-- **Backend API:** https://trading-hub-test-1.preview.emergentagent.com
+- **Backend API:** https://deck-builder-test-1.preview.emergentagent.com
 
 ---
 
