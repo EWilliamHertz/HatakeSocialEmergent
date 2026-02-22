@@ -39,6 +39,7 @@ interface CreateTradeScreenProps {
 }
 
 export default function CreateTradeScreen({ user, token, onClose, onTradeCreated }: CreateTradeScreenProps) {
+  const { colors } = useTheme();
   // Steps: 1 = Select recipient, 2 = Select your cards, 3 = Review & send
   const [step, setStep] = useState(1);
   
