@@ -3016,4 +3016,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  filePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+  },
+  filePickerButtonText: {
+    color: '#3B82F6',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  orDivider: {
+    textAlign: 'center',
+    color: '#9CA3AF',
+    fontSize: 14,
+    marginBottom: 12,
+  },
 });
