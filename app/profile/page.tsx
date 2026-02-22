@@ -90,6 +90,7 @@ export default function MyProfilePage() {
           loadStats();
           loadRecentCollection();
           loadMyListings();
+          loadBadges(data.user.user_id);
         }
       })
       .catch(() => router.push('/auth/login'))
