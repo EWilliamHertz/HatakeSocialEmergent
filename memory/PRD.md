@@ -27,6 +27,26 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Session 8 Updates - Notification Sounds & Message Replies (2026-02-22)
+
+1. **Notification Chime Sound** ✅
+   - Web: Uses Web Audio API to play a pleasant two-note chime
+   - Mobile: Uses expo-av with synthesized audio
+   - Sound toggle available in Messages page header
+   - Plays when new unread messages arrive
+
+2. **Message Reply Feature** ✅
+   - Long-press (mobile) or click reply button (web) to reply to a message
+   - Reply banner shows above input when replying
+   - Messages display reply context with quoted text
+   - API updated to support `reply_to` field
+   - Works in MessagesScreen, MessengerWidget, and web Messages page
+
+3. **Mobile Trades Screen Rewrite** ✅
+   - Completely rewrote TradesScreen with simpler ScrollView approach
+   - Removed FlatList to avoid web rendering issues
+   - Uses standard View hierarchy for better Expo web compatibility
+
 ### Session 7 Updates - Critical Fixes & Media Upload (2026-02-22)
 
 1. **Web Group Invitations Fix** ✅
