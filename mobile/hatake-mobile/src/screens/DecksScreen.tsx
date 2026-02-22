@@ -693,6 +693,8 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
               </TouchableOpacity>
             </View>
           )}
+          </>
+        )}
 
           {/* Import Modal */}
           <Modal
