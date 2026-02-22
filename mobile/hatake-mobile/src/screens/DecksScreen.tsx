@@ -590,6 +590,7 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : (
+          <>
           <ScrollView style={styles.deckContent}>
             {/* Deck Stats */}
             <View style={[styles.deckStatsRow, { backgroundColor: colors.surface }]}>
