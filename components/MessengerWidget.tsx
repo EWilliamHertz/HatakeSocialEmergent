@@ -879,7 +879,7 @@ export default function MessengerWidget() {
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <p className="font-medium text-sm truncate dark:text-white">{conv.name}</p>
+                              <a href={`/profile/${conv.user_id}`} onClick={(e) => e.stopPropagation()} className="font-medium text-sm truncate dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">{conv.name}</a>
                               {conv.unread_count > 0 && (
                                 <span className="bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">
                                   {conv.unread_count}
