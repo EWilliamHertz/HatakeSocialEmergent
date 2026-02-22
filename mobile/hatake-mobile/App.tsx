@@ -75,6 +75,7 @@ function AppContent() {
   const [showCreateTrade, setShowCreateTrade] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [messengerWidgetEnabled, setMessengerWidgetEnabled] = useState(true);
+  const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null);
   const [messageRecipient, setMessageRecipient] = useState<any>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [callState, setCallState] = useState<CallState>({
