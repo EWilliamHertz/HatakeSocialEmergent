@@ -75,6 +75,8 @@ export default function SettingsPage() {
         setPaymentKontonummer(data.user.payment_kontonummer || '');
         setPaymentIban(data.user.payment_iban || '');
         setPaymentSwift(data.user.payment_swift || '');
+        setInviteCode(data.user.invite_code || '');
+        setReferralCount(parseInt(data.user.referral_count || '0'));
       }
     } catch (e) {
       console.error('Failed to fetch profile:', e);
