@@ -136,7 +136,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   drawer: {
-    backgroundColor: '#fff',
     position: 'absolute',
     left: 0,
     top: 0,
@@ -156,7 +155,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   logo: {
     width: 32,
@@ -166,14 +164,12 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1F2937',
     marginLeft: 10,
   },
   userSection: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#F9FAFB',
   },
   userAvatar: {
     width: 48,
@@ -184,7 +180,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -195,11 +190,9 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
   },
   userEmail: {
     fontSize: 13,
-    color: '#6B7280',
     marginTop: 2,
   },
   menuList: {
@@ -214,12 +207,10 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 15,
-    color: '#374151',
     marginLeft: 14,
     flex: 1,
   },
   badge: {
-    backgroundColor: '#EF4444',
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -234,7 +225,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
     padding: 16,
   },
   footerItem: {
@@ -244,7 +234,6 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: '#6B7280',
     marginLeft: 10,
   },
   logoutButton: {
