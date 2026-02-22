@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { User, Package, ShoppingBag, Users, Settings, Camera, UserPlus, UserMinus, MessageCircle, Star } from 'lucide-react';
+import { User, Package, ShoppingBag, Users, Settings, Camera, UserPlus, UserMinus, MessageCircle, Star, Award } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import UserReputation from '@/components/UserReputation';
