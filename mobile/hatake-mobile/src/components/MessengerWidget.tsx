@@ -34,6 +34,10 @@ interface Message {
   sender_id: string;
   content: string;
   created_at: string;
+  message_type?: 'text' | 'image' | 'video';
+  media_url?: string;
+  name?: string;
+  picture?: string;
 }
 
 interface MessengerWidgetProps {
