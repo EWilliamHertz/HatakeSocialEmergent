@@ -200,44 +200,44 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
         <View style={styles.backButton} />
       </View>
 
       <ScrollView style={styles.content}>
         {/* Profile Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Profile</Text>
           
           <TouchableOpacity 
-            style={styles.settingCard}
+            style={[styles.settingCard, { backgroundColor: colors.surface }]}
             onPress={() => setActiveSection(activeSection === 'profile' ? null : 'profile')}
           >
             <View style={styles.settingRow}>
-              <View style={styles.settingIcon}>
-                <Ionicons name="person-outline" size={22} color="#3B82F6" />
+              <View style={[styles.settingIcon, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="person-outline" size={22} color={colors.primary} />
               </View>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingTitle}>Edit Profile</Text>
-                <Text style={styles.settingSubtitle}>Name, shipping address, payment info</Text>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>Edit Profile</Text>
+                <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>Name, shipping address, payment info</Text>
               </View>
               <Ionicons 
                 name={activeSection === 'profile' ? 'chevron-up' : 'chevron-down'} 
                 size={20} 
-                color="#9CA3AF" 
+                color={colors.textTertiary} 
               />
             </View>
             
             {activeSection === 'profile' && (
               <View style={styles.expandedContent}>
-                <Text style={styles.inputLabel}>Display Name</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Display Name</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border }]}
                   value={name}
                   onChangeText={setName}
                   placeholder="Your name"
