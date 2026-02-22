@@ -1117,19 +1117,19 @@ export default function MessagesPage() {
                               )}
                               <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2 items-end`}>
                                 {!isOwn && (
-                                  <div className="flex flex-col items-center">
+                                  <a href={`/profile/${msg.sender_id}`} className="flex flex-col items-center">
                                     {msg.picture ? (
-                                      <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full" unoptimized />
+                                      <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full hover:ring-2 hover:ring-blue-400 transition" unoptimized />
                                     ) : (
-                                      <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                      <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold hover:ring-2 hover:ring-blue-400 transition">
                                         {msg.name?.charAt(0).toUpperCase() || '?'}
                                       </div>
                                     )}
-                                  </div>
+                                  </a>
                                 )}
                                 <div className={`max-w-[70%] ${isOwn ? 'order-first' : ''}`}>
                                   {!isOwn && (
-                                    <p className="text-xs text-gray-500 mb-0.5 ml-1">{msg.name}</p>
+                                    <a href={`/profile/${msg.sender_id}`} className="text-xs text-gray-500 mb-0.5 ml-1 hover:text-blue-600 transition">{msg.name}</a>
                                   )}
                                   <div className={`rounded-2xl px-4 py-2 ${
                                     isOwn 
