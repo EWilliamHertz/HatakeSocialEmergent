@@ -326,9 +326,9 @@ export default function WishlistScreen({ user, token, onClose }: WishlistScreenP
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="heart-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyTitle}>Empty Wishlist</Text>
-              <Text style={styles.emptySubtitle}>
+              <Ionicons name="heart-outline" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>Empty Wishlist</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textTertiary }]}>
                 Add cards to this wishlist from the web app
               </Text>
             </View>
@@ -340,14 +340,14 @@ export default function WishlistScreen({ user, token, onClose }: WishlistScreenP
 
   // Wishlists List View
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Wishlists</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>My Wishlists</Text>
         <TouchableOpacity 
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => setShowCreateModal(true)}
         >
           <Ionicons name="add" size={24} color="#FFFFFF" />
@@ -356,7 +356,7 @@ export default function WishlistScreen({ user, token, onClose }: WishlistScreenP
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -365,17 +365,17 @@ export default function WishlistScreen({ user, token, onClose }: WishlistScreenP
           keyExtractor={(item) => item.wishlist_id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchWishlists(); }} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchWishlists(); }} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="heart-outline" size={64} color="#D1D5DB" />
-              <Text style={styles.emptyTitle}>No Wishlists</Text>
-              <Text style={styles.emptySubtitle}>
+              <Ionicons name="heart-outline" size={64} color={colors.textTertiary} />
+              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No Wishlists</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textTertiary }]}>
                 Create a wishlist to track cards you want
               </Text>
               <TouchableOpacity
-                style={styles.createFirstBtn}
+                style={[styles.createFirstBtn, { backgroundColor: colors.primary }]}
                 onPress={() => setShowCreateModal(true)}
               >
                 <Ionicons name="add" size={20} color="#FFFFFF" />
@@ -393,28 +393,30 @@ export default function WishlistScreen({ user, token, onClose }: WishlistScreenP
         presentationStyle="pageSheet"
         onRequestClose={() => setShowCreateModal(false)}
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>New Wishlist</Text>
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>New Wishlist</Text>
             <TouchableOpacity onPress={() => setShowCreateModal(false)}>
-              <Ionicons name="close" size={28} color="#1F2937" />
+              <Ionicons name="close" size={28} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.modalContent}>
-            <Text style={styles.inputLabel}>Name *</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Name *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               placeholder="My Wishlist"
+              placeholderTextColor={colors.textTertiary}
               value={newWishlistName}
               onChangeText={setNewWishlistName}
               maxLength={50}
             />
 
-            <Text style={styles.inputLabel}>Description</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Description</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               placeholder="What cards are you looking for?"
+              placeholderTextColor={colors.textTertiary}
               value={newWishlistDesc}
               onChangeText={setNewWishlistDesc}
               multiline
