@@ -148,7 +148,7 @@ export default function OnboardingTour({ visible, onComplete }: OnboardingTourPr
       transparent
       statusBarTranslucent
     >
-      <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.95)' : 'rgba(0,0,0,0.9)' }]}>
+      <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.92)' }]}>
         <Animated.View 
           style={[
             styles.content,
