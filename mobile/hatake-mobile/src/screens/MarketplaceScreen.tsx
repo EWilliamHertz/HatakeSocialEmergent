@@ -367,28 +367,28 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
 
   if (loading && activeTab === 'cards') {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text style={styles.loadingText}>Loading marketplace...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading marketplace...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity 
             style={styles.menuButton}
             onPress={onOpenMenu}
           >
-            <Ionicons name="menu" size={26} color="#1F2937" />
+            <Ionicons name="menu" size={26} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.title}>Marketplace</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: colors.text }]}>Marketplace</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               {activeTab === 'cards' ? `${listings.length} listings` : `${shopProducts.length} products`}
             </Text>
           </View>
@@ -397,24 +397,24 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, { backgroundColor: colors.surface }]}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'cards' && styles.tabActive]}
+          style={[styles.tab, { borderBottomColor: 'transparent' }, activeTab === 'cards' && { borderBottomColor: colors.primary }]}
           onPress={() => setActiveTab('cards')}
           data-testid="tab-cards"
         >
-          <Ionicons name="card-outline" size={18} color={activeTab === 'cards' ? '#3B82F6' : '#6B7280'} />
-          <Text style={[styles.tabText, activeTab === 'cards' && styles.tabTextActive]}>
+          <Ionicons name="card-outline" size={18} color={activeTab === 'cards' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'cards' && { color: colors.primary }]}>
             Card Listings
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'hatake' && styles.tabActive]}
+          style={[styles.tab, { borderBottomColor: 'transparent' }, activeTab === 'hatake' && { borderBottomColor: colors.primary }]}
           onPress={() => setActiveTab('hatake')}
           data-testid="tab-hatake"
         >
-          <Ionicons name="storefront-outline" size={18} color={activeTab === 'hatake' ? '#3B82F6' : '#6B7280'} />
-          <Text style={[styles.tabText, activeTab === 'hatake' && styles.tabTextActive]}>
+          <Ionicons name="storefront-outline" size={18} color={activeTab === 'hatake' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'hatake' && { color: colors.primary }]}>
             Hatake Products
           </Text>
         </TouchableOpacity>
@@ -424,16 +424,16 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
       {activeTab === 'cards' && (
         <>
           {/* Filters */}
-          <View style={styles.filters}>
+          <View style={[styles.filters, { backgroundColor: colors.surface }]}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
               {(['all', 'mine', 'mtg', 'pokemon'] as const).map((f) => (
                 <TouchableOpacity
                   key={f}
-                  style={[styles.filterButton, filter === f && styles.filterActive]}
+                  style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === f && { backgroundColor: colors.primary }]}
                   onPress={() => setFilter(f)}
                   data-testid={`filter-${f}`}
                 >
-                  <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                  <Text style={[styles.filterText, { color: colors.textSecondary }, filter === f && styles.filterTextActive]}>
                     {f === 'all' ? 'All' : f === 'mine' ? 'My Listings' : f === 'mtg' ? 'Magic' : 'Pokémon'}
                   </Text>
                 </TouchableOpacity>
