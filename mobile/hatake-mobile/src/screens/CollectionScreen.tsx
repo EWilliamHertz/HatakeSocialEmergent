@@ -2056,37 +2056,37 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
         presentationStyle="pageSheet"
         onRequestClose={() => setShowCsvModal(false)}
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Import from CSV</Text>
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Import from CSV</Text>
             <TouchableOpacity onPress={() => setShowCsvModal(false)}>
-              <Ionicons name="close" size={28} color="#1F2937" />
+              <Ionicons name="close" size={28} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalContent}>
-            <Text style={styles.csvInstructions}>
-              Paste your card list below. Supported formats:
+            <Text style={[styles.csvInstructions, { color: colors.textSecondary }]}>
+              Paste your card list or upload a CSV file. Supported formats:
             </Text>
-            <View style={styles.csvFormatExamples}>
-              <Text style={styles.csvFormatLine}>• set_code, collector_number, quantity</Text>
-              <Text style={styles.csvFormatLine}>• sv09, 123, 2</Text>
-              <Text style={styles.csvFormatLine}>• NEO 45 4</Text>
+            <View style={[styles.csvFormatExamples, { backgroundColor: colors.surfaceSecondary }]}>
+              <Text style={[styles.csvFormatLine, { color: colors.text }]}>• Full CSV with headers (Name, Set Code, Collector Number, etc.)</Text>
+              <Text style={[styles.csvFormatLine, { color: colors.text }]}>• card_name/set_code (e.g., muxus/JMP)</Text>
+              <Text style={[styles.csvFormatLine, { color: colors.text }]}>• set_code, collector_number, quantity</Text>
             </View>
 
             {/* Game Selector */}
-            <Text style={styles.inputLabel}>Card Game</Text>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Card Game</Text>
             <View style={styles.gameSelector}>
               <TouchableOpacity
-                style={[styles.gameButton, csvGame === 'mtg' && styles.gameButtonActive]}
+                style={[styles.gameButton, { backgroundColor: colors.surfaceSecondary }, csvGame === 'mtg' && { backgroundColor: colors.primary }]}
                 onPress={() => setCsvGame('mtg')}
               >
-                <Text style={[styles.gameButtonText, csvGame === 'mtg' && styles.gameButtonTextActive]}>
+                <Text style={[styles.gameButtonText, { color: colors.textSecondary }, csvGame === 'mtg' && styles.gameButtonTextActive]}>
                   Magic
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.gameButton, csvGame === 'pokemon' && styles.gameButtonActive]}
+                style={[styles.gameButton, { backgroundColor: colors.surfaceSecondary }, csvGame === 'pokemon' && { backgroundColor: colors.primary }]}
                 onPress={() => setCsvGame('pokemon')}
               >
                 <Text style={[styles.gameButtonText, csvGame === 'pokemon' && styles.gameButtonTextActive]}>
