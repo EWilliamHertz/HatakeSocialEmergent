@@ -66,6 +66,7 @@ export default function MessagesScreen({
   initialRecipient,
   onStartCall 
 }: MessagesScreenProps) {
+  const { colors } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
