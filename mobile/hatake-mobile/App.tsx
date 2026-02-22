@@ -643,6 +643,15 @@ function AppContent() {
               visible={showOnboarding}
               onComplete={() => setShowOnboarding(false)}
             />
+
+            {/* User Profile Modal - opened from messenger/messages */}
+            <UserProfileModal
+              visible={!!viewProfileUserId}
+              onClose={() => setViewProfileUserId(null)}
+              userId={viewProfileUserId || ''}
+              token={token || ''}
+              currentUserId={user?.user_id}
+            />
           </>
         ) : (
           <LoginScreen onLoginSuccess={handleLoginSuccess} />
