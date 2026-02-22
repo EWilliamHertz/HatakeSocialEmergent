@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Platform,
   ScrollView,
