@@ -27,23 +27,40 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-12-XX (Latest)
 
-### Session 13 Updates - Bug Fixes & Dark Mode (2026-12-XX)
+### Session 13 Updates - Bug Fixes & New Features (2026-12-XX)
 
 1. **Collection & Marketplace Layout Fix** ✅
    - Reverted from 3 columns back to 2 columns per row as requested
    - Card width recalculated for better visibility
 
-2. **Trades Screen Fix** ✅
-   - Replaced Pressable with TouchableOpacity for more reliable touch handling
-   - All trades should now be clickable across all platforms
+2. **Trades Screen Crash Fix** ✅
+   - Fixed null pointer crashes when opening trade details
+   - Added safe null checks for status, user, cards, and money values
+   - Added `formatMoney()` helper for robust number formatting
 
-3. **Dark Mode - Additional Screens** ✅
+3. **Trades - Shipping & Payment Details** ✅
+   - Added full shipping address display (for accepted/completed trades)
+   - Added payment details (Swish, Account, Bankgiro)
+   - Shows both "Their Details" and "Your Details" sections
+   - Added "Mark as Completed" button for accepted trades
+
+4. **Deck Builder - Import & Add Cards** ✅
+   - Added "Import List" button - paste MTGO format decklist
+   - Added "Add Card" button - search and add individual cards
+   - Supports both main deck and sideboard
+   - Works with Scryfall (MTG) and TCGdex (Pokemon)
+
+5. **Dark Mode - Additional Screens** ✅
    - DrawerMenu - fully themed (sidebar menu)
    - DecksScreen - fully themed (deck builder, filters, modals, cards)
 
-4. **Web MessengerWidget Fix** ✅
+6. **Web MessengerWidget Fix** ✅
    - Hidden MessengerWidget on /messages page to avoid redundancy
    - Widget now uses usePathname to detect current route
+
+7. **Launch Roadmap Created** ✅
+   - Created `/app/memory/ROADMAP.md` with full launch plan
+   - Phases: Core Stability → Pre-Launch Polish → Beta → Public Launch → Enhancements
 
 ### Session 12 Updates - Dark Mode & CSV Import Fix (2026-02-22)
 
