@@ -2096,23 +2096,24 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
             </View>
 
             {/* CSV Input */}
-            <Text style={styles.inputLabel}>Card List</Text>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Card List</Text>
             
             {/* File picker button */}
             <TouchableOpacity 
-              style={styles.filePickerButton}
+              style={[styles.filePickerButton, { borderColor: colors.primary, backgroundColor: colors.surfaceSecondary }]}
               onPress={pickCsvFile}
               data-testid="csv-file-picker-btn"
             >
-              <Ionicons name="document-outline" size={20} color="#3B82F6" />
-              <Text style={styles.filePickerButtonText}>Choose CSV File</Text>
+              <Ionicons name="document-outline" size={20} color={colors.primary} />
+              <Text style={[styles.filePickerButtonText, { color: colors.primary }]}>Choose CSV File</Text>
             </TouchableOpacity>
             
-            <Text style={styles.orDivider}>OR paste text below</Text>
+            <Text style={[styles.orDivider, { color: colors.textTertiary }]}>OR paste text below</Text>
             
             <TextInput
-              style={styles.csvInput}
-              placeholder="sv09, 001, 1&#10;sv09, 002, 2&#10;NEO, 45, 4"
+              style={[styles.csvInput, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border }]}
+              placeholder="Name,Set Code,Set Name,Collector Number,..."
+              placeholderTextColor={colors.textTertiary}
               value={csvText}
               onChangeText={setCsvText}
               multiline
@@ -2123,11 +2124,11 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
 
             {/* Import Progress */}
             {importing && (
-              <View style={styles.importProgress}>
-                <Text style={styles.importProgressText}>
+              <View style={[styles.importProgress, { backgroundColor: colors.surfaceSecondary }]}>
+                <Text style={[styles.importProgressText, { color: colors.text }]}>
                   Importing... {importProgress.current}/{importProgress.total}
                 </Text>
-                <View style={styles.importProgressBar}>
+                <View style={[styles.importProgressBar, { backgroundColor: colors.border }]}>
                   <View 
                     style={[
                       styles.importProgressFill, 
