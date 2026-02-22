@@ -109,10 +109,44 @@ export default function CommunityPage() {
 
   const loadGroups = async () => {
     try {
-      const res = await fetch('/api/groups', { credentials: 'include' });
+      const res = await fetch('/api/groups?type=my', { credentials: 'include' });
       const data = await res.json();
       if (data.success) setGroups(data.groups || []);
     } catch (e) { console.error('Load groups error:', e); }
+  };
+
+  const loadGroupInvites = async () => {
+    try {
+      const res = await fetch('/api/groups/invites', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) setGroupInvites(data.invites || []);
+    } catch (e) { console.error('Load group invites error:', e); }
+  };
+
+  const acceptGroupInvite = async (inviteId: string) => {
+    try {
+      const res = await fetch('/api/groups/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ inviteId, action: 'accept' })
+      });
+      if (res.ok) {
+        await Promise.all([loadGroups(), loadGroupInvites()]);
+      }
+    } catch (e) { console.error('Accept invite error:', e); }
+  };
+
+  const declineGroupInvite = async (inviteId: string) => {
+    try {
+      const res = await fetch('/api/groups/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ inviteId, action: 'decline' })
+      });
+      if (res.ok) await loadGroupInvites();
+    } catch (e) { console.error('Decline invite error:', e); }
   };
 
   const searchUsers = async () => {
