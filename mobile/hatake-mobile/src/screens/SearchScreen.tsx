@@ -15,8 +15,10 @@ import CardItem from '../components/CardItem';
 import GameFilter from '../components/GameFilter';
 import { searchService, CardSearchResult } from '../services/search';
 import { useStore } from '../store';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SearchScreen({ navigation }: any) {
+  const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<CardSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
