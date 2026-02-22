@@ -324,12 +324,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       newBadges: awardedBadges,
-      stats: {
-        completedTrades,
-        collectionSize,
-        avgRating,
-        accountAgeDays,
-      }
+      stats,
     });
   } catch (error) {
     console.error('Check badges error:', error);
