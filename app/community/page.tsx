@@ -556,6 +556,60 @@ export default function CommunityPage() {
                   )}
                 </div>
               )}
+
+              {/* Group Invites Tab */}
+              {tab === 'invites' && (
+                <div data-testid="invites-content">
+                  {groupInvites.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <UsersRound className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-500 dark:text-gray-400">No pending group invitations</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y dark:divide-gray-700">
+                      {groupInvites.map((invite) => (
+                        <div key={invite.invite_id} className="p-4 flex items-center justify-between" data-testid={`invite-${invite.invite_id}`}>
+                          <div className="flex items-center gap-4">
+                            {invite.group_image ? (
+                              <Image src={invite.group_image} alt={invite.group_name} width={56} height={56} className="rounded-lg object-cover" />
+                            ) : (
+                              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <UsersRound className="w-7 h-7 text-white" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-semibold text-gray-900 dark:text-white">{invite.group_name}</p>
+                              {invite.group_description && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{invite.group_description}</p>
+                              )}
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                Invited by {invite.inviter_name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => acceptGroupInvite(invite.invite_id)}
+                              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center gap-1"
+                              data-testid={`accept-invite-${invite.invite_id}`}
+                            >
+                              <Check className="w-4 h-4" />
+                              Join
+                            </button>
+                            <button
+                              onClick={() => declineGroupInvite(invite.invite_id)}
+                              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                              data-testid={`decline-invite-${invite.invite_id}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
