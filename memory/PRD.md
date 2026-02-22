@@ -27,6 +27,29 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Session 12 Updates - Dark Mode & Bug Fixes (2026-02-22)
+
+1. **CSV Import Enhancement** ✅
+   - Added support for "name/set_code" format (e.g., "muxus/JMP")
+   - Uses Scryfall name search for MTG cards
+   - Still supports collector number format
+
+2. **Image Upload Fix** ✅
+   - Fixed `/api/upload` endpoint authentication
+   - Changed from session-based to JWT auth for mobile compatibility
+
+3. **Trades API Fix** ✅
+   - Fixed column name mismatch: `recipient_name` → `receiver_name`
+   - Ensures consistent naming between API and frontend
+
+4. **Dark Mode - Full Implementation** ✅
+   - CollectionScreen: Full dark mode support
+   - MarketplaceScreen: Full dark mode support  
+   - MessagesScreen: Full dark mode support (conversations list + chat view)
+   - TradesScreen: Already had dark mode (previous session)
+   - FeedScreen: Already had dark mode (previous session)
+   - ProfileScreen: Already had dark mode (previous session)
+
 ### Session 11 Updates - Bug Fixes (2026-02-22)
 
 1. **Trade Rating 403 Fix** ✅
