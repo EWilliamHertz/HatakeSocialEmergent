@@ -187,58 +187,58 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
           </View>
 
           {/* Your Cards */}
-          <View style={styles.cardsSection}>
-            <Text style={styles.cardsSectionTitle}>You Offer ({myCards.length} cards)</Text>
+          <View style={[styles.cardsSection, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.cardsSectionTitle, { color: colors.text }]}>You Offer ({myCards.length} cards)</Text>
             {myCards.length > 0 ? (
               myCards.map((card: any, index: number) => (
-                <View key={index} style={styles.cardItem}>
+                <View key={index} style={[styles.cardItem, { borderBottomColor: colors.border }]}>
                   {card.image_uri && (
                     <Image source={{ uri: card.image_uri }} style={styles.cardThumbnail} />
                   )}
                   <View style={styles.cardInfo}>
-                    <Text style={styles.cardName}>{card.name || 'Unknown Card'}</Text>
-                    <Text style={styles.cardSet}>{card.set_name || card.set_code || ''}</Text>
-                    {card.finish && <Text style={styles.cardFinish}>{card.finish}</Text>}
+                    <Text style={[styles.cardName, { color: colors.text }]}>{card.name || 'Unknown Card'}</Text>
+                    <Text style={[styles.cardSet, { color: colors.textSecondary }]}>{card.set_name || card.set_code || ''}</Text>
+                    {card.finish && <Text style={[styles.cardFinish, { color: colors.primary }]}>{card.finish}</Text>}
                   </View>
                   {card.value !== undefined && (
-                    <Text style={styles.cardValue}>€{card.value?.toFixed(2) || '0.00'}</Text>
+                    <Text style={[styles.cardValue, { color: colors.success }]}>€{card.value?.toFixed(2) || '0.00'}</Text>
                   )}
                 </View>
               ))
             ) : (
-              <Text style={styles.noCardsText}>No cards offered</Text>
+              <Text style={[styles.noCardsText, { color: colors.textTertiary }]}>No cards offered</Text>
             )}
           </View>
 
           {/* Their Cards */}
-          <View style={styles.cardsSection}>
-            <Text style={styles.cardsSectionTitle}>You Receive ({theirCards.length} cards)</Text>
+          <View style={[styles.cardsSection, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.cardsSectionTitle, { color: colors.text }]}>You Receive ({theirCards.length} cards)</Text>
             {theirCards.length > 0 ? (
               theirCards.map((card: any, index: number) => (
-                <View key={index} style={styles.cardItem}>
+                <View key={index} style={[styles.cardItem, { borderBottomColor: colors.border }]}>
                   {card.image_uri && (
                     <Image source={{ uri: card.image_uri }} style={styles.cardThumbnail} />
                   )}
                   <View style={styles.cardInfo}>
-                    <Text style={styles.cardName}>{card.name || 'Unknown Card'}</Text>
-                    <Text style={styles.cardSet}>{card.set_name || card.set_code || ''}</Text>
-                    {card.finish && <Text style={styles.cardFinish}>{card.finish}</Text>}
+                    <Text style={[styles.cardName, { color: colors.text }]}>{card.name || 'Unknown Card'}</Text>
+                    <Text style={[styles.cardSet, { color: colors.textSecondary }]}>{card.set_name || card.set_code || ''}</Text>
+                    {card.finish && <Text style={[styles.cardFinish, { color: colors.primary }]}>{card.finish}</Text>}
                   </View>
                   {card.value !== undefined && (
-                    <Text style={styles.cardValue}>€{card.value?.toFixed(2) || '0.00'}</Text>
+                    <Text style={[styles.cardValue, { color: colors.success }]}>€{card.value?.toFixed(2) || '0.00'}</Text>
                   )}
                 </View>
               ))
             ) : (
-              <Text style={styles.noCardsText}>No cards requested</Text>
+              <Text style={[styles.noCardsText, { color: colors.textTertiary }]}>No cards requested</Text>
             )}
           </View>
 
           {/* Cash if any */}
           {(selectedTrade.cash_offered || selectedTrade.cash_requested) && (
-            <View style={styles.cashSection}>
-              <Ionicons name="cash-outline" size={20} color="#10B981" />
-              <Text style={styles.cashText}>
+            <View style={[styles.cashSection, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="cash-outline" size={20} color={colors.success} />
+              <Text style={[styles.cashText, { color: colors.success }]}>
                 {selectedTrade.cash_offered 
                   ? `+€${selectedTrade.cash_offered.toFixed(2)} cash offered`
                   : `-€${selectedTrade.cash_requested?.toFixed(2)} cash requested`
