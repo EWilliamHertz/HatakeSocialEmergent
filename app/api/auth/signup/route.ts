@@ -33,10 +33,34 @@ export async function POST(request: NextRequest) {
     const verificationToken = generateId('verify');
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+    // Check referral code
+    let referredBy: string | null = null;
+    if (inviteCode) {
+      const [inviter] = await sql`
+        SELECT user_id FROM users WHERE invite_code = ${inviteCode}
+      `;
+      if (inviter) {
+        referredBy = inviter.user_id;
+      }
+    }
+
     await sql`
-      INSERT INTO users (user_id, email, name, password_hash, email_verified, verification_token, verification_expires)
-      VALUES (${userId}, ${email}, ${name}, ${passwordHash}, false, ${verificationToken}, ${verificationExpires})
+      INSERT INTO users (user_id, email, name, password_hash, email_verified, verification_token, verification_expires, referred_by)
+      VALUES (${userId}, ${email}, ${name}, ${passwordHash}, false, ${verificationToken}, ${verificationExpires}, ${referredBy})
     `;
+
+    // Update referrer's count and award Recruiter badge
+    if (referredBy) {
+      await sql`UPDATE users SET referral_count = referral_count + 1 WHERE user_id = ${referredBy}`;
+      // Award Recruiter badge if not already awarded
+      try {
+        await sql`
+          INSERT INTO user_badges (user_id, badge_type, awarded_at)
+          VALUES (${referredBy}, 'recruiter', NOW())
+          ON CONFLICT (user_id, badge_type) DO NOTHING
+        `;
+      } catch (e) { /* badge table might not exist yet */ }
+    }
 
     // Send verification email (don't block on this)
     sendVerificationEmail(email, name, verificationToken).catch(err => {
