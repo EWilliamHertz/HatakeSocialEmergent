@@ -43,6 +43,13 @@ const BADGE_DEFINITIONS: Record<string, {
     color: '#6366F1',
     manual: true,
   },
+  recruiter: {
+    name: 'Recruiter',
+    description: 'Invited a friend to Hatake.Social',
+    icon: 'person-add',
+    color: '#F43F5E',
+    manual: true, // Awarded automatically on referral signup
+  },
   // Trade milestones
   first_trade: {
     name: 'First Trade',
