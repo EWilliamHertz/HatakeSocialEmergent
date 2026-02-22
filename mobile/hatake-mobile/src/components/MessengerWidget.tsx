@@ -499,7 +499,9 @@ export default function MessengerWidget({ user, token, visible, onViewProfile }:
                 <TouchableOpacity onPress={() => setSelectedChat(null)}>
                   <Ionicons name="arrow-back" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
-                <Text style={[styles.chatTitle, { color: colors.text }]}>{selectedChat.name}</Text>
+                <TouchableOpacity onPress={() => onViewProfile?.(selectedChat.user_id)}>
+                  <Text style={[styles.chatTitle, { color: colors.text }]}>{selectedChat.name}</Text>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={toggleWidget}>
                   <Ionicons name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
