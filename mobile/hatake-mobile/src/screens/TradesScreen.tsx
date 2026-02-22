@@ -277,6 +277,123 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
             </View>
           ) : null}
 
+          {/* Shipping & Payment Info - Show when trade is accepted or completed */}
+          {(selectedTrade.status === 'accepted' || selectedTrade.status === 'completed') && (
+            <View style={styles.shippingPaymentContainer}>
+              {/* Their Details */}
+              <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
+                <View style={styles.detailsHeader}>
+                  <Ionicons name="person" size={18} color={colors.primary} />
+                  <Text style={[styles.detailsTitle, { color: colors.text }]}>
+                    {partner.name}'s Details
+                  </Text>
+                </View>
+                
+                {/* Their Shipping Address */}
+                <View style={styles.detailsSection}>
+                  <View style={styles.detailsLabelRow}>
+                    <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.detailsLabel, { color: colors.textSecondary }]}>Shipping Address</Text>
+                  </View>
+                  <View style={[styles.detailsValue, { backgroundColor: colors.surfaceSecondary }]}>
+                    <Text style={[styles.detailsValueText, { color: colors.text }]}>
+                      {(isInitiator ? selectedTrade.recipient_shipping_address : selectedTrade.initiator_shipping_address) || 'Not provided'}
+                    </Text>
+                  </View>
+                </View>
+                
+                {/* Their Payment Details */}
+                <View style={styles.detailsSection}>
+                  <View style={styles.detailsLabelRow}>
+                    <Ionicons name="card-outline" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.detailsLabel, { color: colors.textSecondary }]}>Payment Details</Text>
+                  </View>
+                  <View style={[styles.detailsValue, { backgroundColor: colors.surfaceSecondary }]}>
+                    {(isInitiator ? selectedTrade.recipient_payment_swish : selectedTrade.initiator_payment_swish) ? (
+                      <Text style={[styles.detailsValueText, { color: colors.text }]}>
+                        <Text style={{ color: colors.textSecondary }}>Swish: </Text>
+                        {isInitiator ? selectedTrade.recipient_payment_swish : selectedTrade.initiator_payment_swish}
+                      </Text>
+                    ) : null}
+                    {(isInitiator ? selectedTrade.recipient_payment_account : selectedTrade.initiator_payment_account) ? (
+                      <Text style={[styles.detailsValueText, { color: colors.text }]}>
+                        <Text style={{ color: colors.textSecondary }}>Account: </Text>
+                        {isInitiator ? selectedTrade.recipient_payment_account : selectedTrade.initiator_payment_account}
+                      </Text>
+                    ) : null}
+                    {(isInitiator ? selectedTrade.recipient_payment_bankgiro : selectedTrade.initiator_payment_bankgiro) ? (
+                      <Text style={[styles.detailsValueText, { color: colors.text }]}>
+                        <Text style={{ color: colors.textSecondary }}>Bankgiro: </Text>
+                        {isInitiator ? selectedTrade.recipient_payment_bankgiro : selectedTrade.initiator_payment_bankgiro}
+                      </Text>
+                    ) : null}
+                    {!(isInitiator ? selectedTrade.recipient_payment_swish : selectedTrade.initiator_payment_swish) && 
+                     !(isInitiator ? selectedTrade.recipient_payment_account : selectedTrade.initiator_payment_account) && 
+                     !(isInitiator ? selectedTrade.recipient_payment_bankgiro : selectedTrade.initiator_payment_bankgiro) && (
+                      <Text style={[styles.detailsValueText, { color: colors.textTertiary }]}>Not provided</Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+
+              {/* Your Details */}
+              <View style={[styles.detailsCard, { backgroundColor: colors.surface }]}>
+                <View style={styles.detailsHeader}>
+                  <Ionicons name="person-circle" size={18} color={colors.success} />
+                  <Text style={[styles.detailsTitle, { color: colors.text }]}>
+                    Your Details (shared)
+                  </Text>
+                </View>
+                
+                {/* Your Shipping Address */}
+                <View style={styles.detailsSection}>
+                  <View style={styles.detailsLabelRow}>
+                    <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.detailsLabel, { color: colors.textSecondary }]}>Your Address</Text>
+                  </View>
+                  <View style={[styles.detailsValue, { backgroundColor: colors.surfaceSecondary }]}>
+                    <Text style={[styles.detailsValueText, { color: colors.text }]}>
+                      {(isInitiator ? selectedTrade.initiator_shipping_address : selectedTrade.recipient_shipping_address) || 'Not provided - update in Settings'}
+                    </Text>
+                  </View>
+                </View>
+                
+                {/* Your Payment Details */}
+                <View style={styles.detailsSection}>
+                  <View style={styles.detailsLabelRow}>
+                    <Ionicons name="card-outline" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.detailsLabel, { color: colors.textSecondary }]}>Your Payment</Text>
+                  </View>
+                  <View style={[styles.detailsValue, { backgroundColor: colors.surfaceSecondary }]}>
+                    {(isInitiator ? selectedTrade.initiator_payment_swish : selectedTrade.recipient_payment_swish) ? (
+                      <Text style={[styles.detailsValueText, { color: colors.text }]}>
+                        <Text style={{ color: colors.textSecondary }}>Swish: </Text>
+                        {isInitiator ? selectedTrade.initiator_payment_swish : selectedTrade.recipient_payment_swish}
+                      </Text>
+                    ) : null}
+                    {(isInitiator ? selectedTrade.initiator_payment_account : selectedTrade.recipient_payment_account) ? (
+                      <Text style={[styles.detailsValueText, { color: colors.text }]}>
+                        <Text style={{ color: colors.textSecondary }}>Account: </Text>
+                        {isInitiator ? selectedTrade.initiator_payment_account : selectedTrade.recipient_payment_account}
+                      </Text>
+                    ) : null}
+                    {(isInitiator ? selectedTrade.initiator_payment_bankgiro : selectedTrade.recipient_payment_bankgiro) ? (
+                      <Text style={[styles.detailsValueText, { color: colors.text }]}>
+                        <Text style={{ color: colors.textSecondary }}>Bankgiro: </Text>
+                        {isInitiator ? selectedTrade.initiator_payment_bankgiro : selectedTrade.recipient_payment_bankgiro}
+                      </Text>
+                    ) : null}
+                    {!(isInitiator ? selectedTrade.initiator_payment_swish : selectedTrade.recipient_payment_swish) && 
+                     !(isInitiator ? selectedTrade.initiator_payment_account : selectedTrade.recipient_payment_account) && 
+                     !(isInitiator ? selectedTrade.initiator_payment_bankgiro : selectedTrade.recipient_payment_bankgiro) && (
+                      <Text style={[styles.detailsValueText, { color: colors.textTertiary }]}>Not provided - update in Settings</Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Actions */}
           {selectedTrade.status === 'pending' && !isInitiator && (
             <View style={styles.actionButtons}>
