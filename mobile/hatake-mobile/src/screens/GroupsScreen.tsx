@@ -217,7 +217,7 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
     
     return (
       <TouchableOpacity 
-        style={styles.groupCard} 
+        style={[styles.groupCard, { backgroundColor: colors.surface }]} 
         data-testid={`group-${item.group_id}`}
         onPress={isMember ? () => setSelectedGroup(item) : undefined}
         activeOpacity={isMember ? 0.7 : 1}
@@ -226,28 +226,28 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
           {item.image ? (
             <Image source={{ uri: item.image }} style={styles.groupImageImg} />
           ) : (
-            <View style={styles.groupImagePlaceholder}>
-              <Ionicons name="people" size={28} color="#9CA3AF" />
+            <View style={[styles.groupImagePlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="people" size={28} color={colors.textTertiary} />
             </View>
           )}
         </View>
         
         <View style={styles.groupInfo}>
           <View style={styles.groupNameRow}>
-            <Text style={styles.groupName}>{item.name}</Text>
+            <Text style={[styles.groupName, { color: colors.text }]}>{item.name}</Text>
             {item.privacy === 'private' && (
-              <Ionicons name="lock-closed" size={14} color="#6B7280" />
+              <Ionicons name="lock-closed" size={14} color={colors.textSecondary} />
             )}
           </View>
           {item.description && (
-            <Text style={styles.groupDescription} numberOfLines={2}>{item.description}</Text>
+            <Text style={[styles.groupDescription, { color: colors.textSecondary }]} numberOfLines={2}>{item.description}</Text>
           )}
           <View style={styles.groupMeta}>
-            <Ionicons name="people-outline" size={14} color="#6B7280" />
-            <Text style={styles.memberCount}>{item.member_count} members</Text>
+            <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
+            <Text style={[styles.memberCount, { color: colors.textSecondary }]}>{item.member_count} members</Text>
             {item.role && (
-              <View style={styles.roleBadge}>
-                <Text style={styles.roleText}>{item.role}</Text>
+              <View style={[styles.roleBadge, { backgroundColor: colors.primaryLight }]}>
+                <Text style={[styles.roleText, { color: colors.primary }]}>{item.role}</Text>
               </View>
             )}
           </View>
@@ -256,7 +256,7 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
         {isMember ? (
           <View style={styles.memberActions}>
             <TouchableOpacity 
-              style={styles.chatButton}
+              style={[styles.chatButton, { backgroundColor: colors.primary }]}
               onPress={() => setSelectedGroup(item)}
               data-testid={`chat-${item.group_id}`}
             >
@@ -266,12 +266,12 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
               style={styles.arrowButton}
               onPress={() => setSelectedGroup(item)}
             >
-              <Ionicons name="chevron-forward" size={24} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         ) : (
           <TouchableOpacity 
-            style={styles.joinButton}
+            style={[styles.joinButton, { backgroundColor: colors.primary }]}
             onPress={() => joinGroup(item.group_id)}
           >
             <Text style={styles.joinButtonText}>Join</Text>
