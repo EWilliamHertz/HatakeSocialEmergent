@@ -650,7 +650,6 @@ function AppContent() {
               onClose={() => setViewProfileUserId(null)}
               userId={viewProfileUserId || ''}
               token={token || ''}
-              currentUserId={user?.user_id}
             />
           </>
         ) : (
