@@ -59,6 +59,7 @@ interface FeedScreenProps {
 }
 
 export default function FeedScreen({ user, token, onOpenMenu, onOpenNotifications }: FeedScreenProps) {
+  const { colors } = useTheme();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
