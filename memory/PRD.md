@@ -4,70 +4,60 @@
 Create a comprehensive full-stack TCG (Trading Card Game) social platform with card management, marketplace, social features, and trading capabilities. Includes a Next.js web app and React Native (Expo) mobile app.
 
 ## Tech Stack
-
-### Web Application
-- Next.js 16+ with App Router
-- TypeScript, Tailwind CSS
-- PostgreSQL (Neon)
-- Cloudinary (image storage)
-- TCGdex API (Pokemon), Scryfall API (MTG)
-- Resend (email notifications)
-- LiveKit (video/voice calls)
-
-### Mobile Application
-- React Native with Expo
-- React Navigation (Native Stack + Bottom Tabs)
-
-## Test Credentials
-- **Test User**: test@test.com / password (admin)
+- **Web:** Next.js 16+, TypeScript, Tailwind CSS, PostgreSQL (Neon), Cloudinary, Scryfall/TCGdex APIs, Resend, LiveKit
+- **Mobile:** React Native (Expo), React Navigation
+- **Test Credentials:** test@test.com / password
 
 ---
 
 ## COMPLETED FEATURES
 
+### Session 15 - Deck Analytics, Badge Showcase & Format Validation (2026-02-22)
+
+1. **Deck Statistics/Analytics (Mobile)** - Full analytics added to mobile deck detail view:
+   - Average mana cost (CMC) display
+   - Color distribution with colored pip indicators (WUBRG)
+   - Card type distribution with bar charts (Creature, Instant, Sorcery, etc.)
+   - Format validation with issue warnings (card count, copy limits, sideboard)
+   - "Deck is [Format] legal" confirmation when all rules pass
+   
+2. **Badge Showcase in Feed** - Badges visible on social feed posts:
+   - Feed API (GET /api/feed) returns `badge_count` and `top_badge` for each post author
+   - Web feed: Award icon + badge count shown next to usernames (links to profile)
+   - Mobile feed: Ribbon icon + count indicator next to usernames
+   - Color-coded based on top badge type
+
+3. **Format Validation (Mobile)** - Validates decks against format rules:
+   - MTG: Standard, Modern, Pioneer, Legacy, Vintage, Commander, Pauper
+   - Pokemon: Standard (60 cards exact)
+   - Checks: min/max card count, copy limits, sideboard size
+
 ### Session 14 - Badge System & Bug Verification (2026-02-22)
 
 1. **Comprehensive Badge System** - 26 badge types across 7 categories
-   - **Trading:** First Trade, Active (5), Experienced (10), Pro (25), Master (50), Top (100), Legendary (250)
-   - **Collection:** Starter (10+), Collector (50+), Serious (100+), Hoarder (500+), Vault Keeper (1000+)
-   - **Social:** Social Butterfly (10+ friends), Community Leader (5+ groups), Content Creator (20+ posts)
-   - **Marketplace:** First Listing, Merchant (20+ listings)
-   - **Deck Building:** Deck Builder (1+ deck), Deck Master (10+ decks)
-   - **Reputation:** Verified Seller, Five Star
-   - **Special (manual):** Beta Tester, Founder, Moderator
-   - **Account Age:** Veteran (30+ days), OG Member (180+ days)
-   - Auto-award on profile visit, admin manual award support
-   - Display on web profile (own + public), mobile profile
-   - API: GET /api/badges?userId=, POST /api/badges (auto-check), GET /api/badges/all
+   - Trading (7): First Trade → Legendary Trader (250+)
+   - Collection (5): Starter (10+) → Vault Keeper (1000+)
+   - Social (3): Social Butterfly, Community Leader, Content Creator
+   - Marketplace (2): First Listing, Merchant
+   - Deck Building (2): Deck Builder, Deck Master
+   - Reputation (2): Verified Seller, Five Star
+   - Special (3): Beta Tester, Founder, Moderator (admin manual)
+   - Account Age (2): Veteran (30d), OG Member (180d)
+   - APIs: GET /api/badges?userId=, POST /api/badges, GET /api/badges/all, POST /api/admin/badges
+   - Displays on web profile, public profiles, and mobile profile
 
-2. **Bug Verification Results**
-   - Web Messenger Widget: New Chat works - loads user list, search, start conversation
-   - Web Messenger Widget: Dark mode properly themed (dark bg, not white)
-   - Upload API: Working with Cloudinary (image + video)
-   - Bulk List API: Working with JWT auth for mobile compatibility
+2. **Bug Verification** - All P0/P1 bugs verified fixed:
+   - Messenger Widget: New Chat + dark mode working
+   - Media uploads: Cloudinary upload functional
+   - Bulk List API: JWT auth working for mobile
 
-3. **Mobile Bulk Listing Styles** - Added all missing StyleSheet entries for bulk list modal
-
-4. **Mobile Profile Badges** - Added badge display with grid layout, colors, icons
-
-### Previously Completed (Sessions 1-13)
-- Authentication (Google + Email/Password)
-- Card search & collection management (MTG + Pokemon)
-- CSV import/export
-- Social feed with posts, likes, comments, reactions
-- Friends system
-- Groups/Communities with chat
-- Real-time messaging with replies, media uploads
-- Marketplace listings (buy/sell)
-- Trade system with ratings & reputation
-- Deck Builder (import, manual add, community decks)
-- Push notifications (Expo)
-- LiveKit video/audio calls
-- Email verification & notifications
-- Dark mode (web + mobile)
-- Onboarding tour for new users
-- Shipping & payment details in trades
-- Admin group controls (delete posts, edit settings)
+### Sessions 1-13 (Previously Completed)
+- Full auth (Google + Email), card management, social feed, friends, groups/chat
+- Messaging with replies & media, marketplace, trade system with ratings
+- Deck Builder (import, manual add, community decks, mana curve)
+- Push notifications, LiveKit calls, email verification
+- Dark mode (web + mobile), onboarding tour, CSV import/export
+- Admin group controls, shipping/payment details in trades
 
 ---
 
@@ -75,65 +65,34 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ### Badges
 - `GET /api/badges?userId=` - Get user badges
-- `POST /api/badges` - Auto-check and award badges (requires auth)
-- `GET /api/badges/all` - Get all 26 badge definitions
-- `POST /api/admin/badges` - Admin award/remove badges
+- `POST /api/badges` - Auto-check and award badges
+- `GET /api/badges/all` - All 26 badge definitions
+- `POST /api/admin/badges` - Admin award/remove
 
-### Collection
-- `POST /api/collection/bulk-list` - Bulk list cards for sale (JWT + session auth)
-
-### Messages
-- `GET /api/messages` - Get conversations
-- `POST /api/messages` - Send message / create conversation
-- `GET /api/messages/{conversationId}` - Get messages
-
-### Upload
-- `POST /api/upload` - Upload image/video to Cloudinary
-
----
-
-## DATABASE SCHEMA ADDITIONS
-
-### user_badges table
-```sql
-CREATE TABLE user_badges (
-  id SERIAL PRIMARY KEY,
-  user_id VARCHAR(255) NOT NULL REFERENCES users(user_id),
-  badge_type VARCHAR(100) NOT NULL,
-  awarded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  awarded_by VARCHAR(255),
-  UNIQUE(user_id, badge_type)
-);
-```
+### Feed (updated with badges)
+- `GET /api/feed?tab=public|friends|groups` - Returns badge_count + top_badge per post
 
 ---
 
 ## NEXT STEPS
 
-### P0 - Immediate
-- None currently blocked
-
 ### P1 - High Priority
-- Mobile Deck Builder: Connect UI stubs to backend logic
-- Complete Deck Builder playtesting and format validation
-
-### P2 - Medium Priority  
-- Deck Statistics/Analytics
-- Native Expo Build for push notifications + video calls
+- Native Expo Build guide (push notifications + video calls require it)
 - Google Play Store deployment guide
 
-### P3 - Future/Backlog
-- Video calls on mobile (requires native build)
-- Card price tracking/alerts
-- Tournament bracket system
-- Card scanning with camera
-- Offline mode (mobile)
-- Referral system
+### P2 - Medium Priority
+- Referralsystem
 - Premium features/subscription
+- Offlineläge (mobil)
+
+### P3 - Future
+- Video-samtal på mobil (kräver native build)
 
 ### Skipped (per user request)
-- Event Calendar/Tournaments
-- Price Alerts/Push Notifications
+- ~~Event Calendar/Tournaments~~
+- ~~Price Alerts/Push Notifications~~
+- ~~Card scanning with camera~~
+- ~~Tournament bracket system~~
 
 ---
 
