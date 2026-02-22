@@ -138,6 +138,18 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
     router.push('/messages');
   };
 
+  const loadBadges = async () => {
+    try {
+      const res = await fetch(`/api/badges?userId=${resolvedParams.id}`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setBadges(data.badges || []);
+      }
+    } catch (error) {
+      console.error('Load badges error:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
