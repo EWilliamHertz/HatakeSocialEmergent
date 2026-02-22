@@ -119,31 +119,31 @@ export default function GroupDetailScreen({ user, token, group, onClose }: Group
   };
 
   const renderPost = ({ item }: { item: Post }) => (
-    <View style={styles.postCard}>
+    <View style={[styles.postCard, { backgroundColor: colors.surface }]}>
       <View style={styles.postHeader}>
         {item.picture ? (
           <Image source={{ uri: item.picture }} style={styles.postAvatar} />
         ) : (
-          <View style={styles.postAvatarPlaceholder}>
-            <Ionicons name="person" size={16} color="#9CA3AF" />
+          <View style={[styles.postAvatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <Ionicons name="person" size={16} color={colors.textTertiary} />
           </View>
         )}
         <View style={styles.postHeaderInfo}>
-          <Text style={styles.postUserName}>{item.name}</Text>
-          <Text style={styles.postDate}>{formatDate(item.created_at)}</Text>
+          <Text style={[styles.postUserName, { color: colors.text }]}>{item.name}</Text>
+          <Text style={[styles.postDate, { color: colors.textTertiary }]}>{formatDate(item.created_at)}</Text>
         </View>
       </View>
-      <Text style={styles.postContent}>{item.content}</Text>
+      <Text style={[styles.postContent, { color: colors.text }]}>{item.content}</Text>
       {item.image && (
         <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
       )}
-      <View style={styles.postActions}>
+      <View style={[styles.postActions, { borderTopColor: colors.border }]}>
         <TouchableOpacity style={styles.postAction}>
-          <Ionicons name="heart-outline" size={20} color="#6B7280" />
-          <Text style={styles.postActionText}>{item.like_count || 0}</Text>
+          <Ionicons name="heart-outline" size={20} color={colors.textSecondary} />
+          <Text style={[styles.postActionText, { color: colors.textSecondary }]}>{item.like_count || 0}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postAction}>
-          <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
+          <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
     </View>
