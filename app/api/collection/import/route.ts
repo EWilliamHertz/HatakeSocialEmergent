@@ -131,10 +131,9 @@ function parseCSV(csvText: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get('session_token')?.value;
-    if (!sessionToken) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    const user = await getSessionUser(sessionToken);
-    if (!user) return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    // Support both session and JWT auth for mobile compatibility
+    const user = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const body = await request.json();
     const { csvContent, action, gameType } = body;
