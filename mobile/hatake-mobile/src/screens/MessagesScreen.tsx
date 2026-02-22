@@ -362,7 +362,11 @@ export default function MessagesScreen({
     const isOwn = item.sender_id === user.user_id;
     
     return (
-      <View style={[styles.messageRow, isOwn && styles.messageRowOwn]}>
+      <TouchableOpacity 
+        style={[styles.messageRow, isOwn && styles.messageRowOwn]}
+        onLongPress={() => setReplyTo(item)}
+        activeOpacity={0.8}
+      >
         {!isOwn && (
           item.picture ? (
             <Image source={{ uri: item.picture }} style={styles.messageAvatar} />
@@ -373,6 +377,17 @@ export default function MessagesScreen({
           )
         )}
         <View style={[styles.messageBubble, isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther]}>
+          {/* Reply Preview */}
+          {item.reply_content && (
+            <View style={[styles.replyPreview, isOwn && styles.replyPreviewOwn]}>
+              <Text style={[styles.replyName, isOwn && styles.replyNameOwn]}>
+                {item.reply_sender_name || 'User'}
+              </Text>
+              <Text style={[styles.replyText, isOwn && styles.replyTextOwn]} numberOfLines={2}>
+                {item.reply_content}
+              </Text>
+            </View>
+          )}
           {/* Media Content */}
           {item.media_url && item.message_type === 'image' && (
             <Image 
@@ -397,7 +412,16 @@ export default function MessagesScreen({
             {formatTime(item.created_at)}
           </Text>
         </View>
-      </View>
+        {/* Reply Button */}
+        {!isOwn && (
+          <TouchableOpacity 
+            style={styles.replyButton}
+            onPress={() => setReplyTo(item)}
+          >
+            <Ionicons name="arrow-undo-outline" size={18} color="#9CA3AF" />
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
     );
   };
 
