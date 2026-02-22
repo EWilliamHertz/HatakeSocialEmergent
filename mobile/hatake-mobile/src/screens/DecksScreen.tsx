@@ -297,7 +297,7 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
                 cardId,
                 cardData,
                 quantity: card.quantity,
-                isSideboard: card.isSideboard,
+                category: card.isSideboard ? 'sideboard' : 'main',
               }),
             });
             const addData = await addRes.json();
