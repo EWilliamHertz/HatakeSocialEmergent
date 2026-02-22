@@ -463,10 +463,10 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
               data={listings}
               renderItem={renderItem}
               keyExtractor={(item) => String(item.id || item.listing_id)}
-              numColumns={2}
+              numColumns={3}
               contentContainerStyle={styles.list}
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
               }
             />
           )}
