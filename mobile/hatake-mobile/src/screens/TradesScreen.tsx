@@ -90,7 +90,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
     }
   };
 
-  const handleTradeAction = async (tradeId: string, action: 'accept' | 'decline' | 'cancel') => {
+  const handleTradeAction = async (tradeId: string, action: 'accept' | 'decline' | 'cancel' | 'complete') => {
     try {
       const authToken = getAuthToken();
       const res = await fetch(`${API_URL}/api/trades/${tradeId}`, {
