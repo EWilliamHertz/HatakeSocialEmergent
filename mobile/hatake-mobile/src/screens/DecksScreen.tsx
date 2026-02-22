@@ -678,7 +678,165 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
               </Text>
             </View>
           </ScrollView>
-        )}
+
+          {/* Action Buttons for adding cards */}
+          {isOwner && (
+            <View style={[styles.deckActionBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={[styles.deckActionButton, { backgroundColor: colors.primary }]}
+                onPress={() => setShowAddCardModal(true)}
+              >
+                <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.deckActionButtonText}>Add Card</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.deckActionButton, { backgroundColor: colors.surfaceSecondary }]}
+                onPress={() => setShowImportModal(true)}
+              >
+                <Ionicons name="document-text-outline" size={20} color={colors.text} />
+                <Text style={[styles.deckActionButtonText, { color: colors.text }]}>Import List</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Import Modal */}
+          <Modal
+            visible={showImportModal}
+            animationType="slide"
+            transparent
+            onRequestClose={() => setShowImportModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>Import Decklist</Text>
+                  <TouchableOpacity onPress={() => setShowImportModal(false)}>
+                    <Ionicons name="close" size={24} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+                
+                <Text style={[styles.importHelpText, { color: colors.textSecondary }]}>
+                  Paste your decklist in MTGO format:{'\n'}
+                  4 Lightning Bolt{'\n'}
+                  2 Counterspell{'\n'}
+                  Sideboard{'\n'}
+                  2 Negate
+                </Text>
+                
+                <TextInput
+                  style={[styles.importTextArea, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
+                  placeholder="Paste decklist here..."
+                  placeholderTextColor={colors.textTertiary}
+                  value={importText}
+                  onChangeText={setImportText}
+                  multiline
+                  numberOfLines={10}
+                  textAlignVertical="top"
+                />
+                
+                <TouchableOpacity
+                  style={[styles.submitButton, { backgroundColor: colors.primary }, (!importText.trim() || importing) && styles.submitButtonDisabled]}
+                  onPress={importDecklist}
+                  disabled={!importText.trim() || importing}
+                >
+                  {importing ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.submitButtonText}>Import Cards</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+
+          {/* Add Card Modal */}
+          <Modal
+            visible={showAddCardModal}
+            animationType="slide"
+            transparent
+            onRequestClose={() => setShowAddCardModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, styles.addCardModalContent, { backgroundColor: colors.surface }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>Add Card</Text>
+                  <TouchableOpacity onPress={() => { setShowAddCardModal(false); setCardSearchResults([]); setCardSearchQuery(''); }}>
+                    <Ionicons name="close" size={24} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={[styles.searchRow, { backgroundColor: colors.surfaceSecondary }]}>
+                  <TextInput
+                    style={[styles.searchInput, { color: colors.text }]}
+                    placeholder={`Search ${showDeckDetail?.game === 'mtg' ? 'Magic' : 'Pokemon'} cards...`}
+                    placeholderTextColor={colors.textTertiary}
+                    value={cardSearchQuery}
+                    onChangeText={setCardSearchQuery}
+                    onSubmitEditing={searchCards}
+                    returnKeyType="search"
+                  />
+                  <TouchableOpacity onPress={searchCards} style={styles.searchButton}>
+                    {searchingCards ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <Ionicons name="search" size={20} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                </View>
+                
+                <ScrollView style={styles.searchResults}>
+                  {cardSearchResults.map((card, idx) => {
+                    const imageUri = showDeckDetail?.game === 'mtg' 
+                      ? card.image_uris?.small 
+                      : card.image ? `${card.image}/high.webp` : null;
+                    
+                    return (
+                      <View key={idx} style={[styles.searchResultItem, { backgroundColor: colors.surfaceSecondary }]}>
+                        {imageUri ? (
+                          <Image source={{ uri: imageUri }} style={styles.searchResultImage} resizeMode="contain" />
+                        ) : (
+                          <View style={[styles.searchResultImagePlaceholder, { backgroundColor: colors.background }]}>
+                            <Ionicons name="image-outline" size={16} color={colors.textTertiary} />
+                          </View>
+                        )}
+                        <View style={styles.searchResultInfo}>
+                          <Text style={[styles.searchResultName, { color: colors.text }]} numberOfLines={1}>
+                            {card.name}
+                          </Text>
+                          <Text style={[styles.searchResultSet, { color: colors.textSecondary }]} numberOfLines={1}>
+                            {showDeckDetail?.game === 'mtg' ? card.set_name : card.set?.name || ''}
+                          </Text>
+                        </View>
+                        <View style={styles.addCardButtons}>
+                          <TouchableOpacity
+                            style={[styles.addCardBtn, { backgroundColor: colors.primary }]}
+                            onPress={() => addCardToDeck(card, 1, false)}
+                            disabled={addingCard}
+                          >
+                            <Text style={styles.addCardBtnText}>+1</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.addCardBtn, styles.addSideboardBtn, { backgroundColor: colors.textSecondary }]}
+                            onPress={() => addCardToDeck(card, 1, true)}
+                            disabled={addingCard}
+                          >
+                            <Text style={styles.addCardBtnText}>SB</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })}
+                  {cardSearchResults.length === 0 && cardSearchQuery && !searchingCards && (
+                    <Text style={[styles.noResultsText, { color: colors.textTertiary }]}>
+                      No cards found. Try a different search.
+                    </Text>
+                  )}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
+        </>
+      )}
       </SafeAreaView>
     );
   }
