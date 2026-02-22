@@ -291,17 +291,17 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
   // Loading State
   if (loading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Trades</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Trades</Text>
           <View style={styles.backButton} />
         </View>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text style={styles.loadingText}>Loading trades...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading trades...</Text>
         </View>
       </View>
     );
@@ -310,18 +310,18 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
   // Error State
   if (error) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Trades</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Trades</Text>
           <View style={styles.backButton} />
         </View>
         <View style={styles.centered}>
-          <Ionicons name="warning-outline" size={48} color="#EF4444" />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchTrades}>
+          <Ionicons name="warning-outline" size={48} color={colors.danger} />
+          <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
+          <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={fetchTrades}>
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -331,23 +331,23 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
 
   // Main Trades List
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         {onOpenMenu ? (
           <TouchableOpacity onPress={onOpenMenu} style={styles.backButton}>
-            <Ionicons name="menu" size={24} color="#1F2937" />
+            <Ionicons name="menu" size={24} color={colors.text} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
         )}
         <View style={styles.headerCenter}>
-          <Text style={styles.title}>Trades</Text>
-          <Text style={styles.subtitle}>{trades.length} total trades</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Trades</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{trades.length} total trades</Text>
         </View>
         {onCreateTrade && (
-          <TouchableOpacity onPress={onCreateTrade} style={styles.createTradeBtn}>
+          <TouchableOpacity onPress={onCreateTrade} style={[styles.createTradeBtn, { backgroundColor: colors.success }]}>
             <Ionicons name="add" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         )}
@@ -355,7 +355,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
       </View>
 
       {/* Filters */}
-      <View style={styles.filters}>
+      <View style={[styles.filters, { backgroundColor: colors.surface }]}>
         {(['all', 'pending', 'completed'] as const).map((f) => (
           <TouchableOpacity
             key={f}
