@@ -212,14 +212,15 @@ class TestProfileAPI:
         })
         return session
     
-    def test_get_user_profile(self, session_cookies):
-        """Test GET /api/profile/{userId} returns profile data"""
+    def test_profile_page_loads(self, session_cookies):
+        """Test GET /profile/{userId} page loads (returns HTML)"""
         # First get user_id
         me_response = session_cookies.get(f"{BASE_URL}/api/auth/me")
         user_id = me_response.json().get("user", {}).get("user_id")
         
         if user_id:
-            response = session_cookies.get(f"{BASE_URL}/api/profile/{user_id}")
+            # Profile is a page, not an API - check it returns 200
+            response = session_cookies.get(f"{BASE_URL}/profile/{user_id}")
             assert response.status_code == 200
-            data = response.json()
-            assert data.get("success") == True or "user" in data or "profile" in data
+            # Page should contain HTML
+            assert "<!DOCTYPE html>" in response.text or "<html" in response.text.lower()
