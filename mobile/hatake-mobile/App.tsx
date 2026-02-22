@@ -56,7 +56,8 @@ interface CallState {
   isIncoming: boolean;
 }
 
-export default function App() {
+function AppContent() {
+  const { isDarkMode, colors } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
