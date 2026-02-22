@@ -49,29 +49,23 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
    - Added "Add Card" button - search and add individual cards
    - Supports both main deck and sideboard
    - Works with Scryfall (MTG) and TCGdex (Pokemon)
+   - Fixed API parameter mapping (category instead of isSideboard)
 
 5. **Dark Mode - 100% Complete** ✅
-   - **Screens:**
-     - DrawerMenu (sidebar menu)
-     - DecksScreen (deck builder, filters, modals)
-     - GroupDetailScreen (full theme support)
-     - GroupChatScreen (messages, input, headers)
-     - CreateTradeScreen (all 3 steps themed)
-     - SearchScreen (headers, results, empty states)
-   - **Components:**
-     - CardItem (backgrounds, text, placeholders)
-     - SearchBar (input, icons)
-     - GameFilter (buttons, text)
-     - UserProfileModal (full theme support)
-     - CommentsModal (already had theme)
+   - All screens and components fully themed
 
 6. **Web MessengerWidget Fix** ✅
    - Hidden MessengerWidget on /messages page to avoid redundancy
-   - Widget now uses usePathname to detect current route
 
 7. **Launch Roadmap Created** ✅
    - Created `/app/memory/ROADMAP.md` with full launch plan
-   - Phases: Core Stability → Pre-Launch Polish → Beta → Public Launch → Enhancements
+
+8. **Onboarding Tour for New Users** ✅
+   - Created 7-step interactive tour guide
+   - Covers: Welcome, Collection, Marketplace, Trades, Social, Deck Builder, Ready
+   - Animated transitions and progress dots
+   - Saves completion status in AsyncStorage
+   - "Show Tour Again" option in Settings
 
 ### Session 12 Updates - Dark Mode & CSV Import Fix (2026-02-22)
 
