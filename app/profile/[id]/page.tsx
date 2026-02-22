@@ -39,6 +39,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isFriend, setIsFriend] = useState(false);
   const [friendshipPending, setFriendshipPending] = useState(false);
+  const [badges, setBadges] = useState<any[]>([]);
 
   useEffect(() => {
     // Check auth and load profile
