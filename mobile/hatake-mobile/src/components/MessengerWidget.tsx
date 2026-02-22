@@ -61,6 +61,10 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
   const [uploading, setUploading] = useState(false);
   const [unreadTotal, setUnreadTotal] = useState(0);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
   
   const scaleAnim = useState(new Animated.Value(1))[0];
 
