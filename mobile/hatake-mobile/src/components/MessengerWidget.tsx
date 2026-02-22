@@ -379,9 +379,26 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                     const isOwn = item.sender_id === user.user_id;
                     return (
                       <View style={[styles.messageBubble, isOwn ? styles.ownBubble : styles.otherBubble]}>
-                        <Text style={[styles.messageText, isOwn && styles.ownMessageText]}>
-                          {item.content}
-                        </Text>
+                        {/* Media Content */}
+                        {item.media_url && item.message_type === 'image' && (
+                          <Image 
+                            source={{ uri: item.media_url }} 
+                            style={styles.mediaImage}
+                            resizeMode="cover"
+                          />
+                        )}
+                        {item.media_url && item.message_type === 'video' && (
+                          <View style={styles.videoPlaceholder}>
+                            <Ionicons name="play-circle" size={40} color="#FFFFFF" />
+                            <Text style={styles.videoText}>Video</Text>
+                          </View>
+                        )}
+                        {/* Text Content */}
+                        {item.content ? (
+                          <Text style={[styles.messageText, isOwn && styles.ownMessageText]}>
+                            {item.content}
+                          </Text>
+                        ) : null}
                         <Text style={[styles.messageTime, isOwn && styles.ownMessageTime]}>
                           {formatTime(item.created_at)}
                         </Text>
