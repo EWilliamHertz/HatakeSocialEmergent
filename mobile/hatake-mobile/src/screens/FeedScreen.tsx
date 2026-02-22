@@ -270,6 +270,12 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
           <View style={styles.postHeaderInfo}>
             <View style={styles.userNameRow}>
               <Text style={[styles.userName, { color: colors.text }]}>{userName}</Text>
+              {(item as any).badge_count > 0 && (
+                <View style={[styles.badgeIndicator, { backgroundColor: '#3B82F620' }]}>
+                  <Ionicons name="ribbon" size={10} color="#3B82F6" />
+                  <Text style={styles.badgeIndicatorText}>{(item as any).badge_count}</Text>
+                </View>
+              )}
               {item.group_name && (
                 <Text style={styles.groupNameBadge}>@ {item.group_name}</Text>
               )}
