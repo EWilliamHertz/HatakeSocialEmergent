@@ -903,101 +903,109 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
     return results;
   };
 
+  // CSV Import - Using server API for robust parsing
   const importFromCSV = async () => {
     if (!csvText.trim()) {
-      Alert.alert('Error', 'Please paste your card list');
-      return;
-    }
-    
-    const cards = parseCSV(csvText);
-    if (cards.length === 0) {
-      Alert.alert('Error', 'Could not parse any cards from the input');
+      Alert.alert('Error', 'Please paste your card list or select a CSV file');
       return;
     }
     
     setImporting(true);
-    setImportProgress({ current: 0, total: cards.length, success: 0, failed: 0 });
+    setImportProgress({ current: 0, total: 100, success: 0, failed: 0 });
     setImportLog([]);
     
     const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
-    let successCount = 0;
-    let failedCount = 0;
-    const logs: string[] = [];
     
-    for (let i = 0; i < cards.length; i++) {
-      const card = cards[i];
-      setImportProgress(prev => ({ ...prev, current: i + 1 }));
+    try {
+      // First, preview the CSV to show what will be imported
+      setImportLog(['Parsing CSV...']);
       
-      try {
-        let cardData: any = null;
-        let game = csvGame;
-        
-        if (card.searchByName && card.name) {
-          // Search by card name and optionally filter by set
-          if (csvGame === 'mtg') {
-            // Use Scryfall search API
-            let searchQuery = `!"${card.name}"`;
-            if (card.setCode) {
-              searchQuery += ` set:${card.setCode}`;
-            }
-            const url = `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(searchQuery)}`;
-            const res = await fetch(url);
-            if (res.ok) {
-              const data = await res.json();
-              if (data.data && data.data.length > 0) {
-                cardData = data.data[0]; // Get the first matching card
-              }
-            }
-          } else {
-            // For Pokemon, search by name (TCGdex doesn't have great name search)
-            // Try to find in the specified set first
-            if (card.setCode) {
-              const mappedSetCode = POKEMON_SET_ALIASES[card.setCode.toLowerCase()] || card.setCode.toLowerCase();
-              const setUrl = `${TCGDEX_API}/sets/${mappedSetCode}`;
-              const setRes = await fetch(setUrl);
-              if (setRes.ok) {
-                const setData = await setRes.json();
-                if (setData.cards) {
-                  const found = setData.cards.find((c: any) => 
-                    c.name.toLowerCase().includes(card.name!.toLowerCase())
-                  );
-                  if (found) {
-                    const cardUrl = `${TCGDEX_API}/cards/${found.id}`;
-                    const cardRes = await fetch(cardUrl);
-                    if (cardRes.ok) {
-                      cardData = await cardRes.json();
-                    }
-                  }
-                }
-              }
-            }
-          }
-        } else if (card.setCode && card.collectorNumber) {
-          // Search by set code and collector number (original behavior)
-          const mappedSetCode = csvGame === 'pokemon' 
-            ? (POKEMON_SET_ALIASES[card.setCode] || card.setCode)
-            : card.setCode;
-          
-          if (csvGame === 'mtg') {
-            const url = `${SCRYFALL_API}/cards/${mappedSetCode}/${card.collectorNumber}`;
-            const res = await fetch(url);
-            if (res.ok) {
-              cardData = await res.json();
-            }
-          } else {
-            const url = `${TCGDEX_API}/sets/${mappedSetCode}/${card.collectorNumber}`;
-            const res = await fetch(url);
-            if (res.ok) {
-              cardData = await res.json();
-            }
-          }
+      const previewRes = await fetch(`${API_URL}/api/collection/import`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          csvContent: csvText,
+          action: 'preview',
+          gameType: csvGame
+        }),
+      });
+      
+      const previewData = await previewRes.json();
+      
+      if (!previewRes.ok || !previewData.success) {
+        setImportLog([`❌ Failed to parse CSV: ${previewData.error || 'Unknown error'}`]);
+        setImporting(false);
+        return;
+      }
+      
+      const totalCards = previewData.totalCards || previewData.cards?.length || 0;
+      setImportLog([`Found ${totalCards} cards in CSV. Starting import...`]);
+      setImportProgress({ current: 0, total: totalCards, success: 0, failed: 0 });
+      
+      // Now do the actual import
+      const importRes = await fetch(`${API_URL}/api/collection/import`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          csvContent: csvText,
+          action: 'import',
+          gameType: csvGame
+        }),
+      });
+      
+      const importData = await importRes.json();
+      
+      if (!importRes.ok) {
+        setImportLog(prev => [...prev, `❌ Import failed: ${importData.error || 'Unknown error'}`]);
+        setImporting(false);
+        return;
+      }
+      
+      // Show results
+      const logs: string[] = [];
+      logs.push(`✅ Successfully imported ${importData.imported} cards`);
+      
+      if (importData.errors && importData.errors.length > 0) {
+        logs.push(`\n⚠️ ${importData.errors.length} errors:`);
+        importData.errors.slice(0, 20).forEach((err: string) => {
+          logs.push(`❌ ${err}`);
+        });
+        if (importData.errors.length > 20) {
+          logs.push(`... and ${importData.errors.length - 20} more errors`);
         }
-        
-        const displayName = card.name || `${card.setCode}/${card.collectorNumber}`;
-        
-        if (!cardData) {
-          logs.push(`❌ ${displayName}: Not found`);
-          failedCount++;
+      }
+      
+      setImportLog(logs);
+      setImportProgress({ 
+        current: totalCards, 
+        total: totalCards, 
+        success: importData.imported, 
+        failed: importData.errors?.length || 0 
+      });
+      
+      if (importData.imported > 0) {
+        fetchCollection();
+      }
+      
+      Alert.alert(
+        'Import Complete',
+        `Successfully imported ${importData.imported} cards.${importData.errors?.length ? `\n${importData.errors.length} cards failed.` : ''}`
+      );
+      
+    } catch (err: any) {
+      console.error('Import error:', err);
+      setImportLog([`❌ Error: ${err.message}`]);
+      Alert.alert('Error', 'Failed to import cards. Please try again.');
+    }
+    
+    setImporting(false);
+  };
           continue;
         }
         
