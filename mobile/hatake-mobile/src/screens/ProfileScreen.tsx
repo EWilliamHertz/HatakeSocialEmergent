@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 const logoImage = require('../../assets/icon.png');
 
@@ -20,6 +21,8 @@ interface ProfileScreenProps {
 }
 
 export default function ProfileScreen({ user, onLogout, onOpenMenu, onSettings }: ProfileScreenProps) {
+  const { colors } = useTheme();
+  
   const handleLogout = () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('auth_token');
@@ -29,82 +32,82 @@ export default function ProfileScreen({ user, onLogout, onOpenMenu, onSettings }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header with menu */}
-      <View style={styles.topHeader}>
+      <View style={[styles.topHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity 
           style={styles.menuButton}
           onPress={onOpenMenu}
         >
-          <Ionicons name="menu" size={26} color="#1F2937" />
+          <Ionicons name="menu" size={26} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
         <View style={styles.menuButton} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           {user.picture ? (
             <Image source={{ uri: user.picture }} style={styles.avatar} />
           ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={40} color="#9CA3AF" />
+            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="person" size={40} color={colors.textTertiary} />
             </View>
           )}
-          <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.email}>{user.email}</Text>
+          <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
+          <Text style={[styles.email, { color: colors.textSecondary }]}>{user.email}</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Account</Text>
           
-          <TouchableOpacity style={styles.menuItem} onPress={onSettings}>
-            <Ionicons name="settings-outline" size={22} color="#4B5563" />
-            <Text style={styles.menuText}>Settings</Text>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]} onPress={onSettings}>
+            <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
+            <Text style={[styles.menuText, { color: colors.text }]}>Settings</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="notifications-outline" size={22} color="#4B5563" />
-            <Text style={styles.menuText}>Notifications</Text>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
+            <Ionicons name="notifications-outline" size={22} color={colors.textSecondary} />
+            <Text style={[styles.menuText, { color: colors.text }]}>Notifications</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="shield-checkmark-outline" size={22} color="#4B5563" />
-            <Text style={styles.menuText}>Privacy</Text>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
+            <Ionicons name="shield-checkmark-outline" size={22} color={colors.textSecondary} />
+            <Text style={[styles.menuText, { color: colors.text }]}>Privacy</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support</Text>
           
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="help-circle-outline" size={22} color="#4B5563" />
-            <Text style={styles.menuText}>Help Center</Text>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
+            <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+            <Text style={[styles.menuText, { color: colors.text }]}>Help Center</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="document-text-outline" size={22} color="#4B5563" />
-            <Text style={styles.menuText}>Terms of Service</Text>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
+            <Ionicons name="document-text-outline" size={22} color={colors.textSecondary} />
+            <Text style={[styles.menuText, { color: colors.text }]}>Terms of Service</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Info</Text>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>App Info</Text>
           <View style={styles.infoRow}>
             <Image source={logoImage} style={styles.appIcon} />
             <View>
-              <Text style={styles.appName}>Hatake.Social</Text>
-              <Text style={styles.appVersion}>Version 1.0.0 (MVP)</Text>
+              <Text style={[styles.appName, { color: colors.text }]}>Hatake.Social</Text>
+              <Text style={[styles.appVersion, { color: colors.textSecondary }]}>Version 1.0.0 (MVP)</Text>
             </View>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.surface }]} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={22} color="#DC2626" />
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
