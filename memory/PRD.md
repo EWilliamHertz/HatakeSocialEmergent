@@ -27,6 +27,35 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Session 9 Updates - Mobile Fixes & Dark Mode (2026-02-22)
+
+1. **Mobile Feed Group Filtering Fix** ✅
+   - Feed now passes `group_id` to API when filtering by group
+   - Posts are correctly filtered per group instead of showing all posts
+
+2. **Trade Details Enhancement** ✅
+   - Trade detail view now shows individual card information
+   - Displays card name, set, finish type for each card
+   - Shows card value in euros (€) when available
+   - Proper card thumbnail images
+
+3. **Dark Mode Settings** ✅
+   - Added dark mode toggle in Settings screen
+   - Sound enabled toggle in Settings
+   - Settings persist to localStorage (web) / AsyncStorage (native)
+
+4. **Profile → Settings Navigation** ✅
+   - Settings menu item now navigates to Settings screen
+
+5. **Web Chat Auto-Scroll Fix** ✅
+   - Chat scrolls to bottom when opened
+   - Does NOT force scroll when user is reading history
+   - Smart detection of user scroll position
+
+6. **Mobile Messages Screen Fix** ✅
+   - Applied web-specific rendering (absolute View instead of Modal)
+   - Should resolve the blank screen issues on Expo web
+
 ### Session 8 Updates - Notification Sounds & Message Replies (2026-02-22)
 
 1. **Notification Chime Sound** ✅
