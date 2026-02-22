@@ -163,7 +163,7 @@ export default function NotificationsScreen({ user, token, onClose }: Notificati
     
     return (
       <TouchableOpacity
-        style={[styles.notificationCard, !item.read && styles.unread]}
+        style={[styles.notificationCard, { backgroundColor: colors.surface }, !item.read && { backgroundColor: colors.surfaceSecondary }]}
         onPress={() => markAsRead(item.notification_id)}
         data-testid={`notification-${item.notification_id}`}
       >
@@ -172,33 +172,33 @@ export default function NotificationsScreen({ user, token, onClose }: Notificati
         </View>
         
         <View style={styles.content}>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.message} numberOfLines={2}>{item.message}</Text>
-          <Text style={styles.time}>{formatTime(item.created_at)}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>
+          <Text style={[styles.message, { color: colors.textSecondary }]} numberOfLines={2}>{item.message}</Text>
+          <Text style={[styles.time, { color: colors.textTertiary }]}>{formatTime(item.created_at)}</Text>
         </View>
         
         <TouchableOpacity 
           style={styles.deleteBtn}
           onPress={() => deleteNotification(item.notification_id)}
         >
-          <Ionicons name="close" size={18} color="#9CA3AF" />
+          <Ionicons name="close" size={18} color={colors.textTertiary} />
         </TouchableOpacity>
         
-        {!item.read && <View style={styles.unreadDot} />}
+        {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
       </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Notifications</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
           {unreadCount > 0 && (
-            <View style={styles.badge}>
+            <View style={[styles.badge, { backgroundColor: colors.primary }]}>
               <Text style={styles.badgeText}>{unreadCount}</Text>
             </View>
           )}
@@ -209,7 +209,7 @@ export default function NotificationsScreen({ user, token, onClose }: Notificati
               style={styles.markAllBtn}
               onPress={() => markAsRead()}
             >
-              <Ionicons name="checkmark-done" size={22} color="#3B82F6" />
+              <Ionicons name="checkmark-done" size={22} color={colors.primary} />
             </TouchableOpacity>
           )}
           {notifications.length > 0 && (
@@ -217,7 +217,7 @@ export default function NotificationsScreen({ user, token, onClose }: Notificati
               style={styles.clearBtn}
               onPress={clearAll}
             >
-              <Ionicons name="trash-outline" size={20} color="#6B7280" />
+              <Ionicons name="trash-outline" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -225,7 +225,7 @@ export default function NotificationsScreen({ user, token, onClose }: Notificati
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -234,7 +234,7 @@ export default function NotificationsScreen({ user, token, onClose }: Notificati
           keyExtractor={(item) => item.notification_id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchNotifications(); }} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchNotifications(); }} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
