@@ -459,7 +459,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
                     </Text>
                   </View>
                 </View>
-              </Pressable>
+              </TouchableOpacity>
             );
           })
         )}
