@@ -402,6 +402,36 @@ export default function MyProfilePage() {
           </div>
         </div>
 
+        {/* Badges */}
+        {badges.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6" data-testid="profile-badges">
+            <div className="flex items-center gap-2 mb-4">
+              <Award className="w-5 h-5 text-yellow-500" />
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Badges</h2>
+              <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">{badges.length}</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {badges.map((badge: any) => (
+                <div
+                  key={badge.badge_type}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border dark:border-gray-700 hover:shadow-md transition"
+                  style={{ borderColor: badge.color + '40', backgroundColor: badge.color + '10' }}
+                  title={badge.description}
+                  data-testid={`badge-${badge.badge_type}`}
+                >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: badge.color + '20' }}>
+                    <Award className="w-4 h-4" style={{ color: badge.color }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{badge.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{badge.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* My Collection */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
