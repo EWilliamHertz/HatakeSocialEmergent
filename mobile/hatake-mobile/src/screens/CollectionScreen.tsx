@@ -1006,57 +1006,6 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
     
     setImporting(false);
   };
-          continue;
-        }
-        
-        // Add to collection
-        const response = await fetch(`${API_URL}/api/collection`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
-            card_id: cardData.id,
-            game: csvGame,
-            quantity: card.quantity,
-            condition: 'Near Mint',
-            finish: 'Normal',
-            card_data: cardData,
-          }),
-        });
-        
-        if (response.ok) {
-          logs.push(`✅ ${cardData.name || displayName} x${card.quantity}`);
-          successCount++;
-        } else {
-          logs.push(`❌ ${displayName}: Failed to add`);
-          failedCount++;
-        }
-      } catch (err) {
-        const displayName = card.name || `${card.setCode}/${card.collectorNumber}`;
-        logs.push(`❌ ${displayName}: Error`);
-        failedCount++;
-      }
-      
-      setImportProgress(prev => ({ ...prev, success: successCount, failed: failedCount }));
-      setImportLog([...logs]);
-      
-      // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-    
-    setImporting(false);
-    
-    if (successCount > 0) {
-      fetchCollection();
-    }
-    
-    Alert.alert(
-      'Import Complete',
-      `Successfully imported ${successCount} cards.\n${failedCount} cards failed.`
-    );
-  };
 
   // Pick a CSV file from device
   const pickCsvFile = async () => {
