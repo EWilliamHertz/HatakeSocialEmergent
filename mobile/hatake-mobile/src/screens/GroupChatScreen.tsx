@@ -41,6 +41,7 @@ interface GroupChatScreenProps {
 }
 
 export default function GroupChatScreen({ user, token, group, onClose }: GroupChatScreenProps) {
+  const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
