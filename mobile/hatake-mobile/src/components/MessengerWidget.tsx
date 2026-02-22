@@ -54,6 +54,7 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [unreadTotal, setUnreadTotal] = useState(0);
   
   const scaleAnim = useState(new Animated.Value(1))[0];
