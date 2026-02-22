@@ -191,57 +191,57 @@ export default function ReputationScreen({ user, token, onClose, viewUserId }: R
     
     return (
       <View style={styles.ratingBarRow} key={stars}>
-        <Text style={styles.ratingBarLabel}>{stars}</Text>
+        <Text style={[styles.ratingBarLabel, { color: colors.text }]}>{stars}</Text>
         <Ionicons name="star" size={12} color="#F59E0B" />
-        <View style={styles.ratingBarTrack}>
+        <View style={[styles.ratingBarTrack, { backgroundColor: colors.surfaceSecondary }]}>
           <View style={[styles.ratingBarFill, { width: `${percentage}%` }]} />
         </View>
-        <Text style={styles.ratingBarCount}>{count}</Text>
+        <Text style={[styles.ratingBarCount, { color: colors.textSecondary }]}>{count}</Text>
       </View>
     );
   };
 
   const renderRating = ({ item }: { item: Rating }) => (
-    <View style={styles.ratingCard} data-testid={`rating-${item.rating_id}`}>
+    <View style={[styles.ratingCard, { backgroundColor: colors.surface }]} data-testid={`rating-${item.rating_id}`}>
       <View style={styles.ratingHeader}>
         {item.rater_picture ? (
           <Image source={{ uri: item.rater_picture }} style={styles.raterAvatar} />
         ) : (
-          <View style={styles.raterAvatarPlaceholder}>
-            <Ionicons name="person" size={16} color="#9CA3AF" />
+          <View style={[styles.raterAvatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <Ionicons name="person" size={16} color={colors.textTertiary} />
           </View>
         )}
         <View style={styles.raterInfo}>
-          <Text style={styles.raterName}>{item.rater_name}</Text>
-          <Text style={styles.ratingDate}>
+          <Text style={[styles.raterName, { color: colors.text }]}>{item.rater_name}</Text>
+          <Text style={[styles.ratingDate, { color: colors.textTertiary }]}>
             {new Date(item.created_at).toLocaleDateString()}
           </Text>
         </View>
         {renderStars(item.rating)}
       </View>
       {item.comment && (
-        <Text style={styles.ratingComment}>{item.comment}</Text>
+        <Text style={[styles.ratingComment, { color: colors.textSecondary }]}>{item.comment}</Text>
       )}
     </View>
   );
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
           {isOwnProfile ? 'My Reputation' : 'Trader Reputation'}
         </Text>
         <View style={styles.backButton} />
@@ -253,33 +253,33 @@ export default function ReputationScreen({ user, token, onClose, viewUserId }: R
         keyExtractor={(item) => item.rating_id}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchReputation(); }} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchReputation(); }} tintColor={colors.primary} />
         }
         ListHeaderComponent={
           <>
             {/* Stats Card */}
-            <View style={styles.statsCard}>
+            <View style={[styles.statsCard, { backgroundColor: colors.surface }]}>
               <View style={styles.mainStat}>
-                <Text style={styles.bigRating}>
+                <Text style={[styles.bigRating, { color: colors.text }]}>
                   {stats?.averageRating?.toFixed(1) || '0.0'}
                 </Text>
                 {renderStars(Math.round(stats?.averageRating || 0), 24)}
-                <Text style={styles.totalRatings}>
+                <Text style={[styles.totalRatings, { color: colors.textSecondary }]}>
                   {stats?.totalRatings || 0} ratings
                 </Text>
               </View>
               
-              <View style={styles.tradesStat}>
-                <Ionicons name="swap-horizontal" size={24} color="#3B82F6" />
-                <Text style={styles.tradesCount}>{stats?.completedTrades || 0}</Text>
-                <Text style={styles.tradesLabel}>Completed Trades</Text>
+              <View style={[styles.tradesStat, { borderLeftColor: colors.border }]}>
+                <Ionicons name="swap-horizontal" size={24} color={colors.primary} />
+                <Text style={[styles.tradesCount, { color: colors.text }]}>{stats?.completedTrades || 0}</Text>
+                <Text style={[styles.tradesLabel, { color: colors.textSecondary }]}>Completed Trades</Text>
               </View>
             </View>
 
             {/* Rating Distribution */}
             {stats && (
-              <View style={styles.distributionCard}>
-                <Text style={styles.sectionTitle}>Rating Distribution</Text>
+              <View style={[styles.distributionCard, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Rating Distribution</Text>
                 {[5, 4, 3, 2, 1].map((stars) => 
                   renderRatingBar(stars, stats.ratingDistribution[stars as keyof typeof stats.ratingDistribution] || 0)
                 )}
@@ -289,7 +289,7 @@ export default function ReputationScreen({ user, token, onClose, viewUserId }: R
             {/* Rate a Trade Button (only for own profile) */}
             {isOwnProfile && pendingTrades.length > 0 && (
               <TouchableOpacity
-                style={styles.rateButton}
+                style={[styles.rateButton, { backgroundColor: colors.primary }]}
                 onPress={() => setShowRatingModal(true)}
                 data-testid="rate-trade-btn"
               >
@@ -301,14 +301,14 @@ export default function ReputationScreen({ user, token, onClose, viewUserId }: R
               </TouchableOpacity>
             )}
 
-            <Text style={styles.sectionTitle}>Recent Reviews</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Reviews</Text>
           </>
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="star-outline" size={48} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>No Reviews Yet</Text>
-            <Text style={styles.emptySubtitle}>
+            <Ionicons name="star-outline" size={48} color={colors.textTertiary} />
+            <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No Reviews Yet</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textTertiary }]}>
               {isOwnProfile 
                 ? 'Complete trades to receive ratings from other traders'
                 : 'This trader has no reviews yet'}
