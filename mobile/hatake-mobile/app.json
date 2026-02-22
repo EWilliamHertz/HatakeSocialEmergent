@@ -49,13 +49,29 @@
     },
     "plugins": [
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "35.0.0",
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Allow Hatake.Social to access your photos to import card images."
         }
       ],
       "expo-secure-store",
-      "expo-build-properties"
+      [
+        "expo-notifications",
+        {
+          "color": "#3B82F6"
+        }
+      ]
     ],
     "extra": {
       "eas": {
