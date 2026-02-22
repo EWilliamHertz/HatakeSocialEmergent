@@ -422,6 +422,17 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
               <Text style={styles.cancelText}>Cancel Trade</Text>
             </TouchableOpacity>
           )}
+
+          {/* Mark as Completed - for accepted trades */}
+          {selectedTrade.status === 'accepted' && (
+            <TouchableOpacity 
+              style={styles.completeButton}
+              onPress={() => handleTradeAction(selectedTrade.trade_id, 'complete')}
+            >
+              <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+              <Text style={styles.completeText}>Mark as Completed</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </View>
     );
