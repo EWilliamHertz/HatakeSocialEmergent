@@ -54,18 +54,38 @@ export async function GET(request: NextRequest) {
       `;
     } else if (tab === 'groups') {
       // Get posts from user's groups
-      posts = await sql`
-        SELECT p.*, u.name, u.picture, g.name as group_name,
-          (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as like_count,
-          (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comment_count,
-          EXISTS(SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ${user.user_id}) as liked
-        FROM posts p
-        JOIN users u ON p.user_id = u.user_id
-        JOIN groups g ON p.group_id = g.group_id
-        JOIN group_members gm ON gm.group_id = g.group_id AND gm.user_id = ${user.user_id}
-        ORDER BY p.created_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
+      const groupId = searchParams.get('group_id');
+      
+      if (groupId) {
+        // Get posts for a specific group
+        posts = await sql`
+          SELECT p.*, u.name, u.picture, g.name as group_name,
+            (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as like_count,
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comment_count,
+            EXISTS(SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ${user.user_id}) as liked
+          FROM posts p
+          JOIN users u ON p.user_id = u.user_id
+          JOIN groups g ON p.group_id = g.group_id
+          JOIN group_members gm ON gm.group_id = g.group_id AND gm.user_id = ${user.user_id}
+          WHERE p.group_id = ${groupId}
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `;
+      } else {
+        // Get posts from all user's groups
+        posts = await sql`
+          SELECT p.*, u.name, u.picture, g.name as group_name,
+            (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as like_count,
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comment_count,
+            EXISTS(SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ${user.user_id}) as liked
+          FROM posts p
+          JOIN users u ON p.user_id = u.user_id
+          JOIN groups g ON p.group_id = g.group_id
+          JOIN group_members gm ON gm.group_id = g.group_id AND gm.user_id = ${user.user_id}
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `;
+      }
     } else {
       // Public feed
       posts = await sql`
