@@ -30,6 +30,10 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [messageNotifications, setMessageNotifications] = useState(true);
   const [tradeNotifications, setTradeNotifications] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  // Appearance settings
+  const [darkMode, setDarkMode] = useState(false);
   
   // Profile settings
   const [name, setName] = useState(user?.name || '');
@@ -46,6 +50,36 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
+
+  // Load dark mode setting
+  useEffect(() => {
+    try {
+      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('darkMode');
+        if (saved !== null) setDarkMode(saved === 'true');
+        const savedSound = localStorage.getItem('soundEnabled');
+        if (savedSound !== null) setSoundEnabled(savedSound === 'true');
+      }
+    } catch (e) {}
+  }, []);
+
+  const toggleDarkMode = (value: boolean) => {
+    setDarkMode(value);
+    try {
+      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('darkMode', String(value));
+      }
+    } catch (e) {}
+  };
+
+  const toggleSoundEnabled = (value: boolean) => {
+    setSoundEnabled(value);
+    try {
+      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('soundEnabled', String(value));
+      }
+    } catch (e) {}
+  };
 
   useEffect(() => {
     fetchSettings();
