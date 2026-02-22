@@ -386,6 +386,9 @@ export default function MessagesPage() {
     const conv = conversations.find(c => c.conversation_id === selectedConv);
     if (!conv) return;
 
+    const replyToMsg = replyTo;
+    setReplyTo(null);
+
     try {
       await fetch('/api/messages', {
         method: 'POST',
@@ -395,7 +398,8 @@ export default function MessagesPage() {
           recipientId: conv.user_id,
           content: content || (messageType === 'image' ? '📷 Image' : '🎥 Video'),
           messageType: messageType || 'text',
-          mediaUrl: mediaUrl
+          mediaUrl: mediaUrl,
+          replyToId: replyToMsg?.message_id || null
         })
       });
       setNewMessage('');
