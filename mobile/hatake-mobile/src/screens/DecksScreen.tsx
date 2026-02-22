@@ -420,10 +420,94 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
     const curve: ManaCurve = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
     cards.filter(c => !c.is_sideboard).forEach(card => {
       const cmc = card.card_data?.cmc || 0;
-      const costBucket = Math.min(Math.floor(cmc), 6); // 6+ goes in the 6 bucket
+      const costBucket = Math.min(Math.floor(cmc), 6);
       curve[costBucket] = (curve[costBucket] || 0) + card.quantity;
     });
     return curve;
+  };
+
+  // Calculate type distribution for MTG
+  const calculateTypeDistribution = (cards: DeckCard[]) => {
+    const types: Record<string, number> = {};
+    cards.filter(c => !c.is_sideboard).forEach(card => {
+      const typeLine = card.card_data?.type_line || '';
+      let type = 'Other';
+      if (typeLine.toLowerCase().includes('creature')) type = 'Creature';
+      else if (typeLine.toLowerCase().includes('instant')) type = 'Instant';
+      else if (typeLine.toLowerCase().includes('sorcery')) type = 'Sorcery';
+      else if (typeLine.toLowerCase().includes('enchantment')) type = 'Enchantment';
+      else if (typeLine.toLowerCase().includes('artifact')) type = 'Artifact';
+      else if (typeLine.toLowerCase().includes('planeswalker')) type = 'Planeswalker';
+      else if (typeLine.toLowerCase().includes('land')) type = 'Land';
+      types[type] = (types[type] || 0) + card.quantity;
+    });
+    return types;
+  };
+
+  // Calculate color distribution for MTG
+  const calculateColorDistribution = (cards: DeckCard[]) => {
+    const colorMap: Record<string, { count: number; name: string; hex: string }> = {
+      W: { count: 0, name: 'White', hex: '#F8E7B9' },
+      U: { count: 0, name: 'Blue', hex: '#0E68AB' },
+      B: { count: 0, name: 'Black', hex: '#393235' },
+      R: { count: 0, name: 'Red', hex: '#D3202A' },
+      G: { count: 0, name: 'Green', hex: '#00733E' },
+    };
+    cards.filter(c => !c.is_sideboard).forEach(card => {
+      const colors = card.card_data?.colors || [];
+      colors.forEach((c: string) => {
+        if (colorMap[c]) colorMap[c].count += card.quantity;
+      });
+    });
+    return Object.entries(colorMap).filter(([_, v]) => v.count > 0);
+  };
+
+  // Format validation
+  const validateFormat = (cards: DeckCard[], format: string | undefined, game: string) => {
+    const issues: string[] = [];
+    const mainCards = cards.filter(c => !c.is_sideboard);
+    const totalMain = mainCards.reduce((sum, c) => sum + c.quantity, 0);
+    const sideCards = cards.filter(c => c.is_sideboard);
+    const totalSide = sideCards.reduce((sum, c) => sum + c.quantity, 0);
+
+    if (game === 'mtg' && format) {
+      const rules: Record<string, { min: number; max?: number; copies: number }> = {
+        'Standard': { min: 60, copies: 4 },
+        'Modern': { min: 60, copies: 4 },
+        'Pioneer': { min: 60, copies: 4 },
+        'Legacy': { min: 60, copies: 4 },
+        'Vintage': { min: 60, copies: 4 },
+        'Commander': { min: 100, max: 100, copies: 1 },
+        'Pauper': { min: 60, copies: 4 },
+      };
+      const rule = rules[format];
+      if (rule) {
+        if (totalMain < rule.min) issues.push(`Need ${rule.min - totalMain} more cards (min: ${rule.min})`);
+        if (rule.max && totalMain > rule.max) issues.push(`Too many cards: ${totalMain}/${rule.max}`);
+        if (totalSide > 15) issues.push(`Sideboard too large: ${totalSide}/15`);
+        // Check for too many copies
+        const counts: Record<string, number> = {};
+        mainCards.forEach(c => {
+          const name = c.card_data?.name || c.card_id;
+          counts[name] = (counts[name] || 0) + c.quantity;
+        });
+        Object.entries(counts).forEach(([name, count]) => {
+          if (count > rule.copies) issues.push(`${name}: ${count}/${rule.copies} copies`);
+        });
+      }
+    } else if (game === 'pokemon') {
+      if (totalMain !== 60) issues.push(`Pokemon decks need exactly 60 cards (have ${totalMain})`);
+    }
+    return issues;
+  };
+
+  // Average CMC
+  const calculateAvgCMC = (cards: DeckCard[]) => {
+    const nonLands = cards.filter(c => !c.is_sideboard && !c.card_data?.type_line?.toLowerCase().includes('land'));
+    if (nonLands.length === 0) return 0;
+    const total = nonLands.reduce((sum, c) => sum + ((c.card_data?.cmc || 0) * c.quantity), 0);
+    const count = nonLands.reduce((sum, c) => sum + c.quantity, 0);
+    return count > 0 ? total / count : 0;
   };
 
   // Get available formats based on game filter
