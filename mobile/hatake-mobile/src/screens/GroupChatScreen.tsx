@@ -156,7 +156,7 @@ export default function GroupChatScreen({ user, token, group, onClose }: GroupCh
               item.sender_picture ? (
                 <Image source={{ uri: item.sender_picture }} style={styles.avatar} />
               ) : (
-                <View style={styles.avatarPlaceholder}>
+                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
                   <Text style={styles.avatarText}>
                     {item.sender_name?.charAt(0)?.toUpperCase() || '?'}
                   </Text>
@@ -168,14 +168,14 @@ export default function GroupChatScreen({ user, token, group, onClose }: GroupCh
           </View>
         )}
         
-        <View style={[styles.messageBubble, isOwnMessage ? styles.ownBubble : styles.otherBubble]}>
+        <View style={[styles.messageBubble, isOwnMessage ? [styles.ownBubble, { backgroundColor: colors.primary }] : [styles.otherBubble, { backgroundColor: colors.surface, borderColor: colors.border }]]}>
           {!isOwnMessage && showAvatar && (
-            <Text style={styles.senderName}>{item.sender_name}</Text>
+            <Text style={[styles.senderName, { color: colors.primary }]}>{item.sender_name}</Text>
           )}
-          <Text style={[styles.messageText, isOwnMessage && styles.ownMessageText]}>
+          <Text style={[styles.messageText, isOwnMessage ? styles.ownMessageText : { color: colors.text }]}>
             {item.content}
           </Text>
-          <Text style={[styles.messageTime, isOwnMessage && styles.ownMessageTime]}>
+          <Text style={[styles.messageTime, isOwnMessage ? styles.ownMessageTime : { color: colors.textTertiary }]}>
             {formatTime(item.created_at)}
           </Text>
         </View>
@@ -187,33 +187,33 @@ export default function GroupChatScreen({ user, token, group, onClose }: GroupCh
 
   if (loading) {
     return (
-      <Container style={styles.container}>
-        <View style={styles.header}>
+      <Container style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
-            <Text style={styles.headerTitle}>{group.name}</Text>
-            <Text style={styles.headerSubtitle}>{group.member_count} members</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>{group.name}</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{group.member_count} members</Text>
           </View>
           <View style={styles.backButton} />
         </View>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </Container>
     );
   }
 
   return (
-    <Container style={styles.container}>
-      <View style={styles.header}>
+    <Container style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>{group.name}</Text>
-          <Text style={styles.headerSubtitle}>{group.member_count} members</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>{group.name}</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{group.member_count} members</Text>
         </View>
         <View style={styles.backButton} />
       </View>
@@ -232,24 +232,25 @@ export default function GroupChatScreen({ user, token, group, onClose }: GroupCh
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             <View style={styles.emptyChat}>
-              <Ionicons name="chatbubbles-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyChatTitle}>No messages yet</Text>
-              <Text style={styles.emptyChatSubtitle}>Be the first to say hello!</Text>
+              <Ionicons name="chatbubbles-outline" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyChatTitle, { color: colors.textSecondary }]}>No messages yet</Text>
+              <Text style={[styles.emptyChatSubtitle, { color: colors.textTertiary }]}>Be the first to say hello!</Text>
             </View>
           }
         />
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
             placeholder="Type a message..."
+            placeholderTextColor={colors.textTertiary}
             value={newMessage}
             onChangeText={setNewMessage}
             multiline
             maxLength={1000}
           />
           <TouchableOpacity
-            style={[styles.sendButton, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
+            style={[styles.sendButton, { backgroundColor: colors.primary }, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
             onPress={sendMessage}
             disabled={!newMessage.trim() || sending}
           >
