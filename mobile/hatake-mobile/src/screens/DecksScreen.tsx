@@ -496,88 +496,88 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
 
   // Decks List View
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.title}>Deck Builder</Text>
-          <Text style={styles.subtitle}>{myDecks.length} my decks</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Deck Builder</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{myDecks.length} my decks</Text>
         </View>
         <TouchableOpacity 
           style={styles.addButton}
           onPress={() => setShowCreateModal(true)}
           data-testid="create-deck-btn"
         >
-          <Ionicons name="add" size={24} color="#3B82F6" />
+          <Ionicons name="add" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={[styles.tab, tab === 'my' && styles.tabActive]}
+          style={[styles.tab, tab === 'my' && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           onPress={() => setTab('my')}
           data-testid="my-decks-tab"
         >
-          <Ionicons name="person-outline" size={18} color={tab === 'my' ? '#3B82F6' : '#6B7280'} />
-          <Text style={[styles.tabText, tab === 'my' && styles.tabTextActive]}>
+          <Ionicons name="person-outline" size={18} color={tab === 'my' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.tabText, { color: colors.textSecondary }, tab === 'my' && { color: colors.primary }]}>
             My Decks
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, tab === 'community' && styles.tabActive]}
+          style={[styles.tab, tab === 'community' && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           onPress={() => setTab('community')}
           data-testid="community-decks-tab"
         >
-          <Ionicons name="globe-outline" size={18} color={tab === 'community' ? '#3B82F6' : '#6B7280'} />
-          <Text style={[styles.tabText, tab === 'community' && styles.tabTextActive]}>
+          <Ionicons name="globe-outline" size={18} color={tab === 'community' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.tabText, { color: colors.textSecondary }, tab === 'community' && { color: colors.primary }]}>
             Community
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Filter Bar */}
-      <View style={styles.filterBar}>
+      <View style={[styles.filterBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           {/* Game Filter */}
           <TouchableOpacity
-            style={[styles.filterChip, gameFilter === 'all' && styles.filterChipActive]}
+            style={[styles.filterChip, { backgroundColor: colors.surfaceSecondary }, gameFilter === 'all' && { backgroundColor: colors.primary }]}
             onPress={() => { setGameFilter('all'); setFormatFilter('all'); }}
           >
-            <Text style={[styles.filterChipText, gameFilter === 'all' && styles.filterChipTextActive]}>All Games</Text>
+            <Text style={[styles.filterChipText, { color: colors.textSecondary }, gameFilter === 'all' && styles.filterChipTextActive]}>All Games</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterChip, gameFilter === 'mtg' && styles.filterChipActive]}
+            style={[styles.filterChip, { backgroundColor: colors.surfaceSecondary }, gameFilter === 'mtg' && { backgroundColor: colors.primary }]}
             onPress={() => { setGameFilter('mtg'); setFormatFilter('all'); }}
           >
-            <Text style={[styles.filterChipText, gameFilter === 'mtg' && styles.filterChipTextActive]}>MTG</Text>
+            <Text style={[styles.filterChipText, { color: colors.textSecondary }, gameFilter === 'mtg' && styles.filterChipTextActive]}>MTG</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.filterChip, gameFilter === 'pokemon' && styles.filterChipActive]}
+            style={[styles.filterChip, { backgroundColor: colors.surfaceSecondary }, gameFilter === 'pokemon' && { backgroundColor: colors.primary }]}
             onPress={() => { setGameFilter('pokemon'); setFormatFilter('all'); }}
           >
-            <Text style={[styles.filterChipText, gameFilter === 'pokemon' && styles.filterChipTextActive]}>Pokemon</Text>
+            <Text style={[styles.filterChipText, { color: colors.textSecondary }, gameFilter === 'pokemon' && styles.filterChipTextActive]}>Pokemon</Text>
           </TouchableOpacity>
           
           {/* Divider */}
-          <View style={styles.filterDivider} />
+          <View style={[styles.filterDivider, { backgroundColor: colors.border }]} />
           
           {/* Format Filters */}
           <TouchableOpacity
-            style={[styles.filterChip, formatFilter === 'all' && styles.filterChipActive]}
+            style={[styles.filterChip, { backgroundColor: colors.surfaceSecondary }, formatFilter === 'all' && { backgroundColor: colors.primary }]}
             onPress={() => setFormatFilter('all')}
           >
-            <Text style={[styles.filterChipText, formatFilter === 'all' && styles.filterChipTextActive]}>All Formats</Text>
+            <Text style={[styles.filterChipText, { color: colors.textSecondary }, formatFilter === 'all' && styles.filterChipTextActive]}>All Formats</Text>
           </TouchableOpacity>
           {getFormats().slice(0, 5).map(format => (
             <TouchableOpacity
               key={format}
-              style={[styles.filterChip, formatFilter.toLowerCase() === format.toLowerCase() && styles.filterChipActive]}
+              style={[styles.filterChip, { backgroundColor: colors.surfaceSecondary }, formatFilter.toLowerCase() === format.toLowerCase() && { backgroundColor: colors.primary }]}
               onPress={() => setFormatFilter(format)}
             >
-              <Text style={[styles.filterChipText, formatFilter.toLowerCase() === format.toLowerCase() && styles.filterChipTextActive]}>
+              <Text style={[styles.filterChipText, { color: colors.textSecondary }, formatFilter.toLowerCase() === format.toLowerCase() && styles.filterChipTextActive]}>
                 {format}
               </Text>
             </TouchableOpacity>
@@ -587,7 +587,7 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -596,22 +596,22 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
           keyExtractor={(item) => item.deck_id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchDecks(); }} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchDecks(); }} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="layers-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyTitle}>
+              <Ionicons name="layers-outline" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>
                 {tab === 'my' ? 'No Decks Yet' : 'No Community Decks'}
               </Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={[styles.emptySubtitle, { color: colors.textTertiary }]}>
                 {tab === 'my' 
                   ? 'Create your first deck to start building'
                   : 'Be the first to share a public deck!'}
               </Text>
               {tab === 'my' && (
                 <TouchableOpacity 
-                  style={styles.createButton}
+                  style={[styles.createButton, { backgroundColor: colors.primary }]}
                   onPress={() => setShowCreateModal(true)}
                 >
                   <Text style={styles.createButtonText}>Create Deck</Text>
@@ -630,18 +630,18 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
         onRequestClose={() => setShowCreateModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Create New Deck</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Create New Deck</Text>
               <TouchableOpacity onPress={() => setShowCreateModal(false)}>
-                <Ionicons name="close" size={24} color="#6B7280" />
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
               placeholder="Deck Name"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textTertiary}
               value={newDeckName}
               onChangeText={setNewDeckName}
               data-testid="deck-name-input"
@@ -649,33 +649,33 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
 
             <View style={styles.gameSelector}>
               <TouchableOpacity
-                style={[styles.gameOption, newDeckGame === 'mtg' && styles.gameOptionActive]}
+                style={[styles.gameOption, { backgroundColor: colors.surfaceSecondary }, newDeckGame === 'mtg' && { backgroundColor: colors.primary }]}
                 onPress={() => { setNewDeckGame('mtg'); setNewDeckFormat(''); }}
               >
-                <Text style={[styles.gameOptionText, newDeckGame === 'mtg' && styles.gameOptionTextActive]}>
+                <Text style={[styles.gameOptionText, { color: colors.textSecondary }, newDeckGame === 'mtg' && styles.gameOptionTextActive]}>
                   Magic: The Gathering
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.gameOption, newDeckGame === 'pokemon' && styles.gameOptionActive]}
+                style={[styles.gameOption, { backgroundColor: colors.surfaceSecondary }, newDeckGame === 'pokemon' && { backgroundColor: colors.primary }]}
                 onPress={() => { setNewDeckGame('pokemon'); setNewDeckFormat(''); }}
               >
-                <Text style={[styles.gameOptionText, newDeckGame === 'pokemon' && styles.gameOptionTextActive]}>
+                <Text style={[styles.gameOptionText, { color: colors.textSecondary }, newDeckGame === 'pokemon' && styles.gameOptionTextActive]}>
                   Pokemon TCG
                 </Text>
               </TouchableOpacity>
             </View>
 
             {/* Format Selection */}
-            <Text style={styles.inputLabel}>Format</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Format</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.formatScroll}>
               {(newDeckGame === 'mtg' ? MTG_FORMATS : POKEMON_FORMATS).map(format => (
                 <TouchableOpacity
                   key={format}
-                  style={[styles.formatOption, newDeckFormat === format && styles.formatOptionActive]}
+                  style={[styles.formatOption, { backgroundColor: colors.surfaceSecondary }, newDeckFormat === format && { backgroundColor: colors.primary }]}
                   onPress={() => setNewDeckFormat(newDeckFormat === format ? '' : format)}
                 >
-                  <Text style={[styles.formatOptionText, newDeckFormat === format && styles.formatOptionTextActive]}>
+                  <Text style={[styles.formatOptionText, { color: colors.textSecondary }, newDeckFormat === format && styles.formatOptionTextActive]}>
                     {format}
                   </Text>
                 </TouchableOpacity>
@@ -683,9 +683,9 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
             </ScrollView>
 
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
               placeholder="Description (optional)"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textTertiary}
               value={newDeckDescription}
               onChangeText={setNewDeckDescription}
               multiline
@@ -694,16 +694,16 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
 
             {/* Public Toggle */}
             <TouchableOpacity
-              style={styles.publicToggle}
+              style={[styles.publicToggle, { backgroundColor: colors.surfaceSecondary }]}
               onPress={() => setNewDeckPublic(!newDeckPublic)}
             >
               <View style={styles.publicToggleLeft}>
                 <Ionicons 
                   name={newDeckPublic ? 'globe' : 'lock-closed'} 
                   size={20} 
-                  color={newDeckPublic ? '#10B981' : '#6B7280'} 
+                  color={newDeckPublic ? '#10B981' : colors.textSecondary} 
                 />
-                <Text style={styles.publicToggleText}>
+                <Text style={[styles.publicToggleText, { color: colors.text }]}>
                   {newDeckPublic ? 'Public - Visible in Community' : 'Private - Only you can see'}
                 </Text>
               </View>
@@ -713,7 +713,7 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.submitButton, (!newDeckName.trim() || creating) && styles.submitButtonDisabled]}
+              style={[styles.submitButton, { backgroundColor: colors.primary }, (!newDeckName.trim() || creating) && styles.submitButtonDisabled]}
               onPress={createDeck}
               disabled={!newDeckName.trim() || creating}
               data-testid="submit-deck-btn"
