@@ -420,7 +420,7 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                     <View style={styles.conversationInfo}>
                       <Text style={[styles.conversationName, { color: colors.text }]}>{item.name}</Text>
                       {item.email && (
-                        <Text style={styles.lastMessage} numberOfLines={1}>{item.email}</Text>
+                        <Text style={[styles.lastMessage, { color: colors.textSecondary }]} numberOfLines={1}>{item.email}</Text>
                       )}
                     </View>
                   </TouchableOpacity>
@@ -430,22 +430,28 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
           ) : !selectedChat ? (
             // Conversations List
             <>
-              <View style={styles.windowHeader}>
-                <Text style={styles.windowTitle}>Messages</Text>
+              <View style={[styles.windowHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.windowTitle, { color: colors.text }]}>Messages</Text>
                 <View style={styles.headerActions}>
                   <TouchableOpacity onPress={() => setShowNewChat(true)} style={styles.newChatBtn}>
-                    <Ionicons name="create-outline" size={22} color="#3B82F6" />
+                    <Ionicons name="create-outline" size={22} color={colors.primary} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={toggleWidget}>
-                    <Ionicons name="close" size={24} color="#6B7280" />
+                    <Ionicons name="close" size={24} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
               </View>
               
               {conversations.length === 0 ? (
                 <View style={styles.emptyState}>
-                  <Ionicons name="chatbubbles-outline" size={40} color="#D1D5DB" />
-                  <Text style={styles.emptyText}>No conversations yet</Text>
+                  <Ionicons name="chatbubbles-outline" size={40} color={colors.textTertiary} />
+                  <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No conversations yet</Text>
+                  <TouchableOpacity
+                    style={[styles.startChatBtn, { backgroundColor: colors.primary }]}
+                    onPress={() => setShowNewChat(true)}
+                  >
+                    <Text style={styles.startChatBtnText}>Start a conversation</Text>
+                  </TouchableOpacity>
                 </View>
               ) : (
                 <View style={{ flex: 1 }}>
@@ -456,26 +462,26 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                     contentContainerStyle={{ flexGrow: 1 }}
                     renderItem={({ item }) => (
                       <TouchableOpacity
-                        style={styles.conversationItem}
+                        style={[styles.conversationItem, { borderBottomColor: colors.border }]}
                         onPress={() => { setSelectedChat(item); setLoading(true); }}
                       >
                         {item.picture ? (
                           <Image source={{ uri: item.picture }} style={styles.avatar} />
                         ) : (
-                          <View style={styles.avatarPlaceholder}>
-                            <Ionicons name="person" size={20} color="#9CA3AF" />
+                          <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                            <Ionicons name="person" size={20} color={colors.textTertiary} />
                           </View>
                         )}
                         <View style={styles.conversationInfo}>
-                          <Text style={styles.conversationName}>{item.name}</Text>
+                          <Text style={[styles.conversationName, { color: colors.text }]}>{item.name}</Text>
                           {item.last_message && (
-                            <Text style={styles.lastMessage} numberOfLines={1}>
+                            <Text style={[styles.lastMessage, { color: colors.textSecondary }]} numberOfLines={1}>
                               {item.last_message}
                             </Text>
                           )}
                         </View>
                         {item.unread_count ? (
-                          <View style={styles.unreadBadge}>
+                          <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
                             <Text style={styles.unreadText}>{item.unread_count}</Text>
                           </View>
                         ) : null}
@@ -488,13 +494,13 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
           ) : (
             // Chat View
             <>
-              <View style={styles.windowHeader}>
+              <View style={[styles.windowHeader, { borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => setSelectedChat(null)}>
-                  <Ionicons name="arrow-back" size={24} color="#6B7280" />
+                  <Ionicons name="arrow-back" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
-                <Text style={styles.chatTitle}>{selectedChat.name}</Text>
+                <Text style={[styles.chatTitle, { color: colors.text }]}>{selectedChat.name}</Text>
                 <TouchableOpacity onPress={toggleWidget}>
-                  <Ionicons name="close" size={24} color="#6B7280" />
+                  <Ionicons name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               
