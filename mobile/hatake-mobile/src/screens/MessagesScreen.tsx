@@ -181,6 +181,7 @@ export default function MessagesScreen({
           recipientId: selectedConversation.user_id,
           content: newMessage.trim(),
           messageType: 'text',
+          replyToId: replyTo?.message_id || null,
         }),
       });
       
@@ -194,6 +195,7 @@ export default function MessagesScreen({
           });
         }
         setNewMessage('');
+        setReplyTo(null);
         // Fetch updated messages
         fetchMessages();
       }
