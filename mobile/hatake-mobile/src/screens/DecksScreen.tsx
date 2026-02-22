@@ -671,13 +671,6 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
                 ))}
               </View>
             )}
-
-            <View style={[styles.addCardNote, { backgroundColor: colors.surfaceSecondary }]}>
-              <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.addCardNoteText, { color: colors.textSecondary }]}>
-                To add cards to this deck, use the web app's Deck Builder
-              </Text>
-            </View>
           </ScrollView>
 
           {/* Action Buttons for adding cards */}
