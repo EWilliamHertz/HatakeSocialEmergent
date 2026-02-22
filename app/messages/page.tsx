@@ -39,6 +39,9 @@ interface Message {
   name: string;
   picture?: string;
   created_at: string;
+  reply_to?: string;
+  reply_content?: string;
+  reply_sender_name?: string;
 }
 
 interface User {
