@@ -635,6 +635,10 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
     const sideboard = deckCards.filter(c => c.is_sideboard);
     const manaCurve = showDeckDetail.game === 'mtg' ? calculateManaCurve(deckCards) : null;
     const isOwner = showDeckDetail.user_id === user.user_id || !showDeckDetail.user_id;
+    const typeDistrib = showDeckDetail.game === 'mtg' ? calculateTypeDistribution(deckCards) : null;
+    const colorDistrib = showDeckDetail.game === 'mtg' ? calculateColorDistribution(deckCards) : null;
+    const avgCMC = showDeckDetail.game === 'mtg' ? calculateAvgCMC(deckCards) : null;
+    const formatIssues = validateFormat(deckCards, showDeckDetail.format, showDeckDetail.game);
     
     return (
       <>
