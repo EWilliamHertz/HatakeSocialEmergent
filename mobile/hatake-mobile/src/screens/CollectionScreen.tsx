@@ -1277,23 +1277,23 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
             </View>
           )}
         </View>
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardName} numberOfLines={2}>
+        <View style={[styles.cardInfo, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.cardName, { color: colors.text }]} numberOfLines={2}>
             {item.card_data?.name || 'Unknown Card'}
           </Text>
           {/* Set code and collector number */}
           <View style={styles.setInfoRow}>
-            <Text style={styles.setCode}>{setCode.toUpperCase()}</Text>
+            <Text style={[styles.setCode, { color: colors.textTertiary }]}>{setCode.toUpperCase()}</Text>
             {collectorNumber && (
-              <Text style={styles.collectorNum}>#{collectorNumber}</Text>
+              <Text style={[styles.collectorNum, { color: colors.textTertiary }]}>#{collectorNumber}</Text>
             )}
           </View>
-          <Text style={styles.cardPrice}>{price}</Text>
+          <Text style={[styles.cardPrice, { color: colors.success }]}>{price}</Text>
           <View style={styles.cardMetaRow}>
-            <Text style={styles.cardMeta}>
+            <Text style={[styles.cardMeta, { color: colors.textTertiary }]}>
               {item.game === 'mtg' ? 'MTG' : 'PKM'}
             </Text>
-            <Text style={styles.cardQuantity}>x{item.quantity}</Text>
+            <Text style={[styles.cardQuantity, { color: colors.textSecondary }]}>x{item.quantity}</Text>
           </View>
           {item.finish && item.finish !== 'Normal' && (
             <Text style={[
