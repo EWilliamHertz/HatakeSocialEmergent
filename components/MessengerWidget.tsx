@@ -52,6 +52,7 @@ const NOTIFICATION_SOUND = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTG
 const RINGTONE_SOUND = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQDgAAAAAAAAAGwsNIlHgAAAAAAAAAAAAAAAAD/4xjEAAKoGfJBQRgAMIAIRhSFIJB8H4fyhACAIB/y4Oefy4AQBAEAQBA/B+H/ygCAIBAEAQBD//5QCAIAgCAIH4P/+DkOQhCAAAAAADCMP/jGMQLA6wa9kZhGABsAGzBBEBsxgxYNKqIjMWYaGmZkCiYJmZmZmDMzMzM0AAAE//4xjEFAPAAsVvwAAAAAAD/+Mf/4xjEGAAAANIAAAAA/4xjEKAAAANIAAAAA';
 
 export default function MessengerWidget() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
