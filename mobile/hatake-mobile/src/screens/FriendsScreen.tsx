@@ -260,10 +260,10 @@ export default function FriendsScreen({ user, token, onClose, onOpenChat }: Frie
           )}
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'search' && styles.tabActive]}
+          style={[styles.tab, { borderBottomColor: 'transparent' }, activeTab === 'search' && { borderBottomColor: colors.primary }]}
           onPress={() => setActiveTab('search')}
         >
-          <Text style={[styles.tabText, activeTab === 'search' && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'search' && { color: colors.primary }]}>
             Find
           </Text>
         </TouchableOpacity>
@@ -277,13 +277,13 @@ export default function FriendsScreen({ user, token, onClose, onOpenChat }: Frie
           keyExtractor={(item) => item.user_id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="people-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyText}>No friends yet</Text>
-              <Text style={styles.emptySubtext}>Search for people to add as friends</Text>
+              <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No friends yet</Text>
+              <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>Search for people to add as friends</Text>
             </View>
           }
         />
@@ -296,12 +296,12 @@ export default function FriendsScreen({ user, token, onClose, onOpenChat }: Frie
           keyExtractor={(item) => item.user_id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="mail-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyText}>No pending requests</Text>
+              <Ionicons name="mail-outline" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No pending requests</Text>
             </View>
           }
         />
@@ -309,18 +309,18 @@ export default function FriendsScreen({ user, token, onClose, onOpenChat }: Frie
 
       {activeTab === 'search' && (
         <View style={styles.searchContainer}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={20} color="#9CA3AF" />
+          <View style={[styles.searchBox, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+            <Ionicons name="search" size={20} color={colors.textTertiary} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               placeholder="Search by name or email..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textTertiary}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearch}
               returnKeyType="search"
             />
-            {searching && <ActivityIndicator size="small" color="#3B82F6" />}
+            {searching && <ActivityIndicator size="small" color={colors.primary} />}
           </View>
           
           <FlatList
@@ -331,13 +331,13 @@ export default function FriendsScreen({ user, token, onClose, onOpenChat }: Frie
             ListEmptyComponent={
               searchQuery.trim() ? (
                 <View style={styles.empty}>
-                  <Text style={styles.emptyText}>No users found</Text>
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No users found</Text>
                 </View>
               ) : (
                 <View style={styles.empty}>
-                  <Ionicons name="search" size={48} color="#D1D5DB" />
-                  <Text style={styles.emptyText}>Search for friends</Text>
-                  <Text style={styles.emptySubtext}>Enter a name or email to find people</Text>
+                  <Ionicons name="search" size={48} color={colors.textTertiary} />
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Search for friends</Text>
+                  <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>Enter a name or email to find people</Text>
                 </View>
               )
             }
