@@ -625,6 +625,13 @@ export default function MessengerWidget() {
                     >
                       ← Back
                     </button>
+                    <a
+                      href={`/profile/${getSelectedConversation()?.user_id}`}
+                      className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition truncate max-w-[140px]"
+                      data-testid="widget-chat-profile-link"
+                    >
+                      {getSelectedConversation()?.name || 'Chat'}
+                    </a>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => startCall('audio')}
