@@ -238,9 +238,9 @@ export default function NotificationsScreen({ user, token, onClose }: Notificati
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="notifications-off-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyTitle}>No Notifications</Text>
-              <Text style={styles.emptySubtitle}>
+              <Ionicons name="notifications-off-outline" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No Notifications</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textTertiary }]}>
                 You're all caught up! New notifications will appear here.
               </Text>
             </View>
