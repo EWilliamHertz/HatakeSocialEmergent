@@ -336,6 +336,37 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
           </TouchableOpacity>
         </View>
 
+        {/* Appearance Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          
+          <View style={styles.settingCard}>
+            {renderSettingRow(
+              'moon-outline',
+              'Dark Mode',
+              'Switch between light and dark themes',
+              <Switch
+                value={darkMode}
+                onValueChange={toggleDarkMode}
+                trackColor={{ false: '#D1D5DB', true: '#6366F1' }}
+                thumbColor={darkMode ? '#FBBF24' : '#9CA3AF'}
+              />
+            )}
+            
+            {renderSettingRow(
+              'volume-high-outline',
+              'Sound Effects',
+              'Play notification sounds',
+              <Switch
+                value={soundEnabled}
+                onValueChange={toggleSoundEnabled}
+                trackColor={{ false: '#D1D5DB', true: '#10B981' }}
+                thumbColor={soundEnabled ? '#10B981' : '#9CA3AF'}
+              />
+            )}
+          </View>
+        </View>
+
         {/* Notifications Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Notifications</Text>
