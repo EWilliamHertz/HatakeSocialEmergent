@@ -1164,6 +1164,33 @@ const styles = StyleSheet.create({
   addCardNote: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 8, padding: 12, gap: 8 },
   addCardNoteText: { flex: 1, fontSize: 13, color: '#6B7280' },
   
+  // Deck Action Bar
+  deckActionBar: { flexDirection: 'row', padding: 12, gap: 12, borderTopWidth: 1 },
+  deckActionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 10, gap: 8 },
+  deckActionButtonText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
+  
+  // Import Modal
+  importHelpText: { fontSize: 12, color: '#6B7280', marginBottom: 12, lineHeight: 18 },
+  importTextArea: { backgroundColor: '#F3F4F6', borderRadius: 8, padding: 14, fontSize: 14, height: 200, textAlignVertical: 'top', marginBottom: 16 },
+  
+  // Add Card Modal
+  addCardModalContent: { maxHeight: '90%' },
+  searchRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 8, paddingHorizontal: 12, marginBottom: 12 },
+  searchInput: { flex: 1, paddingVertical: 12, fontSize: 15 },
+  searchButton: { padding: 8 },
+  searchResults: { maxHeight: 400 },
+  searchResultItem: { flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, marginBottom: 8 },
+  searchResultImage: { width: 40, height: 56, borderRadius: 4 },
+  searchResultImagePlaceholder: { width: 40, height: 56, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
+  searchResultInfo: { flex: 1, marginLeft: 10 },
+  searchResultName: { fontSize: 14, fontWeight: '500' },
+  searchResultSet: { fontSize: 12, marginTop: 2 },
+  addCardButtons: { flexDirection: 'row', gap: 6 },
+  addCardBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6 },
+  addSideboardBtn: { },
+  addCardBtnText: { fontSize: 12, fontWeight: '600', color: '#FFFFFF' },
+  noResultsText: { textAlign: 'center', paddingVertical: 20, fontSize: 14 },
+  
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '85%' },
