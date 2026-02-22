@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
-import { generateId } from '@/lib/utils';
 import sql from '@/lib/db';
 
 // GET - Get user's pending group invites
