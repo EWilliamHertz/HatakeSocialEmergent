@@ -65,6 +65,8 @@ export default function MyProfilePage() {
   const [showSettings, setShowSettings] = useState(false);
   const [recentCollection, setRecentCollection] = useState<CollectionItem[]>([]);
   const [myListings, setMyListings] = useState<Listing[]>([]);
+  const [badges, setBadges] = useState<any[]>([]);
+  const [badgeLoading, setBadgeLoading] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
