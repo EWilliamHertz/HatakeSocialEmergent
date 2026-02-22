@@ -699,6 +699,72 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
             {/* Mana Curve for MTG */}
             {manaCurve && <ManaCurveChart curve={manaCurve} />}
 
+            {/* Deck Analytics */}
+            {deckCards.length > 0 && (
+              <View style={[styles.analyticsSection, { backgroundColor: colors.surface }]}>
+                {/* Average CMC */}
+                {avgCMC !== null && (
+                  <View style={styles.avgCmcRow}>
+                    <Text style={[styles.analyticLabel, { color: colors.textSecondary }]}>Avg. Mana Cost</Text>
+                    <Text style={[styles.avgCmcValue, { color: colors.primary }]}>{avgCMC.toFixed(2)}</Text>
+                  </View>
+                )}
+
+                {/* Color Distribution */}
+                {colorDistrib && colorDistrib.length > 0 && (
+                  <View style={styles.colorDistribRow}>
+                    <Text style={[styles.analyticLabel, { color: colors.textSecondary }]}>Colors</Text>
+                    <View style={styles.colorPips}>
+                      {colorDistrib.map(([key, val]) => (
+                        <View key={key} style={[styles.colorPip, { backgroundColor: val.hex }]}>
+                          <Text style={[styles.colorPipText, key === 'W' ? { color: '#333' } : { color: '#FFF' }]}>{val.count}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* Type Distribution */}
+                {typeDistrib && Object.keys(typeDistrib).length > 0 && (
+                  <View style={styles.typeDistribSection}>
+                    <Text style={[styles.analyticLabel, { color: colors.textSecondary, marginBottom: 8 }]}>Card Types</Text>
+                    {Object.entries(typeDistrib).sort((a, b) => b[1] - a[1]).map(([type, count]) => {
+                      const total = Object.values(typeDistrib).reduce((s, v) => s + v, 0);
+                      const pct = total > 0 ? (count / total) * 100 : 0;
+                      return (
+                        <View key={type} style={styles.typeBarRow}>
+                          <Text style={[styles.typeLabel, { color: colors.text }]}>{type}</Text>
+                          <View style={[styles.typeBarBg, { backgroundColor: colors.surfaceSecondary }]}>
+                            <View style={[styles.typeBarFill, { width: `${pct}%`, backgroundColor: colors.primary }]} />
+                          </View>
+                          <Text style={[styles.typeCount, { color: colors.textSecondary }]}>{count}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+
+                {/* Format Validation */}
+                {formatIssues.length > 0 && (
+                  <View style={[styles.formatIssues, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }]}>
+                    <View style={styles.formatIssueHeader}>
+                      <Ionicons name="warning" size={18} color="#F59E0B" />
+                      <Text style={styles.formatIssueTitle}>Format Issues</Text>
+                    </View>
+                    {formatIssues.map((issue, i) => (
+                      <Text key={i} style={styles.formatIssueText}>- {issue}</Text>
+                    ))}
+                  </View>
+                )}
+                {formatIssues.length === 0 && showDeckDetail.format && (
+                  <View style={[styles.formatValid, { backgroundColor: '#D1FAE5', borderColor: '#10B981' }]}>
+                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+                    <Text style={styles.formatValidText}>Deck is {showDeckDetail.format} legal</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
             {/* Main Deck */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
