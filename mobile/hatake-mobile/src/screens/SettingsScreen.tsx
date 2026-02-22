@@ -245,68 +245,74 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
                   placeholder="Your name"
                 />
                 
-                <Text style={styles.inputLabel}>Shipping Address</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Shipping Address</Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[styles.input, styles.textArea, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border }]}
                   value={shippingAddress}
                   onChangeText={setShippingAddress}
                   placeholder="Street, City, Postal Code, Country"
+                  placeholderTextColor={colors.textTertiary}
                   multiline
                   numberOfLines={3}
                 />
                 
-                <Text style={styles.inputLabel}>Swish Number</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Swish Number</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border }]}
                   value={paymentSwish}
                   onChangeText={setPaymentSwish}
                   placeholder="070-XXX XX XX"
+                  placeholderTextColor={colors.textTertiary}
                   keyboardType="phone-pad"
                 />
 
-                <Text style={styles.sectionDivider}>Swedish Bank Account</Text>
+                <Text style={[styles.sectionDivider, { color: colors.textSecondary }]}>Swedish Bank Account</Text>
                 
                 <View style={styles.inputRow}>
                   <View style={styles.inputHalf}>
-                    <Text style={styles.inputLabel}>Clearing</Text>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Clearing</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border }]}
                       value={paymentClearing}
                       onChangeText={setPaymentClearing}
                       placeholder="XXXX"
+                      placeholderTextColor={colors.textTertiary}
                       keyboardType="number-pad"
                       maxLength={4}
                     />
                   </View>
                   <View style={styles.inputFlex}>
-                    <Text style={styles.inputLabel}>Kontonummer</Text>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Kontonummer</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border }]}
                       value={paymentKontonummer}
                       onChangeText={setPaymentKontonummer}
                       placeholder="XXX XXX XXXX"
+                      placeholderTextColor={colors.textTertiary}
                       keyboardType="number-pad"
                     />
                   </View>
                 </View>
 
-                <Text style={styles.sectionDivider}>International Transfer</Text>
+                <Text style={[styles.sectionDivider, { color: colors.textSecondary }]}>International Transfer</Text>
                 
-                <Text style={styles.inputLabel}>IBAN</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>IBAN</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border }]}
                   value={paymentIban}
                   onChangeText={setPaymentIban}
                   placeholder="SE00 0000 0000 0000 0000 0000"
+                  placeholderTextColor={colors.textTertiary}
                   autoCapitalize="characters"
                 />
                 
-                <Text style={styles.inputLabel}>BIC/SWIFT</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>BIC/SWIFT</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.surfaceSecondary, color: colors.text, borderColor: colors.border }]}
                   value={paymentSwift}
                   onChangeText={setPaymentSwift}
                   placeholder="XXXXXXXX"
+                  placeholderTextColor={colors.textTertiary}
                   autoCapitalize="characters"
                   maxLength={11}
                 />
