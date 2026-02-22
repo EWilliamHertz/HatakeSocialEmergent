@@ -87,7 +87,7 @@ export default function CommunityPage() {
 
   const loadData = async () => {
     setLoading(true);
-    await Promise.all([loadFriends(), loadRequests(), loadGroups()]);
+    await Promise.all([loadFriends(), loadRequests(), loadGroups(), loadGroupInvites()]);
     setLoading(false);
   };
 
