@@ -27,6 +27,34 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Session 7 Updates - Critical Fixes & Media Upload (2026-02-22)
+
+1. **Web Group Invitations Fix** ✅
+   - Fixed authentication issue in `/api/groups/invites/route.ts`
+   - Changed from `getSessionUser` to `getUserFromRequest` for proper JWT auth
+   - Invites API now works correctly with PUT/POST requests
+
+2. **Messenger Photo/Video Upload** ✅
+   - Added ImagePicker integration for both MessengerWidget and MessagesScreen
+   - Users can now send images and videos in chats
+   - Media buttons added to message input area
+   - Upload progress indicator when sending media
+   - Media messages display inline in chat
+
+3. **MessengerWidget Conversation Fix** ✅
+   - Fixed API to include `conversation_id` in conversation list
+   - Updated `fetchMessages` to use `conversation_id` properly
+   - Messages now load correctly when clicking into a conversation
+
+4. **Mobile Trades Screen Enhancement** ✅
+   - Added mounted state check to prevent state updates after unmount
+   - Added flex/display styles to parent container for web
+   - Wrapped content in additional View for better web compatibility
+
+5. **Messages API Enhancement** ✅
+   - Added `conversation_id` to the GET conversations response
+   - Supports `messageType` and `mediaUrl` for media messages
+
 ### Session 6 Updates - Bug Fixes (2026-02-22)
 
 1. **Sealed Products Currency Fix** ✅
