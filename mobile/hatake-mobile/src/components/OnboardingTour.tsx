@@ -81,7 +81,7 @@ interface OnboardingTourProps {
 }
 
 export default function OnboardingTour({ visible, onComplete }: OnboardingTourProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [currentStep, setCurrentStep] = useState(0);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
