@@ -472,6 +472,22 @@ export default function MessagesScreen({
 
           {/* Message Input */}
           <View style={styles.inputContainer}>
+            <TouchableOpacity
+              style={styles.mediaButton}
+              onPress={() => pickMedia('image')}
+              disabled={uploading}
+              data-testid="attach-image-btn"
+            >
+              <Ionicons name="image-outline" size={24} color="#6B7280" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.mediaButton}
+              onPress={() => pickMedia('video')}
+              disabled={uploading}
+              data-testid="attach-video-btn"
+            >
+              <Ionicons name="videocam-outline" size={24} color="#6B7280" />
+            </TouchableOpacity>
             <TextInput
               style={styles.messageInput}
               placeholder="Type a message..."
@@ -482,18 +498,24 @@ export default function MessagesScreen({
               maxLength={1000}
               data-testid="message-input"
             />
-            <TouchableOpacity 
-              style={[styles.sendButton, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
-              onPress={sendMessage}
-              disabled={!newMessage.trim() || sending}
-              data-testid="send-message-btn"
-            >
-              {sending ? (
+            {uploading ? (
+              <View style={styles.sendButton}>
                 <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Ionicons name="send" size={20} color="#FFFFFF" />
-              )}
-            </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={[styles.sendButton, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
+                onPress={sendMessage}
+                disabled={!newMessage.trim() || sending}
+                data-testid="send-message-btn"
+              >
+                {sending ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Ionicons name="send" size={20} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         </KeyboardAvoidingView>
       </Container>
