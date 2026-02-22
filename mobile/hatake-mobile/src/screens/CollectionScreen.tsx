@@ -1398,7 +1398,7 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
             style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === f && { backgroundColor: colors.primary }]}
             onPress={() => setFilter(f)}
           >
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+            <Text style={[styles.filterText, { color: colors.textSecondary }, filter === f && styles.filterTextActive]}>
               {f === 'all' ? 'All' : f === 'mtg' ? 'Magic' : 'Pokémon'}
             </Text>
           </TouchableOpacity>
@@ -1406,20 +1406,20 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
       </View>
 
       {error ? (
-        <View style={styles.errorBox}>
+        <View style={[styles.errorBox, { backgroundColor: '#FEE2E2' }]}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : null}
 
       {items.length === 0 && !error ? (
         <View style={styles.centered}>
-          <Ionicons name="albums-outline" size={64} color="#D1D5DB" />
-          <Text style={styles.emptyText}>No cards in your collection</Text>
-          <Text style={styles.emptySubtext}>
+          <Ionicons name="albums-outline" size={64} color={colors.textTertiary} />
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No cards in your collection</Text>
+          <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>
             Tap the + button to add cards
           </Text>
           <TouchableOpacity 
-            style={styles.addFirstButton}
+            style={[styles.addFirstButton, { backgroundColor: colors.primary }]}
             onPress={() => setShowAddModal(true)}
           >
             <Ionicons name="add" size={20} color="#fff" />
@@ -1441,7 +1441,7 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
 
       {/* Bulk Delete Button - Shows when in selection mode with items selected */}
       {selectionMode && selectedIds.size > 0 && (
-        <View style={styles.bulkActionBar}>
+        <View style={[styles.bulkActionBar, { backgroundColor: colors.surface }]}>
           <TouchableOpacity 
             style={styles.bulkDeleteButton}
             onPress={bulkDelete}
