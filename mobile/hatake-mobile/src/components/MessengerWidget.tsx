@@ -106,6 +106,10 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
       if (data.success) {
         setConversations(data.conversations || []);
         const total = (data.conversations || []).reduce((sum: number, c: Conversation) => sum + (c.unread_count || 0), 0);
+        // Play sound if new unread messages
+        if (total > unreadTotal && unreadTotal > 0) {
+          playNotificationSound();
+        }
         setUnreadTotal(total);
       }
     } catch (err) {
