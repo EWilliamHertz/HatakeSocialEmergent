@@ -27,28 +27,35 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
-### Session 12 Updates - Dark Mode & Bug Fixes (2026-02-22)
+### Session 12 Updates - Dark Mode & CSV Import Fix (2026-02-22)
 
-1. **CSV Import Enhancement** ✅
-   - Added support for "name/set_code" format (e.g., "muxus/JMP")
-   - Uses Scryfall name search for MTG cards
-   - Still supports collector number format
+1. **CSV Import - Server API** ✅
+   - Mobile now uses the same robust server-side API as web (`/api/collection/import`)
+   - Supports full CSV with headers (Name, Set Code, Collector Number, Quantity, etc.)
+   - Fixed auth on import API (JWT instead of session)
+   - Preview before import, then actual import
+   - Works with Scryfall for MTG and TCGdex for Pokemon
 
 2. **Image Upload Fix** ✅
-   - Fixed `/api/upload` endpoint authentication
-   - Changed from session-based to JWT auth for mobile compatibility
+   - Fixed `/api/upload` endpoint authentication (JWT)
 
 3. **Trades API Fix** ✅
    - Fixed column name mismatch: `recipient_name` → `receiver_name`
-   - Ensures consistent naming between API and frontend
+   - Added null-safe array access for trade cards
+   - Changed TouchableOpacity to Pressable for better web compatibility
 
 4. **Dark Mode - Full Implementation** ✅
-   - CollectionScreen: Full dark mode support
-   - MarketplaceScreen: Full dark mode support  
-   - MessagesScreen: Full dark mode support (conversations list + chat view)
-   - TradesScreen: Already had dark mode (previous session)
-   - FeedScreen: Already had dark mode (previous session)
-   - ProfileScreen: Already had dark mode (previous session)
+   - DrawerMenu (sidebar) - fully themed
+   - CollectionScreen - cards, header, filters, modals
+   - MarketplaceScreen - cards, header, tabs, filters
+   - MessagesScreen - conversations list + chat view
+   - NotificationsScreen - fully themed
+   - GroupsScreen - group cards, tabs, invite cards
+   - FriendsScreen - tabs, search, friend cards
+   - SettingsScreen - all sections and switches
+   - TradesScreen - already had dark mode (previous session)
+   - FeedScreen - already had dark mode (previous session)
+   - ProfileScreen - already had dark mode (previous session)
 
 ### Session 11 Updates - Bug Fixes (2026-02-22)
 
