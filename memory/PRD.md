@@ -12,7 +12,7 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES
 
-### Session 15 - Deck Analytics, Badge Showcase & Format Validation (2026-02-22)
+### Session 15 - Deck Analytics, Badge Showcase, Linkable Names & Guides (2026-02-22)
 
 1. **Deck Statistics/Analytics (Mobile)** - Full analytics added to mobile deck detail view:
    - Average mana cost (CMC) display
@@ -22,15 +22,17 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
    - "Deck is [Format] legal" confirmation when all rules pass
    
 2. **Badge Showcase in Feed** - Badges visible on social feed posts:
-   - Feed API (GET /api/feed) returns `badge_count` and `top_badge` for each post author
-   - Web feed: Award icon + badge count shown next to usernames (links to profile)
-   - Mobile feed: Ribbon icon + count indicator next to usernames
-   - Color-coded based on top badge type
+   - Feed API returns `badge_count` and `top_badge` for each post author
+   - Web + mobile: Award icon + badge count next to usernames, color-coded
 
-3. **Format Validation (Mobile)** - Validates decks against format rules:
-   - MTG: Standard, Modern, Pioneer, Legacy, Vintage, Commander, Pauper
-   - Pokemon: Standard (60 cards exact)
-   - Checks: min/max card count, copy limits, sideboard size
+3. **Clickable Profile Links in Messenger & Messages**:
+   - Web MessengerWidget: Chat header name + conversation list names link to /profile/[userId]
+   - Web Messages page: Sidebar names, chat header, sender avatars all link to profiles
+   - Mobile MessengerWidget: Avatar tap + chat header name open UserProfileModal
+
+4. **Deployment Guides** (markdown):
+   - `/app/memory/EXPO_BUILD_GUIDE.md` - Full EAS Build setup, config, troubleshooting
+   - `/app/memory/GOOGLE_PLAY_GUIDE.md` - Complete Play Store submission checklist
 
 ### Session 14 - Badge System & Bug Verification (2026-02-22)
 
