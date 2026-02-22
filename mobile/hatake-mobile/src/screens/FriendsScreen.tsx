@@ -33,6 +33,7 @@ interface FriendsScreenProps {
 }
 
 export default function FriendsScreen({ user, token, onClose, onOpenChat }: FriendsScreenProps) {
+  const { colors } = useTheme();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
