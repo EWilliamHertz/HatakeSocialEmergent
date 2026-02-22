@@ -47,6 +47,7 @@ const menuItems: MenuItem[] = [
 ];
 
 export default function DrawerMenu({ visible, onClose, user, onNavigate, onLogout }: DrawerMenuProps) {
+  const { colors } = useTheme();
   const screenWidth = Dimensions.get('window').width;
 
   if (!visible) return null;
@@ -61,26 +62,26 @@ export default function DrawerMenu({ visible, onClose, user, onNavigate, onLogou
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.overlayTouch} onPress={onClose} />
         
-        <View style={[styles.drawer, { width: screenWidth * 0.8, maxWidth: 320 }]}>
-          <SafeAreaView style={styles.drawerContent}>
+        <View style={[styles.drawer, { width: screenWidth * 0.8, maxWidth: 320, backgroundColor: colors.surface }]}>
+          <SafeAreaView style={[styles.drawerContent, { backgroundColor: colors.surface }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { borderBottomColor: colors.border }]}>
               <Image source={logoImage} style={styles.logo} />
-              <Text style={styles.appName}>Hatake.Social</Text>
+              <Text style={[styles.appName, { color: colors.text }]}>Hatake.Social</Text>
             </View>
 
             {/* User Info */}
-            <View style={styles.userSection}>
+            <View style={[styles.userSection, { backgroundColor: colors.surfaceSecondary }]}>
               {user?.picture ? (
                 <Image source={{ uri: user.picture }} style={styles.userAvatar} />
               ) : (
-                <View style={styles.userAvatarPlaceholder}>
-                  <Ionicons name="person" size={24} color="#9CA3AF" />
+                <View style={[styles.userAvatarPlaceholder, { backgroundColor: colors.border }]}>
+                  <Ionicons name="person" size={24} color={colors.textTertiary} />
                 </View>
               )}
               <View style={styles.userInfo}>
-                <Text style={styles.userName}>{user?.name || 'User'}</Text>
-                <Text style={styles.userEmail}>{user?.email || ''}</Text>
+                <Text style={[styles.userName, { color: colors.text }]}>{user?.name || 'User'}</Text>
+                <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email || ''}</Text>
               </View>
             </View>
 
@@ -89,16 +90,16 @@ export default function DrawerMenu({ visible, onClose, user, onNavigate, onLogou
               {menuItems.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={styles.menuItem}
+                  style={[styles.menuItem, { borderBottomColor: colors.border }]}
                   onPress={() => {
                     onNavigate(item.id);
                     onClose();
                   }}
                 >
-                  <Ionicons name={item.icon as any} size={22} color="#4B5563" />
-                  <Text style={styles.menuItemText}>{item.label}</Text>
+                  <Ionicons name={item.icon as any} size={22} color={colors.textSecondary} />
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>{item.label}</Text>
                   {item.badge !== undefined && item.badge > 0 && (
-                    <View style={styles.badge}>
+                    <View style={[styles.badge, { backgroundColor: colors.primary }]}>
                       <Text style={styles.badgeText}>{item.badge}</Text>
                     </View>
                   )}
@@ -107,10 +108,10 @@ export default function DrawerMenu({ visible, onClose, user, onNavigate, onLogou
             </ScrollView>
 
             {/* Footer */}
-            <View style={styles.footer}>
+            <View style={[styles.footer, { borderTopColor: colors.border }]}>
               <TouchableOpacity style={styles.footerItem} onPress={() => { onNavigate('settings'); onClose(); }}>
-                <Ionicons name="settings-outline" size={20} color="#6B7280" />
-                <Text style={styles.footerText}>Settings</Text>
+                <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>Settings</Text>
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
