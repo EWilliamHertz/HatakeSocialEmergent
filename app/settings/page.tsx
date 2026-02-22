@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { User, Bell, Shield, Moon, Sun, Trash2, Eye, EyeOff, Save, Check, CreditCard, MapPin } from 'lucide-react';
+import { User, Bell, Shield, Moon, Sun, Trash2, Eye, EyeOff, Save, Check, CreditCard, MapPin, Share2, Copy, Link2 } from 'lucide-react';
 
 export default function SettingsPage() {
   const router = useRouter();
