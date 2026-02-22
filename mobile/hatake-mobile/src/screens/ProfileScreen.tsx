@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,23 +6,68 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { API_URL } from '../config';
 
 const logoImage = require('../../assets/icon.png');
 
+interface Badge {
+  badge_type: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  awarded_at: string;
+}
+
 interface ProfileScreenProps {
   user: any;
+  token: string;
   onLogout: () => void;
   onOpenMenu?: () => void;
   onSettings?: () => void;
 }
 
-export default function ProfileScreen({ user, onLogout, onOpenMenu, onSettings }: ProfileScreenProps) {
+export default function ProfileScreen({ user, token, onLogout, onOpenMenu, onSettings }: ProfileScreenProps) {
   const { colors } = useTheme();
-  
+  const [badges, setBadges] = useState<Badge[]>([]);
+
+  useEffect(() => {
+    loadBadges();
+  }, []);
+
+  const getAuthToken = () => {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      return localStorage.getItem('auth_token') || token;
+    }
+    return token;
+  };
+
+  const loadBadges = async () => {
+    try {
+      const authToken = getAuthToken();
+      // Check & award badges
+      await fetch(`${API_URL}/api/badges`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      // Fetch badges
+      const res = await fetch(`${API_URL}/api/badges?userId=${user.user_id}`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBadges(data.badges || []);
+      }
+    } catch (err) {
+      console.log('Failed to load badges:', err);
+    }
+  };
+
   const handleLogout = () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('auth_token');
@@ -57,6 +102,38 @@ export default function ProfileScreen({ user, onLogout, onOpenMenu, onSettings }
           <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
           <Text style={[styles.email, { color: colors.textSecondary }]}>{user.email}</Text>
         </View>
+
+        {/* Badges Section */}
+        {badges.length > 0 && (
+          <View style={[styles.badgesSection, { backgroundColor: colors.surface }]}>
+            <View style={styles.badgesHeader}>
+              <Ionicons name="ribbon" size={20} color="#F59E0B" />
+              <Text style={[styles.badgesTitle, { color: colors.text }]}>Badges</Text>
+              <View style={[styles.badgeCount, { backgroundColor: colors.primary }]}>
+                <Text style={styles.badgeCountText}>{badges.length}</Text>
+              </View>
+            </View>
+            <View style={styles.badgesGrid}>
+              {badges.map((badge) => (
+                <View
+                  key={badge.badge_type}
+                  style={[styles.badgeItem, { backgroundColor: badge.color + '15', borderColor: badge.color + '40' }]}
+                  data-testid={`mobile-badge-${badge.badge_type}`}
+                >
+                  <View style={[styles.badgeIcon, { backgroundColor: badge.color + '25' }]}>
+                    <Ionicons
+                      name={(badge.icon || 'ribbon') as any}
+                      size={18}
+                      color={badge.color}
+                    />
+                  </View>
+                  <Text style={[styles.badgeName, { color: colors.text }]} numberOfLines={1}>{badge.name}</Text>
+                  <Text style={[styles.badgeDesc, { color: colors.textTertiary }]} numberOfLines={2}>{badge.description}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Account</Text>
@@ -175,6 +252,69 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     marginTop: 4,
+  },
+  // Badges
+  badgesSection: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  badgesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+  },
+  badgesTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    flex: 1,
+  },
+  badgeCount: {
+    borderRadius: 10,
+    minWidth: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  badgeCountText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  badgesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  badgeItem: {
+    width: '48%',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  badgeIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  badgeName: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  badgeDesc: {
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 2,
   },
   section: {
     marginTop: 24,
