@@ -500,6 +500,26 @@ export default function MessagesScreen({
             />
           )}
 
+          {/* Reply Banner */}
+          {replyTo && (
+            <View style={styles.replyBanner}>
+              <View style={styles.replyBannerContent}>
+                <Ionicons name="arrow-undo" size={16} color="#3B82F6" />
+                <View style={styles.replyBannerText}>
+                  <Text style={styles.replyBannerName}>
+                    Replying to {replyTo.sender_id === user.user_id ? 'yourself' : replyTo.name}
+                  </Text>
+                  <Text style={styles.replyBannerMessage} numberOfLines={1}>
+                    {replyTo.content || (replyTo.media_url ? '[Media]' : '')}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setReplyTo(null)}>
+                <Ionicons name="close" size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Message Input */}
           <View style={styles.inputContainer}>
             <TouchableOpacity
