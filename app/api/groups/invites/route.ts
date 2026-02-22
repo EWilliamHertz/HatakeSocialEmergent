@@ -86,17 +86,10 @@ export async function POST(request: NextRequest) {
 
     if (actualAction === 'accept') {
       // Add user to group
-      const memberId = generateId('member');
       await sql`
-        INSERT INTO group_members (member_id, group_id, user_id, role)
-        VALUES (${memberId}, ${invite[0].group_id}, ${user.user_id}, 'member')
-        ON CONFLICT DO NOTHING
-      `;
-
-      // Update member count
-      await sql`
-        UPDATE groups SET member_count = member_count + 1 
-        WHERE group_id = ${invite[0].group_id}
+        INSERT INTO group_members (group_id, user_id, role)
+        VALUES (${invite[0].group_id}, ${user.user_id}, 'member')
+        ON CONFLICT (group_id, user_id) DO NOTHING
       `;
     }
 
