@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { API_URL } from '../config';
+import { useTheme } from '../context/ThemeContext';
 
 // Use regular View on web to avoid SafeAreaView issues
 const Container = Platform.OS === 'web' ? View : SafeAreaView;
