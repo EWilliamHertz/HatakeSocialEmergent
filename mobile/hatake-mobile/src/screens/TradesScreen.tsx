@@ -148,14 +148,27 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
   };
 
   // Trade Detail View
+  // Trade Detail View
   if (selectedTrade) {
-    const isInitiator = selectedTrade.initiator_id === user.user_id;
+    const isInitiator = selectedTrade.initiator_id === user?.user_id;
     const partner = isInitiator 
       ? { name: selectedTrade.receiver_name || 'Unknown', picture: selectedTrade.receiver_picture }
       : { name: selectedTrade.initiator_name || 'Unknown', picture: selectedTrade.initiator_picture };
     const myCards = (isInitiator ? selectedTrade.initiator_cards : selectedTrade.receiver_cards) || [];
     const theirCards = (isInitiator ? selectedTrade.receiver_cards : selectedTrade.initiator_cards) || [];
-    const statusColors = getStatusColor(selectedTrade.status);
+    const statusColors = getStatusColor(selectedTrade.status || 'pending');
+    
+    // Safe status display
+    const statusDisplay = selectedTrade.status 
+      ? selectedTrade.status.charAt(0).toUpperCase() + selectedTrade.status.slice(1)
+      : 'Unknown';
+    
+    // Safe number formatting helper
+    const formatMoney = (value: any): string => {
+      if (value === null || value === undefined) return '0.00';
+      const num = typeof value === 'number' ? value : parseFloat(value);
+      return isNaN(num) ? '0.00' : num.toFixed(2);
+    };
 
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -181,7 +194,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
             <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
               <View style={[styles.statusDot, { backgroundColor: statusColors.dot }]} />
               <Text style={[styles.statusText, { color: statusColors.text }]}>
-                {selectedTrade.status.charAt(0).toUpperCase() + selectedTrade.status.slice(1)}
+                {statusDisplay}
               </Text>
             </View>
           </View>
@@ -192,16 +205,16 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
             {myCards.length > 0 ? (
               myCards.map((card: any, index: number) => (
                 <View key={index} style={[styles.cardItem, { borderBottomColor: colors.border }]}>
-                  {card.image_uri && (
+                  {card?.image_uri && (
                     <Image source={{ uri: card.image_uri }} style={styles.cardThumbnail} />
                   )}
                   <View style={styles.cardInfo}>
-                    <Text style={[styles.cardName, { color: colors.text }]}>{card.name || 'Unknown Card'}</Text>
-                    <Text style={[styles.cardSet, { color: colors.textSecondary }]}>{card.set_name || card.set_code || ''}</Text>
-                    {card.finish && <Text style={[styles.cardFinish, { color: colors.primary }]}>{card.finish}</Text>}
+                    <Text style={[styles.cardName, { color: colors.text }]}>{card?.name || 'Unknown Card'}</Text>
+                    <Text style={[styles.cardSet, { color: colors.textSecondary }]}>{card?.set_name || card?.set_code || ''}</Text>
+                    {card?.finish && <Text style={[styles.cardFinish, { color: colors.primary }]}>{card.finish}</Text>}
                   </View>
-                  {card.value !== undefined && (
-                    <Text style={[styles.cardValue, { color: colors.success }]}>€{card.value?.toFixed(2) || '0.00'}</Text>
+                  {card?.value !== undefined && card?.value !== null && (
+                    <Text style={[styles.cardValue, { color: colors.success }]}>€{formatMoney(card.value)}</Text>
                   )}
                 </View>
               ))
@@ -216,16 +229,16 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
             {theirCards.length > 0 ? (
               theirCards.map((card: any, index: number) => (
                 <View key={index} style={[styles.cardItem, { borderBottomColor: colors.border }]}>
-                  {card.image_uri && (
+                  {card?.image_uri && (
                     <Image source={{ uri: card.image_uri }} style={styles.cardThumbnail} />
                   )}
                   <View style={styles.cardInfo}>
-                    <Text style={[styles.cardName, { color: colors.text }]}>{card.name || 'Unknown Card'}</Text>
-                    <Text style={[styles.cardSet, { color: colors.textSecondary }]}>{card.set_name || card.set_code || ''}</Text>
-                    {card.finish && <Text style={[styles.cardFinish, { color: colors.primary }]}>{card.finish}</Text>}
+                    <Text style={[styles.cardName, { color: colors.text }]}>{card?.name || 'Unknown Card'}</Text>
+                    <Text style={[styles.cardSet, { color: colors.textSecondary }]}>{card?.set_name || card?.set_code || ''}</Text>
+                    {card?.finish && <Text style={[styles.cardFinish, { color: colors.primary }]}>{card.finish}</Text>}
                   </View>
-                  {card.value !== undefined && (
-                    <Text style={[styles.cardValue, { color: colors.success }]}>€{card.value?.toFixed(2) || '0.00'}</Text>
+                  {card?.value !== undefined && card?.value !== null && (
+                    <Text style={[styles.cardValue, { color: colors.success }]}>€{formatMoney(card.value)}</Text>
                   )}
                 </View>
               ))
@@ -235,25 +248,25 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
           </View>
 
           {/* Cash if any */}
-          {(selectedTrade.cash_offered || selectedTrade.cash_requested) && (
+          {(selectedTrade.cash_offered || selectedTrade.cash_requested) ? (
             <View style={[styles.cashSection, { backgroundColor: colors.surfaceSecondary }]}>
               <Ionicons name="cash-outline" size={20} color={colors.success} />
               <Text style={[styles.cashText, { color: colors.success }]}>
                 {selectedTrade.cash_offered 
-                  ? `+€${selectedTrade.cash_offered.toFixed(2)} cash offered`
-                  : `-€${selectedTrade.cash_requested?.toFixed(2)} cash requested`
+                  ? `+€${formatMoney(selectedTrade.cash_offered)} cash offered`
+                  : `-€${formatMoney(selectedTrade.cash_requested)} cash requested`
                 }
               </Text>
             </View>
-          )}
+          ) : null}
 
           {/* Note */}
-          {selectedTrade.note && (
+          {selectedTrade.note ? (
             <View style={[styles.noteSection, { backgroundColor: colors.surfaceSecondary }]}>
               <Text style={[styles.noteLabel, { color: colors.textSecondary }]}>Note</Text>
               <Text style={[styles.noteText, { color: colors.text }]}>{selectedTrade.note}</Text>
             </View>
-          )}
+          ) : null}
 
           {/* Actions */}
           {selectedTrade.status === 'pending' && !isInitiator && (
