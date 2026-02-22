@@ -504,26 +504,26 @@ export default function MessagesScreen({
 
           {/* Reply Banner */}
           {replyTo && (
-            <View style={styles.replyBanner}>
+            <View style={[styles.replyBanner, { backgroundColor: colors.surfaceSecondary, borderTopColor: colors.border }]}>
               <View style={styles.replyBannerContent}>
-                <Ionicons name="arrow-undo" size={16} color="#3B82F6" />
+                <Ionicons name="arrow-undo" size={16} color={colors.primary} />
                 <View style={styles.replyBannerText}>
-                  <Text style={styles.replyBannerName}>
+                  <Text style={[styles.replyBannerName, { color: colors.primary }]}>
                     Replying to {replyTo.sender_id === user.user_id ? 'yourself' : replyTo.name}
                   </Text>
-                  <Text style={styles.replyBannerMessage} numberOfLines={1}>
+                  <Text style={[styles.replyBannerMessage, { color: colors.textSecondary }]} numberOfLines={1}>
                     {replyTo.content || (replyTo.media_url ? '[Media]' : '')}
                   </Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setReplyTo(null)}>
-                <Ionicons name="close" size={20} color="#6B7280" />
+                <Ionicons name="close" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           )}
 
           {/* Message Input */}
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
             <TouchableOpacity
               style={styles.mediaButton}
               onPress={() => pickMedia('image')}
