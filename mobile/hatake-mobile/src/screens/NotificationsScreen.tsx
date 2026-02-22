@@ -31,6 +31,7 @@ interface NotificationsScreenProps {
 }
 
 export default function NotificationsScreen({ user, token, onClose }: NotificationsScreenProps) {
+  const { colors } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
