@@ -279,30 +279,31 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
     const displayList = searchQuery.trim() ? searchResults : friends;
     
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <Ionicons name="close" size={24} color="#1F2937" />
+            <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>New Trade</Text>
-            <Text style={styles.stepIndicator}>Step 1 of 3</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>New Trade</Text>
+            <Text style={[styles.stepIndicator, { color: colors.textTertiary }]}>Step 1 of 3</Text>
           </View>
           <View style={styles.backButton} />
         </View>
 
         <View style={styles.content}>
-          <Text style={styles.sectionTitle}>Who do you want to trade with?</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Who do you want to trade with?</Text>
           
           <View style={styles.searchRow}>
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
               placeholder="Search users..."
+              placeholderTextColor={colors.textTertiary}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={searchUsers}
             />
-            <TouchableOpacity style={styles.searchBtn} onPress={searchUsers}>
+            <TouchableOpacity style={[styles.searchBtn, { backgroundColor: colors.primary }]} onPress={searchUsers}>
               {searching ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
@@ -312,11 +313,11 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
           </View>
 
           {!searchQuery.trim() && friends.length > 0 && (
-            <Text style={styles.listLabel}>Your Friends</Text>
+            <Text style={[styles.listLabel, { color: colors.textSecondary }]}>Your Friends</Text>
           )}
 
           {loading ? (
-            <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 40 }} />
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
           ) : (
             <FlatList
               data={displayList}
@@ -325,8 +326,8 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
               contentContainerStyle={styles.list}
               ListEmptyComponent={
                 <View style={styles.empty}>
-                  <Ionicons name="people-outline" size={48} color="#D1D5DB" />
-                  <Text style={styles.emptyText}>
+                  <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
+                  <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
                     {searchQuery.trim() ? 'No users found' : 'No friends yet'}
                   </Text>
                 </View>
@@ -341,52 +342,52 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
   // Step 2: Select Cards
   if (step === 2) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => setStep(1)} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>Select Cards</Text>
-            <Text style={styles.stepIndicator}>Step 2 of 3</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Select Cards</Text>
+            <Text style={[styles.stepIndicator, { color: colors.textTertiary }]}>Step 2 of 3</Text>
           </View>
           <TouchableOpacity 
-            style={[styles.nextBtn, selectedCards.size === 0 && styles.nextBtnDisabled]}
+            style={[styles.nextBtn, { backgroundColor: colors.primary }, selectedCards.size === 0 && { backgroundColor: colors.surfaceSecondary }]}
             onPress={() => selectedCards.size > 0 && setStep(3)}
             disabled={selectedCards.size === 0}
           >
-            <Text style={[styles.nextBtnText, selectedCards.size === 0 && styles.nextBtnTextDisabled]}>
+            <Text style={[styles.nextBtnText, selectedCards.size === 0 && { color: colors.textTertiary }]}>
               Next
             </Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.recipientBar}>
-          <Text style={styles.recipientLabel}>Trading with:</Text>
+        <View style={[styles.recipientBar, { backgroundColor: colors.surfaceSecondary }]}>
+          <Text style={[styles.recipientLabel, { color: colors.textSecondary }]}>Trading with:</Text>
           <View style={styles.recipientInfo}>
             {selectedRecipient?.picture ? (
               <Image source={{ uri: selectedRecipient.picture }} style={styles.recipientAvatar} />
             ) : (
-              <View style={styles.recipientAvatarPlaceholder}>
-                <Ionicons name="person" size={12} color="#9CA3AF" />
+              <View style={[styles.recipientAvatarPlaceholder, { backgroundColor: colors.surface }]}>
+                <Ionicons name="person" size={12} color={colors.textTertiary} />
               </View>
             )}
-            <Text style={styles.recipientName}>{selectedRecipient?.name}</Text>
+            <Text style={[styles.recipientName, { color: colors.text }]}>{selectedRecipient?.name}</Text>
           </View>
         </View>
 
-        <View style={styles.selectionBar}>
-          <Text style={styles.selectionCount}>{selectedCards.size} cards selected</Text>
+        <View style={[styles.selectionBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+          <Text style={[styles.selectionCount, { color: colors.primary }]}>{selectedCards.size} cards selected</Text>
           {selectedCards.size > 0 && (
             <TouchableOpacity onPress={() => setSelectedCards(new Set())}>
-              <Text style={styles.clearText}>Clear</Text>
+              <Text style={[styles.clearText, { color: colors.textSecondary }]}>Clear</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {loadingCollection ? (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color="#3B82F6" />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : (
           <FlatList
@@ -397,8 +398,8 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
             contentContainerStyle={styles.cardGrid}
             ListEmptyComponent={
               <View style={styles.empty}>
-                <Ionicons name="albums-outline" size={48} color="#D1D5DB" />
-                <Text style={styles.emptyText}>Your collection is empty</Text>
+                <Ionicons name="albums-outline" size={48} color={colors.textTertiary} />
+                <Text style={[styles.emptyText, { color: colors.textTertiary }]}>Your collection is empty</Text>
               </View>
             }
           />
@@ -409,35 +410,35 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
 
   // Step 3: Review & Send
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => setStep(2)} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Review Trade</Text>
-          <Text style={styles.stepIndicator}>Step 3 of 3</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Review Trade</Text>
+          <Text style={[styles.stepIndicator, { color: colors.textTertiary }]}>Step 3 of 3</Text>
         </View>
         <View style={styles.backButton} />
       </View>
 
       <ScrollView style={styles.reviewContent}>
         <View style={styles.reviewSection}>
-          <Text style={styles.reviewLabel}>Trading with</Text>
-          <View style={styles.reviewRecipient}>
+          <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Trading with</Text>
+          <View style={[styles.reviewRecipient, { backgroundColor: colors.surface }]}>
             {selectedRecipient?.picture ? (
               <Image source={{ uri: selectedRecipient.picture }} style={styles.reviewAvatar} />
             ) : (
-              <View style={styles.reviewAvatarPlaceholder}>
-                <Ionicons name="person" size={24} color="#9CA3AF" />
+              <View style={[styles.reviewAvatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                <Ionicons name="person" size={24} color={colors.textTertiary} />
               </View>
             )}
-            <Text style={styles.reviewName}>{selectedRecipient?.name}</Text>
+            <Text style={[styles.reviewName, { color: colors.text }]}>{selectedRecipient?.name}</Text>
           </View>
         </View>
 
         <View style={styles.reviewSection}>
-          <Text style={styles.reviewLabel}>Cards you're offering ({selectedCards.size})</Text>
+          <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Cards you're offering ({selectedCards.size})</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardsScroll}>
             {myCollection.filter(c => selectedCards.has(c.id)).map(card => {
               const image = getCardImage(card);
@@ -446,8 +447,8 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
                   {image ? (
                     <Image source={{ uri: image }} style={styles.reviewCardImage} resizeMode="contain" />
                   ) : (
-                    <View style={styles.reviewCardPlaceholder}>
-                      <Ionicons name="image-outline" size={24} color="#9CA3AF" />
+                    <View style={[styles.reviewCardPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                      <Ionicons name="image-outline" size={24} color={colors.textTertiary} />
                     </View>
                   )}
                 </View>
@@ -457,12 +458,13 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
         </View>
 
         <View style={styles.reviewSection}>
-          <Text style={styles.reviewLabel}>Request additional cash (optional)</Text>
-          <View style={styles.cashInputRow}>
-            <Text style={styles.currencyLabel}>€</Text>
+          <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Request additional cash (optional)</Text>
+          <View style={[styles.cashInputRow, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.currencyLabel, { color: colors.text }]}>€</Text>
             <TextInput
-              style={styles.cashInput}
+              style={[styles.cashInput, { color: colors.text }]}
               placeholder="0.00"
+              placeholderTextColor={colors.textTertiary}
               value={cashAmount}
               onChangeText={setCashAmount}
               keyboardType="decimal-pad"
@@ -471,10 +473,11 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
         </View>
 
         <View style={styles.reviewSection}>
-          <Text style={styles.reviewLabel}>Message (optional)</Text>
+          <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>Message (optional)</Text>
           <TextInput
-            style={styles.messageInput}
+            style={[styles.messageInput, { backgroundColor: colors.surface, color: colors.text }]}
             placeholder="Add a message for the recipient..."
+            placeholderTextColor={colors.textTertiary}
             value={message}
             onChangeText={setMessage}
             multiline
