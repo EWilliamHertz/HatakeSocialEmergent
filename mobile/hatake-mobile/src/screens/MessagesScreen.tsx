@@ -430,27 +430,27 @@ export default function MessagesScreen({
   // Chat view
   if (selectedConversation) {
     return (
-      <Container style={styles.container}>
+      <Container style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Chat Header */}
-        <View style={styles.chatHeader}>
+        <View style={[styles.chatHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity 
             onPress={() => setSelectedConversation(null)} 
             style={styles.backButton}
             data-testid="back-to-conversations"
           >
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           
           {selectedConversation.picture ? (
             <Image source={{ uri: selectedConversation.picture }} style={styles.chatAvatar} />
           ) : (
-            <View style={styles.chatAvatarPlaceholder}>
-              <Ionicons name="person" size={20} color="#9CA3AF" />
+            <View style={[styles.chatAvatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="person" size={20} color={colors.textTertiary} />
             </View>
           )}
           
           <View style={styles.chatUserInfo}>
-            <Text style={styles.chatUserName}>{selectedConversation.name}</Text>
+            <Text style={[styles.chatUserName, { color: colors.text }]}>{selectedConversation.name}</Text>
           </View>
           
           <View style={styles.chatActions}>
@@ -459,14 +459,14 @@ export default function MessagesScreen({
               onPress={() => onStartCall?.(selectedConversation, 'audio')}
               data-testid="start-audio-call"
             >
-              <Ionicons name="call" size={22} color="#3B82F6" />
+              <Ionicons name="call" size={22} color={colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.callButton}
               onPress={() => onStartCall?.(selectedConversation, 'video')}
               data-testid="start-video-call"
             >
-              <Ionicons name="videocam" size={22} color="#3B82F6" />
+              <Ionicons name="videocam" size={22} color={colors.primary} />
             </TouchableOpacity>
           </View>
         </View>
