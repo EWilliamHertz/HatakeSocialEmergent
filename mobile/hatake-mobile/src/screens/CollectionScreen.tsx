@@ -150,6 +150,7 @@ interface CollectionScreenProps {
 }
 
 export default function CollectionScreen({ user, token, onOpenMenu }: CollectionScreenProps) {
+  const { colors } = useTheme();
   const [items, setItems] = useState<CollectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
