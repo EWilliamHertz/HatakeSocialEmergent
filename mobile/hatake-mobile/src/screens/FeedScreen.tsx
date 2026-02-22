@@ -98,7 +98,13 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
     try {
       const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
       
-      const response = await fetch(`${API_URL}/api/feed?type=${activeTab}`, {
+      // Build URL with group filter if applicable
+      let url = `${API_URL}/api/feed?type=${activeTab}`;
+      if (activeTab === 'groups' && selectedGroup) {
+        url += `&group_id=${selectedGroup}`;
+      }
+      
+      const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
       const data = await response.json();
@@ -119,7 +125,7 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
 
   useEffect(() => {
     fetchPosts();
-  }, [activeTab]);
+  }, [activeTab, selectedGroup]);
 
   const onRefresh = () => {
     setRefreshing(true);
