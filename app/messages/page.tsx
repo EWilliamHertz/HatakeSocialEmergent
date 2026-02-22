@@ -725,7 +725,7 @@ export default function MessagesPage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <p className="font-semibold truncate dark:text-white">{conv.name}</p>
+                            <p className="font-semibold truncate dark:text-white"><a href={`/profile/${conv.user_id}`} onClick={(e) => e.stopPropagation()} className="hover:text-blue-600 dark:hover:text-blue-400 transition">{conv.name}</a></p>
                             <div className="flex items-center gap-2">
                               {conv.last_message_at && (
                                 <span className="text-xs text-gray-400 whitespace-nowrap">
