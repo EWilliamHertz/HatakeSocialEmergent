@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
 import { useTheme } from '../context/ThemeContext';
+import { resetOnboarding } from '../components/OnboardingTour';
 
 interface SettingsScreenProps {
   user: any;
@@ -23,6 +24,7 @@ interface SettingsScreenProps {
   onLogout: () => void;
   messengerWidgetEnabled?: boolean;
   onToggleMessengerWidget?: () => void;
+  onShowTour?: () => void;
 }
 
 export default function SettingsScreen({ user, token, onClose, onLogout, messengerWidgetEnabled = true, onToggleMessengerWidget }: SettingsScreenProps) {
