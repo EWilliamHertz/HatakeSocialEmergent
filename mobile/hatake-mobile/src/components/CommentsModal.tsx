@@ -179,14 +179,14 @@ export default function CommentsModal({
         {item.picture ? (
           <Image source={{ uri: item.picture }} style={styles.avatar} />
         ) : (
-          <View style={styles.avatarPlaceholder}>
-            <Ionicons name="person" size={isReply ? 14 : 16} color="#9CA3AF" />
+          <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <Ionicons name="person" size={isReply ? 14 : 16} color={colors.textTertiary} />
           </View>
         )}
         <View style={styles.commentContent}>
-          <View style={styles.commentBubble}>
-            <Text style={styles.commentAuthor}>{item.name}</Text>
-            <Text style={styles.commentText}>{item.content}</Text>
+          <View style={[styles.commentBubble, { backgroundColor: colors.surfaceSecondary }]}>
+            <Text style={[styles.commentAuthor, { color: colors.text }]}>{item.name}</Text>
+            <Text style={[styles.commentText, { color: colors.text }]}>{item.content}</Text>
           </View>
           
           {/* Reactions display */}
@@ -195,36 +195,36 @@ export default function CommentsModal({
               {item.reactions.map((r) => (
                 <TouchableOpacity
                   key={r.emoji}
-                  style={[styles.reactionBadge, r.userReacted && styles.reactionBadgeActive]}
+                  style={[styles.reactionBadge, { backgroundColor: colors.surfaceSecondary }, r.userReacted && { backgroundColor: colors.primaryLight }]}
                   onPress={() => handleCommentReaction(item.comment_id, r.emoji)}
                 >
                   <Text style={styles.reactionEmoji}>{r.emoji}</Text>
-                  <Text style={styles.reactionCount}>{r.count}</Text>
+                  <Text style={[styles.reactionCount, { color: colors.text }]}>{r.count}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           )}
           
           <View style={styles.commentActions}>
-            <Text style={styles.commentTime}>{formatTime(item.created_at)}</Text>
+            <Text style={[styles.commentTime, { color: colors.textTertiary }]}>{formatTime(item.created_at)}</Text>
             <TouchableOpacity onPress={() => handleCommentReaction(item.comment_id, '👍')}>
-              <Text style={styles.actionLink}>Like</Text>
+              <Text style={[styles.actionLink, { color: colors.textSecondary }]}>Like</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowEmojiPickerFor(
               showEmojiPickerFor === item.comment_id ? null : item.comment_id
             )}>
-              <Text style={styles.actionLink}>React</Text>
+              <Text style={[styles.actionLink, { color: colors.textSecondary }]}>React</Text>
             </TouchableOpacity>
             {!isReply && (
               <TouchableOpacity onPress={() => handleReply(item)}>
-                <Text style={styles.replyButton}>Reply</Text>
+                <Text style={[styles.replyButton, { color: colors.primary }]}>Reply</Text>
               </TouchableOpacity>
             )}
           </View>
           
           {/* Emoji picker */}
           {showEmojiPickerFor === item.comment_id && (
-            <View style={styles.emojiPicker}>
+            <View style={[styles.emojiPicker, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               {COMMENT_EMOJIS.map(emoji => (
                 <TouchableOpacity
                   key={emoji}
