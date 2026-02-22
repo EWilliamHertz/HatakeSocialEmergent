@@ -142,6 +142,8 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
     setSending(true);
     const content = newMessage.trim();
     setNewMessage('');
+    const replyToMsg = replyTo;
+    setReplyTo(null);
 
     try {
       const authToken = getAuthToken();
@@ -154,6 +156,7 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
         body: JSON.stringify({
           recipientId: selectedChat.user_id,
           content,
+          replyToId: replyToMsg?.message_id || null,
         }),
       });
       
@@ -165,6 +168,9 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
         sender_id: user.user_id,
         content,
         created_at: new Date().toISOString(),
+        reply_to: replyToMsg?.message_id,
+        reply_content: replyToMsg?.content,
+        reply_sender_name: replyToMsg?.name,
       }]);
       
       // If this was a new conversation, update the selectedChat with conversation_id
