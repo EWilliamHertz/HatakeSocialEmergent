@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Users, Globe, Hash, ThumbsUp, MessageCircle, Send, ChevronDown, ChevronUp, Reply, Smile, X } from 'lucide-react';
+import { Users, Globe, Hash, ThumbsUp, MessageCircle, Send, ChevronDown, ChevronUp, Reply, Smile, X, MoreHorizontal, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
