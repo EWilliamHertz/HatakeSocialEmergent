@@ -3,12 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  RefreshControl,
-  Alert,
   Platform,
   ScrollView,
 } from 'react-native';
@@ -44,31 +41,24 @@ interface TradesScreenProps {
 export default function TradesScreen({ user, token, onClose, onCreateTrade, onOpenMenu }: TradesScreenProps) {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
     fetchTrades();
-    return () => setMounted(false);
   }, []);
 
   const getAuthToken = () => {
     try {
-      if (typeof localStorage !== 'undefined') {
+      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
         return localStorage.getItem('auth_token') || token;
       }
-    } catch (e) {
-      // localStorage not available
-    }
+    } catch (e) {}
     return token;
   };
 
   const fetchTrades = async () => {
-    if (!mounted) return;
     setError(null);
     try {
       const authToken = getAuthToken();
@@ -76,7 +66,6 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
       const data = await res.json();
-      if (!mounted) return;
       if (data.success) {
         setTrades(data.trades || []);
       } else {
@@ -84,18 +73,13 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
       }
     } catch (err) {
       console.error('Failed to fetch trades:', err);
-      if (mounted) {
-        setError('Network error. Please try again.');
-      }
+      setError('Network error. Please try again.');
     } finally {
-      if (mounted) {
-        setLoading(false);
-        setRefreshing(false);
-      }
+      setLoading(false);
     }
   };
 
-  const updateTradeStatus = async (tradeId: string, status: string) => {
+  const handleTradeAction = async (tradeId: string, action: 'accept' | 'decline' | 'cancel') => {
     try {
       const authToken = getAuthToken();
       const res = await fetch(`${API_URL}/api/trades/${tradeId}`, {
@@ -104,117 +88,49 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ action }),
       });
       const data = await res.json();
       if (data.success) {
         fetchTrades();
         setSelectedTrade(null);
-        Alert.alert('Success', `Trade ${status}`);
-      } else {
-        Alert.alert('Error', data.error || 'Failed to update trade');
       }
     } catch (err) {
-      console.error('Update trade error:', err);
-      Alert.alert('Error', 'Failed to update trade');
+      console.error('Trade action failed:', err);
     }
-  };
-
-  const isIncoming = (trade: Trade) => trade.receiver_id === user?.user_id;
-  
-  const getOtherUser = (trade: Trade) => {
-    if (trade.initiator_id === user?.user_id) {
-      return { name: trade.receiver_name, picture: trade.receiver_picture };
-    }
-    return { name: trade.initiator_name, picture: trade.initiator_picture };
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return '#F59E0B';
-      case 'accepted': return '#3B82F6';
-      case 'completed': return '#10B981';
-      case 'declined':
-      case 'cancelled': return '#EF4444';
-      default: return '#6B7280';
+      case 'pending': return { bg: '#FEF3C7', text: '#92400E', dot: '#F59E0B' };
+      case 'accepted': return { bg: '#DBEAFE', text: '#1E40AF', dot: '#3B82F6' };
+      case 'completed': return { bg: '#D1FAE5', text: '#065F46', dot: '#10B981' };
+      case 'declined': case 'cancelled': return { bg: '#FEE2E2', text: '#991B1B', dot: '#EF4444' };
+      default: return { bg: '#F3F4F6', text: '#6B7280', dot: '#9CA3AF' };
     }
   };
 
   const filteredTrades = trades.filter(t => {
     if (filter === 'all') return true;
     if (filter === 'pending') return t.status === 'pending' || t.status === 'accepted';
-    if (filter === 'completed') return t.status === 'completed';
-    return true;
+    return t.status === 'completed';
   });
 
-  const renderTrade = ({ item }: { item: Trade }) => {
-    const otherUser = getOtherUser(item);
-    const incoming = isIncoming(item);
-    
-    return (
-      <TouchableOpacity 
-        style={styles.tradeCard}
-        onPress={() => setSelectedTrade(item)}
-        data-testid={`trade-${item.trade_id}`}
-      >
-        <View style={styles.tradeHeader}>
-          {otherUser.picture ? (
-            <Image source={{ uri: otherUser.picture }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={20} color="#9CA3AF" />
-            </View>
-          )}
-          <View style={styles.tradeInfo}>
-            <Text style={styles.tradeName}>{otherUser.name}</Text>
-            <View style={styles.tradeMetaRow}>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-                <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
-                <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                </Text>
-              </View>
-              <Text style={styles.directionText}>
-                {incoming ? '← Incoming' : '→ Outgoing'}
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-        </View>
-        
-        <View style={styles.tradePreview}>
-          <View style={styles.tradeSide}>
-            <Text style={styles.tradeLabel}>You give</Text>
-            <Text style={styles.tradeCount}>
-              {incoming ? item.receiver_cards?.length || 0 : item.initiator_cards?.length || 0} cards
-            </Text>
-          </View>
-          <Ionicons name="swap-horizontal" size={24} color="#D1D5DB" />
-          <View style={styles.tradeSide}>
-            <Text style={styles.tradeLabel}>You get</Text>
-            <Text style={styles.tradeCount}>
-              {incoming ? item.initiator_cards?.length || 0 : item.receiver_cards?.length || 0} cards
-            </Text>
-          </View>
-        </View>
-
-        {item.cash_requested && item.cash_requested > 0 && (
-          <View style={styles.cashBadge}>
-            <Ionicons name="cash-outline" size={14} color="#10B981" />
-            <Text style={styles.cashText}>
-              +€{item.cash_requested.toFixed(2)} {item.cash_currency || ''}
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    );
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
   // Trade Detail View
   if (selectedTrade) {
-    const otherUser = getOtherUser(selectedTrade);
-    const incoming = isIncoming(selectedTrade);
-    
+    const isInitiator = selectedTrade.initiator_id === user.user_id;
+    const partner = isInitiator 
+      ? { name: selectedTrade.receiver_name, picture: selectedTrade.receiver_picture }
+      : { name: selectedTrade.initiator_name, picture: selectedTrade.initiator_picture };
+    const myCards = isInitiator ? selectedTrade.initiator_cards : selectedTrade.receiver_cards;
+    const theirCards = isInitiator ? selectedTrade.receiver_cards : selectedTrade.initiator_cards;
+    const statusColors = getStatusColor(selectedTrade.status);
+
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -228,85 +144,84 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
         <ScrollView style={styles.detailContent}>
           {/* Partner Info */}
           <View style={styles.partnerCard}>
-            {otherUser.picture ? (
-              <Image source={{ uri: otherUser.picture }} style={styles.partnerAvatar} />
+            {partner.picture ? (
+              <Image source={{ uri: partner.picture }} style={styles.partnerAvatar} />
             ) : (
               <View style={styles.partnerAvatarPlaceholder}>
-                <Ionicons name="person" size={24} color="#9CA3AF" />
+                <Ionicons name="person" size={28} color="#9CA3AF" />
               </View>
             )}
-            <Text style={styles.partnerName}>{otherUser.name}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(selectedTrade.status) + '20' }]}>
-              <View style={[styles.statusDot, { backgroundColor: getStatusColor(selectedTrade.status) }]} />
-              <Text style={[styles.statusText, { color: getStatusColor(selectedTrade.status) }]}>
+            <Text style={styles.partnerName}>{partner.name}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
+              <View style={[styles.statusDot, { backgroundColor: statusColors.dot }]} />
+              <Text style={[styles.statusText, { color: statusColors.text }]}>
                 {selectedTrade.status.charAt(0).toUpperCase() + selectedTrade.status.slice(1)}
               </Text>
             </View>
           </View>
 
-          {/* Trade Summary */}
-          <View style={styles.summaryCard}>
-            <View style={styles.summarySide}>
-              <Text style={styles.summaryRole}>You Give</Text>
-              <Text style={styles.summaryCount}>
-                {incoming ? selectedTrade.receiver_cards?.length || 0 : selectedTrade.initiator_cards?.length || 0} cards
-              </Text>
+          {/* Cards Exchange */}
+          <View style={styles.exchangeSection}>
+            <View style={styles.exchangeSide}>
+              <Text style={styles.exchangeLabel}>You Offer</Text>
+              <Text style={styles.cardCount}>{myCards.length} cards</Text>
             </View>
-            <View style={styles.summaryDivider}>
-              <Ionicons name="swap-horizontal" size={28} color="#3B82F6" />
-            </View>
-            <View style={styles.summarySide}>
-              <Text style={styles.summaryRole}>You Get</Text>
-              <Text style={styles.summaryCount}>
-                {incoming ? selectedTrade.initiator_cards?.length || 0 : selectedTrade.receiver_cards?.length || 0} cards
-              </Text>
+            <Ionicons name="swap-horizontal" size={32} color="#3B82F6" />
+            <View style={styles.exchangeSide}>
+              <Text style={styles.exchangeLabel}>You Receive</Text>
+              <Text style={styles.cardCount}>{theirCards.length} cards</Text>
             </View>
           </View>
 
+          {/* Cash if any */}
+          {(selectedTrade.cash_offered || selectedTrade.cash_requested) && (
+            <View style={styles.cashSection}>
+              <Ionicons name="cash-outline" size={20} color="#10B981" />
+              <Text style={styles.cashText}>
+                {selectedTrade.cash_offered 
+                  ? `+€${selectedTrade.cash_offered.toFixed(2)} cash offered`
+                  : `-€${selectedTrade.cash_requested?.toFixed(2)} cash requested`
+                }
+              </Text>
+            </View>
+          )}
+
           {/* Note */}
           {selectedTrade.note && (
-            <View style={styles.noteCard}>
-              <Ionicons name="chatbubble-outline" size={18} color="#6B7280" />
+            <View style={styles.noteSection}>
+              <Text style={styles.noteLabel}>Note</Text>
               <Text style={styles.noteText}>{selectedTrade.note}</Text>
             </View>
           )}
 
-          {/* Action Buttons */}
-          {selectedTrade.status === 'pending' && incoming && (
+          {/* Actions */}
+          {selectedTrade.status === 'pending' && !isInitiator && (
             <View style={styles.actionButtons}>
-              <TouchableOpacity
+              <TouchableOpacity 
                 style={styles.acceptButton}
-                onPress={() => updateTradeStatus(selectedTrade.trade_id, 'accepted')}
+                onPress={() => handleTradeAction(selectedTrade.trade_id, 'accept')}
               >
                 <Ionicons name="checkmark" size={20} color="#FFFFFF" />
-                <Text style={styles.buttonText}>Accept</Text>
+                <Text style={styles.acceptText}>Accept</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity 
                 style={styles.declineButton}
-                onPress={() => updateTradeStatus(selectedTrade.trade_id, 'declined')}
+                onPress={() => handleTradeAction(selectedTrade.trade_id, 'decline')}
               >
-                <Ionicons name="close" size={20} color="#FFFFFF" />
-                <Text style={styles.buttonText}>Decline</Text>
+                <Ionicons name="close" size={20} color="#EF4444" />
+                <Text style={styles.declineText}>Decline</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {selectedTrade.status === 'accepted' && (
-            <TouchableOpacity
-              style={styles.completeButton}
-              onPress={() => updateTradeStatus(selectedTrade.trade_id, 'completed')}
+          {selectedTrade.status === 'pending' && isInitiator && (
+            <TouchableOpacity 
+              style={styles.cancelButton}
+              onPress={() => handleTradeAction(selectedTrade.trade_id, 'cancel')}
             >
-              <Ionicons name="checkmark-done" size={20} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Mark as Completed</Text>
+              <Text style={styles.cancelText}>Cancel Trade</Text>
             </TouchableOpacity>
           )}
-
-          <View style={styles.noteBox}>
-            <Ionicons name="information-circle-outline" size={18} color="#6B7280" />
-            <Text style={styles.noteBoxText}>
-              To view card details or create new trades, use the web app
-            </Text>
-          </View>
         </ScrollView>
       </View>
     );
@@ -317,18 +232,10 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          {onOpenMenu ? (
-            <TouchableOpacity onPress={onOpenMenu} style={styles.backButton}>
-              <Ionicons name="menu" size={24} color="#1F2937" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={onClose} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#1F2937" />
-            </TouchableOpacity>
-          )}
-          <View style={styles.headerCenter}>
-            <Text style={styles.title}>Trades</Text>
-          </View>
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Trades</Text>
           <View style={styles.backButton} />
         </View>
         <View style={styles.centered}>
@@ -344,18 +251,10 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          {onOpenMenu ? (
-            <TouchableOpacity onPress={onOpenMenu} style={styles.backButton}>
-              <Ionicons name="menu" size={24} color="#1F2937" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={onClose} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#1F2937" />
-            </TouchableOpacity>
-          )}
-          <View style={styles.headerCenter}>
-            <Text style={styles.title}>Trades</Text>
-          </View>
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Trades</Text>
           <View style={styles.backButton} />
         </View>
         <View style={styles.centered}>
@@ -369,7 +268,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
     );
   }
 
-  // Trades List View
+  // Main Trades List
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -387,7 +286,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
           <Text style={styles.subtitle}>{trades.length} total trades</Text>
         </View>
         {onCreateTrade && (
-          <TouchableOpacity onPress={onCreateTrade} style={styles.createTradeBtn} data-testid="create-trade-btn">
+          <TouchableOpacity onPress={onCreateTrade} style={styles.createTradeBtn}>
             <Ionicons name="add" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         )}
@@ -409,68 +308,174 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
         ))}
       </View>
 
-      {filteredTrades.length === 0 ? (
-        <View style={styles.centered}>
-          <Ionicons name="swap-horizontal-outline" size={64} color="#D1D5DB" />
-          <Text style={styles.emptyTitle}>No trades yet</Text>
-          <Text style={styles.emptySubtext}>
-            Start trading cards with other collectors
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredTrades}
-          renderItem={renderTrade}
-          keyExtractor={(item) => item.trade_id}
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchTrades(); }} />
-          }
-        />
-      )}
+      {/* Content */}
+      <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContainer}>
+        {filteredTrades.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="swap-horizontal-outline" size={64} color="#D1D5DB" />
+            <Text style={styles.emptyTitle}>No trades yet</Text>
+            <Text style={styles.emptySubtext}>Start trading cards with other collectors</Text>
+          </View>
+        ) : (
+          filteredTrades.map((trade) => {
+            const isInitiator = trade.initiator_id === user.user_id;
+            const partner = isInitiator
+              ? { name: trade.receiver_name, picture: trade.receiver_picture }
+              : { name: trade.initiator_name, picture: trade.initiator_picture };
+            const statusColors = getStatusColor(trade.status);
+
+            return (
+              <TouchableOpacity
+                key={trade.trade_id}
+                style={styles.tradeCard}
+                onPress={() => setSelectedTrade(trade)}
+              >
+                <View style={styles.tradeHeader}>
+                  {partner.picture ? (
+                    <Image source={{ uri: partner.picture }} style={styles.avatar} />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Ionicons name="person" size={22} color="#9CA3AF" />
+                    </View>
+                  )}
+                  <View style={styles.tradeInfo}>
+                    <Text style={styles.tradeName}>{partner.name}</Text>
+                    <View style={styles.tradeMetaRow}>
+                      <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
+                        <View style={[styles.statusDot, { backgroundColor: statusColors.dot }]} />
+                        <Text style={[styles.statusText, { color: statusColors.text }]}>
+                          {trade.status}
+                        </Text>
+                      </View>
+                      <Text style={styles.dateText}>{formatDate(trade.created_at)}</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                </View>
+
+                <View style={styles.tradePreview}>
+                  <View style={styles.tradeSide}>
+                    <Text style={styles.tradeLabel}>Offering</Text>
+                    <Text style={styles.tradeCount}>
+                      {isInitiator ? trade.initiator_cards.length : trade.receiver_cards.length} cards
+                    </Text>
+                  </View>
+                  <Ionicons name="swap-horizontal" size={24} color="#3B82F6" />
+                  <View style={styles.tradeSide}>
+                    <Text style={styles.tradeLabel}>Receiving</Text>
+                    <Text style={styles.tradeCount}>
+                      {isInitiator ? trade.receiver_cards.length : trade.initiator_cards.length} cards
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })
+        )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: '#F9FAFB',
-    width: '100%',
-    height: '100%',
   },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 16, 
-    paddingVertical: 12, 
-    paddingTop: Platform.OS === 'web' ? 16 : 12,
-    backgroundColor: '#FFFFFF', 
-    borderBottomWidth: 1, 
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop: Platform.OS === 'web' ? 20 : 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
-  backButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerCenter: { flex: 1, marginHorizontal: 8 },
-  title: { fontSize: 18, fontWeight: '600', color: '#1F2937' },
-  subtitle: { fontSize: 13, color: '#6B7280', marginTop: 2 },
-  createTradeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#10B981', alignItems: 'center', justifyContent: 'center' },
-  
-  // Filters
-  filters: { flexDirection: 'row', padding: 12, backgroundColor: '#FFFFFF', gap: 8 },
-  filterButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F3F4F6' },
-  filterActive: { backgroundColor: '#3B82F6' },
-  filterText: { fontSize: 14, fontWeight: '500', color: '#6B7280' },
-  filterTextActive: { color: '#FFFFFF' },
-  
-  // List
-  list: { padding: 16 },
-  
-  // Trade Card
-  tradeCard: { 
-    backgroundColor: '#FFFFFF', 
-    borderRadius: 12, 
-    padding: 16, 
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    marginHorizontal: 8,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  createTradeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filters: {
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+    gap: 8,
+  },
+  filterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+  },
+  filterActive: {
+    backgroundColor: '#3B82F6',
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  filterTextActive: {
+    color: '#FFFFFF',
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContainer: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  tradeCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -478,59 +483,235 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  tradeHeader: { flexDirection: 'row', alignItems: 'center' },
-  avatar: { width: 44, height: 44, borderRadius: 22 },
-  avatarPlaceholder: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' },
-  tradeInfo: { flex: 1, marginLeft: 12 },
-  tradeName: { fontSize: 16, fontWeight: '600', color: '#1F2937' },
-  tradeMetaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, gap: 4 },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: { fontSize: 12, fontWeight: '500' },
-  directionText: { fontSize: 12, color: '#9CA3AF' },
-  
-  tradePreview: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
-  tradeSide: { alignItems: 'center' },
-  tradeLabel: { fontSize: 12, color: '#6B7280', marginBottom: 4 },
-  tradeCount: { fontSize: 16, fontWeight: '600', color: '#1F2937' },
-  
-  cashBadge: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 4 },
-  cashText: { fontSize: 14, color: '#10B981', fontWeight: '500' },
-  
-  // Empty State
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: '#6B7280', marginTop: 16 },
-  emptySubtext: { fontSize: 14, color: '#9CA3AF', marginTop: 4, textAlign: 'center' },
-  
-  // Loading
-  loadingText: { fontSize: 14, color: '#6B7280', marginTop: 12 },
-  
-  // Error
-  errorText: { fontSize: 14, color: '#EF4444', marginTop: 12, textAlign: 'center' },
-  retryButton: { marginTop: 16, paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#3B82F6', borderRadius: 8 },
-  retryText: { color: '#FFFFFF', fontWeight: '600' },
-  
-  // Detail View
-  detailContent: { flex: 1, padding: 16 },
-  partnerCard: { alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, marginBottom: 16 },
-  partnerAvatar: { width: 64, height: 64, borderRadius: 32 },
-  partnerAvatarPlaceholder: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' },
-  partnerName: { fontSize: 18, fontWeight: '600', color: '#1F2937', marginTop: 12, marginBottom: 8 },
-  
-  summaryCard: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, marginBottom: 16 },
-  summarySide: { flex: 1, alignItems: 'center' },
-  summaryDivider: { width: 50, alignItems: 'center', justifyContent: 'center' },
-  summaryRole: { fontSize: 12, color: '#6B7280', marginBottom: 4 },
-  summaryCount: { fontSize: 20, fontWeight: '700', color: '#1F2937' },
-  
-  noteCard: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 16, gap: 10 },
-  noteText: { flex: 1, fontSize: 14, color: '#374151' },
-  
-  actionButtons: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  acceptButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#10B981', borderRadius: 12, paddingVertical: 14, gap: 8 },
-  declineButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#EF4444', borderRadius: 12, paddingVertical: 14, gap: 8 },
-  completeButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3B82F6', borderRadius: 12, paddingVertical: 14, gap: 8, marginBottom: 16 },
-  buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
-  
-  noteBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 8, padding: 12, gap: 8, marginTop: 8 },
-  noteBoxText: { flex: 1, fontSize: 13, color: '#6B7280' },
+  tradeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  avatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tradeInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  tradeName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  tradeMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 8,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'capitalize',
+  },
+  dateText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  tradePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  tradeSide: {
+    alignItems: 'center',
+  },
+  tradeLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  tradeCount: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#EF4444',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  // Detail View Styles
+  detailContent: {
+    flex: 1,
+    padding: 16,
+  },
+  partnerCard: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+  },
+  partnerAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
+  partnerAvatarPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  partnerName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginTop: 12,
+  },
+  exchangeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+  },
+  exchangeSide: {
+    alignItems: 'center',
+  },
+  exchangeLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  cardCount: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  cashSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ECFDF5',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    gap: 8,
+  },
+  cashText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+  noteSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  noteLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  noteText: {
+    fontSize: 15,
+    color: '#1F2937',
+    lineHeight: 22,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  acceptButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10B981',
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+  },
+  acceptText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  declineButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+  },
+  declineText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#EF4444',
+  },
+  cancelButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
 });
