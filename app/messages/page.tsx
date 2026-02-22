@@ -810,7 +810,7 @@ export default function MessagesPage() {
                               </div>
                             )}
                             <div>
-                              <p className="font-semibold dark:text-white">{conv.name}</p>
+                              <p className="font-semibold dark:text-white"><a href={`/profile/${conv.user_id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition" data-testid="messages-chat-profile-link">{conv.name}</a></p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">Active now</p>
                             </div>
                           </div>
