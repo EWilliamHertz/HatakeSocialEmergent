@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
+import { useTheme } from '../context/ThemeContext';
 
 interface Wishlist {
   wishlist_id: string;
