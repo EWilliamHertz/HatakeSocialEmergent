@@ -409,6 +409,20 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
               )}
               
               <View style={styles.inputContainer}>
+                <TouchableOpacity
+                  style={styles.mediaButton}
+                  onPress={() => pickMedia('image')}
+                  disabled={uploading}
+                >
+                  <Ionicons name="image-outline" size={22} color="#6B7280" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.mediaButton}
+                  onPress={() => pickMedia('video')}
+                  disabled={uploading}
+                >
+                  <Ionicons name="videocam-outline" size={22} color="#6B7280" />
+                </TouchableOpacity>
                 <TextInput
                   style={styles.messageInput}
                   value={newMessage}
@@ -416,13 +430,19 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                   placeholder="Type a message..."
                   multiline
                 />
-                <TouchableOpacity
-                  style={[styles.sendButton, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
-                  onPress={sendMessage}
-                  disabled={!newMessage.trim() || sending}
-                >
-                  <Ionicons name="send" size={18} color="#FFFFFF" />
-                </TouchableOpacity>
+                {uploading ? (
+                  <View style={styles.sendButton}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.sendButton, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
+                    onPress={sendMessage}
+                    disabled={!newMessage.trim() || sending}
+                  >
+                    <Ionicons name="send" size={18} color="#FFFFFF" />
+                  </TouchableOpacity>
+                )}
               </View>
             </>
           )}
