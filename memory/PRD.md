@@ -27,6 +27,25 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Session 11 Updates - Bug Fixes (2026-02-22)
+
+1. **Trade Rating 403 Fix** ✅
+   - Fixed `/api/trades/ratings` endpoint that was using wrong column name
+   - Changed `sender_id` to `initiator_id` to match database schema
+   - Users can now submit ratings for completed trades
+
+2. **Auto-scroll Fix for Web** ✅
+   - Fixed Messages page auto-scroll not going all the way to bottom
+   - Fixed MessengerWidget auto-scroll not going all the way to bottom
+   - Changed from `scrollIntoView` to direct `scrollTop` for reliability
+   - Added setTimeout to ensure DOM updates before scrolling
+
+3. **Mobile Dark Mode Enhancement** ✅
+   - Updated FeedScreen to use ThemeContext colors
+   - Updated TradesScreen to use ThemeContext colors
+   - Posts, headers, tabs, buttons now respond to dark mode toggle
+   - Background, text, borders all dynamically themed
+
 ### Session 10 Updates - Trades Stats, Dark Mode & Admin Controls (2026-02-22)
 
 1. **Trade Statistics Dashboard** ✅
