@@ -58,7 +58,7 @@ export default function ProfileScreen({ user, onLogout, onOpenMenu, onSettings }
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={onSettings}>
             <Ionicons name="settings-outline" size={22} color="#4B5563" />
             <Text style={styles.menuText}>Settings</Text>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
