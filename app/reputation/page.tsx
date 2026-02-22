@@ -149,16 +149,21 @@ export default function ReputationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="flex items-center justify-center pt-20">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navbar />
+      
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-4 mt-16">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Trading Reputation</h1>
           <p className="text-gray-500 dark:text-gray-400">Your trading history and ratings</p>
