@@ -409,24 +409,48 @@ export default function App() {
             </Modal>
 
             {/* Trades Modal */}
-            <Modal
-              visible={showTrades}
-              animationType="slide"
-              presentationStyle="fullScreen"
-              onRequestClose={() => setShowTrades(false)}
-            >
-              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
-                <TradesScreen
-                  user={user}
-                  token={token}
-                  onClose={() => setShowTrades(false)}
-                  onCreateTrade={() => {
-                    setShowTrades(false);
-                    setShowCreateTrade(true);
-                  }}
-                />
-              </View>
-            </Modal>
+            {Platform.OS === 'web' ? (
+              showTrades && (
+                <View style={{ 
+                  position: 'absolute', 
+                  top: 0, 
+                  left: 0, 
+                  right: 0, 
+                  bottom: 0, 
+                  backgroundColor: '#F9FAFB',
+                  zIndex: 100 
+                }}>
+                  <TradesScreen
+                    user={user}
+                    token={token}
+                    onClose={() => setShowTrades(false)}
+                    onCreateTrade={() => {
+                      setShowTrades(false);
+                      setShowCreateTrade(true);
+                    }}
+                  />
+                </View>
+              )
+            ) : (
+              <Modal
+                visible={showTrades}
+                animationType="slide"
+                presentationStyle="fullScreen"
+                onRequestClose={() => setShowTrades(false)}
+              >
+                <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                  <TradesScreen
+                    user={user}
+                    token={token}
+                    onClose={() => setShowTrades(false)}
+                    onCreateTrade={() => {
+                      setShowTrades(false);
+                      setShowCreateTrade(true);
+                    }}
+                  />
+                </View>
+              </Modal>
+            )}
 
             {/* Groups Modal */}
             <Modal
