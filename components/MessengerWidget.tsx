@@ -555,6 +555,9 @@ export default function MessengerWidget() {
   };
 
   if (!isAuthenticated) return null;
+  
+  // Hide messenger widget on the full messages page to avoid redundancy
+  if (pathname === '/messages') return null;
 
   return (
     <>
