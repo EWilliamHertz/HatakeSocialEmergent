@@ -895,11 +895,13 @@ export default function MessagesPage() {
                               }`}
                             >
                               {msg.picture ? (
-                                <Image src={msg.picture} alt={msg.name} width={32} height={32} className="rounded-full" />
+                                <a href={`/profile/${msg.sender_id}`} className="flex-shrink-0">
+                                  <Image src={msg.picture} alt={msg.name} width={32} height={32} className="rounded-full hover:ring-2 hover:ring-blue-400 transition" />
+                                </a>
                               ) : (
-                                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                                <a href={`/profile/${msg.sender_id}`} className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 hover:ring-2 hover:ring-blue-400 transition">
                               {msg.name.charAt(0).toUpperCase()}
-                                </div>
+                                </a>
                               )}
                               <div className="flex items-end gap-2">
                                 {/* Reply button - only show on other's messages */}
