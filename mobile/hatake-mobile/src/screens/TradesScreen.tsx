@@ -359,10 +359,10 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
         {(['all', 'pending', 'completed'] as const).map((f) => (
           <TouchableOpacity
             key={f}
-            style={[styles.filterButton, filter === f && styles.filterActive]}
+            style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === f && { backgroundColor: colors.primary }]}
             onPress={() => setFilter(f)}
           >
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+            <Text style={[styles.filterText, { color: colors.textSecondary }, filter === f && styles.filterTextActive]}>
               {f.charAt(0).toUpperCase() + f.slice(1)}
             </Text>
           </TouchableOpacity>
@@ -370,21 +370,21 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
       </View>
 
       {/* Trade Statistics */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Completed</Text>
-          <Text style={styles.statValue}>{tradeStats.completed}</Text>
+      <View style={[styles.statsContainer, { backgroundColor: colors.surface }]}>
+        <View style={[styles.statBox, { backgroundColor: colors.surfaceSecondary }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Completed</Text>
+          <Text style={[styles.statValue, { color: colors.text }]}>{tradeStats.completed}</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>€ Out</Text>
+        <View style={[styles.statBox, { backgroundColor: colors.surfaceSecondary }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>€ Out</Text>
           <Text style={[styles.statValue, styles.statValueOut]}>€{tradeStats.totalOut.toFixed(0)}</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>€ In</Text>
+        <View style={[styles.statBox, { backgroundColor: colors.surfaceSecondary }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>€ In</Text>
           <Text style={[styles.statValue, styles.statValueIn]}>€{tradeStats.totalIn.toFixed(0)}</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Pending</Text>
+        <View style={[styles.statBox, { backgroundColor: colors.surfaceSecondary }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pending</Text>
           <Text style={[styles.statValue, styles.statValuePending]}>{tradeStats.pending}</Text>
         </View>
       </View>
@@ -393,9 +393,9 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContainer}>
         {filteredTrades.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="swap-horizontal-outline" size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>No trades yet</Text>
-            <Text style={styles.emptySubtext}>Start trading cards with other collectors</Text>
+            <Ionicons name="swap-horizontal-outline" size={64} color={colors.textTertiary} />
+            <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No trades yet</Text>
+            <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>Start trading cards with other collectors</Text>
           </View>
         ) : (
           filteredTrades.map((trade) => {
@@ -408,19 +408,19 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
             return (
               <TouchableOpacity
                 key={trade.trade_id}
-                style={styles.tradeCard}
+                style={[styles.tradeCard, { backgroundColor: colors.surface }]}
                 onPress={() => setSelectedTrade(trade)}
               >
                 <View style={styles.tradeHeader}>
                   {partner.picture ? (
                     <Image source={{ uri: partner.picture }} style={styles.avatar} />
                   ) : (
-                    <View style={styles.avatarPlaceholder}>
-                      <Ionicons name="person" size={22} color="#9CA3AF" />
+                    <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                      <Ionicons name="person" size={22} color={colors.textTertiary} />
                     </View>
                   )}
                   <View style={styles.tradeInfo}>
-                    <Text style={styles.tradeName}>{partner.name}</Text>
+                    <Text style={[styles.tradeName, { color: colors.text }]}>{partner.name}</Text>
                     <View style={styles.tradeMetaRow}>
                       <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
                         <View style={[styles.statusDot, { backgroundColor: statusColors.dot }]} />
@@ -428,23 +428,23 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
                           {trade.status}
                         </Text>
                       </View>
-                      <Text style={styles.dateText}>{formatDate(trade.created_at)}</Text>
+                      <Text style={[styles.dateText, { color: colors.textTertiary }]}>{formatDate(trade.created_at)}</Text>
                     </View>
                   </View>
-                  <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                  <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
                 </View>
 
-                <View style={styles.tradePreview}>
+                <View style={[styles.tradePreview, { borderTopColor: colors.border }]}>
                   <View style={styles.tradeSide}>
-                    <Text style={styles.tradeLabel}>Offering</Text>
-                    <Text style={styles.tradeCount}>
+                    <Text style={[styles.tradeLabel, { color: colors.textSecondary }]}>Offering</Text>
+                    <Text style={[styles.tradeCount, { color: colors.text }]}>
                       {isInitiator ? trade.initiator_cards.length : trade.receiver_cards.length} cards
                     </Text>
                   </View>
-                  <Ionicons name="swap-horizontal" size={24} color="#3B82F6" />
+                  <Ionicons name="swap-horizontal" size={24} color={colors.primary} />
                   <View style={styles.tradeSide}>
-                    <Text style={styles.tradeLabel}>Receiving</Text>
-                    <Text style={styles.tradeCount}>
+                    <Text style={[styles.tradeLabel, { color: colors.textSecondary }]}>Receiving</Text>
+                    <Text style={[styles.tradeCount, { color: colors.text }]}>
                       {isInitiator ? trade.receiver_cards.length : trade.initiator_cards.length} cards
                     </Text>
                   </View>
