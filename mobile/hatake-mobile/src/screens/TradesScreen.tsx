@@ -152,10 +152,10 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
   if (selectedTrade) {
     const isInitiator = selectedTrade.initiator_id === user.user_id;
     const partner = isInitiator 
-      ? { name: selectedTrade.receiver_name, picture: selectedTrade.receiver_picture }
-      : { name: selectedTrade.initiator_name, picture: selectedTrade.initiator_picture };
-    const myCards = isInitiator ? selectedTrade.initiator_cards : selectedTrade.receiver_cards;
-    const theirCards = isInitiator ? selectedTrade.receiver_cards : selectedTrade.initiator_cards;
+      ? { name: selectedTrade.receiver_name || 'Unknown', picture: selectedTrade.receiver_picture }
+      : { name: selectedTrade.initiator_name || 'Unknown', picture: selectedTrade.initiator_picture };
+    const myCards = (isInitiator ? selectedTrade.initiator_cards : selectedTrade.receiver_cards) || [];
+    const theirCards = (isInitiator ? selectedTrade.receiver_cards : selectedTrade.initiator_cards) || [];
     const statusColors = getStatusColor(selectedTrade.status);
 
     return (
