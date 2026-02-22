@@ -158,26 +158,26 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
     const statusColors = getStatusColor(selectedTrade.status);
 
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => setSelectedTrade(null)} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Trade Details</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Trade Details</Text>
           <View style={styles.backButton} />
         </View>
 
         <ScrollView style={styles.detailContent}>
           {/* Partner Info */}
-          <View style={styles.partnerCard}>
+          <View style={[styles.partnerCard, { backgroundColor: colors.surface }]}>
             {partner.picture ? (
               <Image source={{ uri: partner.picture }} style={styles.partnerAvatar} />
             ) : (
-              <View style={styles.partnerAvatarPlaceholder}>
-                <Ionicons name="person" size={28} color="#9CA3AF" />
+              <View style={[styles.partnerAvatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                <Ionicons name="person" size={28} color={colors.textTertiary} />
               </View>
             )}
-            <Text style={styles.partnerName}>{partner.name}</Text>
+            <Text style={[styles.partnerName, { color: colors.text }]}>{partner.name}</Text>
             <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
               <View style={[styles.statusDot, { backgroundColor: statusColors.dot }]} />
               <Text style={[styles.statusText, { color: statusColors.text }]}>
