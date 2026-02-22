@@ -530,7 +530,7 @@ export default function MessagesScreen({
               disabled={uploading}
               data-testid="attach-image-btn"
             >
-              <Ionicons name="image-outline" size={24} color="#6B7280" />
+              <Ionicons name="image-outline" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.mediaButton}
@@ -538,12 +538,12 @@ export default function MessagesScreen({
               disabled={uploading}
               data-testid="attach-video-btn"
             >
-              <Ionicons name="videocam-outline" size={24} color="#6B7280" />
+              <Ionicons name="videocam-outline" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
             <TextInput
-              style={styles.messageInput}
+              style={[styles.messageInput, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
               placeholder="Type a message..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textTertiary}
               value={newMessage}
               onChangeText={setNewMessage}
               multiline
@@ -551,12 +551,12 @@ export default function MessagesScreen({
               data-testid="message-input"
             />
             {uploading ? (
-              <View style={styles.sendButton}>
+              <View style={[styles.sendButton, { backgroundColor: colors.primary }]}>
                 <ActivityIndicator size="small" color="#FFFFFF" />
               </View>
             ) : (
               <TouchableOpacity 
-                style={[styles.sendButton, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
+                style={[styles.sendButton, { backgroundColor: colors.primary }, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
                 onPress={sendMessage}
                 disabled={!newMessage.trim() || sending}
                 data-testid="send-message-btn"
