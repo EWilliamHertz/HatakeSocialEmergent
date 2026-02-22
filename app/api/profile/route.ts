@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const userProfile = await sql`
       SELECT user_id, name, email, picture, bio, created_at, banner_url,
              shipping_address, payment_swish, payment_clearing, payment_kontonummer,
-             payment_iban, payment_swift
+             payment_iban, payment_swift, invite_code, referral_count
       FROM users
       WHERE user_id = ${user.user_id}
     `;
