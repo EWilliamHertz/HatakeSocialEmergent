@@ -664,4 +664,32 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     backgroundColor: '#93C5FD',
   },
+  mediaButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mediaImage: {
+    width: 180,
+    height: 180,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  videoPlaceholder: {
+    width: 180,
+    height: 120,
+    borderRadius: 10,
+    backgroundColor: '#374151',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  videoText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    marginTop: 4,
+  },
 });
