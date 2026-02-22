@@ -75,6 +75,7 @@ function AppContent() {
   const [showSettings, setShowSettings] = useState(false);
   const [messengerWidgetEnabled, setMessengerWidgetEnabled] = useState(true);
   const [messageRecipient, setMessageRecipient] = useState<any>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [callState, setCallState] = useState<CallState>({
     active: false,
     recipient: null,
