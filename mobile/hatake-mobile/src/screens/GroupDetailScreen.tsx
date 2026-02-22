@@ -162,18 +162,18 @@ export default function GroupDetailScreen({ user, token, group, onClose }: Group
   }
 
   return (
-    <Container style={styles.container}>
+    <Container style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{group.name}</Text>
-          <Text style={styles.headerSubtitle}>{group.member_count} members</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>{group.name}</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{group.member_count} members</Text>
         </View>
         <TouchableOpacity 
-          style={styles.chatButton}
+          style={[styles.chatButton, { backgroundColor: colors.primary }]}
           onPress={() => setShowChat(true)}
           data-testid="open-chat-btn"
         >
@@ -186,8 +186,8 @@ export default function GroupDetailScreen({ user, token, group, onClose }: Group
         {group.image ? (
           <Image source={{ uri: group.image }} style={styles.bannerImage} />
         ) : (
-          <View style={styles.bannerPlaceholder}>
-            <Ionicons name="people" size={48} color="#9CA3AF" />
+          <View style={[styles.bannerPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <Ionicons name="people" size={48} color={colors.textTertiary} />
           </View>
         )}
         <View style={styles.bannerOverlay}>
@@ -202,14 +202,14 @@ export default function GroupDetailScreen({ user, token, group, onClose }: Group
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         {(['feed', 'about', 'members'] as const).map((tab) => (
           <TouchableOpacity
             key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
+            style={[styles.tab, activeTab === tab && { borderBottomColor: colors.primary }]}
             onPress={() => setActiveTab(tab)}
           >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+            <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === tab && { color: colors.primary }]}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </Text>
           </TouchableOpacity>
@@ -220,17 +220,17 @@ export default function GroupDetailScreen({ user, token, group, onClose }: Group
       {activeTab === 'feed' && (
         <View style={styles.feedContainer}>
           {/* New Post Input */}
-          <View style={styles.newPostCard}>
+          <View style={[styles.newPostCard, { backgroundColor: colors.surface }]}>
             <TextInput
-              style={styles.newPostInput}
+              style={[styles.newPostInput, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
               placeholder="Share something with the group..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textTertiary}
               value={newPostContent}
               onChangeText={setNewPostContent}
               multiline
             />
             <TouchableOpacity
-              style={[styles.postButton, (!newPostContent.trim() || posting) && styles.postButtonDisabled]}
+              style={[styles.postButton, { backgroundColor: colors.primary }, (!newPostContent.trim() || posting) && styles.postButtonDisabled]}
               onPress={createPost}
               disabled={!newPostContent.trim() || posting}
             >
@@ -244,7 +244,7 @@ export default function GroupDetailScreen({ user, token, group, onClose }: Group
 
           {loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator size="large" color="#3B82F6" />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : (
             <FlatList
@@ -254,9 +254,9 @@ export default function GroupDetailScreen({ user, token, group, onClose }: Group
               contentContainerStyle={styles.postsList}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <Ionicons name="newspaper-outline" size={48} color="#D1D5DB" />
-                  <Text style={styles.emptyTitle}>No posts yet</Text>
-                  <Text style={styles.emptySubtitle}>Be the first to share something!</Text>
+                  <Ionicons name="newspaper-outline" size={48} color={colors.textTertiary} />
+                  <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No posts yet</Text>
+                  <Text style={[styles.emptySubtitle, { color: colors.textTertiary }]}>Be the first to share something!</Text>
                 </View>
               }
             />
@@ -266,27 +266,27 @@ export default function GroupDetailScreen({ user, token, group, onClose }: Group
 
       {activeTab === 'about' && (
         <ScrollView style={styles.aboutContainer}>
-          <View style={styles.aboutSection}>
-            <Text style={styles.aboutLabel}>Description</Text>
-            <Text style={styles.aboutText}>
+          <View style={[styles.aboutSection, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.aboutLabel, { color: colors.textSecondary }]}>Description</Text>
+            <Text style={[styles.aboutText, { color: colors.text }]}>
               {group.description || 'No description provided for this group.'}
             </Text>
           </View>
           
-          <View style={styles.aboutSection}>
-            <Text style={styles.aboutLabel}>Group Info</Text>
+          <View style={[styles.aboutSection, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.aboutLabel, { color: colors.textSecondary }]}>Group Info</Text>
             <View style={styles.infoRow}>
-              <Ionicons name="people" size={18} color="#6B7280" />
-              <Text style={styles.infoText}>{group.member_count} members</Text>
+              <Ionicons name="people" size={18} color={colors.textSecondary} />
+              <Text style={[styles.infoText, { color: colors.text }]}>{group.member_count} members</Text>
             </View>
             <View style={styles.infoRow}>
-              <Ionicons name={group.privacy === 'private' ? 'lock-closed' : 'globe'} size={18} color="#6B7280" />
-              <Text style={styles.infoText}>{group.privacy === 'private' ? 'Private group' : 'Public group'}</Text>
+              <Ionicons name={group.privacy === 'private' ? 'lock-closed' : 'globe'} size={18} color={colors.textSecondary} />
+              <Text style={[styles.infoText, { color: colors.text }]}>{group.privacy === 'private' ? 'Private group' : 'Public group'}</Text>
             </View>
             {group.role && (
               <View style={styles.infoRow}>
-                <Ionicons name="shield" size={18} color="#6B7280" />
-                <Text style={styles.infoText}>Your role: {group.role}</Text>
+                <Ionicons name="shield" size={18} color={colors.textSecondary} />
+                <Text style={[styles.infoText, { color: colors.text }]}>Your role: {group.role}</Text>
               </View>
             )}
           </View>
@@ -296,9 +296,9 @@ export default function GroupDetailScreen({ user, token, group, onClose }: Group
       {activeTab === 'members' && (
         <View style={styles.membersContainer}>
           <View style={styles.centered}>
-            <Ionicons name="people-outline" size={48} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>Members list</Text>
-            <Text style={styles.emptySubtitle}>Coming soon...</Text>
+            <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
+            <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>Members list</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textTertiary }]}>Coming soon...</Text>
           </View>
         </View>
       )}
