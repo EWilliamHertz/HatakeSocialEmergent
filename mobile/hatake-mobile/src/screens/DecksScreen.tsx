@@ -61,6 +61,7 @@ const MTG_FORMATS = ['Standard', 'Modern', 'Pioneer', 'Legacy', 'Vintage', 'Comm
 const POKEMON_FORMATS = ['Standard', 'Expanded', 'Unlimited', 'GLC'];
 
 export default function DecksScreen({ user, token, onClose }: DecksScreenProps) {
+  const { colors } = useTheme();
   const [myDecks, setMyDecks] = useState<Deck[]>([]);
   const [communityDecks, setCommunityDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(true);
