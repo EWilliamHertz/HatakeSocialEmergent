@@ -841,7 +841,11 @@ export default function MessagesPage() {
                   </div>
                   
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <div 
+                    className="flex-1 overflow-y-auto p-6 space-y-4"
+                    onScroll={handleScroll}
+                    ref={messagesContainerRef}
+                  >
                     {filteredMessages.length === 0 ? (
                       <div className="text-center py-8">
                         <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
