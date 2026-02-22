@@ -20,7 +20,11 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Hatake.Social to use your camera for video calls",
         "NSMicrophoneUsageDescription": "Allow Hatake.Social to use your microphone for voice and video calls",
-        "UIBackgroundModes": ["audio", "voip", "remote-notification"]
+        "UIBackgroundModes": [
+          "audio",
+          "voip",
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -50,7 +54,8 @@
           "photosPermission": "Allow Hatake.Social to access your photos to import card images."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-build-properties"
     ],
     "extra": {
       "eas": {
