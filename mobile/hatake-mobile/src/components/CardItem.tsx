@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 interface CardItemProps {
   card: {
@@ -20,22 +21,23 @@ interface CardItemProps {
 }
 
 export default function CardItem({ card, quantity, showPrice = true, onPress, onLongPress }: CardItemProps) {
+  const { colors } = useTheme();
   const imageUrl = card.image_uris?.small || card.image_uris?.normal || card.images?.small || '';
   const price = card.prices?.usd || card.price;
 
   return (
     <TouchableOpacity 
-      style={styles.container} 
+      style={[styles.container, { backgroundColor: colors.surface }]} 
       onPress={onPress}
       onLongPress={onLongPress}
       activeOpacity={0.7}
     >
-      <View style={styles.imageContainer}>
+      <View style={[styles.imageContainer, { backgroundColor: colors.surfaceSecondary }]}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
         ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>No Image</Text>
+          <View style={[styles.placeholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <Text style={[styles.placeholderText, { color: colors.textTertiary }]}>No Image</Text>
           </View>
         )}
         {quantity && quantity > 1 && (
@@ -52,12 +54,12 @@ export default function CardItem({ card, quantity, showPrice = true, onPress, on
         )}
       </View>
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>{card.name}</Text>
+        <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{card.name}</Text>
         {card.set_name && (
-          <Text style={styles.set} numberOfLines={1}>{card.set_name}</Text>
+          <Text style={[styles.set, { color: colors.textSecondary }]} numberOfLines={1}>{card.set_name}</Text>
         )}
         {showPrice && price && (
-          <Text style={styles.price}>${typeof price === 'number' ? price.toFixed(2) : price}</Text>
+          <Text style={[styles.price, { color: colors.success }]}>${typeof price === 'number' ? price.toFixed(2) : price}</Text>
         )}
       </View>
     </TouchableOpacity>
