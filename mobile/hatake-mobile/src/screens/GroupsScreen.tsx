@@ -322,58 +322,58 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
           <Text style={styles.acceptButtonText}>Join</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.declineButton}
+          style={[styles.declineButton, { borderColor: colors.border }]}
           onPress={() => declineInvite(item.invite_id)}
         >
-          <Ionicons name="close" size={18} color="#6B7280" />
+          <Ionicons name="close" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <Container style={styles.container}>
-      <View style={styles.header}>
+    <Container style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Communities</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Communities</Text>
         <TouchableOpacity 
           style={styles.addButton}
           onPress={() => setShowCreateModal(true)}
           data-testid="create-group-btn"
         >
-          <Ionicons name="add" size={24} color="#3B82F6" />
+          <Ionicons name="add" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, { backgroundColor: colors.surface }]}>
         <TouchableOpacity
-          style={[styles.tab, tab === 'my' && styles.tabActive]}
+          style={[styles.tab, { borderBottomColor: 'transparent' }, tab === 'my' && { borderBottomColor: colors.primary }]}
           onPress={() => setTab('my')}
         >
-          <Text style={[styles.tabText, tab === 'my' && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: colors.textSecondary }, tab === 'my' && { color: colors.primary }]}>
             My Groups ({myGroups.length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, tab === 'discover' && styles.tabActive]}
+          style={[styles.tab, { borderBottomColor: 'transparent' }, tab === 'discover' && { borderBottomColor: colors.primary }]}
           onPress={() => setTab('discover')}
         >
-          <Text style={[styles.tabText, tab === 'discover' && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: colors.textSecondary }, tab === 'discover' && { color: colors.primary }]}>
             Discover
           </Text>
         </TouchableOpacity>
         {groupInvites.length > 0 && (
           <TouchableOpacity
-            style={[styles.tab, tab === 'invites' && styles.tabActive]}
+            style={[styles.tab, { borderBottomColor: 'transparent' }, tab === 'invites' && { borderBottomColor: colors.primary }]}
             onPress={() => setTab('invites')}
           >
-            <View style={styles.inviteBadge}>
+            <View style={[styles.inviteBadge, { backgroundColor: colors.danger }]}>
               <Text style={styles.inviteBadgeText}>{groupInvites.length}</Text>
             </View>
-            <Text style={[styles.tabText, tab === 'invites' && styles.tabTextActive]}>
+            <Text style={[styles.tabText, { color: colors.textSecondary }, tab === 'invites' && { color: colors.primary }]}>
               Invites
             </Text>
           </TouchableOpacity>
@@ -382,7 +382,7 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : tab === 'invites' ? (
         <FlatList
@@ -391,13 +391,13 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
           keyExtractor={(item) => item.invite_id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchGroups(); }} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchGroups(); }} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="mail-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyTitle}>No Invitations</Text>
-              <Text style={styles.emptySubtext}>You don't have any pending group invitations</Text>
+              <Ionicons name="mail-outline" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No Invitations</Text>
+              <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>You don't have any pending group invitations</Text>
             </View>
           }
         />
