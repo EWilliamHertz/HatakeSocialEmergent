@@ -920,6 +920,38 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
     );
   };
 
+  // Pick a CSV file from device
+  const pickCsvFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'text/comma-separated-values', 'text/plain', '*/*'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const file = result.assets[0];
+      
+      // Read the file content
+      if (Platform.OS === 'web') {
+        // On web, we can read the file directly
+        const response = await fetch(file.uri);
+        const text = await response.text();
+        setCsvText(text);
+      } else {
+        // On native, use FileSystem
+        const FileSystem = require('expo-file-system');
+        const content = await FileSystem.readAsStringAsync(file.uri);
+        setCsvText(content);
+      }
+    } catch (error) {
+      console.error('Error picking CSV file:', error);
+      Alert.alert('Error', 'Failed to read the CSV file. Please try again or paste the content manually.');
+    }
+  };
+
   // Get price from card data - handles both MTG and Pokemon formats
   // All prices returned in EUR
   const getCardPrice = (item: CollectionItem): number => {
