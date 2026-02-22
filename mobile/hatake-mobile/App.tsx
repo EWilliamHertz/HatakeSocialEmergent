@@ -26,6 +26,7 @@ import DrawerMenu from './src/components/DrawerMenu';
 import IncomingCallNotification from './src/components/IncomingCallNotification';
 import MessengerWidget from './src/components/MessengerWidget';
 import OnboardingTour, { shouldShowOnboarding } from './src/components/OnboardingTour';
+import UserProfileModal from './src/components/UserProfileModal';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { API_URL } from './src/config';
 
