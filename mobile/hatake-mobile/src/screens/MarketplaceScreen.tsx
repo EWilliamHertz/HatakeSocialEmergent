@@ -19,7 +19,7 @@ import { API_URL } from '../config';
 import { useTheme } from '../context/ThemeContext';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_WIDTH = (SCREEN_WIDTH - 48) / 3; // 3 columns with padding
+const CARD_WIDTH = (SCREEN_WIDTH - 36) / 2; // 2 columns with padding
 
 interface Listing {
   id: number;

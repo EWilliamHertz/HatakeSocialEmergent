@@ -22,7 +22,7 @@ import { API_URL, SCRYFALL_API, TCGDEX_API } from '../config';
 import { useTheme } from '../context/ThemeContext';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_WIDTH = (SCREEN_WIDTH - 48) / 3; // 3 columns with padding
+const CARD_WIDTH = (SCREEN_WIDTH - 36) / 2; // 2 columns with padding
 
 // Pokemon TCG set code mappings (common export codes -> TCGdex codes)
 // User's CSV might use different codes than TCGdex expects
