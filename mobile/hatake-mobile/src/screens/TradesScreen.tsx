@@ -402,15 +402,26 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
           filteredTrades.map((trade) => {
             const isInitiator = trade.initiator_id === user.user_id;
             const partner = isInitiator
-              ? { name: trade.receiver_name, picture: trade.receiver_picture }
-              : { name: trade.initiator_name, picture: trade.initiator_picture };
+              ? { name: trade.receiver_name || 'Unknown', picture: trade.receiver_picture }
+              : { name: trade.initiator_name || 'Unknown', picture: trade.initiator_picture };
             const statusColors = getStatusColor(trade.status);
+            
+            // Ensure arrays exist to prevent crashes
+            const initiatorCards = trade.initiator_cards || [];
+            const receiverCards = trade.receiver_cards || [];
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={trade.trade_id}
-                style={[styles.tradeCard, { backgroundColor: colors.surface }]}
-                onPress={() => setSelectedTrade(trade)}
+                style={({ pressed }) => [
+                  styles.tradeCard, 
+                  { backgroundColor: colors.surface },
+                  pressed && { opacity: 0.7 }
+                ]}
+                onPress={() => {
+                  console.log('Trade pressed:', trade.trade_id);
+                  setSelectedTrade(trade);
+                }}
               >
                 <View style={styles.tradeHeader}>
                   {partner.picture ? (
