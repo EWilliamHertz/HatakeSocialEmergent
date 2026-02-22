@@ -81,6 +81,7 @@ export default function MessagesScreen({
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
