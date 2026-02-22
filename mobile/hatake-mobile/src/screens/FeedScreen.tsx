@@ -710,6 +710,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F2937',
   },
+  badgeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  badgeIndicatorText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#3B82F6',
+  },
   groupNameBadge: {
     fontSize: 12,
     fontWeight: '500',
