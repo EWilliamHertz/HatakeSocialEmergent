@@ -29,6 +29,15 @@ interface Trade {
   cash_currency?: string;
   note?: string;
   created_at: string;
+  // Shipping & Payment details
+  initiator_shipping_address?: string;
+  initiator_payment_swish?: string;
+  initiator_payment_account?: string;
+  initiator_payment_bankgiro?: string;
+  recipient_shipping_address?: string;
+  recipient_payment_swish?: string;
+  recipient_payment_account?: string;
+  recipient_payment_bankgiro?: string;
 }
 
 interface TradesScreenProps {
