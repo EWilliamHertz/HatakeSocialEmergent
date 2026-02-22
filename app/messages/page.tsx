@@ -204,9 +204,27 @@ export default function MessagesPage() {
   };
 
   // Scroll to bottom when messages change (only if not scrolled up)
+  // Using scrollTop directly for more reliable scrolling
+  const scrollToBottom = (smooth = true) => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      if (smooth) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        });
+      } else {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+  };
+
   useEffect(() => {
     if (initialLoad || !isUserScrolledUp) {
-      messagesEndRef.current?.scrollIntoView({ behavior: initialLoad ? 'auto' : 'smooth' });
+      // Use setTimeout to ensure DOM has updated
+      setTimeout(() => {
+        scrollToBottom(!initialLoad);
+      }, 50);
       if (initialLoad && messages.length > 0) {
         setInitialLoad(false);
       }
