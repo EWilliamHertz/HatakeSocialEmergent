@@ -884,6 +884,30 @@ export default function MessagesPage() {
 
                   {/* Send Message */}
                   <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+                    {/* Reply Banner */}
+                    {replyTo && (
+                      <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 px-4 py-2 mb-3 rounded-lg border-l-4 border-blue-500">
+                        <div className="flex items-center gap-3">
+                          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                              Replying to {replyTo.sender_id === currentUserId ? 'yourself' : replyTo.name}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[300px]">
+                              {replyTo.content || (replyTo.media_url ? '[Media]' : '')}
+                            </p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setReplyTo(null)} 
+                          className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded"
+                        >
+                          <X className="w-4 h-4 text-gray-500" />
+                        </button>
+                      </div>
+                    )}
                     <div className="flex gap-2 items-end relative">
                       {/* Media buttons */}
                       <div className="flex gap-1">
