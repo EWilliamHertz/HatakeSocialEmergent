@@ -815,7 +815,7 @@ export default function MessagesPage() {
                             )}
                             
                             <div
-                              className={`flex gap-3 ${
+                              className={`flex gap-3 group ${
                                 msg.sender_id === currentUserId ? 'flex-row-reverse' : ''
                               }`}
                             >
@@ -826,16 +826,53 @@ export default function MessagesPage() {
                               {msg.name.charAt(0).toUpperCase()}
                                 </div>
                               )}
-                              <div>
-                                <div className={`max-w-sm ${
-                                  msg.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
-                                } rounded-2xl px-4 py-2`}>
-                                  {renderMessageContent(msg)}
+                              <div className="flex items-end gap-2">
+                                {/* Reply button - only show on other's messages */}
+                                {msg.sender_id !== currentUserId && (
+                                  <button 
+                                    onClick={() => setReplyTo(msg)}
+                                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                                    title="Reply"
+                                  >
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div>
+                                  {/* Reply Preview */}
+                                  {msg.reply_content && (
+                                    <div className={`text-xs mb-1 px-3 py-1.5 rounded-lg border-l-2 ${
+                                      msg.sender_id === currentUserId 
+                                        ? 'bg-blue-500/20 border-blue-300 text-blue-100' 
+                                        : 'bg-gray-200 dark:bg-gray-600 border-gray-400 text-gray-600 dark:text-gray-300'
+                                    }`}>
+                                      <span className="font-medium">{msg.reply_sender_name}</span>
+                                      <p className="truncate max-w-[200px]">{msg.reply_content}</p>
+                                    </div>
+                                  )}
+                                  <div className={`max-w-sm ${
+                                    msg.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
+                                  } rounded-2xl px-4 py-2`}>
+                                    {renderMessageContent(msg)}
+                                  </div>
+                                  {/* Timestamp */}
+                                  <p className={`text-xs text-gray-400 mt-1 ${msg.sender_id === currentUserId ? 'text-right' : ''}`}>
+                                    {formatMessageTime(msg.created_at)}
+                                  </p>
                                 </div>
-                                {/* Timestamp */}
-                                <p className={`text-xs text-gray-400 mt-1 ${msg.sender_id === currentUserId ? 'text-right' : ''}`}>
-                                  {formatMessageTime(msg.created_at)}
-                                </p>
+                                {/* Reply button - for own messages */}
+                                {msg.sender_id === currentUserId && (
+                                  <button 
+                                    onClick={() => setReplyTo(msg)}
+                                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                                    title="Reply"
+                                  >
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                    </svg>
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </div>
