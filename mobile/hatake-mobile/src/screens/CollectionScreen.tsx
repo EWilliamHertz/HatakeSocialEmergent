@@ -2188,7 +2188,7 @@ const styles = StyleSheet.create({
   },
   cardPlaceholder: {
     width: '100%',
-    height: 140,
+    height: CARD_WIDTH * 1.4,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
