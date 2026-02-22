@@ -356,32 +356,32 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header with menu button */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onOpenMenu} style={styles.menuButton}>
-          <Ionicons name="menu" size={24} color="#1F2937" />
+          <Ionicons name="menu" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Feed</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Feed</Text>
         <TouchableOpacity style={styles.notifButton} onPress={onOpenNotifications}>
-          <Ionicons name="notifications-outline" size={24} color="#1F2937" />
+          <Ionicons name="notifications-outline" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
       {/* Tab Navigation */}
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, { backgroundColor: colors.surface }]}>
         {(['friends', 'groups', 'public'] as const).map((tab) => (
           <TouchableOpacity
             key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
+            style={[styles.tab, { backgroundColor: colors.surfaceSecondary }, activeTab === tab && { backgroundColor: colors.primaryLight }]}
             onPress={() => setActiveTab(tab)}
           >
             <Ionicons 
               name={tab === 'friends' ? 'people' : tab === 'groups' ? 'chatbubbles' : 'globe'} 
               size={18} 
-              color={activeTab === tab ? '#3B82F6' : '#9CA3AF'} 
+              color={activeTab === tab ? colors.primary : colors.textTertiary} 
             />
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+            <Text style={[styles.tabText, { color: colors.textTertiary }, activeTab === tab && { color: colors.primary }]}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </Text>
           </TouchableOpacity>
