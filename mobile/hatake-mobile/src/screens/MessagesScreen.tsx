@@ -576,19 +576,19 @@ export default function MessagesScreen({
 
   // Conversations list view
   return (
-    <Container style={styles.container}>
+    <Container style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Messages</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Messages</Text>
         <View style={styles.backButton} />
       </View>
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -597,13 +597,13 @@ export default function MessagesScreen({
           keyExtractor={(item) => item.conversation_id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="chatbubbles-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyText}>No conversations yet</Text>
-              <Text style={styles.emptySubtext}>
+              <Ionicons name="chatbubbles-outline" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No conversations yet</Text>
+              <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>
                 Start a chat with a friend from the Friends screen
               </Text>
             </View>
