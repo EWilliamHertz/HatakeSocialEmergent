@@ -3,7 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Users, Globe, Hash, ThumbsUp, MessageCircle, Send, ChevronDown, ChevronUp, Reply, Smile, X, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Users, Globe, Hash, ThumbsUp, MessageCircle, Send, ChevronDown, ChevronUp, Reply, Smile, X, MoreHorizontal, Trash2, Award } from 'lucide-react';
+
+// Badge display colors
+const BADGE_COLORS: Record<string, string> = {
+  first_trade: '#EC4899', trader_5: '#F97316', trader_10: '#EAB308', trader_25: '#22C55E',
+  trader_50: '#14B8A6', top_trader: '#F59E0B', legendary_trader: '#A855F7',
+  verified_seller: '#10B981', five_star: '#FBBF24', beta_tester: '#8B5CF6',
+  founder: '#FFD700', moderator: '#6366F1', starter_collector: '#60A5FA',
+  collector_50: '#3B82F6', collector_100: '#2563EB', collector_500: '#1D4ED8',
+  collector_1000: '#6D28D9', social_butterfly: '#F472B6', community_leader: '#34D399',
+  content_creator: '#FB923C', first_listing: '#4ADE80', merchant: '#2DD4BF',
+  deck_builder: '#818CF8', deck_master: '#7C3AED', veteran: '#94A3B8', og_member: '#64748B',
+};
 import Image from 'next/image';
 import Link from 'next/link';
 
