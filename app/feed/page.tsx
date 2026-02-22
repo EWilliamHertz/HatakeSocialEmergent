@@ -456,6 +456,14 @@ export default function FeedPage() {
                         <Link href={`/profile/${post.user_id}`} className="hover:underline hover:text-blue-600">
                           <p className="font-semibold text-gray-900 dark:text-white">{post.name}</p>
                         </Link>
+                        {(post as any).badge_count > 0 && (
+                          <Link href={`/profile/${post.user_id}`} title={`${(post as any).badge_count} badges`}>
+                            <span className="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: (BADGE_COLORS[(post as any).top_badge] || '#3B82F6') + '20', color: BADGE_COLORS[(post as any).top_badge] || '#3B82F6' }}>
+                              <Award className="w-3 h-3" />
+                              {(post as any).badge_count}
+                            </span>
+                          </Link>
+                        )}
                         {(post as any).group_name && (
                           <span className="text-xs font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded">
                             @ {(post as any).group_name}
