@@ -24,11 +24,19 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get messages
+    // Get messages with reply info
     const messages = await sql`
-      SELECT m.*, u.name, u.picture
+      SELECT 
+        m.*,
+        u.name,
+        u.picture,
+        rm.content as reply_content,
+        rm.sender_id as reply_sender_id,
+        ru.name as reply_sender_name
       FROM messages m
       JOIN users u ON m.sender_id = u.user_id
+      LEFT JOIN messages rm ON m.reply_to = rm.message_id
+      LEFT JOIN users ru ON rm.sender_id = ru.user_id
       WHERE m.conversation_id = ${conversationId}
       ORDER BY m.created_at ASC
     `;
