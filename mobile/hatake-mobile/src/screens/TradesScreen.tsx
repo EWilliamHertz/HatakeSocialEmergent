@@ -928,6 +928,46 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     lineHeight: 22,
   },
+  // Shipping & Payment styles
+  shippingPaymentContainer: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  detailsCard: {
+    borderRadius: 12,
+    padding: 16,
+  },
+  detailsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  detailsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  detailsSection: {
+    marginBottom: 12,
+  },
+  detailsLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  detailsLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  detailsValue: {
+    borderRadius: 8,
+    padding: 12,
+  },
+  detailsValueText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
