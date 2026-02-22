@@ -1027,6 +1027,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
   },
+  completeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    gap: 8,
+  },
+  completeText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
   // Card list styles
   cardsSection: {
     backgroundColor: '#FFFFFF',
