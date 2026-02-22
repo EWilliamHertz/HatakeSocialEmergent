@@ -411,17 +411,15 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
             const receiverCards = trade.receiver_cards || [];
 
             return (
-              <Pressable
+              <TouchableOpacity
                 key={trade.trade_id}
-                style={({ pressed }) => [
-                  styles.tradeCard, 
-                  { backgroundColor: colors.surface },
-                  pressed && { opacity: 0.7 }
-                ]}
+                style={[styles.tradeCard, { backgroundColor: colors.surface }]}
                 onPress={() => {
                   console.log('Trade pressed:', trade.trade_id);
                   setSelectedTrade(trade);
                 }}
+                activeOpacity={0.7}
+                data-testid={`trade-${trade.trade_id}`}
               >
                 <View style={styles.tradeHeader}>
                   {partner.picture ? (
