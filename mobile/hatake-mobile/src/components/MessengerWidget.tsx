@@ -354,6 +354,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 10,
     overflow: 'hidden',
+    zIndex: 1001,
   },
   windowHeader: {
     flexDirection: 'row',
