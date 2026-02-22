@@ -122,9 +122,15 @@ function AppContent() {
     setLoading(false);
   };
 
-  const handleLoginSuccess = (loggedInUser: User, authToken: string) => {
+  const handleLoginSuccess = async (loggedInUser: User, authToken: string) => {
     setUser(loggedInUser);
     setToken(authToken);
+    
+    // Check if we should show onboarding for new users
+    const needsOnboarding = await shouldShowOnboarding();
+    if (needsOnboarding) {
+      setShowOnboarding(true);
+    }
   };
 
   const handleLogout = async () => {
