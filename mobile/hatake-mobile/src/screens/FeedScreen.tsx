@@ -427,21 +427,22 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
       )}
 
       {/* New Post Input */}
-      <View style={styles.newPostContainer}>
+      <View style={[styles.newPostContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         {activeTab === 'groups' && selectedGroup && (
-          <View style={styles.postingToGroup}>
-            <Ionicons name="chatbubbles" size={14} color="#3B82F6" />
-            <Text style={styles.postingToGroupText}>
+          <View style={[styles.postingToGroup, { backgroundColor: colors.primaryLight }]}>
+            <Ionicons name="chatbubbles" size={14} color={colors.primary} />
+            <Text style={[styles.postingToGroupText, { color: colors.primary }]}>
               Posting to {myGroups.find(g => g.group_id === selectedGroup)?.name}
             </Text>
           </View>
         )}
         <View style={styles.newPostRow}>
           <TextInput
-            style={styles.newPostInput}
+            style={[styles.newPostInput, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
             placeholder={activeTab === 'groups' && selectedGroup 
               ? "Share with this group..." 
               : "Share something with your community..."}
+            placeholderTextColor={colors.textTertiary}
             value={newPostText}
             onChangeText={setNewPostText}
             multiline
@@ -462,13 +463,13 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : posts.length === 0 ? (
         <View style={styles.centered}>
-          <Ionicons name="newspaper-outline" size={64} color="#D1D5DB" />
-          <Text style={styles.emptyText}>No posts yet</Text>
-          <Text style={styles.emptySubtext}>
+          <Ionicons name="newspaper-outline" size={64} color={colors.textTertiary} />
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No posts yet</Text>
+          <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>
             {activeTab === 'friends' 
               ? 'Follow friends to see their posts here' 
               : activeTab === 'groups'
@@ -483,7 +484,7 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
         />
       )}
