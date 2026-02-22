@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    if (!user || user.role !== 'admin') {
+    if (!user || !(user as any).is_admin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
