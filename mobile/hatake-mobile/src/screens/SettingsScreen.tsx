@@ -335,10 +335,10 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
               'Dark Mode',
               'Switch between light and dark themes',
               <Switch
-                value={darkMode}
-                onValueChange={toggleDarkMode}
+                value={isDarkMode}
+                onValueChange={setDarkMode}
                 trackColor={{ false: '#D1D5DB', true: '#6366F1' }}
-                thumbColor={darkMode ? '#FBBF24' : '#9CA3AF'}
+                thumbColor={isDarkMode ? '#FBBF24' : '#9CA3AF'}
               />
             )}
             
