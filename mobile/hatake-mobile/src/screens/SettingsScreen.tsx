@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
+import { useTheme } from '../context/ThemeContext';
 
 interface SettingsScreenProps {
   user: any;
@@ -25,6 +26,8 @@ interface SettingsScreenProps {
 }
 
 export default function SettingsScreen({ user, token, onClose, onLogout, messengerWidgetEnabled = true, onToggleMessengerWidget }: SettingsScreenProps) {
+  const { isDarkMode, setDarkMode, colors } = useTheme();
+  
   // Notification settings
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -32,7 +35,7 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
   const [tradeNotifications, setTradeNotifications] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   
-  // Appearance settings
+  // Remove local dark mode state since we're using context now
   const [darkMode, setDarkMode] = useState(false);
   
   // Profile settings
