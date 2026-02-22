@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   card: {
-    width: '46%',
+    width: CARD_WIDTH,
     margin: 4,
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -615,12 +615,12 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    height: 100,
+    height: CARD_WIDTH * 1.4,
     backgroundColor: '#F3F4F6',
   },
   cardPlaceholder: {
     width: '100%',
-    height: 100,
+    height: CARD_WIDTH * 1.4,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
