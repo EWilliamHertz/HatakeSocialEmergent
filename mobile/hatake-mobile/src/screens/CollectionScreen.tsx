@@ -193,6 +193,13 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0, success: 0, failed: 0 });
   const [importLog, setImportLog] = useState<string[]>([]);
 
+  // Bulk List state
+  const [showBulkListModal, setShowBulkListModal] = useState(false);
+  const [bulkListPercent, setBulkListPercent] = useState('90');
+  const [bulkListCondition, setBulkListCondition] = useState('Near Mint');
+  const [individualPrices, setIndividualPrices] = useState<Record<number, string>>({});
+  const [bulkListing, setBulkListing] = useState(false);
+
   useEffect(() => {
     fetchCollection();
   }, [filter]);
