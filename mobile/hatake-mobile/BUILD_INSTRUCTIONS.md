@@ -42,7 +42,7 @@ Note: Safari on iPad may have issues selecting APK files directly. Try these alt
 ## API Configuration
 
 The app connects to:
-- **Backend API:** https://hatake-tcg.preview.emergentagent.com
+- **Backend API:** https://hatake-tcg-preview.preview.emergentagent.com
 
 ---
 
