@@ -355,14 +355,88 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
       {/* Chat Window */}
       {isOpen && (
         <View style={styles.chatWindow}>
-          {!selectedChat ? (
+          {showNewChat ? (
+            // New Chat - Search Users
+            <>
+              <View style={styles.windowHeader}>
+                <TouchableOpacity onPress={() => setShowNewChat(false)}>
+                  <Ionicons name="arrow-back" size={24} color="#6B7280" />
+                </TouchableOpacity>
+                <Text style={styles.windowTitle}>New Message</Text>
+                <TouchableOpacity onPress={toggleWidget}>
+                  <Ionicons name="close" size={24} color="#6B7280" />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.searchContainer}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search users..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  onSubmitEditing={searchUsers}
+                  returnKeyType="search"
+                />
+                <TouchableOpacity style={styles.searchButton} onPress={searchUsers}>
+                  {searching ? (
+                    <ActivityIndicator size="small" color="#3B82F6" />
+                  ) : (
+                    <Ionicons name="search" size={20} color="#3B82F6" />
+                  )}
+                </TouchableOpacity>
+              </View>
+              
+              <FlatList
+                data={searchResults}
+                keyExtractor={(item) => item.user_id}
+                style={{ flex: 1 }}
+                ListEmptyComponent={
+                  searchQuery && !searching ? (
+                    <View style={styles.emptyState}>
+                      <Text style={styles.emptyText}>No users found</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.emptyState}>
+                      <Ionicons name="search-outline" size={40} color="#D1D5DB" />
+                      <Text style={styles.emptyText}>Search for someone to message</Text>
+                    </View>
+                  )
+                }
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.conversationItem}
+                    onPress={() => startNewChat(item)}
+                  >
+                    {item.picture ? (
+                      <Image source={{ uri: item.picture }} style={styles.avatar} />
+                    ) : (
+                      <View style={styles.avatarPlaceholder}>
+                        <Ionicons name="person" size={20} color="#9CA3AF" />
+                      </View>
+                    )}
+                    <View style={styles.conversationInfo}>
+                      <Text style={styles.conversationName}>{item.name}</Text>
+                      {item.email && (
+                        <Text style={styles.lastMessage} numberOfLines={1}>{item.email}</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                )}
+              />
+            </>
+          ) : !selectedChat ? (
             // Conversations List
             <>
               <View style={styles.windowHeader}>
                 <Text style={styles.windowTitle}>Messages</Text>
-                <TouchableOpacity onPress={toggleWidget}>
-                  <Ionicons name="close" size={24} color="#6B7280" />
-                </TouchableOpacity>
+                <View style={styles.headerActions}>
+                  <TouchableOpacity onPress={() => setShowNewChat(true)} style={styles.newChatBtn}>
+                    <Ionicons name="create-outline" size={22} color="#3B82F6" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={toggleWidget}>
+                    <Ionicons name="close" size={24} color="#6B7280" />
+                  </TouchableOpacity>
+                </View>
               </View>
               
               {conversations.length === 0 ? (
