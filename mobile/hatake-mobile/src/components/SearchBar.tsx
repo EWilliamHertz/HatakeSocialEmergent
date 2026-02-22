@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 interface SearchBarProps {
   value: string;
@@ -17,16 +18,18 @@ export default function SearchBar({
   placeholder = 'Search cards...',
   autoFocus = false
 }: SearchBarProps) {
+  const { colors } = useTheme();
+  
   return (
-    <View style={styles.container}>
-      <Ionicons name="search" size={20} color="#9CA3AF" style={styles.icon} />
+    <View style={[styles.container, { backgroundColor: colors.surfaceSecondary }]}>
+      <Ionicons name="search" size={20} color={colors.textTertiary} style={styles.icon} />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { color: colors.text }]}
         value={value}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmit}
         placeholder={placeholder}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={colors.textTertiary}
         autoFocus={autoFocus}
         returnKeyType="search"
         autoCapitalize="none"
@@ -34,7 +37,7 @@ export default function SearchBar({
       />
       {value.length > 0 && (
         <TouchableOpacity onPress={() => onChangeText('')} style={styles.clearButton}>
-          <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+          <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
         </TouchableOpacity>
       )}
     </View>
