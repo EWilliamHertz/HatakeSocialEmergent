@@ -40,6 +40,7 @@ interface TradesScreenProps {
 }
 
 export default function TradesScreen({ user, token, onClose, onCreateTrade, onOpenMenu }: TradesScreenProps) {
+  const { colors } = useTheme();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
