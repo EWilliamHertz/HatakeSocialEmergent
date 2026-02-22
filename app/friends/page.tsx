@@ -88,33 +88,48 @@ export default function FriendsPage() {
 
   const sendFriendRequest = async (userId: string) => {
     try {
-      await fetch('/api/friends', {
+      const res = await fetch('/api/friends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ friendId: userId, action: 'request' })
       });
-      alert('Friend request sent!');
-      searchUsers(); // Refresh search to show updated status
+      const data = await res.json();
+      if (data.success) {
+        alert('Friend request sent!');
+        searchUsers(); // Refresh search to show updated status
+      } else {
+        alert('Failed to send friend request: ' + (data.error || 'Unknown error'));
+      }
     } catch (error) {
       console.error('Send request error:', error);
+      alert('Failed to send friend request');
     }
   };
 
   const respondToRequest = async (userId: string, action: 'accept' | 'reject') => {
     try {
-      await fetch('/api/friends', {
+      const res = await fetch('/api/friends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ friendId: userId, action })
       });
-      loadRequests();
-      if (action === 'accept') {
-        loadFriends();
+      const data = await res.json();
+      if (data.success) {
+        loadRequests();
+        if (action === 'accept') {
+          loadFriends();
+          alert('Friend request accepted!');
+        } else {
+          alert('Friend request declined');
+        }
+      } else {
+        alert('Failed: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Respond to request error:', error);
+      alert('Failed to respond to request');
     }
   };
 
