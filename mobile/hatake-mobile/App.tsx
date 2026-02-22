@@ -632,6 +632,12 @@ function AppContent() {
               token={token || ''}
               visible={messengerWidgetEnabled}
             />
+
+            {/* Onboarding Tour - For new users */}
+            <OnboardingTour
+              visible={showOnboarding}
+              onComplete={() => setShowOnboarding(false)}
+            />
           </>
         ) : (
           <LoginScreen onLoginSuccess={handleLoginSuccess} />
