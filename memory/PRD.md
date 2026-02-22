@@ -40,11 +40,33 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
    - Changed from `scrollIntoView` to direct `scrollTop` for reliability
    - Added setTimeout to ensure DOM updates before scrolling
 
-3. **Mobile Dark Mode Enhancement** ✅
+3. **Mobile Dark Mode Enhancement - Phase 1** ✅
    - Updated FeedScreen to use ThemeContext colors
-   - Updated TradesScreen to use ThemeContext colors
+   - Updated TradesScreen to use ThemeContext colors (including trade detail view)
+   - Updated ProfileScreen to use ThemeContext colors
    - Posts, headers, tabs, buttons now respond to dark mode toggle
    - Background, text, borders all dynamically themed
+
+4. **Collection & Marketplace Grid Fix** ✅
+   - Changed from 2 columns to 3 columns per row
+   - Smaller card widths for better visibility
+   - Dynamic card sizing based on screen width
+
+5. **CSV Import File Picker** ✅
+   - Added file picker button to CSV import modal
+   - Users can now select CSV files from device
+   - Works on both web and mobile platforms
+
+6. **Dark Mode Imports Added** ✅
+   - Added useTheme to FriendsScreen
+   - Added useTheme to MessagesScreen
+   - Added useTheme to GroupsScreen
+   - Added useTheme to NotificationsScreen
+   - Added useTheme to WishlistScreen
+   - Added useTheme to DecksScreen
+   - Added useTheme to ReputationScreen
+   - Added useTheme to MarketplaceScreen
+   - Added useTheme to CollectionScreen
 
 ### Session 10 Updates - Trades Stats, Dark Mode & Admin Controls (2026-02-22)
 
