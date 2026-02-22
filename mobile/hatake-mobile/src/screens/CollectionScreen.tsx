@@ -1967,6 +1967,19 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
 
             {/* CSV Input */}
             <Text style={styles.inputLabel}>Card List</Text>
+            
+            {/* File picker button */}
+            <TouchableOpacity 
+              style={styles.filePickerButton}
+              onPress={pickCsvFile}
+              data-testid="csv-file-picker-btn"
+            >
+              <Ionicons name="document-outline" size={20} color="#3B82F6" />
+              <Text style={styles.filePickerButtonText}>Choose CSV File</Text>
+            </TouchableOpacity>
+            
+            <Text style={styles.orDivider}>OR paste text below</Text>
+            
             <TextInput
               style={styles.csvInput}
               placeholder="sv09, 001, 1&#10;sv09, 002, 2&#10;NEO, 45, 4"
