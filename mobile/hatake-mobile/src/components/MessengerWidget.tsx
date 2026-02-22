@@ -49,9 +49,10 @@ interface MessengerWidgetProps {
   user: any;
   token: string;
   visible: boolean;
+  onViewProfile?: (userId: string) => void;
 }
 
-export default function MessengerWidget({ user, token, visible }: MessengerWidgetProps) {
+export default function MessengerWidget({ user, token, visible, onViewProfile }: MessengerWidgetProps) {
   const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
