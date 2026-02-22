@@ -367,6 +367,26 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
         ))}
       </View>
 
+      {/* Trade Statistics */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>Completed</Text>
+          <Text style={styles.statValue}>{tradeStats.completed}</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>€ Out</Text>
+          <Text style={[styles.statValue, styles.statValueOut]}>€{tradeStats.totalOut.toFixed(0)}</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>€ In</Text>
+          <Text style={[styles.statValue, styles.statValueIn]}>€{tradeStats.totalIn.toFixed(0)}</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>Pending</Text>
+          <Text style={[styles.statValue, styles.statValuePending]}>{tradeStats.pending}</Text>
+        </View>
+      </View>
+
       {/* Content */}
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContainer}>
         {filteredTrades.length === 0 ? (
