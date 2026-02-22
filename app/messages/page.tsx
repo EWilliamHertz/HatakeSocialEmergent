@@ -181,16 +181,15 @@ export default function MessagesPage() {
     }
   };
 
-  // Initialize audio
+  // Initialize audio - no longer needed with Web Audio API
   useEffect(() => {
-    audioRef.current = new Audio(NOTIFICATION_SOUND);
+    // Web Audio API is used directly in playNotificationChime
   }, []);
 
   // Play notification sound
   const playNotificationSound = useCallback(() => {
-    if (soundEnabled && audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
+    if (soundEnabled) {
+      playNotificationChime();
     }
   }, [soundEnabled]);
 
