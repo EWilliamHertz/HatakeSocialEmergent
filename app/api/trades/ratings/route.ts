@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
 
     const trade = trades[0];
 
-    // Verify user was part of the trade
-    if (trade.sender_id !== user.user_id && trade.receiver_id !== user.user_id) {
+    // Verify user was part of the trade (database uses initiator_id, not sender_id)
+    if (trade.initiator_id !== user.user_id && trade.receiver_id !== user.user_id) {
       return NextResponse.json({ error: 'You were not part of this trade' }, { status: 403 });
     }
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify rating the other party
-    const otherUserId = trade.sender_id === user.user_id ? trade.receiver_id : trade.sender_id;
+    const otherUserId = trade.initiator_id === user.user_id ? trade.receiver_id : trade.initiator_id;
     if (ratedUserId !== otherUserId) {
       return NextResponse.json({ error: 'Can only rate the other trade participant' }, { status: 400 });
     }
