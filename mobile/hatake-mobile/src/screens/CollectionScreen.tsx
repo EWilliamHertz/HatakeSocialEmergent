@@ -1319,28 +1319,28 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity 
             style={styles.menuButton}
             onPress={onOpenMenu}
           >
-            <Ionicons name="menu" size={26} color="#1F2937" />
+            <Ionicons name="menu" size={26} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.title}>My Collection</Text>
-            <Text style={styles.subtitle}>{items.length} cards</Text>
+            <Text style={[styles.title, { color: colors.text }]}>My Collection</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{items.length} cards</Text>
           </View>
           <TouchableOpacity 
             style={styles.csvButton}
             onPress={() => setShowCsvModal(true)}
             data-testid="csv-import-btn"
           >
-            <Ionicons name="document-text-outline" size={22} color="#3B82F6" />
+            <Ionicons name="document-text-outline" size={22} color={colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity 
-            style={styles.addButton}
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
             onPress={() => setShowAddModal(true)}
           >
             <Ionicons name="add" size={24} color="#fff" />
@@ -1350,23 +1350,23 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
         {/* Collection Value Stats */}
         {items.length > 0 && (
           <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Total Value</Text>
-              <Text style={styles.statValue}>
+            <View style={[styles.statBox, { backgroundColor: colors.surfaceSecondary }]}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Value</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>
                 €{stats.totalValue.toFixed(2)}
               </Text>
             </View>
             {stats.mtgValue > 0 && (
-              <View style={styles.statBox}>
-                <Text style={styles.statLabel}>MTG</Text>
+              <View style={[styles.statBox, { backgroundColor: colors.surfaceSecondary }]}>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>MTG</Text>
                 <Text style={[styles.statValue, styles.mtgColor]}>
                   €{stats.mtgValue.toFixed(2)}
                 </Text>
               </View>
             )}
             {stats.pokemonValue > 0 && (
-              <View style={styles.statBox}>
-                <Text style={styles.statLabel}>Pokémon</Text>
+              <View style={[styles.statBox, { backgroundColor: colors.surfaceSecondary }]}>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pokémon</Text>
                 <Text style={[styles.statValue, styles.pokemonColor]}>
                   €{stats.pokemonValue.toFixed(2)}
                 </Text>
@@ -1378,24 +1378,24 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
 
       {/* Selection Mode Bar */}
       {selectionMode && (
-        <View style={styles.selectionBar}>
+        <View style={[styles.selectionBar, { backgroundColor: colors.surfaceSecondary }]}>
           <TouchableOpacity style={styles.selectionButton} onPress={selectAll}>
-            <Ionicons name="checkmark-done-outline" size={20} color="#3B82F6" />
-            <Text style={styles.selectionButtonText}>Select All</Text>
+            <Ionicons name="checkmark-done-outline" size={20} color={colors.primary} />
+            <Text style={[styles.selectionButtonText, { color: colors.primary }]}>Select All</Text>
           </TouchableOpacity>
-          <Text style={styles.selectionCount}>{selectedIds.size} selected</Text>
+          <Text style={[styles.selectionCount, { color: colors.text }]}>{selectedIds.size} selected</Text>
           <TouchableOpacity style={styles.selectionButton} onPress={clearSelection}>
-            <Ionicons name="close-outline" size={20} color="#6B7280" />
-            <Text style={styles.selectionButtonText}>Clear</Text>
+            <Ionicons name="close-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.selectionButtonText, { color: colors.textSecondary }]}>Clear</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      <View style={styles.filters}>
+      <View style={[styles.filters, { backgroundColor: colors.surface }]}>
         {(['all', 'mtg', 'pokemon'] as const).map((f) => (
           <TouchableOpacity
             key={f}
-            style={[styles.filterButton, filter === f && styles.filterActive]}
+            style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === f && { backgroundColor: colors.primary }]}
             onPress={() => setFilter(f)}
           >
             <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
