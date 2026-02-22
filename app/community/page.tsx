@@ -33,6 +33,18 @@ interface Group {
   created_at: string;
 }
 
+interface GroupInvite {
+  invite_id: string;
+  group_id: string;
+  group_name: string;
+  group_description?: string;
+  group_image?: string;
+  privacy: string;
+  inviter_name: string;
+  inviter_picture?: string;
+  created_at: string;
+}
+
 interface SearchUser {
   user_id: string;
   name: string;
