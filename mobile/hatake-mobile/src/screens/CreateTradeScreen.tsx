@@ -230,19 +230,19 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
 
   const renderFriend = ({ item }: { item: Friend }) => (
     <TouchableOpacity
-      style={styles.friendCard}
+      style={[styles.friendCard, { backgroundColor: colors.surface }]}
       onPress={() => selectRecipient(item)}
       data-testid={`friend-${item.user_id}`}
     >
       {item.picture ? (
         <Image source={{ uri: item.picture }} style={styles.avatar} />
       ) : (
-        <View style={styles.avatarPlaceholder}>
-          <Ionicons name="person" size={24} color="#9CA3AF" />
+        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+          <Ionicons name="person" size={24} color={colors.textTertiary} />
         </View>
       )}
-      <Text style={styles.friendName}>{item.name}</Text>
-      <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+      <Text style={[styles.friendName, { color: colors.text }]}>{item.name}</Text>
+      <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
     </TouchableOpacity>
   );
 
@@ -252,22 +252,22 @@ export default function CreateTradeScreen({ user, token, onClose, onTradeCreated
     
     return (
       <TouchableOpacity
-        style={[styles.cardItem, isSelected && styles.cardItemSelected]}
+        style={[styles.cardItem, { backgroundColor: colors.surface }, isSelected && { borderColor: colors.primary, backgroundColor: colors.surfaceSecondary }]}
         onPress={() => toggleCardSelection(item.id)}
       >
         {isSelected && (
-          <View style={styles.checkBadge}>
+          <View style={[styles.checkBadge, { backgroundColor: colors.primary }]}>
             <Ionicons name="checkmark" size={14} color="#FFFFFF" />
           </View>
         )}
         {image ? (
           <Image source={{ uri: image }} style={styles.cardImage} resizeMode="contain" />
         ) : (
-          <View style={styles.cardImagePlaceholder}>
-            <Ionicons name="image-outline" size={20} color="#9CA3AF" />
+          <View style={[styles.cardImagePlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <Ionicons name="image-outline" size={20} color={colors.textTertiary} />
           </View>
         )}
-        <Text style={styles.cardName} numberOfLines={2}>
+        <Text style={[styles.cardName, { color: colors.text }]} numberOfLines={2}>
           {item.card_data?.name || 'Unknown'}
         </Text>
       </TouchableOpacity>
