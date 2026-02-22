@@ -592,6 +592,7 @@ function AppContent() {
                   onLogout={handleLogout}
                   messengerWidgetEnabled={messengerWidgetEnabled}
                   onToggleMessengerWidget={() => setMessengerWidgetEnabled(!messengerWidgetEnabled)}
+                  onShowTour={() => setShowOnboarding(true)}
                 />
               </View>
             </Modal>
