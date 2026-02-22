@@ -59,10 +59,11 @@ export default function CommunityPage() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') || 'friends';
   
-  const [tab, setTab] = useState<'friends' | 'groups' | 'requests' | 'search'>(initialTab as any);
+  const [tab, setTab] = useState<'friends' | 'groups' | 'requests' | 'search' | 'invites'>(initialTab as any);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
+  const [groupInvites, setGroupInvites] = useState<GroupInvite[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
   const [loading, setLoading] = useState(true);
