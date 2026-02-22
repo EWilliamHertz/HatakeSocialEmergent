@@ -72,13 +72,13 @@ export default function SearchScreen({ navigation }: any) {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Search Cards</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Search Cards</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -105,8 +105,8 @@ export default function SearchScreen({ navigation }: any) {
       {/* Results */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text style={styles.loadingText}>Searching...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Searching...</Text>
         </View>
       ) : (
         <FlatList
@@ -119,17 +119,17 @@ export default function SearchScreen({ navigation }: any) {
           ListEmptyComponent={
             query ? (
               <View style={styles.emptyContainer}>
-                <Ionicons name="search-outline" size={64} color="#D1D5DB" />
-                <Text style={styles.emptyText}>No cards found</Text>
-                <Text style={styles.emptySubtext}>
+                <Ionicons name="search-outline" size={64} color={colors.textTertiary} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No cards found</Text>
+                <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>
                   Try a different search term
                 </Text>
               </View>
             ) : (
               <View style={styles.emptyContainer}>
-                <Ionicons name="search" size={64} color="#D1D5DB" />
-                <Text style={styles.emptyText}>Search for cards</Text>
-                <Text style={styles.emptySubtext}>
+                <Ionicons name="search" size={64} color={colors.textTertiary} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Search for cards</Text>
+                <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>
                   Enter a card name to search
                 </Text>
               </View>
