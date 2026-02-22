@@ -249,9 +249,9 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
 
           {/* Note */}
           {selectedTrade.note && (
-            <View style={styles.noteSection}>
-              <Text style={styles.noteLabel}>Note</Text>
-              <Text style={styles.noteText}>{selectedTrade.note}</Text>
+            <View style={[styles.noteSection, { backgroundColor: colors.surfaceSecondary }]}>
+              <Text style={[styles.noteLabel, { color: colors.textSecondary }]}>Note</Text>
+              <Text style={[styles.noteText, { color: colors.text }]}>{selectedTrade.note}</Text>
             </View>
           )}
 
