@@ -70,8 +70,8 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
 
   useEffect(() => {
     if (selectedChat) {
-      fetchMessages(selectedChat.user_id);
-      const interval = setInterval(() => fetchMessages(selectedChat.user_id), 3000);
+      fetchMessages(selectedChat);
+      const interval = setInterval(() => fetchMessages(selectedChat), 3000);
       return () => clearInterval(interval);
     }
   }, [selectedChat]);
