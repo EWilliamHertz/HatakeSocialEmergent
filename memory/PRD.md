@@ -25,7 +25,25 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ---
 
-## COMPLETED FEATURES - Session 2026-02-22 (Latest)
+## COMPLETED FEATURES - Session 2026-12-XX (Latest)
+
+### Session 13 Updates - Bug Fixes & Dark Mode (2026-12-XX)
+
+1. **Collection & Marketplace Layout Fix** ✅
+   - Reverted from 3 columns back to 2 columns per row as requested
+   - Card width recalculated for better visibility
+
+2. **Trades Screen Fix** ✅
+   - Replaced Pressable with TouchableOpacity for more reliable touch handling
+   - All trades should now be clickable across all platforms
+
+3. **Dark Mode - Additional Screens** ✅
+   - DrawerMenu - fully themed (sidebar menu)
+   - DecksScreen - fully themed (deck builder, filters, modals, cards)
+
+4. **Web MessengerWidget Fix** ✅
+   - Hidden MessengerWidget on /messages page to avoid redundancy
+   - Widget now uses usePathname to detect current route
 
 ### Session 12 Updates - Dark Mode & CSV Import Fix (2026-02-22)
 
