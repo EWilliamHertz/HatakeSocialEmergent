@@ -31,6 +31,18 @@ interface Group {
   created_at: string;
 }
 
+interface GroupInvite {
+  invite_id: string;
+  group_id: string;
+  group_name: string;
+  group_description?: string;
+  group_image?: string;
+  privacy: string;
+  inviter_name: string;
+  inviter_picture?: string;
+  created_at: string;
+}
+
 interface GroupsScreenProps {
   user: any;
   token: string;
@@ -40,9 +52,10 @@ interface GroupsScreenProps {
 export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps) {
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [discoverGroups, setDiscoverGroups] = useState<Group[]>([]);
+  const [groupInvites, setGroupInvites] = useState<GroupInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [tab, setTab] = useState<'my' | 'discover'>('my');
+  const [tab, setTab] = useState<'my' | 'discover' | 'invites'>('my');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
