@@ -11,10 +11,15 @@ import {
   ScrollView,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
+import { useTheme } from '../context/ThemeContext';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const CARD_WIDTH = (SCREEN_WIDTH - 48) / 3; // 3 columns with padding
 
 interface Listing {
   id: number;
