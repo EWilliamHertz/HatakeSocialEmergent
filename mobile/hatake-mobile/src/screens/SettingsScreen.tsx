@@ -27,7 +27,7 @@ interface SettingsScreenProps {
   onShowTour?: () => void;
 }
 
-export default function SettingsScreen({ user, token, onClose, onLogout, messengerWidgetEnabled = true, onToggleMessengerWidget }: SettingsScreenProps) {
+export default function SettingsScreen({ user, token, onClose, onLogout, messengerWidgetEnabled = true, onToggleMessengerWidget, onShowTour }: SettingsScreenProps) {
   const { isDarkMode, setDarkMode, colors } = useTheme();
   
   // Notification settings
