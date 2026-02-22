@@ -635,6 +635,7 @@ function AppContent() {
               user={user}
               token={token || ''}
               visible={messengerWidgetEnabled}
+              onViewProfile={(userId) => setViewProfileUserId(userId)}
             />
 
             {/* Onboarding Tour - For new users */}
