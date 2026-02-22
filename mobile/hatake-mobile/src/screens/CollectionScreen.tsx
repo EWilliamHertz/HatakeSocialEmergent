@@ -872,29 +872,71 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
         let cardData: any = null;
         let game = csvGame;
         
-        // Map set code using aliases if needed (for Pokemon)
-        const mappedSetCode = csvGame === 'pokemon' 
-          ? (POKEMON_SET_ALIASES[card.setCode] || card.setCode)
-          : card.setCode;
-        
-        if (csvGame === 'mtg') {
-          // Search Scryfall by set and collector number
-          const url = `${SCRYFALL_API}/cards/${mappedSetCode}/${card.collectorNumber}`;
-          const res = await fetch(url);
-          if (res.ok) {
-            cardData = await res.json();
+        if (card.searchByName && card.name) {
+          // Search by card name and optionally filter by set
+          if (csvGame === 'mtg') {
+            // Use Scryfall search API
+            let searchQuery = `!"${card.name}"`;
+            if (card.setCode) {
+              searchQuery += ` set:${card.setCode}`;
+            }
+            const url = `${SCRYFALL_API}/cards/search?q=${encodeURIComponent(searchQuery)}`;
+            const res = await fetch(url);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.data && data.data.length > 0) {
+                cardData = data.data[0]; // Get the first matching card
+              }
+            }
+          } else {
+            // For Pokemon, search by name (TCGdex doesn't have great name search)
+            // Try to find in the specified set first
+            if (card.setCode) {
+              const mappedSetCode = POKEMON_SET_ALIASES[card.setCode.toLowerCase()] || card.setCode.toLowerCase();
+              const setUrl = `${TCGDEX_API}/sets/${mappedSetCode}`;
+              const setRes = await fetch(setUrl);
+              if (setRes.ok) {
+                const setData = await setRes.json();
+                if (setData.cards) {
+                  const found = setData.cards.find((c: any) => 
+                    c.name.toLowerCase().includes(card.name!.toLowerCase())
+                  );
+                  if (found) {
+                    const cardUrl = `${TCGDEX_API}/cards/${found.id}`;
+                    const cardRes = await fetch(cardUrl);
+                    if (cardRes.ok) {
+                      cardData = await cardRes.json();
+                    }
+                  }
+                }
+              }
+            }
           }
-        } else {
-          // Search TCGdex by set and number
-          const url = `${TCGDEX_API}/sets/${mappedSetCode}/${card.collectorNumber}`;
-          const res = await fetch(url);
-          if (res.ok) {
-            cardData = await res.json();
+        } else if (card.setCode && card.collectorNumber) {
+          // Search by set code and collector number (original behavior)
+          const mappedSetCode = csvGame === 'pokemon' 
+            ? (POKEMON_SET_ALIASES[card.setCode] || card.setCode)
+            : card.setCode;
+          
+          if (csvGame === 'mtg') {
+            const url = `${SCRYFALL_API}/cards/${mappedSetCode}/${card.collectorNumber}`;
+            const res = await fetch(url);
+            if (res.ok) {
+              cardData = await res.json();
+            }
+          } else {
+            const url = `${TCGDEX_API}/sets/${mappedSetCode}/${card.collectorNumber}`;
+            const res = await fetch(url);
+            if (res.ok) {
+              cardData = await res.json();
+            }
           }
         }
         
+        const displayName = card.name || `${card.setCode}/${card.collectorNumber}`;
+        
         if (!cardData) {
-          logs.push(`❌ ${card.setCode}/${card.collectorNumber}: Not found`);
+          logs.push(`❌ ${displayName}: Not found`);
           failedCount++;
           continue;
         }
@@ -917,14 +959,15 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
         });
         
         if (response.ok) {
-          logs.push(`✅ ${cardData.name || card.collectorNumber} x${card.quantity}`);
+          logs.push(`✅ ${cardData.name || displayName} x${card.quantity}`);
           successCount++;
         } else {
-          logs.push(`❌ ${card.setCode}/${card.collectorNumber}: Failed to add`);
+          logs.push(`❌ ${displayName}: Failed to add`);
           failedCount++;
         }
       } catch (err) {
-        logs.push(`❌ ${card.setCode}/${card.collectorNumber}: Error`);
+        const displayName = card.name || `${card.setCode}/${card.collectorNumber}`;
+        logs.push(`❌ ${displayName}: Error`);
         failedCount++;
       }
       
