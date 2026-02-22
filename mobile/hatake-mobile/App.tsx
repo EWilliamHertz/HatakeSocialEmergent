@@ -633,6 +633,15 @@ export default function App() {
   );
 }
 
+// Wrap with ThemeProvider
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
