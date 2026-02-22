@@ -291,7 +291,43 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
     );
   }
 
-  const currentGroups = tab === 'my' ? myGroups : discoverGroups;
+  const currentGroups = tab === 'my' ? myGroups : tab === 'discover' ? discoverGroups : [];
+
+  const renderInvite = ({ item }: { item: GroupInvite }) => (
+    <View style={styles.inviteCard} data-testid={`invite-${item.invite_id}`}>
+      <View style={styles.inviteHeader}>
+        {item.group_image ? (
+          <Image source={{ uri: item.group_image }} style={styles.inviteImage} />
+        ) : (
+          <View style={styles.inviteImagePlaceholder}>
+            <Ionicons name="people" size={24} color="#9CA3AF" />
+          </View>
+        )}
+        <View style={styles.inviteInfo}>
+          <Text style={styles.inviteName}>{item.group_name}</Text>
+          {item.group_description && (
+            <Text style={styles.inviteDescription} numberOfLines={1}>{item.group_description}</Text>
+          )}
+          <Text style={styles.inviterText}>Invited by {item.inviter_name}</Text>
+        </View>
+      </View>
+      <View style={styles.inviteActions}>
+        <TouchableOpacity
+          style={styles.acceptButton}
+          onPress={() => acceptInvite(item.invite_id)}
+        >
+          <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+          <Text style={styles.acceptButtonText}>Join</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.declineButton}
+          onPress={() => declineInvite(item.invite_id)}
+        >
+          <Ionicons name="close" size={18} color="#6B7280" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
     <Container style={styles.container}>
@@ -327,12 +363,42 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
             Discover
           </Text>
         </TouchableOpacity>
+        {groupInvites.length > 0 && (
+          <TouchableOpacity
+            style={[styles.tab, tab === 'invites' && styles.tabActive]}
+            onPress={() => setTab('invites')}
+          >
+            <View style={styles.inviteBadge}>
+              <Text style={styles.inviteBadgeText}>{groupInvites.length}</Text>
+            </View>
+            <Text style={[styles.tabText, tab === 'invites' && styles.tabTextActive]}>
+              Invites
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#3B82F6" />
         </View>
+      ) : tab === 'invites' ? (
+        <FlatList
+          data={groupInvites}
+          renderItem={renderInvite}
+          keyExtractor={(item) => item.invite_id}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchGroups(); }} />
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Ionicons name="mail-outline" size={48} color="#D1D5DB" />
+              <Text style={styles.emptyTitle}>No Invitations</Text>
+              <Text style={styles.emptySubtext}>You don't have any pending group invitations</Text>
+            </View>
+          }
+        />
       ) : (
         <FlatList
           data={currentGroups}
