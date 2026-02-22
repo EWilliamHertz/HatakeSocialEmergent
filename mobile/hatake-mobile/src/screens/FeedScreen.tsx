@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
 import CommentsModal from '../components/CommentsModal';
 import UserProfileModal from '../components/UserProfileModal';
+import { useTheme } from '../context/ThemeContext';
 
 interface Reaction {
   emoji: string;
