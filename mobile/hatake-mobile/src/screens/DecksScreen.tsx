@@ -224,6 +224,185 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
     }
   };
 
+  // Import decklist from text (MTGO format, etc.)
+  const importDecklist = async () => {
+    if (!importText.trim() || !showDeckDetail) return;
+    
+    setImporting(true);
+    try {
+      const authToken = getAuthToken();
+      const lines = importText.trim().split('\n');
+      const cards: { name: string; quantity: number; isSideboard: boolean }[] = [];
+      let isSideboard = false;
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        
+        // Check for sideboard marker
+        if (trimmed.toLowerCase() === 'sideboard' || trimmed.toLowerCase() === 'sideboard:') {
+          isSideboard = true;
+          continue;
+        }
+        
+        // Parse "4 Lightning Bolt" or "4x Lightning Bolt" format
+        const match = trimmed.match(/^(\d+)x?\s+(.+)$/i);
+        if (match) {
+          cards.push({
+            quantity: parseInt(match[1], 10),
+            name: match[2].trim(),
+            isSideboard,
+          });
+        } else {
+          // Assume 1 copy if no quantity
+          cards.push({
+            quantity: 1,
+            name: trimmed,
+            isSideboard,
+          });
+        }
+      }
+      
+      // Add each card to the deck
+      let successCount = 0;
+      for (const card of cards) {
+        try {
+          // Search for the card first
+          const searchUrl = showDeckDetail.game === 'mtg'
+            ? `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(card.name)}`
+            : `https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(card.name)}`;
+          
+          const searchRes = await fetch(searchUrl);
+          const searchData = await searchRes.json();
+          
+          let cardData: any = null;
+          let cardId = '';
+          
+          if (showDeckDetail.game === 'mtg' && searchData.id) {
+            cardData = searchData;
+            cardId = searchData.id;
+          } else if (showDeckDetail.game === 'pokemon' && Array.isArray(searchData) && searchData.length > 0) {
+            cardData = searchData[0];
+            cardId = searchData[0].id;
+          }
+          
+          if (cardId && cardData) {
+            const addRes = await fetch(`${API_URL}/api/decks/${showDeckDetail.deck_id}/cards`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                cardId,
+                cardData,
+                quantity: card.quantity,
+                isSideboard: card.isSideboard,
+              }),
+            });
+            const addData = await addRes.json();
+            if (addData.success) successCount++;
+          }
+        } catch (cardErr) {
+          console.error(`Failed to add card: ${card.name}`, cardErr);
+        }
+      }
+      
+      if (successCount > 0) {
+        fetchDeckCards(showDeckDetail.deck_id);
+        fetchDecks();
+      }
+      
+      setShowImportModal(false);
+      setImportText('');
+      alert(`Imported ${successCount} of ${cards.length} cards`);
+    } catch (err) {
+      console.error('Failed to import decklist:', err);
+      alert('Import failed. Please check the format.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Search for cards to add
+  const searchCards = async () => {
+    if (!cardSearchQuery.trim() || !showDeckDetail) return;
+    
+    setSearchingCards(true);
+    try {
+      if (showDeckDetail.game === 'mtg') {
+        const res = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(cardSearchQuery)}&order=name`);
+        const data = await res.json();
+        setCardSearchResults(data.data?.slice(0, 20) || []);
+      } else {
+        const res = await fetch(`https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(cardSearchQuery)}`);
+        const data = await res.json();
+        setCardSearchResults(Array.isArray(data) ? data.slice(0, 20) : []);
+      }
+    } catch (err) {
+      console.error('Card search failed:', err);
+      setCardSearchResults([]);
+    } finally {
+      setSearchingCards(false);
+    }
+  };
+
+  // Add a card to the deck
+  const addCardToDeck = async (card: any, quantity: number = 1, isSideboard: boolean = false) => {
+    if (!showDeckDetail) return;
+    
+    setAddingCard(true);
+    try {
+      const authToken = getAuthToken();
+      const cardId = card.id;
+      
+      const res = await fetch(`${API_URL}/api/decks/${showDeckDetail.deck_id}/cards`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cardId,
+          cardData: card,
+          quantity,
+          isSideboard,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchDeckCards(showDeckDetail.deck_id);
+        fetchDecks();
+        setCardSearchQuery('');
+        setCardSearchResults([]);
+      }
+    } catch (err) {
+      console.error('Failed to add card:', err);
+    } finally {
+      setAddingCard(false);
+    }
+  };
+
+  // Remove a card from deck
+  const removeCardFromDeck = async (cardId: string) => {
+    if (!showDeckDetail) return;
+    
+    try {
+      const authToken = getAuthToken();
+      const res = await fetch(`${API_URL}/api/decks/${showDeckDetail.deck_id}/cards/${cardId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchDeckCards(showDeckDetail.deck_id);
+        fetchDecks();
+      }
+    } catch (err) {
+      console.error('Failed to remove card:', err);
+    }
+  };
+
   const openDeckDetail = (deck: Deck) => {
     setShowDeckDetail(deck);
     fetchDeckCards(deck.deck_id);
