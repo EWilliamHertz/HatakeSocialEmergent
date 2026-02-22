@@ -191,37 +191,41 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                   <Text style={styles.emptyText}>No conversations yet</Text>
                 </View>
               ) : (
-                <FlatList
-                  data={conversations}
-                  keyExtractor={(item) => item.user_id}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.conversationItem}
-                      onPress={() => { setSelectedChat(item); setLoading(true); }}
-                    >
-                      {item.picture ? (
-                        <Image source={{ uri: item.picture }} style={styles.avatar} />
-                      ) : (
-                        <View style={styles.avatarPlaceholder}>
-                          <Ionicons name="person" size={20} color="#9CA3AF" />
-                        </View>
-                      )}
-                      <View style={styles.conversationInfo}>
-                        <Text style={styles.conversationName}>{item.name}</Text>
-                        {item.last_message && (
-                          <Text style={styles.lastMessage} numberOfLines={1}>
-                            {item.last_message}
-                          </Text>
+                <View style={{ flex: 1 }}>
+                  <FlatList
+                    data={conversations}
+                    keyExtractor={(item) => item.user_id}
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.conversationItem}
+                        onPress={() => { setSelectedChat(item); setLoading(true); }}
+                      >
+                        {item.picture ? (
+                          <Image source={{ uri: item.picture }} style={styles.avatar} />
+                        ) : (
+                          <View style={styles.avatarPlaceholder}>
+                            <Ionicons name="person" size={20} color="#9CA3AF" />
+                          </View>
                         )}
-                      </View>
-                      {item.unread_count ? (
-                        <View style={styles.unreadBadge}>
-                          <Text style={styles.unreadText}>{item.unread_count}</Text>
+                        <View style={styles.conversationInfo}>
+                          <Text style={styles.conversationName}>{item.name}</Text>
+                          {item.last_message && (
+                            <Text style={styles.lastMessage} numberOfLines={1}>
+                              {item.last_message}
+                            </Text>
+                          )}
                         </View>
-                      ) : null}
-                    </TouchableOpacity>
-                  )}
-                />
+                        {item.unread_count ? (
+                          <View style={styles.unreadBadge}>
+                            <Text style={styles.unreadText}>{item.unread_count}</Text>
+                          </View>
+                        ) : null}
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
               )}
             </>
           ) : (
