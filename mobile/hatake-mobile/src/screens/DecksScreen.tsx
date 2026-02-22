@@ -85,6 +85,16 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
   const [newDeckPublic, setNewDeckPublic] = useState(false);
   const [creating, setCreating] = useState(false);
 
+  // Import & Add Card
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [cardSearchQuery, setCardSearchQuery] = useState('');
+  const [cardSearchResults, setCardSearchResults] = useState<any[]>([]);
+  const [searchingCards, setSearchingCards] = useState(false);
+  const [addingCard, setAddingCard] = useState(false);
+
   useEffect(() => {
     fetchDecks();
   }, []);
