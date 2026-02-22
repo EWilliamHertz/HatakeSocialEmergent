@@ -48,19 +48,27 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(true);
 
   useEffect(() => {
+    setMounted(true);
     fetchTrades();
+    return () => setMounted(false);
   }, []);
 
   const getAuthToken = () => {
-    if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem('auth_token') || token;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        return localStorage.getItem('auth_token') || token;
+      }
+    } catch (e) {
+      // localStorage not available
     }
     return token;
   };
 
   const fetchTrades = async () => {
+    if (!mounted) return;
     setError(null);
     try {
       const authToken = getAuthToken();
@@ -68,6 +76,7 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
       const data = await res.json();
+      if (!mounted) return;
       if (data.success) {
         setTrades(data.trades || []);
       } else {
@@ -75,10 +84,14 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
       }
     } catch (err) {
       console.error('Failed to fetch trades:', err);
-      setError('Network error. Please try again.');
+      if (mounted) {
+        setError('Network error. Please try again.');
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (mounted) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
 
