@@ -12,6 +12,27 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES
 
+### Session 16 - Referral System & Mobile Video Calls (2026-02-22)
+
+1. **Referral System** - Custom invite codes with badge rewards:
+   - Users choose custom invite codes in Settings (e.g., `/invite/HatakeHugo`)
+   - Beautiful invite landing page showing inviter info + feature list
+   - New signups with invite code auto-award "Recruiter" badge to inviter
+   - Referral tracking (count + list of referred users)
+   - APIs: GET/POST /api/referral, GET /api/invite/[code]
+   - DB: invite_code, referred_by, referral_count columns on users table
+
+2. **Mobile Video/Voice Calls (LiveKit)** - Native build integration:
+   - VideoCallScreen now connects to LiveKit API for token generation
+   - Voice calls, video calls, and screen sharing support
+   - Call signaling via /api/calls endpoint
+   - End call notification to remote participant
+   - Fallback simulation for testing on web/Expo Go
+
+3. **Deployment Guides** (created in previous session):
+   - `/app/memory/EXPO_BUILD_GUIDE.md`
+   - `/app/memory/GOOGLE_PLAY_GUIDE.md`
+
 ### Session 15 - Deck Analytics, Badge Showcase, Linkable Names & Guides (2026-02-22)
 
 1. **Deck Statistics/Analytics (Mobile)** - Full analytics added to mobile deck detail view:
