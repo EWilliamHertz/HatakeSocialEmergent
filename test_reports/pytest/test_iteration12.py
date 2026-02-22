@@ -8,7 +8,7 @@ import requests
 import os
 
 # Use production URL from environment
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://deck-builder-test-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hatake-tcg.preview.emergentagent.com')
 if BASE_URL.endswith('/'):
     BASE_URL = BASE_URL.rstrip('/')
 
