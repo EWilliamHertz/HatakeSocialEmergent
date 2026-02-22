@@ -274,6 +274,21 @@ export default function CommunityPage() {
             <Search className="w-5 h-5" />
             Find
           </button>
+          {groupInvites.length > 0 && (
+            <button
+              onClick={() => setTab('invites')}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition flex items-center justify-center gap-2 relative ${
+                tab === 'invites' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+              data-testid="invites-tab"
+            >
+              <UsersRound className="w-5 h-5" />
+              Invites
+              <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {groupInvites.length}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Content */}
