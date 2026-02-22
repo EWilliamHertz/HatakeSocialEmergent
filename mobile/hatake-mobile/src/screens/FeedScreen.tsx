@@ -258,39 +258,39 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
     };
 
     return (
-      <View style={styles.post}>
+      <View style={[styles.post, { backgroundColor: colors.surface }]}>
         <TouchableOpacity style={styles.postHeader} onPress={handleUserPress}>
           {userPicture ? (
             <Image source={{ uri: userPicture }} style={styles.avatar} />
           ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={16} color="#9CA3AF" />
+            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="person" size={16} color={colors.textTertiary} />
             </View>
           )}
           <View style={styles.postHeaderInfo}>
             <View style={styles.userNameRow}>
-              <Text style={styles.userName}>{userName}</Text>
+              <Text style={[styles.userName, { color: colors.text }]}>{userName}</Text>
               {item.group_name && (
                 <Text style={styles.groupNameBadge}>@ {item.group_name}</Text>
               )}
             </View>
-            <Text style={styles.postTime}>{formatDate(item.created_at)}</Text>
+            <Text style={[styles.postTime, { color: colors.textTertiary }]}>{formatDate(item.created_at)}</Text>
           </View>
         </TouchableOpacity>
         
-        <Text style={styles.postContent}>{item.content}</Text>
+        <Text style={[styles.postContent, { color: colors.text }]}>{item.content}</Text>
         
         {imageUrl && (
           <Image source={{ uri: imageUrl }} style={styles.postImage} />
         )}
         
         {item.card_data && (
-          <View style={styles.cardPreview}>
+          <View style={[styles.cardPreview, { backgroundColor: colors.surfaceSecondary }]}>
             <Image 
               source={{ uri: getCardImageUrl(item.card_data) }} 
               style={styles.cardPreviewImage} 
             />
-            <Text style={styles.cardPreviewName}>{item.card_data.name}</Text>
+            <Text style={[styles.cardPreviewName, { color: colors.text }]}>{item.card_data.name}</Text>
           </View>
         )}
 
@@ -300,46 +300,46 @@ export default function FeedScreen({ user, token, onOpenMenu, onOpenNotification
             {item.reactions.map((r, idx) => (
               <TouchableOpacity 
                 key={idx} 
-                style={[styles.reactionBadge, r.userReacted && styles.reactionBadgeActive]}
+                style={[styles.reactionBadge, { backgroundColor: colors.surfaceSecondary }, r.userReacted && { backgroundColor: colors.primaryLight }]}
                 onPress={() => handleReaction(r.emoji)}
               >
                 <Text style={styles.reactionEmoji}>{r.emoji}</Text>
-                <Text style={styles.reactionCount}>{r.count}</Text>
+                <Text style={[styles.reactionCount, { color: colors.text }]}>{r.count}</Text>
               </TouchableOpacity>
             ))}
           </View>
         )}
         
-        <View style={styles.postActions}>
+        <View style={[styles.postActions, { borderTopColor: colors.border }]}>
           <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
             <Ionicons 
               name={isLiked ? "heart" : "heart-outline"} 
               size={20} 
-              color={isLiked ? "#EF4444" : "#6B7280"} 
+              color={isLiked ? "#EF4444" : colors.textSecondary} 
             />
-            <Text style={styles.actionText}>{likeCount}</Text>
+            <Text style={[styles.actionText, { color: colors.textSecondary }]}>{likeCount}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
-            <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
-            <Text style={styles.actionText}>{commentCount}</Text>
+            <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.actionText, { color: colors.textSecondary }]}>{commentCount}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.actionButton} 
             onPress={() => setShowEmojiPicker(showEmojiPicker === postId ? null : postId)}
           >
-            <Ionicons name="happy-outline" size={20} color="#6B7280" />
+            <Ionicons name="happy-outline" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="share-outline" size={20} color="#6B7280" />
+            <Ionicons name="share-outline" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
         {/* Emoji Picker */}
         {showEmojiPicker === postId && (
-          <View style={styles.emojiPicker}>
+          <View style={[styles.emojiPicker, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             {EMOJI_OPTIONS.map((emoji) => (
               <TouchableOpacity 
                 key={emoji} 
