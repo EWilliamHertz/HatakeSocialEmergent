@@ -425,24 +425,24 @@ export default function WishlistScreen({ user, token, onClose }: WishlistScreenP
             />
 
             <TouchableOpacity
-              style={styles.publicToggle}
+              style={[styles.publicToggle, { backgroundColor: colors.surfaceSecondary }]}
               onPress={() => setIsPublic(!isPublic)}
             >
               <Ionicons 
                 name={isPublic ? 'checkbox' : 'square-outline'} 
                 size={24} 
-                color={isPublic ? '#3B82F6' : '#9CA3AF'} 
+                color={isPublic ? colors.primary : colors.textTertiary} 
               />
               <View style={styles.publicToggleInfo}>
-                <Text style={styles.publicToggleTitle}>Make Public</Text>
-                <Text style={styles.publicToggleDesc}>
+                <Text style={[styles.publicToggleTitle, { color: colors.text }]}>Make Public</Text>
+                <Text style={[styles.publicToggleDesc, { color: colors.textSecondary }]}>
                   Others can see this wishlist on your profile
                 </Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.createBtn, creating && styles.buttonDisabled]}
+              style={[styles.createBtn, { backgroundColor: colors.primary }, creating && styles.buttonDisabled]}
               onPress={createWishlist}
               disabled={creating}
             >
