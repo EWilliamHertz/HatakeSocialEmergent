@@ -215,10 +215,29 @@ export default function MessengerWidget() {
   }, [soundEnabled]);
 
   // Scroll to bottom only when new messages arrive or user sends a message
+  // Scroll to bottom helper - uses scrollTop directly for reliability
+  const scrollToBottom = (smooth = true) => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      if (smooth) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        });
+      } else {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+  };
+
+  // Scroll when new messages arrive
   useEffect(() => {
     // Only auto-scroll if user hasn't scrolled up and there are new messages
     if (!userScrolledUp.current && messages.length > lastMessageCount.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      // Use setTimeout to ensure DOM has updated
+      setTimeout(() => {
+        scrollToBottom(true);
+      }, 50);
     }
     lastMessageCount.current = messages.length;
   }, [messages]);
