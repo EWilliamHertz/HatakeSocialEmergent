@@ -766,14 +766,16 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
 
   // CSV Import functionality
   // Supports multiple formats:
-  // 1. name/set_code (e.g., "muxus/JMP" or "cavern of souls/LCI")
-  // 2. set_code,collector_number,quantity (e.g., "sv09,123,2")
-  // 3. quantity set_code collector_number (e.g., "2 sv09 123")
+  // 1. Full CSV export: Name,Set Code,Set Name,Collector Number,normal/foil,rarity,quantity,...
+  // 2. name/set_code (e.g., "muxus/JMP" or "cavern of souls/LCI")
+  // 3. set_code,collector_number,quantity (e.g., "sv09,123,2")
+  // 4. quantity set_code collector_number (e.g., "2 sv09 123")
   interface ParsedCard {
     name?: string;
     setCode?: string;
     collectorNumber?: string;
     quantity: number;
+    finish?: string;
     searchByName: boolean;
   }
 
@@ -781,6 +783,64 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
     const lines = text.trim().split('\n');
     const results: ParsedCard[] = [];
     
+    // Check if first line looks like a header (contains common header words)
+    const firstLine = lines[0]?.toLowerCase() || '';
+    const isFullCsvExport = firstLine.includes('name') && 
+      (firstLine.includes('set') || firstLine.includes('collector') || firstLine.includes('quantity'));
+    
+    // If it's a full CSV export, parse it differently
+    if (isFullCsvExport && lines.length > 1) {
+      // Parse header to find column indices
+      const headerParts = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+      const nameIdx = headerParts.findIndex(h => h === 'name');
+      const setCodeIdx = headerParts.findIndex(h => h === 'set code' || h === 'set_code' || h === 'setcode');
+      const collectorIdx = headerParts.findIndex(h => h === 'collector number' || h === 'collector_number' || h === 'collectornumber');
+      const quantityIdx = headerParts.findIndex(h => h === 'quantity' || h === 'qty');
+      const finishIdx = headerParts.findIndex(h => h === 'finish' || h === 'foil' || h === 'normal/foil');
+      
+      // Parse data rows (skip header)
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        // Handle CSV with potential commas in quoted fields
+        const parts: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        for (const char of line) {
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            parts.push(current.trim().replace(/"/g, ''));
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        parts.push(current.trim().replace(/"/g, '')); // Push last part
+        
+        const name = nameIdx >= 0 ? parts[nameIdx] : undefined;
+        const setCode = setCodeIdx >= 0 ? parts[setCodeIdx] : undefined;
+        const collectorNumber = collectorIdx >= 0 ? parts[collectorIdx] : undefined;
+        const quantity = quantityIdx >= 0 ? parseInt(parts[quantityIdx]) || 1 : 1;
+        const finish = finishIdx >= 0 ? parts[finishIdx] : 'normal';
+        
+        if (name && setCode) {
+          results.push({
+            name,
+            setCode: setCode.toLowerCase(),
+            collectorNumber,
+            quantity,
+            finish,
+            searchByName: !collectorNumber // Search by name if no collector number
+          });
+        }
+      }
+      
+      return results;
+    }
+    
+    // Original parsing logic for simpler formats
     for (const line of lines) {
       if (!line.trim()) continue;
       const trimmedLine = line.trim();
