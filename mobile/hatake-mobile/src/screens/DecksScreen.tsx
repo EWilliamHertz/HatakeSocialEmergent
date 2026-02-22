@@ -364,14 +364,14 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
     const isOwner = showDeckDetail.user_id === user.user_id || !showDeckDetail.user_id;
     
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => setShowDeckDetail(null)} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.title}>{showDeckDetail.name}</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: colors.text }]}>{showDeckDetail.name}</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               {showDeckDetail.game === 'mtg' ? 'Magic' : 'Pokemon'}
               {showDeckDetail.format && ` - ${showDeckDetail.format}`}
             </Text>
@@ -390,30 +390,30 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
               onPress={() => copyDeck(showDeckDetail)}
               data-testid="copy-deck-btn"
             >
-              <Ionicons name="copy-outline" size={22} color="#3B82F6" />
+              <Ionicons name="copy-outline" size={22} color={colors.primary} />
             </TouchableOpacity>
           )}
         </View>
 
         {loadingCards ? (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color="#3B82F6" />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : (
           <ScrollView style={styles.deckContent}>
             {/* Deck Stats */}
-            <View style={styles.deckStatsRow}>
+            <View style={[styles.deckStatsRow, { backgroundColor: colors.surface }]}>
               <View style={styles.deckStat}>
-                <Text style={styles.deckStatValue}>{mainDeck.reduce((sum, c) => sum + c.quantity, 0)}</Text>
-                <Text style={styles.deckStatLabel}>Main</Text>
+                <Text style={[styles.deckStatValue, { color: colors.text }]}>{mainDeck.reduce((sum, c) => sum + c.quantity, 0)}</Text>
+                <Text style={[styles.deckStatLabel, { color: colors.textSecondary }]}>Main</Text>
               </View>
               <View style={styles.deckStat}>
-                <Text style={styles.deckStatValue}>{sideboard.reduce((sum, c) => sum + c.quantity, 0)}</Text>
-                <Text style={styles.deckStatLabel}>Sideboard</Text>
+                <Text style={[styles.deckStatValue, { color: colors.text }]}>{sideboard.reduce((sum, c) => sum + c.quantity, 0)}</Text>
+                <Text style={[styles.deckStatLabel, { color: colors.textSecondary }]}>Sideboard</Text>
               </View>
               <View style={styles.deckStat}>
-                <Text style={styles.deckStatValue}>{deckCards.length}</Text>
-                <Text style={styles.deckStatLabel}>Unique</Text>
+                <Text style={[styles.deckStatValue, { color: colors.text }]}>{deckCards.length}</Text>
+                <Text style={[styles.deckStatLabel, { color: colors.textSecondary }]}>Unique</Text>
               </View>
             </View>
 
@@ -422,14 +422,33 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
 
             {/* Main Deck */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 Main Deck ({mainDeck.reduce((sum, c) => sum + c.quantity, 0)})
               </Text>
               {mainDeck.length === 0 ? (
-                <Text style={styles.emptyText}>No cards in main deck</Text>
+                <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No cards in main deck</Text>
               ) : (
                 mainDeck.map((card, idx) => (
-                  <View key={`main-${idx}`}>{renderDeckCard({ item: card })}</View>
+                  <View key={`main-${idx}`} style={[styles.deckCardItem, { backgroundColor: colors.surface }]}>
+                    {getCardImage(card) ? (
+                      <Image source={{ uri: getCardImage(card)! }} style={styles.cardImage} resizeMode="contain" />
+                    ) : (
+                      <View style={[styles.cardPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                        <Ionicons name="image-outline" size={20} color={colors.textTertiary} />
+                      </View>
+                    )}
+                    <View style={styles.cardInfo}>
+                      <Text style={[styles.cardName, { color: colors.text }]} numberOfLines={1}>
+                        {card.card_data?.name || 'Unknown'}
+                      </Text>
+                      <Text style={[styles.cardQuantity, { color: colors.textSecondary }]}>x{card.quantity}</Text>
+                    </View>
+                    {card.is_sideboard && (
+                      <View style={[styles.sideboardBadge, { backgroundColor: colors.surfaceSecondary }]}>
+                        <Text style={[styles.sideboardText, { color: colors.textSecondary }]}>SB</Text>
+                      </View>
+                    )}
+                  </View>
                 ))
               )}
             </View>
@@ -437,18 +456,35 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
             {/* Sideboard */}
             {sideboard.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
                   Sideboard ({sideboard.reduce((sum, c) => sum + c.quantity, 0)})
                 </Text>
                 {sideboard.map((card, idx) => (
-                  <View key={`side-${idx}`}>{renderDeckCard({ item: card })}</View>
+                  <View key={`side-${idx}`} style={[styles.deckCardItem, { backgroundColor: colors.surface }]}>
+                    {getCardImage(card) ? (
+                      <Image source={{ uri: getCardImage(card)! }} style={styles.cardImage} resizeMode="contain" />
+                    ) : (
+                      <View style={[styles.cardPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                        <Ionicons name="image-outline" size={20} color={colors.textTertiary} />
+                      </View>
+                    )}
+                    <View style={styles.cardInfo}>
+                      <Text style={[styles.cardName, { color: colors.text }]} numberOfLines={1}>
+                        {card.card_data?.name || 'Unknown'}
+                      </Text>
+                      <Text style={[styles.cardQuantity, { color: colors.textSecondary }]}>x{card.quantity}</Text>
+                    </View>
+                    <View style={[styles.sideboardBadge, { backgroundColor: colors.surfaceSecondary }]}>
+                      <Text style={[styles.sideboardText, { color: colors.textSecondary }]}>SB</Text>
+                    </View>
+                  </View>
                 ))}
               </View>
             )}
 
-            <View style={styles.addCardNote}>
-              <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
-              <Text style={styles.addCardNoteText}>
+            <View style={[styles.addCardNote, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+              <Text style={[styles.addCardNoteText, { color: colors.textSecondary }]}>
                 To add cards to this deck, use the web app's Deck Builder
               </Text>
             </View>
