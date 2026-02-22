@@ -506,7 +506,7 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
               
               {loading ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator color="#3B82F6" />
+                  <ActivityIndicator color={colors.primary} />
                 </View>
               ) : (
                 <FlatList
@@ -517,7 +517,10 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                   renderItem={({ item }) => {
                     const isOwn = item.sender_id === user.user_id;
                     return (
-                      <View style={[styles.messageBubble, isOwn ? styles.ownBubble : styles.otherBubble]}>
+                      <View style={[
+                        styles.messageBubble, 
+                        isOwn ? [styles.ownBubble, { backgroundColor: colors.primary }] : [styles.otherBubble, { backgroundColor: colors.surfaceSecondary }]
+                      ]}>
                         {/* Media Content */}
                         {item.media_url && item.message_type === 'image' && (
                           <Image 
@@ -534,11 +537,11 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                         )}
                         {/* Text Content */}
                         {item.content ? (
-                          <Text style={[styles.messageText, isOwn && styles.ownMessageText]}>
+                          <Text style={[styles.messageText, isOwn ? styles.ownMessageText : { color: colors.text }]}>
                             {item.content}
                           </Text>
                         ) : null}
-                        <Text style={[styles.messageTime, isOwn && styles.ownMessageTime]}>
+                        <Text style={[styles.messageTime, isOwn ? styles.ownMessageTime : { color: colors.textTertiary }]}>
                           {formatTime(item.created_at)}
                         </Text>
                       </View>
@@ -547,35 +550,36 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                 />
               )}
               
-              <View style={styles.inputContainer}>
+              <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
                 <TouchableOpacity
                   style={styles.mediaButton}
                   onPress={() => pickMedia('image')}
                   disabled={uploading}
                 >
-                  <Ionicons name="image-outline" size={22} color="#6B7280" />
+                  <Ionicons name="image-outline" size={22} color={colors.textSecondary} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.mediaButton}
                   onPress={() => pickMedia('video')}
                   disabled={uploading}
                 >
-                  <Ionicons name="videocam-outline" size={22} color="#6B7280" />
+                  <Ionicons name="videocam-outline" size={22} color={colors.textSecondary} />
                 </TouchableOpacity>
                 <TextInput
-                  style={styles.messageInput}
+                  style={[styles.messageInput, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
                   value={newMessage}
                   onChangeText={setNewMessage}
                   placeholder="Type a message..."
+                  placeholderTextColor={colors.textTertiary}
                   multiline
                 />
                 {uploading ? (
-                  <View style={styles.sendButton}>
+                  <View style={[styles.sendButton, { backgroundColor: colors.primary }]}>
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={[styles.sendButton, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
+                    style={[styles.sendButton, { backgroundColor: colors.primary }, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
                     onPress={sendMessage}
                     disabled={!newMessage.trim() || sending}
                   >
