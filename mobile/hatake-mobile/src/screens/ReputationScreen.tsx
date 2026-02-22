@@ -49,6 +49,7 @@ interface ReputationScreenProps {
 }
 
 export default function ReputationScreen({ user, token, onClose, viewUserId }: ReputationScreenProps) {
+  const { colors } = useTheme();
   const [stats, setStats] = useState<ReputationStats | null>(null);
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [loading, setLoading] = useState(true);
