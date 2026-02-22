@@ -450,18 +450,18 @@ export default function TradesScreen({ user, token, onClose, onCreateTrade, onOp
                   <View style={styles.tradeSide}>
                     <Text style={[styles.tradeLabel, { color: colors.textSecondary }]}>Offering</Text>
                     <Text style={[styles.tradeCount, { color: colors.text }]}>
-                      {isInitiator ? trade.initiator_cards.length : trade.receiver_cards.length} cards
+                      {isInitiator ? initiatorCards.length : receiverCards.length} cards
                     </Text>
                   </View>
                   <Ionicons name="swap-horizontal" size={24} color={colors.primary} />
                   <View style={styles.tradeSide}>
                     <Text style={[styles.tradeLabel, { color: colors.textSecondary }]}>Receiving</Text>
                     <Text style={[styles.tradeCount, { color: colors.text }]}>
-                      {isInitiator ? trade.receiver_cards.length : trade.initiator_cards.length} cards
+                      {isInitiator ? receiverCards.length : initiatorCards.length} cards
                     </Text>
                   </View>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })
         )}
