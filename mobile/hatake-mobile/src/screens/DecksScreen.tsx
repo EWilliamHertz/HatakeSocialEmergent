@@ -553,6 +553,7 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
     const isOwner = showDeckDetail.user_id === user.user_id || !showDeckDetail.user_id;
     
     return (
+      <>
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => setShowDeckDetail(null)} style={styles.backButton}>
