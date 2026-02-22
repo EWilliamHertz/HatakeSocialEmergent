@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { API_URL } from '../config';
 import { playNotificationSound } from '../utils/notificationSound';
+import { useTheme } from '../context/ThemeContext';
 
 interface Conversation {
   conversation_id?: string;
