@@ -13,7 +13,7 @@ import requests
 import time
 import json
 
-BASE_URL = "https://hatake-tcg-preview.preview.emergentagent.com"
+BASE_URL = "https://tcg-social-hub-1.preview.emergentagent.com"
 
 
 class TestAuthentication:

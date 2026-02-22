@@ -145,7 +145,7 @@ Update `src/config.ts` with your backend URL:
 ```typescript
 export const API_URL = 'https://www.hatake.eu';  // Production
 // or
-export const API_URL = 'https://hatake-tcg-preview.preview.emergentagent.com';  // Preview
+export const API_URL = 'https://tcg-social-hub-1.preview.emergentagent.com';  // Preview
 ```
 
 ## Google Play Store Deployment

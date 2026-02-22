@@ -13,7 +13,7 @@ import requests
 import os
 import json
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hatake-tcg-preview.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://tcg-social-hub-1.preview.emergentagent.com')
 
 class TestAuth:
     """Test authentication for subsequent tests"""
