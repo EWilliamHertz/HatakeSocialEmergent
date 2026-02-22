@@ -348,6 +348,7 @@ function AppContent() {
                 {() => (
                   <ProfileScreen 
                     user={user} 
+                    token={authToken}
                     onLogout={handleLogout} 
                     onOpenMenu={() => setDrawerOpen(true)}
                     onSettings={() => setShowSettings(true)}
