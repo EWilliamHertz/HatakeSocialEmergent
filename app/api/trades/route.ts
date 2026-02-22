@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
         t.cash_currency,
         i.name as initiator_name,
         i.picture as initiator_picture,
-        r.name as recipient_name,
-        r.picture as recipient_picture
+        r.name as receiver_name,
+        r.picture as receiver_picture
       FROM trades t
       JOIN users i ON t.initiator_id = i.user_id
       JOIN users r ON t.receiver_id = r.user_id
