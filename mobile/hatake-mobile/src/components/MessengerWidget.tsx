@@ -17,11 +17,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
 
 interface Conversation {
+  conversation_id?: string;
   user_id: string;
   name: string;
   picture?: string;
   last_message?: string;
   last_message_time?: string;
+  last_message_at?: string;
   unread_count?: number;
 }
 
