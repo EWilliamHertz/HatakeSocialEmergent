@@ -356,24 +356,25 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
     <View style={styles.container}>
       {/* Chat Window */}
       {isOpen && (
-        <View style={styles.chatWindow}>
+        <View style={[styles.chatWindow, { backgroundColor: colors.surface }]}>
           {showNewChat ? (
             // New Chat - Search Users
             <>
-              <View style={styles.windowHeader}>
+              <View style={[styles.windowHeader, { borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => setShowNewChat(false)}>
-                  <Ionicons name="arrow-back" size={24} color="#6B7280" />
+                  <Ionicons name="arrow-back" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
-                <Text style={styles.windowTitle}>New Message</Text>
+                <Text style={[styles.windowTitle, { color: colors.text }]}>New Message</Text>
                 <TouchableOpacity onPress={toggleWidget}>
-                  <Ionicons name="close" size={24} color="#6B7280" />
+                  <Ionicons name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               
-              <View style={styles.searchContainer}>
+              <View style={[styles.searchContainer, { borderBottomColor: colors.border }]}>
                 <TextInput
-                  style={styles.searchInput}
+                  style={[styles.searchInput, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
                   placeholder="Search users..."
+                  placeholderTextColor={colors.textTertiary}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   onSubmitEditing={searchUsers}
@@ -381,9 +382,9 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                 />
                 <TouchableOpacity style={styles.searchButton} onPress={searchUsers}>
                   {searching ? (
-                    <ActivityIndicator size="small" color="#3B82F6" />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
-                    <Ionicons name="search" size={20} color="#3B82F6" />
+                    <Ionicons name="search" size={20} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -395,29 +396,29 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
                 ListEmptyComponent={
                   searchQuery && !searching ? (
                     <View style={styles.emptyState}>
-                      <Text style={styles.emptyText}>No users found</Text>
+                      <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No users found</Text>
                     </View>
                   ) : (
                     <View style={styles.emptyState}>
-                      <Ionicons name="search-outline" size={40} color="#D1D5DB" />
-                      <Text style={styles.emptyText}>Search for someone to message</Text>
+                      <Ionicons name="search-outline" size={40} color={colors.textTertiary} />
+                      <Text style={[styles.emptyText, { color: colors.textTertiary }]}>Search for someone to message</Text>
                     </View>
                   )
                 }
                 renderItem={({ item }) => (
                   <TouchableOpacity
-                    style={styles.conversationItem}
+                    style={[styles.conversationItem, { borderBottomColor: colors.border }]}
                     onPress={() => startNewChat(item)}
                   >
                     {item.picture ? (
                       <Image source={{ uri: item.picture }} style={styles.avatar} />
                     ) : (
-                      <View style={styles.avatarPlaceholder}>
-                        <Ionicons name="person" size={20} color="#9CA3AF" />
+                      <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                        <Ionicons name="person" size={20} color={colors.textTertiary} />
                       </View>
                     )}
                     <View style={styles.conversationInfo}>
-                      <Text style={styles.conversationName}>{item.name}</Text>
+                      <Text style={[styles.conversationName, { color: colors.text }]}>{item.name}</Text>
                       {item.email && (
                         <Text style={styles.lastMessage} numberOfLines={1}>{item.email}</Text>
                       )}
