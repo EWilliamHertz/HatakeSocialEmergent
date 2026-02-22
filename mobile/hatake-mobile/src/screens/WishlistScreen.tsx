@@ -233,23 +233,23 @@ export default function WishlistScreen({ user, token, onClose }: WishlistScreenP
 
   const renderWishlist = ({ item }: { item: Wishlist }) => (
     <TouchableOpacity
-      style={styles.wishlistCard}
+      style={[styles.wishlistCard, { backgroundColor: colors.surface }]}
       onPress={() => {
         setSelectedWishlist(item);
         fetchWishlistItems(item.wishlist_id);
       }}
       data-testid={`wishlist-${item.wishlist_id}`}
     >
-      <View style={styles.wishlistIcon}>
-        <Ionicons name="heart" size={24} color="#3B82F6" />
+      <View style={[styles.wishlistIcon, { backgroundColor: colors.primaryLight || colors.surfaceSecondary }]}>
+        <Ionicons name="heart" size={24} color={colors.primary} />
       </View>
       <View style={styles.wishlistInfo}>
-        <Text style={styles.wishlistName}>{item.name}</Text>
+        <Text style={[styles.wishlistName, { color: colors.text }]}>{item.name}</Text>
         {item.description && (
-          <Text style={styles.wishlistDesc} numberOfLines={1}>{item.description}</Text>
+          <Text style={[styles.wishlistDesc, { color: colors.textSecondary }]} numberOfLines={1}>{item.description}</Text>
         )}
         <View style={styles.wishlistMeta}>
-          <Text style={styles.wishlistCount}>{item.item_count} cards</Text>
+          <Text style={[styles.wishlistCount, { color: colors.textTertiary }]}>{item.item_count} cards</Text>
           {item.is_public && (
             <View style={styles.publicBadge}>
               <Ionicons name="globe-outline" size={12} color="#10B981" />
@@ -272,21 +272,21 @@ export default function WishlistScreen({ user, token, onClose }: WishlistScreenP
     const name = item.card_data?.name || 'Unknown Card';
     
     return (
-      <View style={styles.itemCard} data-testid={`wishlist-item-${item.item_id}`}>
+      <View style={[styles.itemCard, { backgroundColor: colors.surface }]} data-testid={`wishlist-item-${item.item_id}`}>
         {image ? (
           <Image source={{ uri: image }} style={styles.itemImage} resizeMode="contain" />
         ) : (
-          <View style={styles.itemImagePlaceholder}>
-            <Ionicons name="image-outline" size={24} color="#9CA3AF" />
+          <View style={[styles.itemImagePlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <Ionicons name="image-outline" size={24} color={colors.textTertiary} />
           </View>
         )}
         <View style={styles.itemInfo}>
-          <Text style={styles.itemName} numberOfLines={2}>{name}</Text>
-          <Text style={styles.itemGame}>
+          <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{name}</Text>
+          <Text style={[styles.itemGame, { color: colors.textSecondary }]}>
             {item.game === 'mtg' ? 'Magic' : 'Pokémon'} • x{item.quantity}
           </Text>
           {item.notes && (
-            <Text style={styles.itemNotes} numberOfLines={1}>{item.notes}</Text>
+            <Text style={[styles.itemNotes, { color: colors.textTertiary }]} numberOfLines={1}>{item.notes}</Text>
           )}
         </View>
         <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(item.priority) + '20' }]}>
@@ -301,14 +301,14 @@ export default function WishlistScreen({ user, token, onClose }: WishlistScreenP
   // Wishlist Detail View
   if (selectedWishlist) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => setSelectedWishlist(null)} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{selectedWishlist.name}</Text>
-            <Text style={styles.headerSubtitle}>{wishlistItems.length} cards</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>{selectedWishlist.name}</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{wishlistItems.length} cards</Text>
           </View>
           <View style={styles.backButton} />
         </View>
