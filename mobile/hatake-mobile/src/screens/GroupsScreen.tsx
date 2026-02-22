@@ -51,6 +51,7 @@ interface GroupsScreenProps {
 }
 
 export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps) {
+  const { colors } = useTheme();
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [discoverGroups, setDiscoverGroups] = useState<Group[]>([]);
   const [groupInvites, setGroupInvites] = useState<GroupInvite[]>([]);
