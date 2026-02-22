@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config';
+import { useTheme } from '../context/ThemeContext';
 
 interface Trade {
   trade_id: string;
