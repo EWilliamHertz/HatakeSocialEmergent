@@ -717,6 +717,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: '#9CA3AF',
+    textAlign: 'center',
+  },
+  startChatBtn: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  startChatBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   conversationItem: {
     flexDirection: 'row',
