@@ -303,7 +303,44 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
     setIsOpen(!isOpen);
     if (!isOpen) {
       setSelectedChat(null);
+      setShowNewChat(false);
     }
+  };
+
+  const searchUsers = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setSearching(true);
+    try {
+      const authToken = getAuthToken();
+      const res = await fetch(`${API_URL}/api/users/search?q=${encodeURIComponent(searchQuery)}`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Filter out current user
+        const filtered = (data.users || []).filter((u: any) => u.user_id !== user.user_id);
+        setSearchResults(filtered);
+      }
+    } catch (err) {
+      console.log('Search failed:', err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const startNewChat = (recipient: any) => {
+    // Create a new conversation object and open chat
+    const newConvo: Conversation = {
+      user_id: recipient.user_id,
+      name: recipient.name,
+      picture: recipient.picture,
+    };
+    setSelectedChat(newConvo);
+    setShowNewChat(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    setLoading(true);
   };
 
   const formatTime = (dateStr: string) => {
