@@ -95,7 +95,10 @@ export default function FeedPage() {
         setAuthenticated(true);
         return res.json();
       })
-      .then(() => {
+      .then((data) => {
+        if (data?.user?.user_id) {
+          setCurrentUserId(data.user.user_id);
+        }
         loadPosts();
         loadMyGroups();
       })
