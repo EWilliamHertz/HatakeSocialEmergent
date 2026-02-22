@@ -196,10 +196,28 @@ export default function MessagesPage() {
     }
   }, [soundEnabled]);
 
-  // Scroll to bottom when messages change
+  // Handle scroll to detect if user is scrolled up
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+    setIsUserScrolledUp(!isAtBottom);
+  };
+
+  // Scroll to bottom when messages change (only if not scrolled up)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (initialLoad || !isUserScrolledUp) {
+      messagesEndRef.current?.scrollIntoView({ behavior: initialLoad ? 'auto' : 'smooth' });
+      if (initialLoad && messages.length > 0) {
+        setInitialLoad(false);
+      }
+    }
+  }, [messages, initialLoad, isUserScrolledUp]);
+
+  // Reset initial load when conversation changes
+  useEffect(() => {
+    setInitialLoad(true);
+    setIsUserScrolledUp(false);
+  }, [selectedConv, selectedGroup]);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
