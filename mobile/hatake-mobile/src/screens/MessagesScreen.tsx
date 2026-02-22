@@ -893,4 +893,68 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
+  // Reply styles
+  replyButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
+  },
+  replyPreview: {
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderLeftWidth: 3,
+    borderLeftColor: '#6B7280',
+    borderRadius: 4,
+    padding: 8,
+    marginBottom: 8,
+  },
+  replyPreviewOwn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderLeftColor: '#FFFFFF',
+  },
+  replyName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  replyNameOwn: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  replyText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  replyTextOwn: {
+    color: 'rgba(255,255,255,0.7)',
+  },
+  replyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  replyBannerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  replyBannerText: {
+    flex: 1,
+  },
+  replyBannerName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
+  replyBannerMessage: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
 });
