@@ -290,15 +290,15 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
           )}
         </View>
         
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardName} numberOfLines={1}>
+        <View style={[styles.cardInfo, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.cardName, { color: colors.text }]} numberOfLines={1}>
             {getCardName(item)}
           </Text>
-          <Text style={styles.cardSet} numberOfLines={1}>
+          <Text style={[styles.cardSet, { color: colors.textTertiary }]} numberOfLines={1}>
             {getSetInfo(item)}
           </Text>
-          <Text style={styles.price}>{formatPrice(item.price)}</Text>
-          <Text style={styles.condition}>
+          <Text style={[styles.price, { color: colors.success }]}>{formatPrice(item.price)}</Text>
+          <Text style={[styles.condition, { color: colors.textSecondary }]}>
             {item.condition || 'NM'} • {item.game === 'mtg' ? 'Magic' : 'Pokémon'}
           </Text>
           
@@ -306,11 +306,11 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
             {item.seller_picture ? (
               <Image source={{ uri: item.seller_picture }} style={styles.sellerAvatar} />
             ) : (
-              <View style={styles.sellerAvatarPlaceholder}>
-                <Ionicons name="person" size={10} color="#9CA3AF" />
+              <View style={[styles.sellerAvatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                <Ionicons name="person" size={10} color={colors.textTertiary} />
               </View>
             )}
-            <Text style={styles.sellerName} numberOfLines={1}>
+            <Text style={[styles.sellerName, { color: colors.textSecondary }]} numberOfLines={1}>
               {isOwner ? 'You' : (item.seller_name || 'Seller')}
             </Text>
           </View>
@@ -321,7 +321,7 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
 
   const renderShopProduct = ({ item }: { item: ShopProduct }) => {
     return (
-      <TouchableOpacity style={styles.card} data-testid={`product-${item.id}`}>
+      <TouchableOpacity style={[styles.card, { backgroundColor: colors.surface }]} data-testid={`product-${item.id}`}>
         <View style={styles.cardImageContainer}>
           {item.image ? (
             <Image 
@@ -330,8 +330,8 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
               resizeMode="contain"
             />
           ) : (
-            <View style={styles.cardPlaceholder}>
-              <Ionicons name="bag-outline" size={30} color="#9CA3AF" />
+            <View style={[styles.cardPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="bag-outline" size={30} color={colors.textTertiary} />
             </View>
           )}
           {item.stock < 5 && item.stock > 0 && (
@@ -346,8 +346,8 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
           )}
         </View>
         
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardName} numberOfLines={2}>
+        <View style={[styles.cardInfo, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.cardName, { color: colors.text }]} numberOfLines={2}>
             {item.name}
           </Text>
           <Text style={styles.cardSet} numberOfLines={1}>
