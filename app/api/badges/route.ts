@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     const [tradeStats] = await sql`
       SELECT 
         COUNT(*) FILTER (WHERE status = 'completed') as completed_trades,
-        (SELECT COUNT(*) FROM collection WHERE user_id = ${user.user_id}) as collection_size,
+        (SELECT COUNT(*) FROM collection_items WHERE user_id = ${user.user_id}) as collection_size,
         (SELECT AVG(rating) FROM trade_ratings WHERE rated_user_id = ${user.user_id}) as avg_rating,
         (SELECT created_at FROM users WHERE user_id = ${user.user_id}) as account_created
       FROM trades 
