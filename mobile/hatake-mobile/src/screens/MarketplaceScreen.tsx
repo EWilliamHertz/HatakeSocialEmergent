@@ -57,6 +57,7 @@ interface MarketplaceScreenProps {
 }
 
 export default function MarketplaceScreen({ user, token, onOpenMenu }: MarketplaceScreenProps) {
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<'cards' | 'hatake'>('cards');
   const [listings, setListings] = useState<Listing[]>([]);
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
