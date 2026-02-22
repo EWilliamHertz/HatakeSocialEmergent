@@ -466,13 +466,15 @@ export default function MessengerWidget({ user, token, visible, onViewProfile }:
                         style={[styles.conversationItem, { borderBottomColor: colors.border }]}
                         onPress={() => { setSelectedChat(item); setLoading(true); }}
                       >
-                        {item.picture ? (
-                          <Image source={{ uri: item.picture }} style={styles.avatar} />
-                        ) : (
-                          <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
-                            <Ionicons name="person" size={20} color={colors.textTertiary} />
-                          </View>
-                        )}
+                        <TouchableOpacity onPress={() => onViewProfile?.(item.user_id)}>
+                          {item.picture ? (
+                            <Image source={{ uri: item.picture }} style={styles.avatar} />
+                          ) : (
+                            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                              <Ionicons name="person" size={20} color={colors.textTertiary} />
+                            </View>
+                          )}
+                        </TouchableOpacity>
                         <View style={styles.conversationInfo}>
                           <Text style={[styles.conversationName, { color: colors.text }]}>{item.name}</Text>
                           {item.last_message && (
