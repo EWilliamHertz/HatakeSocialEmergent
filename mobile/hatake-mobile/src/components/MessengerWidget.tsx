@@ -38,6 +38,9 @@ interface Message {
   media_url?: string;
   name?: string;
   picture?: string;
+  reply_to?: string;
+  reply_content?: string;
+  reply_sender_name?: string;
 }
 
 interface MessengerWidgetProps {
@@ -56,6 +59,7 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [unreadTotal, setUnreadTotal] = useState(0);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
   
   const scaleAnim = useState(new Animated.Value(1))[0];
 
