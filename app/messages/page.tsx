@@ -82,6 +82,7 @@ export default function MessagesPage() {
   const [showMediaGallery, setShowMediaGallery] = useState(false);
   const [mediaGallery, setMediaGallery] = useState<Message[]>([]);
   const [fullscreenMedia, setFullscreenMedia] = useState<Message | null>(null);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
