@@ -370,28 +370,54 @@ export default function App() {
             </Modal>
 
             {/* Messages Modal */}
-            <Modal
-              visible={showMessages}
-              animationType="slide"
-              presentationStyle="fullScreen"
-              onRequestClose={() => {
-                setShowMessages(false);
-                setMessageRecipient(null);
-              }}
-            >
-              <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
-                <MessagesScreen
-                  user={user}
-                  token={token}
-                  onClose={() => {
-                    setShowMessages(false);
-                    setMessageRecipient(null);
-                  }}
-                  initialRecipient={messageRecipient}
-                  onStartCall={handleStartCall}
-                />
-              </View>
-            </Modal>
+            {Platform.OS === 'web' ? (
+              showMessages && (
+                <View style={{ 
+                  position: 'absolute', 
+                  top: 0, 
+                  left: 0, 
+                  right: 0, 
+                  bottom: 0, 
+                  backgroundColor: '#F9FAFB',
+                  zIndex: 100,
+                  flex: 1,
+                }}>
+                  <MessagesScreen
+                    user={user}
+                    token={token}
+                    onClose={() => {
+                      setShowMessages(false);
+                      setMessageRecipient(null);
+                    }}
+                    initialRecipient={messageRecipient}
+                    onStartCall={handleStartCall}
+                  />
+                </View>
+              )
+            ) : (
+              <Modal
+                visible={showMessages}
+                animationType="slide"
+                presentationStyle="fullScreen"
+                onRequestClose={() => {
+                  setShowMessages(false);
+                  setMessageRecipient(null);
+                }}
+              >
+                <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+                  <MessagesScreen
+                    user={user}
+                    token={token}
+                    onClose={() => {
+                      setShowMessages(false);
+                      setMessageRecipient(null);
+                    }}
+                    initialRecipient={messageRecipient}
+                    onStartCall={handleStartCall}
+                  />
+                </View>
+              </Modal>
+            )}
 
             {/* Decks Modal */}
             <Modal
