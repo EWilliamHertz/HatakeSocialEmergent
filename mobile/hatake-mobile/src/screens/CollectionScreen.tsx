@@ -1417,11 +1417,18 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
       {selectionMode && selectedIds.size > 0 && (
         <View style={[styles.bulkActionBar, { backgroundColor: colors.surface }]}>
           <TouchableOpacity 
+            style={[styles.bulkListButton, { backgroundColor: colors.primary }]}
+            onPress={openBulkListModal}
+          >
+            <Ionicons name="pricetag-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.bulkListText}>List ({selectedIds.size})</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
             style={styles.bulkDeleteButton}
             onPress={bulkDelete}
           >
             <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.bulkDeleteText}>Delete ({selectedIds.size})</Text>
+            <Text style={styles.bulkDeleteText}>Delete</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.bulkCancelButton}
@@ -1434,6 +1441,147 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Bulk List Modal */}
+      <Modal
+        visible={showBulkListModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowBulkListModal(false)}
+      >
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>List {selectedIds.size} Cards for Sale</Text>
+            <TouchableOpacity onPress={() => setShowBulkListModal(false)}>
+              <Ionicons name="close" size={28} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            {/* Price Summary */}
+            <View style={[styles.priceSummary, { backgroundColor: colors.surfaceSecondary }]}>
+              <Text style={[styles.summaryText, { color: colors.textSecondary }]}>
+                Market Value: €{calculateSelectedValue().toFixed(2)}
+              </Text>
+              <Text style={[styles.summaryText, { color: colors.primary }]}>
+                Listing Total: €{calculateListingTotal().toFixed(2)}
+              </Text>
+            </View>
+
+            {/* Global Percent Slider */}
+            <View style={[styles.percentSection, { backgroundColor: colors.surface }]}>
+              <View style={styles.percentHeader}>
+                <Text style={[styles.sectionLabel, { color: colors.text }]}>% of Market Price</Text>
+                <TouchableOpacity 
+                  style={[styles.applyAllBtn, { backgroundColor: colors.primaryLight || colors.surfaceSecondary }]}
+                  onPress={() => recalculateAllPrices(bulkListPercent)}
+                >
+                  <Text style={[styles.applyAllText, { color: colors.primary }]}>Apply to All</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.percentRow}>
+                <View style={[styles.percentInputBox, { backgroundColor: colors.surfaceSecondary }]}>
+                  <TextInput
+                    style={[styles.percentInput, { color: colors.text }]}
+                    value={bulkListPercent}
+                    onChangeText={setBulkListPercent}
+                    keyboardType="numeric"
+                    maxLength={3}
+                  />
+                  <Text style={[styles.percentSign, { color: colors.textSecondary }]}>%</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Condition Selector */}
+            <View style={[styles.conditionSection, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.sectionLabel, { color: colors.text }]}>Condition for All</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.conditionScroll}>
+                {['Mint', 'Near Mint', 'Lightly Played', 'Moderately Played', 'Heavily Played', 'Damaged'].map(cond => (
+                  <TouchableOpacity
+                    key={cond}
+                    style={[
+                      styles.conditionChip,
+                      { backgroundColor: colors.surfaceSecondary },
+                      bulkListCondition === cond && { backgroundColor: colors.primary }
+                    ]}
+                    onPress={() => setBulkListCondition(cond)}
+                  >
+                    <Text style={[
+                      styles.conditionChipText,
+                      { color: colors.textSecondary },
+                      bulkListCondition === cond && { color: '#FFFFFF' }
+                    ]}>{cond}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Individual Cards */}
+            <View style={[styles.cardsSection, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.sectionLabel, { color: colors.text }]}>Individual Prices</Text>
+              {items.filter(item => selectedIds.has(item.id)).map(item => {
+                const marketPrice = getCardPrice(item) / (item.quantity || 1);
+                const imageUrl = getCardImage(item);
+                return (
+                  <View key={item.id} style={[styles.listCardRow, { borderBottomColor: colors.border }]}>
+                    {imageUrl ? (
+                      <Image source={{ uri: imageUrl }} style={styles.listCardImage} />
+                    ) : (
+                      <View style={[styles.listCardImagePlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+                        <Ionicons name="image-outline" size={16} color={colors.textTertiary} />
+                      </View>
+                    )}
+                    <View style={styles.listCardInfo}>
+                      <Text style={[styles.listCardName, { color: colors.text }]} numberOfLines={1}>
+                        {item.card_data?.name || 'Unknown'}
+                      </Text>
+                      <Text style={[styles.listCardMeta, { color: colors.textTertiary }]}>
+                        Market: €{marketPrice.toFixed(2)} {item.quantity > 1 && `× ${item.quantity}`}
+                      </Text>
+                    </View>
+                    <View style={styles.listCardPriceInput}>
+                      <Text style={[styles.eurSign, { color: colors.textSecondary }]}>€</Text>
+                      <TextInput
+                        style={[styles.priceInput, { backgroundColor: colors.surfaceSecondary, color: colors.text }]}
+                        value={individualPrices[item.id] || ''}
+                        onChangeText={(val) => setIndividualPrices(prev => ({ ...prev, [item.id]: val }))}
+                        keyboardType="decimal-pad"
+                        placeholder="0.00"
+                        placeholderTextColor={colors.textTertiary}
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
+
+          {/* Footer */}
+          <View style={[styles.modalFooter, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+            <TouchableOpacity
+              style={[styles.cancelButton, { borderColor: colors.border }]}
+              onPress={() => setShowBulkListModal(false)}
+            >
+              <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.listButton, { backgroundColor: colors.primary }, bulkListing && styles.buttonDisabled]}
+              onPress={submitBulkList}
+              disabled={bulkListing}
+            >
+              {bulkListing ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="pricetag" size={20} color="#FFFFFF" />
+                  <Text style={styles.listButtonText}>List for Sale</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
 
       {/* Card Detail Modal */}
       <Modal
