@@ -81,7 +81,9 @@ export async function GET(request: NextRequest) {
           SELECT p.*, u.name, u.picture, g.name as group_name,
             (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as like_count,
             (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comment_count,
-            EXISTS(SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ${user.user_id}) as liked
+            EXISTS(SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ${user.user_id}) as liked,
+            (SELECT COUNT(*) FROM user_badges WHERE user_id = p.user_id) as badge_count,
+            (SELECT badge_type FROM user_badges WHERE user_id = p.user_id ORDER BY awarded_at ASC LIMIT 1) as top_badge
           FROM posts p
           JOIN users u ON p.user_id = u.user_id
           JOIN groups g ON p.group_id = g.group_id
