@@ -328,32 +328,32 @@ export default function MessagesScreen({
 
   const renderConversation = ({ item }: { item: Conversation }) => (
     <TouchableOpacity
-      style={styles.conversationItem}
+      style={[styles.conversationItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}
       onPress={() => setSelectedConversation(item)}
       data-testid={`conversation-${item.conversation_id}`}
     >
       {item.picture ? (
         <Image source={{ uri: item.picture }} style={styles.avatar} />
       ) : (
-        <View style={styles.avatarPlaceholder}>
-          <Ionicons name="person" size={24} color="#9CA3AF" />
+        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+          <Ionicons name="person" size={24} color={colors.textTertiary} />
         </View>
       )}
       <View style={styles.conversationInfo}>
         <View style={styles.conversationHeader}>
-          <Text style={styles.conversationName}>{item.name}</Text>
+          <Text style={[styles.conversationName, { color: colors.text }]}>{item.name}</Text>
           {item.last_message_at && (
-            <Text style={styles.conversationTime}>{formatTime(item.last_message_at)}</Text>
+            <Text style={[styles.conversationTime, { color: colors.textTertiary }]}>{formatTime(item.last_message_at)}</Text>
           )}
         </View>
         {item.last_message && (
-          <Text style={styles.lastMessage} numberOfLines={1}>
+          <Text style={[styles.lastMessage, { color: colors.textSecondary }]} numberOfLines={1}>
             {item.last_message}
           </Text>
         )}
       </View>
       {item.unread_count && item.unread_count > 0 && (
-        <View style={styles.unreadBadge}>
+        <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
           <Text style={styles.unreadText}>{item.unread_count}</Text>
         </View>
       )}
