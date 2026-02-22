@@ -257,7 +257,7 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
 
   const renderDeck = ({ item }: { item: Deck }) => (
     <TouchableOpacity 
-      style={styles.deckCard}
+      style={[styles.deckCard, { backgroundColor: colors.surface }]}
       onPress={() => openDeckDetail(item)}
       data-testid={`deck-${item.deck_id}`}
     >
@@ -268,15 +268,15 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
           </Text>
         </View>
         {item.format && (
-          <Text style={styles.formatText}>{item.format}</Text>
+          <Text style={[styles.formatText, { color: colors.textSecondary }]}>{item.format}</Text>
         )}
         {item.is_public && (
           <Ionicons name="globe-outline" size={14} color="#10B981" style={{ marginLeft: 'auto' }} />
         )}
       </View>
-      <Text style={styles.deckName}>{item.name}</Text>
+      <Text style={[styles.deckName, { color: colors.text }]}>{item.name}</Text>
       {item.description && (
-        <Text style={styles.deckDescription} numberOfLines={2}>{item.description}</Text>
+        <Text style={[styles.deckDescription, { color: colors.textSecondary }]} numberOfLines={2}>{item.description}</Text>
       )}
       
       {/* Community deck author info */}
@@ -285,20 +285,20 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
           {item.user_picture ? (
             <Image source={{ uri: item.user_picture }} style={styles.authorAvatar} />
           ) : (
-            <View style={styles.authorPlaceholder}>
-              <Ionicons name="person" size={12} color="#9CA3AF" />
+            <View style={[styles.authorPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="person" size={12} color={colors.textTertiary} />
             </View>
           )}
-          <Text style={styles.authorName}>by {item.user_name}</Text>
+          <Text style={[styles.authorName, { color: colors.textSecondary }]}>by {item.user_name}</Text>
         </View>
       )}
       
-      <View style={styles.deckFooter}>
+      <View style={[styles.deckFooter, { borderTopColor: colors.border }]}>
         <View style={styles.cardCount}>
-          <Ionicons name="layers" size={14} color="#6B7280" />
-          <Text style={styles.cardCountText}>{item.card_count} cards</Text>
+          <Ionicons name="layers" size={14} color={colors.textSecondary} />
+          <Text style={[styles.cardCountText, { color: colors.textSecondary }]}>{item.card_count} cards</Text>
         </View>
-        <Text style={styles.dateText}>
+        <Text style={[styles.dateText, { color: colors.textTertiary }]}>
           {new Date(item.updated_at).toLocaleDateString()}
         </Text>
       </View>
