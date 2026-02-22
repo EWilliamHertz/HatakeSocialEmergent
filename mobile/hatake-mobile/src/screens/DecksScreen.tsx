@@ -389,7 +389,7 @@ export default function DecksScreen({ user, token, onClose }: DecksScreenProps) 
     
     try {
       const authToken = getAuthToken();
-      const res = await fetch(`${API_URL}/api/decks/${showDeckDetail.deck_id}/cards/${cardId}`, {
+      const res = await fetch(`${API_URL}/api/decks/${showDeckDetail.deck_id}/cards?cardId=${cardId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
