@@ -78,6 +78,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
         }
         // Check friendship status
         checkFriendship();
+        loadBadges();
       } else {
         router.push('/');
       }
