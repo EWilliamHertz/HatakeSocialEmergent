@@ -6,7 +6,7 @@ import sql from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    const { email, password, name, inviteCode } = await request.json();
 
     if (!email || !password || !name) {
       return NextResponse.json(
