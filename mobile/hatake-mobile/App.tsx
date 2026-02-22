@@ -339,7 +339,8 @@ export default function App() {
                   <ProfileScreen 
                     user={user} 
                     onLogout={handleLogout} 
-                    onOpenMenu={() => setDrawerOpen(true)} 
+                    onOpenMenu={() => setDrawerOpen(true)}
+                    onSettings={() => setShowSettings(true)}
                   />
                 )}
               </Tab.Screen>
