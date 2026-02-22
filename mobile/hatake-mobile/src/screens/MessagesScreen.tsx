@@ -367,9 +367,26 @@ export default function MessagesScreen({
           )
         )}
         <View style={[styles.messageBubble, isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther]}>
-          <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
-            {item.content}
-          </Text>
+          {/* Media Content */}
+          {item.media_url && item.message_type === 'image' && (
+            <Image 
+              source={{ uri: item.media_url }} 
+              style={styles.mediaImage}
+              resizeMode="cover"
+            />
+          )}
+          {item.media_url && item.message_type === 'video' && (
+            <View style={styles.videoPlaceholder}>
+              <Ionicons name="play-circle" size={48} color="#FFFFFF" />
+              <Text style={styles.videoText}>Video</Text>
+            </View>
+          )}
+          {/* Text Content */}
+          {item.content ? (
+            <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
+              {item.content}
+            </Text>
+          ) : null}
           <Text style={[styles.messageTime, isOwn && styles.messageTimeOwn]}>
             {formatTime(item.created_at)}
           </Text>
