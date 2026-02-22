@@ -1300,6 +1300,112 @@ const styles = StyleSheet.create({
   manaCurveBarFill: { width: 24, backgroundColor: '#3B82F6', borderRadius: 4, marginBottom: 4 },
   manaCurveLabel: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
   manaCurveCount: { fontSize: 10, color: '#9CA3AF', marginTop: 2 },
+  // Deck Analytics Styles
+  analyticsSection: {
+    margin: 12,
+    padding: 14,
+    borderRadius: 12,
+  },
+  avgCmcRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  analyticLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  avgCmcValue: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  colorDistribRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  colorPips: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  colorPip: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colorPipText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  typeDistribSection: {
+    marginBottom: 14,
+  },
+  typeBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 8,
+  },
+  typeLabel: {
+    width: 80,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  typeBarBg: {
+    flex: 1,
+    height: 14,
+    borderRadius: 7,
+    overflow: 'hidden',
+  },
+  typeBarFill: {
+    height: '100%',
+    borderRadius: 7,
+  },
+  typeCount: {
+    width: 28,
+    fontSize: 12,
+    textAlign: 'right',
+    fontWeight: '600',
+  },
+  formatIssues: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  formatIssueHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  formatIssueTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  formatIssueText: {
+    fontSize: 12,
+    color: '#78350F',
+    marginLeft: 24,
+    marginBottom: 2,
+  },
+  formatValid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  formatValidText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#065F46',
+  },
   
   section: { marginBottom: 24 },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 12 },
