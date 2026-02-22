@@ -966,6 +966,95 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
 
   const stats = calculateCollectionStats();
 
+  // Bulk List Functions
+  const openBulkListModal = () => {
+    const prices: Record<number, string> = {};
+    items.filter(item => selectedIds.has(item.id)).forEach(item => {
+      const marketPrice = getCardPrice(item) / (item.quantity || 1); // Price per card
+      const listingPrice = (marketPrice * (parseFloat(bulkListPercent) / 100)).toFixed(2);
+      prices[item.id] = listingPrice;
+    });
+    setIndividualPrices(prices);
+    setShowBulkListModal(true);
+  };
+
+  const recalculateAllPrices = (percent: string) => {
+    const prices: Record<number, string> = {};
+    items.filter(item => selectedIds.has(item.id)).forEach(item => {
+      const marketPrice = getCardPrice(item) / (item.quantity || 1);
+      const listingPrice = (marketPrice * (parseFloat(percent) / 100)).toFixed(2);
+      prices[item.id] = listingPrice;
+    });
+    setIndividualPrices(prices);
+  };
+
+  const calculateSelectedValue = () => {
+    let total = 0;
+    items.filter(item => selectedIds.has(item.id)).forEach(item => {
+      total += getCardPrice(item);
+    });
+    return total;
+  };
+
+  const calculateListingTotal = () => {
+    let total = 0;
+    items.filter(item => selectedIds.has(item.id)).forEach(item => {
+      const price = parseFloat(individualPrices[item.id] || '0');
+      total += price * (item.quantity || 1);
+    });
+    return total;
+  };
+
+  const submitBulkList = async () => {
+    setBulkListing(true);
+    try {
+      const authToken = Platform.OS === 'web' && typeof localStorage !== 'undefined'
+        ? localStorage.getItem('auth_token') || token
+        : token;
+
+      const selectedCards = items.filter(item => selectedIds.has(item.id));
+      
+      const listings = selectedCards.map(item => {
+        const price = parseFloat(individualPrices[item.id] || '0');
+        return {
+          card_id: item.card_id,
+          card_data: item.card_data,
+          game: item.game,
+          price: Math.max(0.01, price),
+          condition: bulkListCondition,
+          quantity: item.quantity || 1,
+          foil: item.foil,
+        };
+      });
+
+      const res = await fetch(`${API_URL}/api/collection/bulk-list`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ listings }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        Alert.alert('Success', `Listed ${data.listed} card(s) for sale!`);
+        setSelectedIds(new Set());
+        setSelectionMode(false);
+        setShowBulkListModal(false);
+        setIndividualPrices({});
+      } else {
+        Alert.alert('Error', data.error || 'Failed to list cards');
+      }
+    } catch (error) {
+      console.error('Bulk list error:', error);
+      Alert.alert('Error', 'Failed to list cards. Please try again.');
+    } finally {
+      setBulkListing(false);
+    }
+  };
+
   // State for card detail modal (collection card view/edit)
   const [detailCard, setDetailCard] = useState<CollectionItem | null>(null);
   const [editingQuantity, setEditingQuantity] = useState('1');
