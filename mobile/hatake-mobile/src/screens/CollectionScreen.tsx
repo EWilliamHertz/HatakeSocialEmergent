@@ -765,50 +765,77 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
   };
 
   // CSV Import functionality
-  const parseCSV = (text: string): { setCode: string; collectorNumber: string; quantity: number }[] => {
+  // Supports multiple formats:
+  // 1. name/set_code (e.g., "muxus/JMP" or "cavern of souls/LCI")
+  // 2. set_code,collector_number,quantity (e.g., "sv09,123,2")
+  // 3. quantity set_code collector_number (e.g., "2 sv09 123")
+  interface ParsedCard {
+    name?: string;
+    setCode?: string;
+    collectorNumber?: string;
+    quantity: number;
+    searchByName: boolean;
+  }
+
+  const parseCSV = (text: string): ParsedCard[] => {
     const lines = text.trim().split('\n');
-    const results: { setCode: string; collectorNumber: string; quantity: number }[] = [];
+    const results: ParsedCard[] = [];
     
     for (const line of lines) {
       if (!line.trim()) continue;
+      const trimmedLine = line.trim();
       
-      // Try different CSV formats
-      // Format 1: "set_code,collector_number,quantity" (e.g., "sv09,123,2")
-      // Format 2: "quantity set_code collector_number" (e.g., "2 sv09 123")
-      // Format 3: "set_code collector_number quantity" (e.g., "sv09 123 2")
+      // Check for name/set_code format (contains "/" and text on both sides)
+      if (trimmedLine.includes('/')) {
+        const slashIndex = trimmedLine.lastIndexOf('/');
+        const name = trimmedLine.substring(0, slashIndex).trim();
+        const setCode = trimmedLine.substring(slashIndex + 1).trim();
+        
+        if (name && setCode) {
+          results.push({
+            name: name,
+            setCode: setCode.toLowerCase(),
+            quantity: 1,
+            searchByName: true
+          });
+          continue;
+        }
+      }
       
-      let parts = line.split(',').map(p => p.trim().replace(/"/g, ''));
+      // Try comma-separated format: set_code,collector_number,quantity
+      let parts = trimmedLine.split(',').map(p => p.trim().replace(/"/g, ''));
       
-      if (parts.length >= 2) {
-        // CSV format with commas
+      if (parts.length >= 2 && !isNaN(parseInt(parts[1]))) {
         const setCode = parts[0].toLowerCase();
         const collectorNumber = parts[1];
         const quantity = parts[2] ? parseInt(parts[2]) || 1 : 1;
         
         if (setCode && collectorNumber) {
-          results.push({ setCode, collectorNumber, quantity });
+          results.push({ setCode, collectorNumber, quantity, searchByName: false });
+          continue;
         }
-      } else {
-        // Space-separated format
-        parts = line.split(/\s+/).map(p => p.trim());
-        if (parts.length >= 2) {
-          // Check if first part is a number (quantity first format)
-          const firstNum = parseInt(parts[0]);
-          if (!isNaN(firstNum) && parts.length >= 3) {
-            // Format: quantity set_code collector_number
-            results.push({
-              setCode: parts[1].toLowerCase(),
-              collectorNumber: parts[2],
-              quantity: firstNum
-            });
-          } else {
-            // Format: set_code collector_number [quantity]
-            results.push({
-              setCode: parts[0].toLowerCase(),
-              collectorNumber: parts[1],
-              quantity: parts[2] ? parseInt(parts[2]) || 1 : 1
-            });
-          }
+      }
+      
+      // Space-separated format
+      parts = trimmedLine.split(/\s+/).map(p => p.trim());
+      if (parts.length >= 2) {
+        const firstNum = parseInt(parts[0]);
+        if (!isNaN(firstNum) && parts.length >= 3) {
+          // Format: quantity set_code collector_number
+          results.push({
+            setCode: parts[1].toLowerCase(),
+            collectorNumber: parts[2],
+            quantity: firstNum,
+            searchByName: false
+          });
+        } else if (!isNaN(parseInt(parts[1]))) {
+          // Format: set_code collector_number [quantity]
+          results.push({
+            setCode: parts[0].toLowerCase(),
+            collectorNumber: parts[1],
+            quantity: parts[2] ? parseInt(parts[2]) || 1 : 1,
+            searchByName: false
+          });
         }
       }
     }
