@@ -337,8 +337,8 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
               <Switch
                 value={isDarkMode}
                 onValueChange={setDarkMode}
-                trackColor={{ false: '#D1D5DB', true: '#6366F1' }}
-                thumbColor={isDarkMode ? '#FBBF24' : '#9CA3AF'}
+                trackColor={{ false: colors.border, true: '#6366F1' }}
+                thumbColor={isDarkMode ? '#FBBF24' : colors.textTertiary}
               />
             )}
             
@@ -349,8 +349,8 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
               <Switch
                 value={soundEnabled}
                 onValueChange={toggleSoundEnabled}
-                trackColor={{ false: '#D1D5DB', true: '#10B981' }}
-                thumbColor={soundEnabled ? '#10B981' : '#9CA3AF'}
+                trackColor={{ false: colors.border, true: '#10B981' }}
+                thumbColor={soundEnabled ? '#10B981' : colors.textTertiary}
               />
             )}
           </View>
@@ -358,9 +358,9 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
 
         {/* Notifications Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notifications</Text>
           
-          <View style={styles.settingCard}>
+          <View style={[styles.settingCard, { backgroundColor: colors.surface }]}>
             {renderSettingRow(
               'notifications-outline',
               'Push Notifications',
@@ -368,8 +368,8 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
               <Switch
                 value={pushEnabled}
                 onValueChange={setPushEnabled}
-                trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
-                thumbColor={pushEnabled ? '#3B82F6' : '#9CA3AF'}
+                trackColor={{ false: colors.border, true: '#93C5FD' }}
+                thumbColor={pushEnabled ? colors.primary : colors.textTertiary}
               />
             )}
             
@@ -380,8 +380,8 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
               <Switch
                 value={emailNotifications}
                 onValueChange={setEmailNotifications}
-                trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
-                thumbColor={emailNotifications ? '#3B82F6' : '#9CA3AF'}
+                trackColor={{ false: colors.border, true: '#93C5FD' }}
+                thumbColor={emailNotifications ? colors.primary : colors.textTertiary}
               />
             )}
             
@@ -392,8 +392,8 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
               <Switch
                 value={messageNotifications}
                 onValueChange={setMessageNotifications}
-                trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
-                thumbColor={messageNotifications ? '#3B82F6' : '#9CA3AF'}
+                trackColor={{ false: colors.border, true: '#93C5FD' }}
+                thumbColor={messageNotifications ? colors.primary : colors.textTertiary}
               />
             )}
             
@@ -404,8 +404,8 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
               <Switch
                 value={tradeNotifications}
                 onValueChange={setTradeNotifications}
-                trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
-                thumbColor={tradeNotifications ? '#3B82F6' : '#9CA3AF'}
+                trackColor={{ false: colors.border, true: '#93C5FD' }}
+                thumbColor={tradeNotifications ? colors.primary : colors.textTertiary}
               />
             )}
           </View>
@@ -413,9 +413,9 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
 
         {/* Chat Widget Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Chat Widget</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Chat Widget</Text>
           
-          <View style={styles.settingCard}>
+          <View style={[styles.settingCard, { backgroundColor: colors.surface }]}>
             {renderSettingRow(
               'chatbubble-ellipses-outline',
               'Messenger Widget',
