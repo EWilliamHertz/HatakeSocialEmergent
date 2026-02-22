@@ -151,8 +151,27 @@ export default function VideoCallScreen({ user, token, callState, onEndCall }: V
     }
   };
 
-  const endCall = () => {
+  const endCall = async () => {
     setCallStatus('ended');
+    // Notify the other participant
+    try {
+      const authToken = getAuthToken();
+      const recipientId = callState.recipient?.user_id || '';
+      await fetch(`${API_URL}/api/calls`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'call_ended',
+          target: recipientId,
+          data: {},
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to send end call signal:', err);
+    }
     onEndCall();
   };
 
@@ -161,10 +180,6 @@ export default function VideoCallScreen({ user, token, callState, onEndCall }: V
   const toggleSpeaker = () => setIsSpeakerOn(!isSpeakerOn);
 
   const toggleScreenShare = () => {
-    if (isWeb) {
-      showAlert('Not Available', 'Screen sharing requires the native app.');
-      return;
-    }
     setIsScreenSharing(!isScreenSharing);
   };
 
