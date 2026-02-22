@@ -5,6 +5,7 @@ const BADGE_DEFINITIONS: Record<string, { name: string; description: string; ico
   beta_tester: { name: 'Beta Tester', description: 'Early supporter of Hatake.Social', icon: 'flask', color: '#8B5CF6', category: 'Special' },
   founder: { name: 'Founder', description: 'Original founding member', icon: 'star', color: '#FFD700', category: 'Special' },
   moderator: { name: 'Moderator', description: 'Community moderator', icon: 'shield', color: '#6366F1', category: 'Special' },
+  recruiter: { name: 'Recruiter', description: 'Invited a friend to Hatake.Social', icon: 'person-add', color: '#F43F5E', category: 'Special' },
   first_trade: { name: 'First Trade', description: 'Completed your first trade!', icon: 'swap-horizontal', color: '#EC4899', category: 'Trading' },
   trader_5: { name: 'Active Trader', description: '5 successful trades', icon: 'repeat', color: '#F97316', category: 'Trading' },
   trader_10: { name: 'Experienced Trader', description: '10 successful trades', icon: 'trending-up', color: '#EAB308', category: 'Trading' },
