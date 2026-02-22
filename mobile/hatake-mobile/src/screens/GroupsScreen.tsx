@@ -93,11 +93,56 @@ export default function GroupsScreen({ user, token, onClose }: GroupsScreenProps
       });
       const discoverData = await discoverRes.json();
       if (discoverData.success) setDiscoverGroups(discoverData.groups || []);
+      
+      // Fetch group invites
+      const invitesRes = await fetch(`${API_URL}/api/groups/invites`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const invitesData = await invitesRes.json();
+      if (invitesData.success) setGroupInvites(invitesData.invites || []);
     } catch (err) {
       console.error('Failed to fetch groups:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const acceptInvite = async (inviteId: string) => {
+    try {
+      const authToken = getAuthToken();
+      const res = await fetch(`${API_URL}/api/groups/invites`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ inviteId, action: 'accept' }),
+      });
+      if (res.ok) {
+        fetchGroups();
+      }
+    } catch (err) {
+      console.error('Failed to accept invite:', err);
+    }
+  };
+
+  const declineInvite = async (inviteId: string) => {
+    try {
+      const authToken = getAuthToken();
+      const res = await fetch(`${API_URL}/api/groups/invites`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ inviteId, action: 'decline' }),
+      });
+      if (res.ok) {
+        setGroupInvites(prev => prev.filter(i => i.invite_id !== inviteId));
+      }
+    } catch (err) {
+      console.error('Failed to decline invite:', err);
     }
   };
 
