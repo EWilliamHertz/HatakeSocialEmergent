@@ -438,6 +438,22 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
           
           <View style={styles.settingCard}>
             {renderSettingRow(
+              'sparkles-outline',
+              'Show Tour Again',
+              'See the app introduction',
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />,
+              async () => {
+                await resetOnboarding();
+                if (onShowTour) {
+                  onShowTour();
+                  onClose();
+                } else {
+                  showAlert('Tour', 'Please restart the app to see the tour.');
+                }
+              }
+            )}
+            
+            {renderSettingRow(
               'information-circle-outline',
               'About',
               'Version 1.0.0',
