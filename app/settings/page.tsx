@@ -365,6 +365,89 @@ export default function SettingsPage() {
         {/* Notifications */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
+            <Share2 className="w-6 h-6 text-pink-600" />
+            <h2 className="text-lg font-semibold dark:text-white">Invite Friends</h2>
+            {referralCount > 0 && (
+              <span className="text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-600 px-2 py-0.5 rounded-full">{referralCount} referrals</span>
+            )}
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Invite Code</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={inviteCode}
+                  onChange={(e) => { setInviteCode(e.target.value); setInviteCodeError(''); }}
+                  placeholder="Choose your invite code (e.g. HatakeHugo)"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                  data-testid="invite-code-input"
+                />
+                <button
+                  onClick={async () => {
+                    if (!inviteCode.trim()) return;
+                    setInviteCodeSaving(true);
+                    setInviteCodeError('');
+                    try {
+                      const res = await fetch('/api/referral', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ inviteCode: inviteCode.trim() }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        setInviteCodeSaved(true);
+                        setTimeout(() => setInviteCodeSaved(false), 3000);
+                      } else {
+                        setInviteCodeError(data.error);
+                      }
+                    } catch { setInviteCodeError('Failed to save'); }
+                    setInviteCodeSaving(false);
+                  }}
+                  disabled={inviteCodeSaving || !inviteCode.trim()}
+                  className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 transition flex items-center gap-2"
+                  data-testid="save-invite-code-btn"
+                >
+                  {inviteCodeSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                  {inviteCodeSaved ? 'Saved!' : 'Save'}
+                </button>
+              </div>
+              {inviteCodeError && <p className="text-red-500 text-sm mt-1">{inviteCodeError}</p>}
+            </div>
+            
+            {inviteCode && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Invite Link</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${inviteCode}`}
+                    className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded-lg text-sm"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/invite/${inviteCode}`);
+                      alert('Link copied!');
+                    }}
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center gap-2"
+                    data-testid="copy-invite-link-btn"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copy
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Share this link with friends. When they sign up, you earn the exclusive Recruiter badge!</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Notifications */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex items-center gap-3 mb-6">
             <Bell className="w-6 h-6 text-yellow-600" />
             <h2 className="text-lg font-semibold dark:text-white">Notifications</h2>
           </div>
