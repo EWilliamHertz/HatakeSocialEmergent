@@ -134,7 +134,7 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
 
     try {
       const authToken = getAuthToken();
-      await fetch(`${API_URL}/api/messages`, {
+      const res = await fetch(`${API_URL}/api/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -146,13 +146,26 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
         }),
       });
       
+      const data = await res.json();
+      
       // Add message optimistically
       setMessages(prev => [...prev, {
-        message_id: `temp-${Date.now()}`,
+        message_id: data.message?.message_id || `temp-${Date.now()}`,
         sender_id: user.user_id,
         content,
         created_at: new Date().toISOString(),
       }]);
+      
+      // If this was a new conversation, update the selectedChat with conversation_id
+      if (data.conversationId && !selectedChat.conversation_id) {
+        setSelectedChat(prev => prev ? { ...prev, conversation_id: data.conversationId } : null);
+        // Also update in conversations list
+        setConversations(prev => prev.map(c => 
+          c.user_id === selectedChat.user_id 
+            ? { ...c, conversation_id: data.conversationId }
+            : c
+        ));
+      }
     } catch (err) {
       console.log('Failed to send message:', err);
       setNewMessage(content);
