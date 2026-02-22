@@ -59,6 +59,13 @@ export default function MessengerWidget({ user, token, visible }: MessengerWidge
     }
   }, [visible]);
 
+  // Also fetch when widget is opened
+  useEffect(() => {
+    if (isOpen && visible) {
+      fetchConversations();
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (selectedChat) {
       fetchMessages(selectedChat.user_id);
