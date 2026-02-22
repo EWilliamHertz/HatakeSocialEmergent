@@ -1309,7 +1309,7 @@ export default function CollectionScreen({ user, token, onOpenMenu }: Collection
           data={items}
           renderItem={renderItem}
           keyExtractor={(item) => String(item.id || item.item_id || item.card_id)}
-          numColumns={3}
+          numColumns={2}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />

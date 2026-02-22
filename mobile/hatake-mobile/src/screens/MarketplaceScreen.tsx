@@ -463,7 +463,7 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
               data={listings}
               renderItem={renderItem}
               keyExtractor={(item) => String(item.id || item.listing_id)}
-              numColumns={3}
+              numColumns={2}
               contentContainerStyle={styles.list}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
@@ -494,7 +494,7 @@ export default function MarketplaceScreen({ user, token, onOpenMenu }: Marketpla
               data={shopProducts}
               renderItem={renderShopProduct}
               keyExtractor={(item) => item.id}
-              numColumns={3}
+              numColumns={2}
               contentContainerStyle={styles.list}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={fetchShopProducts} tintColor={colors.primary} />
