@@ -41,6 +41,9 @@ interface Message {
   created_at: string;
   name: string;
   picture?: string;
+  reply_to?: string;
+  reply_content?: string;
+  reply_sender_name?: string;
 }
 
 interface MessagesScreenProps {
