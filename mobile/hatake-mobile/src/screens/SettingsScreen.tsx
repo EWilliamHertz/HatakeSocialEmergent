@@ -174,16 +174,16 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
     onPress?: () => void
   ) => (
     <TouchableOpacity
-      style={styles.settingRow}
+      style={[styles.settingRow, { borderBottomColor: colors.border }]}
       onPress={onPress}
       disabled={!onPress}
     >
-      <View style={styles.settingIcon}>
-        <Ionicons name={icon as any} size={22} color="#3B82F6" />
+      <View style={[styles.settingIcon, { backgroundColor: colors.primaryLight }]}>
+        <Ionicons name={icon as any} size={22} color={colors.primary} />
       </View>
       <View style={styles.settingInfo}>
-        <Text style={styles.settingTitle}>{title}</Text>
-        {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
+        <Text style={[styles.settingTitle, { color: colors.text }]}>{title}</Text>
+        {subtitle && <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
       </View>
       {rightElement}
     </TouchableOpacity>
@@ -191,9 +191,9 @@ export default function SettingsScreen({ user, token, onClose, onLogout, messeng
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
