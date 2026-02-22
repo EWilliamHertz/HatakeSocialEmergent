@@ -27,6 +27,31 @@ Create a comprehensive full-stack TCG (Trading Card Game) social platform with c
 
 ## COMPLETED FEATURES - Session 2026-02-22 (Latest)
 
+### Session 10 Updates - Trades Stats, Dark Mode & Admin Controls (2026-02-22)
+
+1. **Trade Statistics Dashboard** ✅
+   - Shows Completed trades count
+   - Shows € Out (total value sent in completed trades)
+   - Shows € In (total value received in completed trades)
+   - Shows Pending trades count
+   - Color-coded: Green for € In, Red for € Out, Yellow for Pending
+
+2. **Dark Mode Theme System** ✅
+   - Created ThemeContext with full light/dark theme colors
+   - Tab bar colors update with theme
+   - Settings screen uses theme colors
+   - Persists preference to localStorage/AsyncStorage
+
+3. **Group Admin Controls** ✅
+   - Delete post API with admin check (`/api/feed/[postId]`)
+   - Admins and owners can delete any post in their group
+   - Users can delete their own posts
+   - Delete button (three dots menu) on posts
+
+4. **Group Settings API Fix** ✅
+   - Fixed auth in `/api/groups/[groupId]/route.ts`
+   - Changed from `getSessionUser` to `getUserFromRequest`
+
 ### Session 9 Updates - Mobile Fixes & Dark Mode (2026-02-22)
 
 1. **Mobile Feed Group Filtering Fix** ✅
