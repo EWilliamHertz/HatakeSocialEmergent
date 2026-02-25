@@ -712,15 +712,14 @@ export default function CollectionPage() {
           </div>
 
           {/* Cards Tab Header */}
-          {activeTab === 'cards' && (
+        {activeTab === 'cards' && (
             <>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2 dark:text-white">My Collection</h1>
-                  <p className="text-gray-600 dark:text-gray-400">{items.length} cards • Estimated value: {calculateTotalValue()}</p>
+                  <h1 className="text-3xl font-bold dark:text-white">My Collection</h1>
                 </div>
                 <div className="flex gap-2">
-                  <button
+                            <button
                     onClick={() => setShowAddCardModal(true)}
                     className="px-4 py-2 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
                     data-testid="add-card-btn"

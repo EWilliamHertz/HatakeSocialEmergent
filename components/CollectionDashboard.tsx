@@ -18,21 +18,39 @@ interface DashboardProps {
 
 export default function CollectionDashboard({ items }: DashboardProps) {
   const [showDetailedStats, setShowDetailedStats] = useState(false);
+
+  // Robust pricing calculator (Matches your main collection page)
+  const getCardPrice = (item: CollectionItem): number => {
+    const card = item.card_data || {};
+    if (item.game === 'pokemon') {
+      if (card.pricing?.cardmarket) {
+        return card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0;
+      }
+      if (card.tcgplayer?.prices) {
+        const prices = card.tcgplayer.prices;
+        const usdPrice = prices.holofoil?.market || prices.normal?.market || 0;
+        return usdPrice * 0.92; // Convert USD to EUR
+      }
+      return 0;
+    } else if (item.game === 'mtg') {
+      if (card.prices?.eur) return parseFloat(card.prices.eur);
+      if (card.prices?.eur_foil && item.foil) return parseFloat(card.prices.eur_foil);
+      if (card.prices?.usd) return parseFloat(card.prices.usd) * 0.92;
+      if (card.prices?.usd_foil && item.foil) return parseFloat(card.prices.usd_foil) * 0.92;
+    }
+    return 0;
+  };
   
   // 1. Calculate Total Value
-  const totalValue = items.reduce((sum, item) => {
-    const price = item.card_data?.prices?.eur || item.card_data?.pricing?.cardmarket?.avg || 0;
-    return sum + (parseFloat(price) * item.quantity);
-  }, 0);
+  const totalValue = items.reduce((sum, item) => sum + (getCardPrice(item) * item.quantity), 0);
 
-  // Total cards count (including quantities)
+  // Total and Unique cards
   const totalCards = items.reduce((sum, item) => sum + item.quantity, 0);
+  const uniqueCards = items.length;
 
   // 2. Find Top Card
   const topCard = items.reduce((prev, current) => {
-    const prevPrice = parseFloat(prev?.card_data?.prices?.eur || prev?.card_data?.pricing?.cardmarket?.avg || '0');
-    const currPrice = parseFloat(current.card_data?.prices?.eur || current.card_data?.pricing?.cardmarket?.avg || '0');
-    return (prevPrice > currPrice) ? prev : current;
+    return (getCardPrice(prev) > getCardPrice(current)) ? prev : current;
   }, items[0]);
 
   // 3. Group by Set for "Completion" Progress
@@ -45,7 +63,6 @@ export default function CollectionDashboard({ items }: DashboardProps) {
     setCounts[setId].count += 1;
   });
 
-  // Sort sets by count (most collected first)
   const topSets = Object.values(setCounts)
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
@@ -84,7 +101,7 @@ export default function CollectionDashboard({ items }: DashboardProps) {
       item.quantity,
       item.condition || 'Near Mint',
       item.foil ? 'Yes' : 'No',
-      parseFloat(item.card_data?.prices?.eur || item.card_data?.pricing?.cardmarket?.avg || '0').toFixed(2),
+      getCardPrice(item).toFixed(2),
       item.game
     ]);
     
@@ -114,7 +131,7 @@ export default function CollectionDashboard({ items }: DashboardProps) {
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
             €{totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h2>
-          <p className="text-xs text-gray-500 mt-1">{totalCards} cards ({items.length} unique)</p>
+          <p className="text-xs text-gray-500 mt-1">{totalCards} total cards ({uniqueCards} unique cards)</p>
         </div>
 
         {/* Metric 2: Crown Jewel (Most Expensive) */}
@@ -135,7 +152,7 @@ export default function CollectionDashboard({ items }: DashboardProps) {
               <div className="min-w-0">
                 <p className="font-bold text-sm truncate">{topCard.card_data?.name}</p>
                 <p className="text-xs text-gray-500">
-                  €{parseFloat(topCard.card_data?.prices?.eur || topCard.card_data?.pricing?.cardmarket?.avg || '0').toFixed(2)}
+                  €{getCardPrice(topCard).toFixed(2)}
                 </p>
               </div>
             </div>
