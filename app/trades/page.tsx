@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { ArrowRightLeft, Clock, CheckCircle, XCircle, Package, Send, Eye } from 'lucide-react';
+import { ArrowRightLeft, Clock, CheckCircle, XCircle, Package, Eye } from 'lucide-react';
 import Image from 'next/image';
 
 interface Trade {
@@ -26,29 +26,11 @@ export default function TradesPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState('');
-  const [tab, setTab] = useState<'active' | 'completed' | 'all'>('active');
+  const [tab, setTab] = useState<'active' | 'history' | 'all'>('active');
 
-  // Calculate trade stats
   const tradeStats = {
     active: trades.filter(t => ['pending', 'accepted'].includes(t.status)).length,
     completed: trades.filter(t => t.status === 'completed').length,
-    rejected: trades.filter(t => ['rejected', 'cancelled'].includes(t.status)).length,
-    totalValue: trades.reduce((sum, trade) => {
-      const isInitiator = trade.initiator_id === currentUserId;
-      const myItems = isInitiator ? trade.initiator_cards : trade.receiver_cards;
-      const itemValue = myItems?.reduce((itemSum: number, item: any) => {
-        return itemSum + ((item.value || 0) * (item.quantity || 1));
-      }, 0) || 0;
-      return sum + itemValue;
-    }, 0),
-    completedValue: trades.filter(t => t.status === 'completed').reduce((sum, trade) => {
-      const isInitiator = trade.initiator_id === currentUserId;
-      const myItems = isInitiator ? trade.initiator_cards : trade.receiver_cards;
-      const itemValue = myItems?.reduce((itemSum: number, item: any) => {
-        return itemSum + ((item.value || 0) * (item.quantity || 1));
-      }, 0) || 0;
-      return sum + itemValue;
-    }, 0)
   };
 
   useEffect(() => {
@@ -84,20 +66,6 @@ export default function TradesPage() {
     }
   };
 
-  const respondToTrade = async (tradeId: string, action: 'accept' | 'reject') => {
-    try {
-      await fetch(`/api/trades/${tradeId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ action })
-      });
-      loadTrades();
-    } catch (error) {
-      console.error('Respond to trade error:', error);
-    }
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending': return <Clock className="w-5 h-5 text-yellow-500" />;
@@ -122,7 +90,7 @@ export default function TradesPage() {
 
   const filteredTrades = trades.filter(trade => {
     if (tab === 'active') return ['pending', 'accepted'].includes(trade.status);
-    if (tab === 'completed') return ['completed', 'rejected', 'cancelled'].includes(trade.status);
+    if (tab === 'history') return ['completed', 'rejected', 'cancelled'].includes(trade.status);
     return true;
   });
 
@@ -131,27 +99,6 @@ export default function TradesPage() {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Trade Overview Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Trades</p>
-            <p className="text-2xl font-bold text-yellow-600">{tradeStats.active}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Completed</p>
-            <p className="text-2xl font-bold text-green-600">{tradeStats.completed}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Trade Value</p>
-            <p className="text-2xl font-bold text-blue-600">€{tradeStats.totalValue.toFixed(2)}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Completed Value</p>
-            <p className="text-2xl font-bold text-purple-600">€{tradeStats.completedValue.toFixed(2)}</p>
-          </div>
-        </div>
-
-        {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -161,14 +108,12 @@ export default function TradesPage() {
             <button
               onClick={() => router.push('/trades/new')}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2"
-              data-testid="new-trade-btn"
             >
               <ArrowRightLeft className="w-4 h-4" />
               New Trade
             </button>
           </div>
           
-          {/* Tabs */}
           <div className="flex gap-2">
             <button
               onClick={() => setTab('active')}
@@ -179,12 +124,12 @@ export default function TradesPage() {
               Active ({tradeStats.active})
             </button>
             <button
-              onClick={() => setTab('completed')}
+              onClick={() => setTab('history')}
               className={`px-4 py-2 rounded-lg font-semibold transition ${
-                tab === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                tab === 'history' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}
             >
-              Completed ({tradeStats.completed})
+              History
             </button>
             <button
               onClick={() => setTab('all')}
@@ -197,7 +142,6 @@ export default function TradesPage() {
           </div>
         </div>
 
-        {/* Trades List */}
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -206,7 +150,7 @@ export default function TradesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
             <ArrowRightLeft className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {tab === 'active' ? 'No active trades' : tab === 'completed' ? 'No completed trades' : 'No trades yet'}
+              {tab === 'active' ? 'No active trades' : tab === 'history' ? 'No trade history' : 'No trades yet'}
             </p>
             <button
               onClick={() => router.push('/trades/new')}
@@ -223,13 +167,13 @@ export default function TradesPage() {
                 ? { name: trade.recipient_name, picture: trade.recipient_picture }
                 : { name: trade.initiator_name, picture: trade.initiator_picture };
               
+              // 🔴 Distinct background styling for history page items
+              let cardBg = "bg-white dark:bg-gray-800";
+              if (trade.status === 'completed') cardBg = "bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900";
+              if (trade.status === 'rejected' || trade.status === 'cancelled') cardBg = "bg-gray-50 dark:bg-gray-800/80 opacity-75";
+
               return (
-                <div 
-                  key={trade.trade_id} 
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
-                  data-testid={`trade-${trade.trade_id}`}
-                >
-                  {/* Trade Header */}
+                <div key={trade.trade_id} className={`rounded-xl shadow-sm p-6 ${cardBg}`}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
                       {otherParty.picture ? (
@@ -259,56 +203,7 @@ export default function TradesPage() {
                     </div>
                   </div>
 
-                  {/* Trade Items */}
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">
-                        {isInitiator ? 'You offer' : 'They offer'}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {(isInitiator ? trade.initiator_cards : trade.receiver_cards)?.map((item: any, idx: number) => (
-                          <div key={idx} className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded px-2 py-1 text-sm dark:text-white">
-                            <Package className="w-4 h-4 text-gray-400" />
-                            {item.card_name || 'Card'}
-                          </div>
-                        )) || <span className="text-gray-400 text-sm">No items</span>}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">
-                        {isInitiator ? 'They offer' : 'You offer'}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {(isInitiator ? trade.receiver_cards : trade.initiator_cards)?.map((item: any, idx: number) => (
-                          <div key={idx} className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded px-2 py-1 text-sm dark:text-white">
-                            <Package className="w-4 h-4 text-gray-400" />
-                            {item.card_name || 'Card'}
-                          </div>
-                        )) || <span className="text-gray-400 text-sm">No items</span>}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Trade Actions */}
                   <div className="flex justify-end gap-2">
-                    {trade.status === 'pending' && !isInitiator && (
-                      <>
-                        <button
-                          onClick={() => respondToTrade(trade.trade_id, 'accept')}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => respondToTrade(trade.trade_id, 'reject')}
-                          className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center gap-2"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          Decline
-                        </button>
-                      </>
-                    )}
                     <button
                       onClick={() => router.push(`/trades/${trade.trade_id}`)}
                       className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2"

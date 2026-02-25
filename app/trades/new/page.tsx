@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { ArrowRightLeft, Search, Plus, X, Loader2, Package, User, Filter } from 'lucide-react';
+import { ArrowRightLeft, Search, X, Loader2, Package } from 'lucide-react';
 import Image from 'next/image';
+import UserReputation from '@/components/UserReputation';
 
 interface CollectionItem {
   id: number;
@@ -23,8 +24,11 @@ interface UserResult {
   picture?: string;
 }
 
-export default function NewTradePage() {
+function NewTradeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const counterId = searchParams.get('counterId');
+  
   const [loading, setLoading] = useState(true);
   const [myCollection, setMyCollection] = useState<CollectionItem[]>([]);
   const [partnerCollection, setPartnerCollection] = useState<CollectionItem[]>([]);
@@ -34,20 +38,16 @@ export default function NewTradePage() {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   
-  // Cash request
   const [cashAmount, setCashAmount] = useState('');
   const [cashCurrency, setCashCurrency] = useState<'EUR' | 'USD' | 'SEK'>('EUR');
   
-  // User search
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState<UserResult[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
   
-  // My collection search/filter
   const [mySearchQuery, setMySearchQuery] = useState('');
   const [myGameFilter, setMyGameFilter] = useState('all');
   
-  // Partner collection search/filter
   const [partnerSearchQuery, setPartnerSearchQuery] = useState('');
   const [partnerGameFilter, setPartnerGameFilter] = useState('all');
   const [loadingPartnerCollection, setLoadingPartnerCollection] = useState(false);
@@ -68,6 +68,41 @@ export default function NewTradePage() {
       })
       .catch(() => router.push('/auth/login'));
   }, [router]);
+
+  // Handle Counter Offer Prefill
+  useEffect(() => {
+    if (counterId) {
+      fetch(`/api/trades/${counterId}`, { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const t = data.trade;
+            // Set partner
+            const partner = {
+              user_id: t.initiator_id,
+              name: t.initiator_name,
+              email: '', 
+              picture: t.initiator_picture
+            };
+            setSelectedPartner(partner);
+            
+            // Format cards to match CollectionItem schema
+            const mappedOffer = t.receiver_cards.map((c: any) => ({
+              card: { id: 0, card_id: c.card_id, game: c.game, quantity: c.quantity, is_foil: c.foil, condition: c.condition, card_data: { name: c.card_name, images: { small: c.card_image } } },
+              quantity: c.quantity
+            }));
+            const mappedRequest = t.initiator_cards.map((c: any) => ({
+              card: { id: 0, card_id: c.card_id, game: c.game, quantity: c.quantity, is_foil: c.foil, condition: c.condition, card_data: { name: c.card_name, images: { small: c.card_image } } },
+              quantity: c.quantity
+            }));
+
+            setOfferedCards(mappedOffer);
+            setRequestedCards(mappedRequest);
+            fetchPartnerCollection(t.initiator_id);
+          }
+        });
+    }
+  }, [counterId]);
 
   const loadMyCollection = async () => {
     try {
@@ -114,15 +149,10 @@ export default function NewTradePage() {
     return () => clearTimeout(debounce);
   }, [userSearchQuery]);
 
-  const selectPartner = async (user: UserResult) => {
-    setSelectedPartner(user);
-    setUserSearchQuery('');
-    setUserSearchResults([]);
-    
-    // Load partner's collection
+  const fetchPartnerCollection = async (userId: string) => {
     setLoadingPartnerCollection(true);
     try {
-      const res = await fetch(`/api/collection/user/${user.user_id}`, { credentials: 'include' });
+      const res = await fetch(`/api/collection/user/${userId}`, { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         setPartnerCollection(data.items || []);
@@ -132,6 +162,13 @@ export default function NewTradePage() {
     } finally {
       setLoadingPartnerCollection(false);
     }
+  };
+
+  const selectPartner = async (user: UserResult) => {
+    setSelectedPartner(user);
+    setUserSearchQuery('');
+    setUserSearchResults([]);
+    fetchPartnerCollection(user.user_id);
   };
 
   const addCardToOffer = (item: CollectionItem) => {
@@ -213,7 +250,7 @@ export default function NewTradePage() {
             quantity: o.quantity,
             condition: o.card.condition,
             foil: o.card.is_foil,
-            value: getCardValue(o.card)
+            value: 0
           })),
           recipientItems: requestedCards.map(o => ({
             card_id: o.card.card_id,
@@ -223,11 +260,12 @@ export default function NewTradePage() {
             quantity: o.quantity,
             condition: o.card.condition,
             foil: o.card.is_foil,
-            value: getCardValue(o.card)
+            value: 0
           })),
           message: notes,
           cash_requested: cashAmount ? parseFloat(cashAmount) : null,
-          cash_currency: cashAmount ? cashCurrency : null
+          cash_currency: cashAmount ? cashCurrency : null,
+          countered_trade_id: counterId // 🔴 Sends the ID to cancel original
         })
       });
       
@@ -263,39 +301,10 @@ export default function NewTradePage() {
   const filteredMyCollection = filterCollection(myCollection, mySearchQuery, myGameFilter);
   const filteredPartnerCollection = filterCollection(partnerCollection, partnerSearchQuery, partnerGameFilter);
 
-  // Calculate total value of offered/requested cards
-  const getCardValue = (item: CollectionItem): number => {
-    const prices = item.card_data?.prices;
-    // Try USD prices first (Scryfall MTG)
-    if (prices?.usd) return parseFloat(prices.usd);
-    if (prices?.usd_foil && item.is_foil) return parseFloat(prices.usd_foil);
-    if (prices?.eur) return parseFloat(prices.eur);
-    if (prices?.eur_foil && item.is_foil) return parseFloat(prices.eur_foil);
-    
-    // TCGPlayer prices (Pokemon)
-    if (item.card_data?.tcgplayer?.prices?.normal?.market) return item.card_data.tcgplayer.prices.normal.market;
-    if (item.card_data?.tcgplayer?.prices?.holofoil?.market) return item.card_data.tcgplayer.prices.holofoil.market;
-    
-    // TCGdex prices
-    if (item.card_data?.prices?.firstEdition?.mid) return item.card_data.prices.firstEdition.mid;
-    if (item.card_data?.prices?.normal?.mid) return item.card_data.prices.normal.mid;
-    
-    // Custom purchase price
-    if (item.card_data?.purchase_price) return parseFloat(item.card_data.purchase_price);
-    
-    return 0;
-  };
-
-  const offeredValue = offeredCards.reduce((sum, o) => sum + (getCardValue(o.card) * o.quantity), 0);
-  const requestedValue = requestedCards.reduce((sum, o) => sum + (getCardValue(o.card) * o.quantity), 0);
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Navbar />
-        <div className="flex items-center justify-center h-[80vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+      <div className="flex items-center justify-center h-[80vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -338,74 +347,76 @@ export default function NewTradePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">New Trade</h1>
-            <p className="text-gray-600 dark:text-gray-400">Create a trade offer with any user</p>
-          </div>
-          <button
-            onClick={submitTrade}
-            disabled={!selectedPartner || (offeredCards.length === 0 && requestedCards.length === 0) || submitting}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            data-testid="submit-trade-btn"
-          >
-            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRightLeft className="w-5 h-5" />}
-            Send Trade Offer
-          </button>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {counterId ? 'Counter Trade Offer' : 'New Trade'}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {counterId ? 'Modify the trade items to propose a new deal' : 'Create a trade offer with any user'}
+          </p>
         </div>
+        <button
+          onClick={submitTrade}
+          disabled={!selectedPartner || (offeredCards.length === 0 && requestedCards.length === 0) || submitting}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRightLeft className="w-5 h-5" />}
+          Send Trade Offer
+        </button>
+      </div>
 
-        {/* Select Trade Partner */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Trade Partner</h2>
-          
-          {selectedPartner ? (
-            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <div className="flex items-center gap-3">
-                {selectedPartner.picture ? (
-                  <Image src={selectedPartner.picture} alt={selectedPartner.name} width={40} height={40} className="rounded-full" />
-                ) : (
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    {selectedPartner.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <span className="font-medium dark:text-white">{selectedPartner.name}</span>
-                  <p className="text-sm text-gray-500">{selectedPartner.email}</p>
+      {/* Select Trade Partner */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Trade Partner</h2>
+        
+        {selectedPartner ? (
+          <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="flex items-center gap-4">
+              {selectedPartner.picture ? (
+                <Image src={selectedPartner.picture} alt={selectedPartner.name} width={40} height={40} className="rounded-full" />
+              ) : (
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {selectedPartner.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <span className="font-medium dark:text-white">{selectedPartner.name}</span>
+                <div className="mt-1">
+                  {/* 🔴 Compact Reputation Component! */}
+                  <UserReputation userId={selectedPartner.user_id} compact={true} />
                 </div>
               </div>
+            </div>
+            {!counterId && (
               <button onClick={() => { setSelectedPartner(null); setPartnerCollection([]); setRequestedCards([]); }} className="text-gray-500 hover:text-gray-700">
                 <X className="w-5 h-5" />
               </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search users by name or email..."
+                value={userSearchQuery}
+                onChange={(e) => setUserSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search users by name or email..."
-                  value={userSearchQuery}
-                  onChange={(e) => setUserSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
-                  data-testid="user-search-input"
-                />
-                {searchingUsers && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 animate-spin" />
-                )}
-              </div>
-              
-              {userSearchResults.length > 0 && (
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-48 overflow-y-auto">
-                  {userSearchResults.map((user) => (
-                    <button
-                      key={user.user_id}
-                      onClick={() => selectPartner(user)}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left border-b last:border-b-0 dark:border-gray-700"
-                    >
+            
+            {userSearchResults.length > 0 && (
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-48 overflow-y-auto">
+                {userSearchResults.map((user) => (
+                  <button
+                    key={user.user_id}
+                    onClick={() => selectPartner(user)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition border-b last:border-b-0 dark:border-gray-700"
+                  >
+                    <div className="flex items-center gap-3">
                       {user.picture ? (
                         <Image src={user.picture} alt={user.name} width={36} height={36} className="rounded-full" />
                       ) : (
@@ -413,241 +424,115 @@ export default function NewTradePage() {
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      <div>
-                        <span className="font-medium dark:text-white">{user.name}</span>
-                        <p className="text-xs text-gray-500">{user.email}</p>
+                      <div className="text-left">
+                        <span className="font-medium dark:text-white block">{user.name}</span>
                       </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-              
-              {userSearchQuery.length >= 2 && userSearchResults.length === 0 && !searchingUsers && (
-                <p className="text-center text-gray-500 py-4">No users found</p>
-              )}
-            </div>
-          )}
-        </div>
+                    </div>
+                    {/* 🔴 Ratings displayed dynamically in search results */}
+                    <UserReputation userId={user.user_id} compact={true} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Trade Value Summary */}
-          {(offeredCards.length > 0 || requestedCards.length > 0) && (
-            <div className="lg:col-span-2 bg-gradient-to-r from-blue-500/10 to-green-500/10 dark:from-blue-900/30 dark:to-green-900/30 rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">You Offer</p>
-                  <p className="text-2xl font-bold text-green-600">€{offeredValue.toFixed(2)}</p>
-                </div>
-                <ArrowRightLeft className="w-6 h-6 text-gray-400" />
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">You Request</p>
-                  <p className="text-2xl font-bold text-blue-600">€{requestedValue.toFixed(2)}</p>
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Your Offer */}
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-3">You Offer ({offeredCards.length} cards)</h3>
+            {offeredCards.length === 0 ? (
+              <p className="text-gray-500 text-sm text-center py-3">Select cards from your collection below</p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {offeredCards.map((offer) => (
+                  <SelectedCard 
+                    key={offer.card.card_id} 
+                    offer={offer} 
+                    onRemove={() => removeCardFromOffer(offer.card.card_id)}
+                    onUpdateQty={(qty) => updateOfferQuantity(offer.card.card_id, qty)}
+                  />
+                ))}
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Difference</p>
-                <p className={`text-xl font-bold ${
-                  offeredValue > requestedValue ? 'text-red-600' : 
-                  offeredValue < requestedValue ? 'text-green-600' : 'text-gray-600'
-                }`}>
-                  {offeredValue > requestedValue ? '-' : offeredValue < requestedValue ? '+' : ''}
-                  €{Math.abs(offeredValue - requestedValue).toFixed(2)}
-                </p>
-              </div>
-            </div>
-          )}
-          {/* Left: Your Offer */}
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-gray-900 dark:text-white">You Offer ({offeredCards.length} cards)</h3>
-                <span className="text-lg font-bold text-green-600">€{offeredValue.toFixed(2)}</span>
-              </div>
-              {offeredCards.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-3">Select cards from your collection below</p>
-              ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {offeredCards.map((offer) => (
-                    <SelectedCard 
-                      key={offer.card.card_id} 
-                      offer={offer} 
-                      onRemove={() => removeCardFromOffer(offer.card.card_id)}
-                      onUpdateQty={(qty) => updateOfferQuantity(offer.card.card_id, qty)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
+          </div>
 
-            {/* Your Collection */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-gray-900 dark:text-white">Your Collection</h3>
-                <select 
-                  value={myGameFilter} 
-                  onChange={(e) => setMyGameFilter(e.target.value)}
-                  className="text-sm px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                  <option value="all">All Games</option>
-                  <option value="mtg">MTG</option>
-                  <option value="pokemon">Pokemon</option>
-                </select>
-              </div>
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search your cards..."
-                  value={mySearchQuery}
-                  onChange={(e) => setMySearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-3">Your Collection</h3>
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {filteredMyCollection.map((item) => (
+                <CardItem 
+                  key={item.card_id} 
+                  item={item} 
+                  onAdd={() => addCardToOffer(item)}
+                  isAdded={offeredCards.some(o => o.card.card_id === item.card_id)}
                 />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Your Request */}
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-3">You Request ({requestedCards.length} cards)</h3>
+            {requestedCards.length === 0 ? (
+              <p className="text-gray-500 text-sm text-center py-3">
+                {selectedPartner ? "Select cards from their collection below" : "Select a partner first"}
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {requestedCards.map((req) => (
+                  <SelectedCard 
+                    key={req.card.card_id} 
+                    offer={req} 
+                    onRemove={() => removeCardFromRequest(req.card.card_id)}
+                    onUpdateQty={(qty) => updateRequestQuantity(req.card.card_id, qty)}
+                  />
+                ))}
               </div>
+            )}
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-3">Partner's Collection</h3>
+            {!selectedPartner ? (
+              <p className="text-gray-500 text-sm text-center py-8">Select a trade partner to see their collection</p>
+            ) : loadingPartnerCollection ? (
+              <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
+            ) : (
               <div className="space-y-1 max-h-64 overflow-y-auto">
-                {filteredMyCollection.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-4">No cards in collection</p>
-                ) : (
-                  filteredMyCollection.map((item) => (
-                    <CardItem 
-                      key={item.card_id} 
-                      item={item} 
-                      onAdd={() => addCardToOffer(item)}
-                      isAdded={offeredCards.some(o => o.card.card_id === item.card_id)}
-                    />
-                  ))
-                )}
+                {filteredPartnerCollection.map((item) => (
+                  <CardItem 
+                    key={item.card_id} 
+                    item={item} 
+                    onAdd={() => addCardToRequest(item)}
+                    isAdded={requestedCards.some(o => o.card.card_id === item.card_id)}
+                  />
+                ))}
               </div>
-            </div>
+            )}
           </div>
-
-          {/* Right: Your Request */}
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-gray-900 dark:text-white">You Request ({requestedCards.length} cards)</h3>
-                <span className="text-lg font-bold text-blue-600">€{requestedValue.toFixed(2)}</span>
-              </div>
-              {requestedCards.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-3">
-                  {selectedPartner ? "Select cards from their collection below" : "Select a trade partner first"}
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {requestedCards.map((req) => (
-                    <SelectedCard 
-                      key={req.card.card_id} 
-                      offer={req} 
-                      onRemove={() => removeCardFromRequest(req.card.card_id)}
-                      onUpdateQty={(qty) => updateRequestQuantity(req.card.card_id, qty)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Partner's Collection */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-gray-900 dark:text-white">
-                  {selectedPartner ? `${selectedPartner.name}'s Collection` : "Partner's Collection"}
-                </h3>
-                {selectedPartner && (
-                  <select 
-                    value={partnerGameFilter} 
-                    onChange={(e) => setPartnerGameFilter(e.target.value)}
-                    className="text-sm px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  >
-                    <option value="all">All Games</option>
-                    <option value="mtg">MTG</option>
-                    <option value="pokemon">Pokemon</option>
-                  </select>
-                )}
-              </div>
-              
-              {!selectedPartner ? (
-                <p className="text-gray-500 text-sm text-center py-8">Select a trade partner to see their collection</p>
-              ) : loadingPartnerCollection ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                </div>
-              ) : (
-                <>
-                  <div className="relative mb-3">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search their cards..."
-                      value={partnerSearchQuery}
-                      onChange={(e) => setPartnerSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-1 max-h-64 overflow-y-auto">
-                    {filteredPartnerCollection.length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-4">No tradeable cards in their collection</p>
-                    ) : (
-                      filteredPartnerCollection.map((item) => (
-                        <CardItem 
-                          key={item.card_id} 
-                          item={item} 
-                          onAdd={() => addCardToRequest(item)}
-                          isAdded={requestedCards.some(o => o.card.card_id === item.card_id)}
-                        />
-                      ))
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Cash Request */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mt-6">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Cash Request (optional)</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Request an additional cash amount as part of this trade</p>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
-              <input
-                type="number"
-                value={cashAmount}
-                onChange={(e) => setCashAmount(e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
-                data-testid="cash-amount-input"
-              />
-            </div>
-            <div className="w-32">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
-              <select
-                value={cashCurrency}
-                onChange={(e) => setCashCurrency(e.target.value as 'EUR' | 'USD' | 'SEK')}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
-                data-testid="cash-currency-select"
-              >
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="SEK">SEK</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mt-6">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Notes (optional)</h2>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add a message to your trade offer..."
-            rows={3}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-none focus:ring-2 focus:ring-blue-500"
-          />
         </div>
       </div>
+    </div>
+  );
+}
+
+// 🔴 Wrap in suspense boundary to safely use useSearchParams in Next.js 13+
+export default function NewTradePage() {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navbar />
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-[80vh]">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+        </div>
+      }>
+        <NewTradeContent />
+      </Suspense>
     </div>
   );
 }

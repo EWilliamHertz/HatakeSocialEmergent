@@ -17,6 +17,7 @@ interface UserProfile {
   created_at: string;
 }
 
+
 interface Stats {
   collection_count: number;
   listings_count: number;

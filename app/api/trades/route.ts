@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Get all trades where user is initiator or receiver
     const trades = await sql`
       SELECT 
         t.trade_id,
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const { recipientId, initiatorItems, recipientItems, message, cash_requested, cash_currency } = await request.json();
+    const { recipientId, initiatorItems, recipientItems, message, cash_requested, cash_currency, countered_trade_id } = await request.json();
 
     if (!recipientId) {
       return NextResponse.json(
@@ -64,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     const tradeId = generateId('trade');
 
-    // Note: DB schema uses 'receiver_id' and 'initiator_cards/receiver_cards'
+    // Create the new trade
     await sql`
       INSERT INTO trades (
         trade_id,
@@ -89,6 +88,15 @@ export async function POST(request: NextRequest) {
         ${cash_currency || null}
       )
     `;
+
+    // 🔴 Cancel the old trade if this is a counter offer
+    if (countered_trade_id) {
+      await sql`
+        UPDATE trades 
+        SET status = 'cancelled', updated_at = NOW() 
+        WHERE trade_id = ${countered_trade_id}
+      `;
+    }
 
     // Send push notification to recipient
     const pushTokens = await sql`

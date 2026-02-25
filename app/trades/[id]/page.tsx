@@ -186,7 +186,6 @@ export default function TradeDetailPage() {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Back Button */}
         <button
           onClick={() => router.push('/trades')}
           className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6"
@@ -215,7 +214,6 @@ export default function TradeDetailPage() {
             </div>
           </div>
 
-          {/* Trade Parties */}
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div className="flex items-center gap-3">
               <a href={`/profile/${trade.initiator_id}`} className="hover:opacity-80 transition">
@@ -231,7 +229,6 @@ export default function TradeDetailPage() {
                 <a 
                   href={`/profile/${trade.initiator_id}`}
                   className="font-semibold dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition"
-                  data-testid="initiator-profile-link"
                 >
                   {trade.initiator_name}
                 </a>
@@ -248,7 +245,6 @@ export default function TradeDetailPage() {
                 <a 
                   href={`/profile/${trade.receiver_id}`}
                   className="font-semibold dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition"
-                  data-testid="recipient-profile-link"
                 >
                   {trade.recipient_name}
                 </a>
@@ -269,77 +265,15 @@ export default function TradeDetailPage() {
           </div>
         </div>
 
-        {/* Trade Summary */}
-        <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-xl shadow-sm p-6 mb-6 border border-blue-200 dark:border-blue-800">
-          <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
-            <ArrowRightLeft className="w-5 h-5 text-blue-600" />
-            Trade Summary
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                {trade.initiator_name} offers
-              </p>
-              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                {trade.initiator_cards?.length || 0} card{(trade.initiator_cards?.length || 0) !== 1 ? 's' : ''}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Value: €{(trade.initiator_cards || []).reduce((sum, item) => sum + ((item.value || 0) * (item.quantity || 1)), 0).toFixed(2)}
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                {trade.recipient_name} offers
-              </p>
-              <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                {trade.receiver_cards?.length || 0} card{(trade.receiver_cards?.length || 0) !== 1 ? 's' : ''}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Value: €{(trade.receiver_cards || []).reduce((sum, item) => sum + ((item.value || 0) * (item.quantity || 1)), 0).toFixed(2)}
-              </p>
-            </div>
-            {trade.cash_requested && trade.cash_requested > 0 ? (
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
-                <p className="text-sm text-yellow-600 dark:text-yellow-400 mb-1">
-                  Cash Requested
-                </p>
-                <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                  {trade.cash_currency === 'EUR' ? '€' : trade.cash_currency === 'SEK' ? 'kr ' : '$'}
-                  {Number(trade.cash_requested).toFixed(2)}
-                </p>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  {trade.cash_currency}
-                </p>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                  Cash
-                </p>
-                <p className="text-lg font-bold text-gray-400 dark:text-gray-500">
-                  None
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Cards only
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Trade Items */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
-          {/* First column - Always shows initiator's cards */}
+          {/* Initiator Cards */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold dark:text-white flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-500" />
                 {isInitiator ? 'You Offer' : 'They Offer'}
               </h2>
-              {(() => {
-                const total = (trade.initiator_cards || []).reduce((sum, item) => sum + ((item.value || 0) * (item.quantity || 1)), 0);
-                return total > 0 ? <span className="text-lg font-bold text-green-600">€{total.toFixed(2)}</span> : null;
-              })()}
             </div>
             <div className="space-y-3">
               {trade.initiator_cards?.length > 0 ? (
@@ -359,9 +293,6 @@ export default function TradeDetailPage() {
                         {item.quantity > 1 && <span>× {item.quantity}</span>}
                         {item.foil && <span className="text-purple-500">Foil</span>}
                         {item.condition && <span>{item.condition}</span>}
-                        {item.value && item.value > 0 && (
-                          <span className="text-green-600 font-medium">€{item.value.toFixed(2)}</span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -372,17 +303,13 @@ export default function TradeDetailPage() {
             </div>
           </div>
 
-          {/* Second column - Always shows receiver's cards */}
+          {/* Receiver Cards */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold dark:text-white flex items-center gap-2">
                 <User className="w-5 h-5 text-green-500" />
                 {isInitiator ? 'They Offer' : 'You Offer'}
               </h2>
-              {(() => {
-                const total = (trade.receiver_cards || []).reduce((sum, item) => sum + ((item.value || 0) * (item.quantity || 1)), 0);
-                return total > 0 ? <span className="text-lg font-bold text-blue-600">€{total.toFixed(2)}</span> : null;
-              })()}
             </div>
             <div className="space-y-3">
               {trade.receiver_cards?.length > 0 ? (
@@ -402,9 +329,6 @@ export default function TradeDetailPage() {
                         {item.quantity > 1 && <span>× {item.quantity}</span>}
                         {item.foil && <span className="text-purple-500">Foil</span>}
                         {item.condition && <span>{item.condition}</span>}
-                        {item.value && item.value > 0 && (
-                          <span className="text-green-600 font-medium">€{item.value.toFixed(2)}</span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -416,139 +340,12 @@ export default function TradeDetailPage() {
           </div>
         </div>
 
-        {/* Notes */}
-        {trade.message && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
-            <h2 className="text-lg font-bold mb-3 dark:text-white flex items-center gap-2">
-              <MessageCircle className="w-5 h-5 text-gray-500" />
-              Notes
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{trade.message}</p>
-          </div>
-        )}
-
-        {/* Cash Request */}
-        {trade.cash_requested && trade.cash_requested > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border-2 border-yellow-400">
-            <h2 className="text-lg font-bold mb-3 dark:text-white flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-yellow-500" />
-              Cash Requested
-            </h2>
-            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-              {trade.cash_currency === 'EUR' ? '€' : trade.cash_currency === 'SEK' ? 'kr ' : '$'}
-              {Number(trade.cash_requested).toFixed(2)}
-              {trade.cash_currency === 'SEK' ? '' : ` ${trade.cash_currency}`}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              The initiator is requesting this amount in addition to the card trade.
-            </p>
-          </div>
-        )}
-
-        {/* Shipping & Payment Info - Show when trade is accepted or completed */}
-        {(trade.status === 'accepted' || trade.status === 'completed') && (
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            {/* Their Info */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-500" />
-                {otherParty.name}&apos;s Details
-              </h2>
-              
-              {/* Shipping Address */}
-              <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-                  <MapPin className="w-4 h-4" /> Shipping Address
-                </h3>
-                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg text-sm">
-                  {(isInitiator ? trade.recipient_shipping_address : trade.initiator_shipping_address) || 'Not provided'}
-                </p>
-              </div>
-              
-              {/* Payment Details */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-                  <CreditCard className="w-4 h-4" /> Payment Details
-                </h3>
-                <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg space-y-2 text-sm">
-                  {(isInitiator ? trade.recipient_payment_swish : trade.initiator_payment_swish) && (
-                    <p className="dark:text-gray-200">
-                      <span className="text-gray-500 dark:text-gray-400">Swish:</span> {isInitiator ? trade.recipient_payment_swish : trade.initiator_payment_swish}
-                    </p>
-                  )}
-                  {(isInitiator ? trade.recipient_payment_account : trade.initiator_payment_account) && (
-                    <p className="dark:text-gray-200">
-                      <span className="text-gray-500 dark:text-gray-400">Account:</span> {isInitiator ? trade.recipient_payment_account : trade.initiator_payment_account}
-                    </p>
-                  )}
-                  {(isInitiator ? trade.recipient_payment_bankgiro : trade.initiator_payment_bankgiro) && (
-                    <p className="dark:text-gray-200">
-                      <span className="text-gray-500 dark:text-gray-400">Bankgiro:</span> {isInitiator ? trade.recipient_payment_bankgiro : trade.initiator_payment_bankgiro}
-                    </p>
-                  )}
-                  {!(isInitiator ? trade.recipient_payment_swish : trade.initiator_payment_swish) && 
-                   !(isInitiator ? trade.recipient_payment_account : trade.initiator_payment_account) && 
-                   !(isInitiator ? trade.recipient_payment_bankgiro : trade.initiator_payment_bankgiro) && (
-                    <p className="text-gray-500">Not provided</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Your Info */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-green-500" />
-                Your Details (shared with them)
-              </h2>
-              
-              {/* Shipping Address */}
-              <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-                  <MapPin className="w-4 h-4" /> Your Shipping Address
-                </h3>
-                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg text-sm">
-                  {(isInitiator ? trade.initiator_shipping_address : trade.recipient_shipping_address) || 'Not provided - update in Settings'}
-                </p>
-              </div>
-              
-              {/* Payment Details */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-                  <CreditCard className="w-4 h-4" /> Your Payment Details
-                </h3>
-                <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg space-y-2 text-sm">
-                  {(isInitiator ? trade.initiator_payment_swish : trade.recipient_payment_swish) && (
-                    <p className="dark:text-gray-200">
-                      <span className="text-gray-500 dark:text-gray-400">Swish:</span> {isInitiator ? trade.initiator_payment_swish : trade.recipient_payment_swish}
-                    </p>
-                  )}
-                  {(isInitiator ? trade.initiator_payment_account : trade.recipient_payment_account) && (
-                    <p className="dark:text-gray-200">
-                      <span className="text-gray-500 dark:text-gray-400">Account:</span> {isInitiator ? trade.initiator_payment_account : trade.recipient_payment_account}
-                    </p>
-                  )}
-                  {(isInitiator ? trade.initiator_payment_bankgiro : trade.recipient_payment_bankgiro) && (
-                    <p className="dark:text-gray-200">
-                      <span className="text-gray-500 dark:text-gray-400">Bankgiro:</span> {isInitiator ? trade.initiator_payment_bankgiro : trade.recipient_payment_bankgiro}
-                    </p>
-                  )}
-                  {!(isInitiator ? trade.initiator_payment_swish : trade.recipient_payment_swish) && 
-                   !(isInitiator ? trade.initiator_payment_account : trade.recipient_payment_account) && 
-                   !(isInitiator ? trade.initiator_payment_bankgiro : trade.recipient_payment_bankgiro) && (
-                    <p className="text-gray-500">Not provided - update in Settings</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Actions */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-bold mb-4 dark:text-white">Actions</h2>
           <div className="flex flex-wrap gap-3">
-            {/* Pending trade - recipient can accept/reject */}
+            
+            {/* Pending trade - recipient can accept/reject/counter */}
             {trade.status === 'pending' && !isInitiator && (
               <>
                 <button
@@ -559,6 +356,16 @@ export default function TradeDetailPage() {
                   <CheckCircle className="w-4 h-4" />
                   Accept Trade
                 </button>
+                
+                <button
+                  onClick={() => router.push(`/trades/new?counterId=${trade.trade_id}`)}
+                  disabled={updating}
+                  className="px-6 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 disabled:opacity-50 flex items-center gap-2"
+                >
+                  <ArrowRightLeft className="w-4 h-4" />
+                  Counter Offer
+                </button>
+
                 <button
                   onClick={() => respondToTrade('reject')}
                   disabled={updating}
@@ -594,7 +401,6 @@ export default function TradeDetailPage() {
               </button>
             )}
 
-            {/* Message the other party */}
             <button
               onClick={() => router.push('/messages')}
               className="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2"
@@ -603,12 +409,10 @@ export default function TradeDetailPage() {
               Message {otherParty.name}
             </button>
 
-            {/* Rate Trade - Only for completed trades */}
             {trade.status === 'completed' && !hasRated && !showRating && (
               <button
                 onClick={() => setShowRating(true)}
                 className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center gap-2"
-                data-testid="rate-trade-btn"
               >
                 <Star className="w-4 h-4" />
                 Rate This Trade
@@ -617,7 +421,6 @@ export default function TradeDetailPage() {
           </div>
         </div>
 
-        {/* Trade Rating Section - Show for completed trades */}
         {trade.status === 'completed' && showRating && !hasRated && (
           <div className="mt-6">
             <TradeRating
@@ -633,20 +436,15 @@ export default function TradeDetailPage() {
           </div>
         )}
 
-        {/* Completed Rating Confirmation */}
         {trade.status === 'completed' && hasRated && (
           <div className="mt-6 bg-green-50 dark:bg-green-900/20 rounded-xl p-6 text-center">
             <Star className="w-12 h-12 text-yellow-400 fill-yellow-400 mx-auto mb-3" />
             <h3 className="text-lg font-semibold text-green-800 dark:text-green-300">
               You've rated this trade!
             </h3>
-            <p className="text-green-600 dark:text-green-400 text-sm mt-1">
-              Thank you for your feedback
-            </p>
           </div>
         )}
 
-        {/* User Reputation - Show for both parties on completed trades */}
         {trade.status === 'completed' && (
           <div className="mt-6 grid md:grid-cols-2 gap-6">
             <div>
