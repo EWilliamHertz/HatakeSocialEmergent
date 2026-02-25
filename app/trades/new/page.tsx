@@ -8,7 +8,7 @@ import Image from 'next/image';
 import UserReputation from '@/components/UserReputation';
 
 interface CollectionItem {
-  id: number;
+  id: number | string; // Allowed string for temporary counter-offer IDs
   card_id: string;
   game: string;
   card_data: any;
@@ -23,6 +23,22 @@ interface UserResult {
   email: string;
   picture?: string;
 }
+
+// 🔴 THE FIX: A strict matching function that prevents identical cards or undefined IDs from selecting everything
+const isSameCard = (a: CollectionItem, b: CollectionItem) => {
+  // 1. If both cards have a real numeric database ID, use that for a strict exact match
+  if (typeof a.id === 'number' && typeof b.id === 'number') {
+    return a.id === b.id;
+  }
+  
+  // 2. Fallback for Counter-Offers (which use temporary string IDs)
+  if (a.card_id && b.card_id && a.card_id === b.card_id) {
+    return a.is_foil === b.is_foil && a.condition === b.condition;
+  }
+
+  // 3. Absolute fallback
+  return a.id === b.id;
+};
 
 function NewTradeContent() {
   const router = useRouter();
@@ -77,7 +93,6 @@ function NewTradeContent() {
         .then(data => {
           if (data.success) {
             const t = data.trade;
-            // Set partner
             const partner = {
               user_id: t.initiator_id,
               name: t.initiator_name,
@@ -86,13 +101,13 @@ function NewTradeContent() {
             };
             setSelectedPartner(partner);
             
-            // Format cards to match CollectionItem schema
-            const mappedOffer = t.receiver_cards.map((c: any) => ({
-              card: { id: 0, card_id: c.card_id, game: c.game, quantity: c.quantity, is_foil: c.foil, condition: c.condition, card_data: { name: c.card_name, images: { small: c.card_image } } },
+            // Generate temporary unique IDs for counter offers so they don't crash the mapping
+            const mappedOffer = t.receiver_cards.map((c: any, i: number) => ({
+              card: { id: `counter_my_${i}`, card_id: c.card_id, game: c.game, quantity: c.quantity, is_foil: c.foil, condition: c.condition, card_data: { name: c.card_name, images: { small: c.card_image } } },
               quantity: c.quantity
             }));
-            const mappedRequest = t.initiator_cards.map((c: any) => ({
-              card: { id: 0, card_id: c.card_id, game: c.game, quantity: c.quantity, is_foil: c.foil, condition: c.condition, card_data: { name: c.card_name, images: { small: c.card_image } } },
+            const mappedRequest = t.initiator_cards.map((c: any, i: number) => ({
+              card: { id: `counter_their_${i}`, card_id: c.card_id, game: c.game, quantity: c.quantity, is_foil: c.foil, condition: c.condition, card_data: { name: c.card_name, images: { small: c.card_image } } },
               quantity: c.quantity
             }));
 
@@ -171,12 +186,13 @@ function NewTradeContent() {
     fetchPartnerCollection(user.user_id);
   };
 
+  // 🔴 Updated logic to use isSameCard
   const addCardToOffer = (item: CollectionItem) => {
-    const existing = offeredCards.find(o => o.card.card_id === item.card_id);
+    const existing = offeredCards.find(o => isSameCard(o.card, item));
     if (existing) {
       if (existing.quantity < item.quantity) {
         setOfferedCards(offeredCards.map(o => 
-          o.card.card_id === item.card_id ? { ...o, quantity: o.quantity + 1 } : o
+          isSameCard(o.card, item) ? { ...o, quantity: o.quantity + 1 } : o
         ));
       }
     } else {
@@ -184,29 +200,34 @@ function NewTradeContent() {
     }
   };
 
-  const removeCardFromOffer = (cardId: string) => {
-    setOfferedCards(offeredCards.filter(o => o.card.card_id !== cardId));
+  const removeCardFromOffer = (item: CollectionItem) => {
+    setOfferedCards(offeredCards.filter(o => !isSameCard(o.card, item)));
   };
 
-  const updateOfferQuantity = (cardId: string, quantity: number) => {
+  const updateOfferQuantity = (item: CollectionItem, quantity: number) => {
     if (quantity <= 0) {
-      removeCardFromOffer(cardId);
+      removeCardFromOffer(item);
     } else {
-      const item = myCollection.find(i => i.card_id === cardId);
-      if (item && quantity <= item.quantity) {
+      const collectionItem = myCollection.find(i => isSameCard(i, item));
+      if (collectionItem && quantity <= collectionItem.quantity) {
         setOfferedCards(offeredCards.map(o => 
-          o.card.card_id === cardId ? { ...o, quantity } : o
+          isSameCard(o.card, item) ? { ...o, quantity } : o
+        ));
+      } else if (!collectionItem) {
+        // Fallback for counter offer items
+        setOfferedCards(offeredCards.map(o => 
+          isSameCard(o.card, item) ? { ...o, quantity } : o
         ));
       }
     }
   };
 
   const addCardToRequest = (item: CollectionItem) => {
-    const existing = requestedCards.find(o => o.card.card_id === item.card_id);
+    const existing = requestedCards.find(o => isSameCard(o.card, item));
     if (existing) {
       if (existing.quantity < item.quantity) {
         setRequestedCards(requestedCards.map(o => 
-          o.card.card_id === item.card_id ? { ...o, quantity: o.quantity + 1 } : o
+          isSameCard(o.card, item) ? { ...o, quantity: o.quantity + 1 } : o
         ));
       }
     } else {
@@ -214,18 +235,22 @@ function NewTradeContent() {
     }
   };
 
-  const removeCardFromRequest = (cardId: string) => {
-    setRequestedCards(requestedCards.filter(o => o.card.card_id !== cardId));
+  const removeCardFromRequest = (item: CollectionItem) => {
+    setRequestedCards(requestedCards.filter(o => !isSameCard(o.card, item)));
   };
 
-  const updateRequestQuantity = (cardId: string, quantity: number) => {
+  const updateRequestQuantity = (item: CollectionItem, quantity: number) => {
     if (quantity <= 0) {
-      removeCardFromRequest(cardId);
+      removeCardFromRequest(item);
     } else {
-      const item = partnerCollection.find(i => i.card_id === cardId);
-      if (item && quantity <= item.quantity) {
+      const collectionItem = partnerCollection.find(i => isSameCard(i, item));
+      if (collectionItem && quantity <= collectionItem.quantity) {
         setRequestedCards(requestedCards.map(o => 
-          o.card.card_id === cardId ? { ...o, quantity } : o
+          isSameCard(o.card, item) ? { ...o, quantity } : o
+        ));
+      } else if (!collectionItem) {
+        setRequestedCards(requestedCards.map(o => 
+          isSameCard(o.card, item) ? { ...o, quantity } : o
         ));
       }
     }
@@ -265,7 +290,7 @@ function NewTradeContent() {
           message: notes,
           cash_requested: cashAmount ? parseFloat(cashAmount) : null,
           cash_currency: cashAmount ? cashCurrency : null,
-          countered_trade_id: counterId // 🔴 Sends the ID to cancel original
+          countered_trade_id: counterId
         })
       });
       
@@ -367,7 +392,6 @@ function NewTradeContent() {
         </button>
       </div>
 
-      {/* Select Trade Partner */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Trade Partner</h2>
         
@@ -378,12 +402,12 @@ function NewTradeContent() {
                 <Image src={selectedPartner.picture} alt={selectedPartner.name} width={40} height={40} className="rounded-full" />
               ) : (
                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-{(selectedPartner.name || '?').charAt(0).toUpperCase()}                </div>
+                  {(selectedPartner.name || '?').charAt(0).toUpperCase()}
+                </div>
               )}
               <div>
                 <span className="font-medium dark:text-white">{selectedPartner.name}</span>
                 <div className="mt-1">
-                  {/* 🔴 Compact Reputation Component! */}
                   <UserReputation userId={selectedPartner.user_id} compact={true} />
                 </div>
               </div>
@@ -420,13 +444,13 @@ function NewTradeContent() {
                         <Image src={user.picture} alt={user.name} width={36} height={36} className="rounded-full" />
                       ) : (
                         <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-{(user.name || '?').charAt(0).toUpperCase()}                        </div>
+                          {(user.name || '?').charAt(0).toUpperCase()}
+                        </div>
                       )}
                       <div className="text-left">
                         <span className="font-medium dark:text-white block">{user.name}</span>
                       </div>
                     </div>
-                    {/* 🔴 Ratings displayed dynamically in search results */}
                     <UserReputation userId={user.user_id} compact={true} />
                   </button>
                 ))}
@@ -437,7 +461,6 @@ function NewTradeContent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Your Offer */}
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
             <h3 className="font-bold text-gray-900 dark:text-white mb-3">You Offer ({offeredCards.length} cards)</h3>
@@ -447,10 +470,10 @@ function NewTradeContent() {
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {offeredCards.map((offer) => (
                   <SelectedCard 
-                    key={offer.card.card_id} 
+                    key={offer.card.id} 
                     offer={offer} 
-                    onRemove={() => removeCardFromOffer(offer.card.card_id)}
-                    onUpdateQty={(qty) => updateOfferQuantity(offer.card.card_id, qty)}
+                    onRemove={() => removeCardFromOffer(offer.card)}
+                    onUpdateQty={(qty) => updateOfferQuantity(offer.card, qty)}
                   />
                 ))}
               </div>
@@ -462,17 +485,16 @@ function NewTradeContent() {
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {filteredMyCollection.map((item) => (
                 <CardItem 
-                  key={item.card_id} 
+                  key={item.id} 
                   item={item} 
                   onAdd={() => addCardToOffer(item)}
-                  isAdded={offeredCards.some(o => o.card.card_id === item.card_id)}
+                  isAdded={offeredCards.some(o => isSameCard(o.card, item))}
                 />
               ))}
             </div>
           </div>
         </div>
 
-        {/* Right: Your Request */}
         <div className="space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
             <h3 className="font-bold text-gray-900 dark:text-white mb-3">You Request ({requestedCards.length} cards)</h3>
@@ -484,10 +506,10 @@ function NewTradeContent() {
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {requestedCards.map((req) => (
                   <SelectedCard 
-                    key={req.card.card_id} 
+                    key={req.card.id} 
                     offer={req} 
-                    onRemove={() => removeCardFromRequest(req.card.card_id)}
-                    onUpdateQty={(qty) => updateRequestQuantity(req.card.card_id, qty)}
+                    onRemove={() => removeCardFromRequest(req.card)}
+                    onUpdateQty={(qty) => updateRequestQuantity(req.card, qty)}
                   />
                 ))}
               </div>
@@ -504,10 +526,10 @@ function NewTradeContent() {
               <div className="space-y-1 max-h-64 overflow-y-auto">
                 {filteredPartnerCollection.map((item) => (
                   <CardItem 
-                    key={item.card_id} 
+                    key={item.id} 
                     item={item} 
                     onAdd={() => addCardToRequest(item)}
-                    isAdded={requestedCards.some(o => o.card.card_id === item.card_id)}
+                    isAdded={requestedCards.some(o => isSameCard(o.card, item))}
                   />
                 ))}
               </div>
@@ -519,7 +541,6 @@ function NewTradeContent() {
   );
 }
 
-// 🔴 Wrap in suspense boundary to safely use useSearchParams in Next.js 13+
 export default function NewTradePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
