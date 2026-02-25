@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Users, Globe, Hash, ThumbsUp, MessageCircle, Send, ChevronDown, ChevronUp, Reply, Smile, X, MoreHorizontal, Trash2, Award } from 'lucide-react';
+import { Users, Globe, Hash, ThumbsUp, MessageCircle, Send, ChevronDown, ChevronUp, Reply, Smile, X, MoreHorizontal, Trash2, Award, Share2 } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 // Badge display colors
 const BADGE_COLORS: Record<string, string> = {
@@ -16,8 +18,6 @@ const BADGE_COLORS: Record<string, string> = {
   content_creator: '#FB923C', first_listing: '#4ADE80', merchant: '#2DD4BF',
   deck_builder: '#818CF8', deck_master: '#7C3AED', veteran: '#94A3B8', og_member: '#64748B',
 };
-import Image from 'next/image';
-import Link from 'next/link';
 
 interface Reaction {
   emoji: string;
@@ -50,7 +50,6 @@ interface Post {
   reactions?: Reaction[];
 }
 
-// Updated reactions: Heart added, ThumbsUp removed (since it's the main button)
 const QUICK_REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '🔥', '💯'];
 
 export default function FeedPage() {
@@ -68,17 +67,19 @@ export default function FeedPage() {
   const [postReactions, setPostReactions] = useState<Record<string, Reaction[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
   
-  // Groups for posting
   const [myGroups, setMyGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [postMenu, setPostMenu] = useState<string | null>(null);
 
-  // Delete post function
+  // Modal States for viewing who reacted
+  const [reactorsModal, setReactorsModal] = useState<string | null>(null);
+  const [reactorsData, setReactorsData] = useState<{ likes: any[], reactions: any[] } | null>(null);
+  const [activeReactorTab, setActiveReactorTab] = useState<'likes' | 'reactions'>('likes');
+
   const deletePost = async (postId: string) => {
     if (!confirm('Are you sure you want to delete this post?')) return;
-    
     try {
       const res = await fetch(`/api/feed/${postId}`, {
         method: 'DELETE',
@@ -127,10 +128,7 @@ export default function FeedPage() {
     try {
       const res = await fetch('/api/groups?type=my', { credentials: 'include' });
       const data = await res.json();
-      if (data.success) {
-        // API returns 'groups' not 'myGroups'
-        setMyGroups(data.groups || []);
-      }
+      if (data.success) setMyGroups(data.groups || []);
     } catch (e) {
       console.log('Failed to load groups:', e);
     }
@@ -140,9 +138,7 @@ export default function FeedPage() {
     setLoading(true);
     try {
       let url = `/api/feed?tab=${tab}`;
-      if (tab === 'groups' && selectedGroup) {
-        url += `&group_id=${selectedGroup}`;
-      }
+      if (tab === 'groups' && selectedGroup) url += `&group_id=${selectedGroup}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
@@ -172,25 +168,20 @@ export default function FeedPage() {
 
   const createPost = async () => {
     if (!newPost.trim()) return;
-
     try {
       const postData: any = { 
         content: newPost, 
         visibility: tab === 'public' ? 'public' : (tab === 'groups' ? 'group' : 'friends')
       };
-      
-      // If posting to a specific group
       if (tab === 'groups' && selectedGroup) {
         postData.group_id = selectedGroup;
         postData.visibility = 'group';
       }
-
       const res = await fetch('/api/feed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(postData),
       });
-
       if (res.ok) {
         setNewPost('');
         loadPosts();
@@ -272,7 +263,6 @@ export default function FeedPage() {
   const submitComment = async (postId: string) => {
     const content = commentInputs[postId]?.trim();
     if (!content) return;
-
     try {
       const res = await fetch(`/api/feed/${postId}/comments`, {
         method: 'POST',
@@ -282,7 +272,6 @@ export default function FeedPage() {
           parentCommentId: replyingTo?.postId === postId ? replyingTo.commentId : null,
         }),
       });
-
       if (res.ok) {
         setCommentInputs(prev => ({ ...prev, [postId]: '' }));
         setReplyingTo(null);
@@ -317,7 +306,6 @@ export default function FeedPage() {
   const getThreadedComments = (comments: Comment[]) => {
     const topLevel = comments.filter(c => !c.parent_comment_id);
     const replies: Record<string, Comment[]> = {};
-
     comments.forEach(c => {
       if (c.parent_comment_id) {
         if (!replies[c.parent_comment_id]) {
@@ -326,8 +314,39 @@ export default function FeedPage() {
         replies[c.parent_comment_id].push(c);
       }
     });
-
     return { topLevel, replies };
+  };
+
+  const openReactors = async (postId: string) => {
+    setReactorsModal(postId);
+    setReactorsData(null);
+    try {
+      const res = await fetch(`/api/feed/${postId}/reactors`);
+      const data = await res.json();
+      if (data.success) {
+        setReactorsData({ likes: data.likes, reactions: data.reactions });
+      }
+    } catch (e) {
+      console.error('Failed to load reactors', e);
+    }
+  };
+
+  const handleShare = async (postId: string) => {
+    const url = `${window.location.origin}/feed#${postId}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Hatake Social',
+          text: 'Check out this post on Hatake!',
+          url: url
+        });
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert('Post link copied to clipboard!');
+    }
   };
 
   if (!authenticated) return null;
@@ -342,7 +361,6 @@ export default function FeedPage() {
             <button
               key={t}
               onClick={() => { setTab(t); if (t !== 'groups') setSelectedGroup(null); }}
-              data-testid={`tab-${t}`}
               className={`flex-1 py-3 px-4 rounded-lg font-semibold transition capitalize flex items-center justify-center gap-2
                 ${tab === t ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
             >
@@ -354,7 +372,6 @@ export default function FeedPage() {
           ))}
         </div>
 
-        {/* Group Selector - only shown when on groups tab */}
         {tab === 'groups' && myGroups.length > 0 && (
           <div className="mb-4 relative">
             <button
@@ -412,14 +429,12 @@ export default function FeedPage() {
               : "What's happening in your collection?"}
             className="w-full p-4 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             rows={3}
-            data-testid="new-post-input"
           />
           <div className="flex justify-end mt-3">
             <button
               onClick={createPost}
               disabled={!newPost.trim()}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              data-testid="create-post-btn"
             >
               <Send className="w-4 h-4" />
               Post
@@ -439,7 +454,7 @@ export default function FeedPage() {
         ) : (
           <div className="space-y-6">
             {posts.map(post => (
-              <div key={post.post_id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm" data-testid={`post-${post.post_id}`}>
+              <div key={post.post_id} id={post.post_id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
                 <div className="p-6 pb-4">
                   <div className="flex items-center gap-3 mb-4">
                     <Link href={`/profile/${post.user_id}`} className="hover:opacity-80 transition">
@@ -447,7 +462,7 @@ export default function FeedPage() {
                         <Image src={post.picture} alt={post.name} width={40} height={40} className="rounded-full object-cover" />
                       ) : (
                         <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                          {post.name.charAt(0).toUpperCase()}
+                          {(post.name || '?').charAt(0).toUpperCase()}
                         </div>
                       )}
                     </Link>
@@ -472,7 +487,6 @@ export default function FeedPage() {
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(post.created_at).toLocaleDateString()}</p>
                     </div>
-                    {/* Post Menu (for own posts or admins) */}
                     {currentUserId === post.user_id && (
                       <div className="ml-auto relative">
                         <button
@@ -498,14 +512,11 @@ export default function FeedPage() {
                   <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">{post.content}</p>
                 </div>
 
-                {/* Post Actions & Reactions - MERGED ROW */}
                 <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    {/* Main Like Button - Thumbs Up */}
                     <button
                       onClick={() => toggleLike(post.post_id)}
                       className={`flex items-center gap-2 ${post.liked ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'} hover:text-blue-600 transition`}
-                      data-testid={`like-btn-${post.post_id}`}
                     >
                       <ThumbsUp className={`w-5 h-5 ${post.liked ? 'fill-current' : ''}`} />
                       <span>{post.like_count || 0}</span>
@@ -514,7 +525,6 @@ export default function FeedPage() {
                     <button
                       onClick={() => toggleComments(post.post_id)}
                       className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition"
-                      data-testid={`comments-btn-${post.post_id}`}
                     >
                       <MessageCircle className="w-5 h-5" />
                       <span>{post.comment_count || 0}</span>
@@ -525,7 +535,6 @@ export default function FeedPage() {
                       <button
                         onClick={() => setShowEmojiPicker(showEmojiPicker === post.post_id ? null : post.post_id)}
                         className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
-                        data-testid={`emoji-btn-${post.post_id}`}
                       >
                         <Smile className="w-5 h-5" />
                       </button>
@@ -544,27 +553,45 @@ export default function FeedPage() {
                         </div>
                       )}
                     </div>
+                    
+                    <button
+                      onClick={() => handleShare(post.post_id)}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                      title="Share Post"
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </button>
                   </div>
 
-                  {/* Reactions Display (Same Row) */}
-                  {postReactions[post.post_id]?.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {postReactions[post.post_id].map(r => (
-                        <button
-                          key={r.emoji}
-                          onClick={() => togglePostReaction(post.post_id, r.emoji)}
-                          className={`px-2 py-1 rounded-full text-sm flex items-center gap-1 transition ${
-                            r.userReacted
-                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          <span>{r.emoji}</span>
-                          <span className="text-xs">{r.count}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-4 flex-1 justify-end">
+                    {postReactions[post.post_id]?.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {postReactions[post.post_id].map(r => (
+                          <button
+                            key={r.emoji}
+                            onClick={() => togglePostReaction(post.post_id, r.emoji)}
+                            className={`px-2 py-1 rounded-full text-sm flex items-center gap-1 transition ${
+                              r.userReacted
+                                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            <span>{r.emoji}</span>
+                            <span className="text-xs">{r.count}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {(post.like_count > 0 || postReactions[post.post_id]?.length > 0) && (
+                      <button 
+                        onClick={() => openReactors(post.post_id)} 
+                        className="text-xs text-gray-500 hover:text-blue-600 hover:underline flex-shrink-0"
+                      >
+                        View interactions
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {expandedComments.has(post.post_id) && (
@@ -581,13 +608,13 @@ export default function FeedPage() {
                               const { topLevel, replies } = getThreadedComments(postComments[post.post_id] || []);
                               return topLevel.map(comment => (
                                 <div key={comment.comment_id}>
-                                  <div className="flex gap-3" data-testid={`comment-${comment.comment_id}`}>
+                                  <div className="flex gap-3">
                                     <Link href={`/profile/${comment.user_id}`}>
                                       {comment.picture ? (
                                         <Image src={comment.picture} alt={comment.name} width={32} height={32} className="rounded-full" />
                                       ) : (
                                         <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                                          {comment.name.charAt(0).toUpperCase()}
+                                          {(comment.name || '?').charAt(0).toUpperCase()}
                                         </div>
                                       )}
                                     </Link>
@@ -613,7 +640,6 @@ export default function FeedPage() {
                                         <button
                                           onClick={() => startReply(post.post_id, comment.comment_id, comment.name)}
                                           className="text-xs text-gray-500 hover:text-blue-600 flex items-center gap-1"
-                                          data-testid={`reply-btn-${comment.comment_id}`}
                                         >
                                           <Reply className="w-3 h-3" />
                                           Reply
@@ -639,13 +665,13 @@ export default function FeedPage() {
                                   {replies[comment.comment_id]?.length > 0 && (
                                     <div className="ml-10 mt-3 space-y-3 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
                                       {replies[comment.comment_id].map(reply => (
-                                        <div key={reply.comment_id} className="flex gap-3" data-testid={`reply-${reply.comment_id}`}>
+                                        <div key={reply.comment_id} className="flex gap-3">
                                           <Link href={`/profile/${reply.user_id}`}>
                                             {reply.picture ? (
                                               <Image src={reply.picture} alt={reply.name} width={28} height={28} className="rounded-full" />
                                             ) : (
                                               <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                                                {reply.name.charAt(0).toUpperCase()}
+                                                {(reply.name || '?').charAt(0).toUpperCase()}
                                               </div>
                                             )}
                                           </Link>
@@ -680,9 +706,6 @@ export default function FeedPage() {
                           </div>
                         )}
                         <div className="flex gap-3">
-                          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                            Y
-                          </div>
                           <div className="flex-1 relative">
                             {replyingTo?.postId === post.post_id && (
                               <div className="absolute -top-6 left-0 text-xs text-blue-600 flex items-center gap-1">
@@ -701,13 +724,11 @@ export default function FeedPage() {
                                 onKeyDown={e => e.key === 'Enter' && submitComment(post.post_id)}
                                 placeholder={replyingTo?.postId === post.post_id ? 'Write a reply...' : 'Write a comment...'}
                                 className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-full text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                data-testid={`comment-input-${post.post_id}`}
                               />
                               <button
                                 onClick={() => submitComment(post.post_id)}
                                 disabled={!commentInputs[post.post_id]?.trim()}
                                 className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                data-testid={`submit-comment-${post.post_id}`}
                               >
                                 <Send className="w-4 h-4" />
                               </button>
@@ -723,6 +744,62 @@ export default function FeedPage() {
           </div>
         )}
       </div>
+
+      {/* Reactors Modal */}
+      {reactorsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="font-bold text-lg dark:text-white">Post Interactions</h3>
+              <button onClick={() => setReactorsModal(null)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex border-b border-gray-100 dark:border-gray-700">
+              <button
+                onClick={() => setActiveReactorTab('likes')}
+                className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeReactorTab === 'likes' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              >
+                Likes {reactorsData?.likes ? `(${reactorsData.likes.length})` : ''}
+              </button>
+              <button
+                onClick={() => setActiveReactorTab('reactions')}
+                className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeReactorTab === 'reactions' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              >
+                Reactions {reactorsData?.reactions ? `(${reactorsData.reactions.length})` : ''}
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]">
+              {!reactorsData ? (
+                <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+              ) : activeReactorTab === 'likes' ? (
+                reactorsData.likes.length === 0 ? <p className="text-center text-gray-500 py-4">No likes yet.</p> : (
+                  reactorsData.likes.map(user => (
+                    <Link key={user.user_id} href={`/profile/${user.user_id}`} onClick={() => setReactorsModal(null)} className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition">
+                      {user.picture ? <Image src={user.picture} width={40} height={40} alt={user.name} className="rounded-full" /> : <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white">{(user.name || '?').charAt(0).toUpperCase()}</div>}
+                      <span className="font-medium dark:text-white">{user.name}</span>
+                    </Link>
+                  ))
+                )
+              ) : (
+                 reactorsData.reactions.length === 0 ? <p className="text-center text-gray-500 py-4">No reactions yet.</p> : (
+                  reactorsData.reactions.map((reaction, i) => (
+                    <Link key={i} href={`/profile/${reaction.user_id}`} onClick={() => setReactorsModal(null)} className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition">
+                      <div className="relative">
+                        {reaction.picture ? <Image src={reaction.picture} width={40} height={40} alt={reaction.name} className="rounded-full" /> : <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white">{(reaction.name || '?').charAt(0).toUpperCase()}</div>}
+                        <div className="absolute -bottom-1 -right-1 text-sm bg-white dark:bg-gray-800 rounded-full p-0.5 shadow-sm border border-gray-100 dark:border-gray-700 leading-none">{reaction.emoji}</div>
+                      </div>
+                      <span className="font-medium dark:text-white">{reaction.name}</span>
+                    </Link>
+                  ))
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
