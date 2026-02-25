@@ -378,8 +378,7 @@ function NewTradeContent() {
                 <Image src={selectedPartner.picture} alt={selectedPartner.name} width={40} height={40} className="rounded-full" />
               ) : (
                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  {selectedPartner.name.charAt(0).toUpperCase()}
-                </div>
+{(selectedPartner.name || '?').charAt(0).toUpperCase()}                </div>
               )}
               <div>
                 <span className="font-medium dark:text-white">{selectedPartner.name}</span>
@@ -421,8 +420,7 @@ function NewTradeContent() {
                         <Image src={user.picture} alt={user.name} width={36} height={36} className="rounded-full" />
                       ) : (
                         <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
+{(user.name || '?').charAt(0).toUpperCase()}                        </div>
                       )}
                       <div className="text-left">
                         <span className="font-medium dark:text-white block">{user.name}</span>

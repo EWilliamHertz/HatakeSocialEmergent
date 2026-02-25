@@ -180,8 +180,7 @@ export default function TradesPage() {
                         <Image src={otherParty.picture} alt={otherParty.name} width={48} height={48} className="rounded-full" />
                       ) : (
                         <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
-                          {otherParty.name.charAt(0).toUpperCase()}
-                        </div>
+                        {(otherParty.name || '?').charAt(0).toUpperCase()}                        </div>
                       )}
                       <div>
                         <p className="font-semibold dark:text-white">Trade with {otherParty.name}</p>

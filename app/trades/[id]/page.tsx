@@ -221,8 +221,7 @@ export default function TradeDetailPage() {
                   <Image src={trade.initiator_picture} alt={trade.initiator_name} width={48} height={48} className="rounded-full" unoptimized />
                 ) : (
                   <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
-                    {trade.initiator_name.charAt(0).toUpperCase()}
-                  </div>
+{(trade.initiator_name || '?').charAt(0).toUpperCase()}                  </div>
                 )}
               </a>
               <div>
@@ -257,8 +256,7 @@ export default function TradeDetailPage() {
                   <Image src={trade.recipient_picture} alt={trade.recipient_name} width={48} height={48} className="rounded-full" unoptimized />
                 ) : (
                   <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
-                    {trade.recipient_name.charAt(0).toUpperCase()}
-                  </div>
+{(trade.recipient_name || '?').charAt(0).toUpperCase()}                  </div>
                 )}
               </a>
             </div>
