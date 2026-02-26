@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import MessengerWidget from "@/components/MessengerWidget";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import GlobalCallListener from "@/components/VideoCall/GlobalCallListener";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +30,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col`}
       >
         <ThemeProvider>
-          <GlobalCallListener />
           <div className="flex-1 flex flex-col">
             {children}
           </div>
