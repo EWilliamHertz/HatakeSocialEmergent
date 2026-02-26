@@ -69,18 +69,8 @@ export default function Navbar() {
     { href: '/decks', icon: Layers, label: 'Decks' },
     { href: '/marketplace', icon: ShoppingBag, label: 'Market' },
     { href: '/trades', icon: ArrowRightLeft, label: 'Trades' },
-    { href: '/community', icon: Users, label: 'Community' }, // Combined Friends + Groups
-    <Link 
-  href="/blog" 
-  className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition ${
-    pathname?.startsWith('/blog') 
-      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400'
-  }`}
->
-  <Newspaper className="w-5 h-5" />
-  <span className="hidden lg:inline">News</span>
-</Link>
+    { href: '/community', icon: Users, label: 'Community' },
+    { href: '/blog', icon: Newspaper, label: 'News' },
     { href: '/messages', icon: MessageCircle, label: 'Messages' },
   ];
 
@@ -120,9 +110,11 @@ export default function Navbar() {
                       : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                   data-testid={`nav-${link.label.toLowerCase()}`}
+                  title={link.label} // Adds a nice native tooltip on hover since the text is hidden!
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="hidden xl:inline text-sm font-medium">{link.label}</span>
+                  {/* TEXT IS HIDDEN HERE USING sr-only */}
+                  <span className="sr-only">{link.label}</span>
                 </Link>
               );
             })}
@@ -144,10 +136,12 @@ export default function Navbar() {
                   <Image src={user.picture} alt={user.name} width={32} height={32} className="rounded-full" />
                 ) : (
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    {user.name.charAt(0).toUpperCase()}
+                    {(user.name || '?').charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-300">{user.name.split(' ')[0]}</span>
+                <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {user.name ? user.name.split(' ')[0] : 'User'}
+                </span>
                 <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
               </button>
 
