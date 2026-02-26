@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { Home, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound, Layers, Settings, ChevronDown, Shield, Heart, Archive } from 'lucide-react';
+import { Home, Newspaper, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound, Layers, Settings, ChevronDown, Shield, Heart, Archive } from 'lucide-react';
 import Link from 'next/link';
 import NotificationsDropdown from './NotificationsDropdown';
 import ThemeToggle from './ThemeToggle';
@@ -70,6 +70,17 @@ export default function Navbar() {
     { href: '/marketplace', icon: ShoppingBag, label: 'Market' },
     { href: '/trades', icon: ArrowRightLeft, label: 'Trades' },
     { href: '/community', icon: Users, label: 'Community' }, // Combined Friends + Groups
+    <Link 
+  href="/blog" 
+  className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition ${
+    pathname?.startsWith('/blog') 
+      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400'
+  }`}
+>
+  <Newspaper className="w-5 h-5" />
+  <span className="hidden lg:inline">News</span>
+</Link>
     { href: '/messages', icon: MessageCircle, label: 'Messages' },
   ];
 
