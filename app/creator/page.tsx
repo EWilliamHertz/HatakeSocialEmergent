@@ -1,10 +1,20 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
-import ReactMarkdown from 'react-markdown';
-import { PenTool, Eye, Save, Globe, Loader2 } from 'lucide-react';
+import { Save, Globe, Loader2 } from 'lucide-react';
+
+// Dynamically import the editor to prevent Next.js SSR errors (Window is not defined)
+const JoditEditor = dynamic(() => import('jodit-react'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full min-h-[400px]">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+    </div>
+  ),
+});
 
 const CATEGORIES = ['General', 'Releases', 'Tournaments', 'Marketplace', 'Updates'];
 
@@ -13,7 +23,6 @@ function CreatorContent() {
   const searchParams = useSearchParams();
   const editSlug = searchParams.get('edit');
 
-  const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(!!editSlug);
   
@@ -22,6 +31,30 @@ function CreatorContent() {
   const [excerpt, setExcerpt] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [content, setContent] = useState('');
+
+  // Jodit Editor Configuration
+  const editorConfig = useMemo(() => ({
+    readonly: false,
+    placeholder: 'Write your amazing article here... You can drag & drop images or paste YouTube links!',
+    height: 650,
+    // Allows dragging and dropping images directly into the editor
+    enableDragAndDropFileToEditor: true,
+    uploader: {
+      // Automatically converts uploaded images to Base64 so you don't need a complex backend image API immediately
+      insertImageAsBase64URI: true 
+    },
+    buttons: [
+      'source', '|',
+      'bold', 'strikethrough', 'underline', 'italic', '|',
+      'ul', 'ol', '|',
+      'outdent', 'indent', '|',
+      'font', 'fontsize', 'brush', 'paragraph', '|',
+      'image', 'video', 'table', 'link', '|',
+      'align', 'undo', 'redo', '|',
+      'hr', 'fullsize'
+    ],
+    removeButtons: ['about'], // Hide the Jodit branding button
+  }), []);
 
   // Load existing article if editing
   useEffect(() => {
@@ -72,7 +105,7 @@ function CreatorContent() {
   if (initializing) return <div className="text-center pt-32"><Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" /></div>;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <div className="container mx-auto px-4 py-8 max-w-[1400px]">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold dark:text-white">{editSlug ? 'Edit Article' : 'Creator Studio'}</h1>
@@ -88,8 +121,9 @@ function CreatorContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Settings Panel */}
+        <div className="space-y-4 lg:col-span-1">
           <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
             <h3 className="font-bold mb-4 dark:text-white">Article Settings</h3>
             <div className="space-y-4">
@@ -116,17 +150,15 @@ function CreatorContent() {
           </div>
         </div>
 
-        <div className="md:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-[700px]">
-          <div className="flex border-b border-gray-200 dark:border-gray-700">
-            <button onClick={() => setActiveTab('write')} className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-medium transition ${activeTab === 'write' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-gray-500'}`}><PenTool className="w-4 h-4" /> Write</button>
-            <button onClick={() => setActiveTab('preview')} className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-medium transition ${activeTab === 'preview' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-gray-500'}`}><Eye className="w-4 h-4" /> Preview</button>
-          </div>
-          <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900/50">
-            {activeTab === 'write' ? (
-              <textarea value={content} onChange={(e) => setContent(e.target.value)} className="w-full h-full p-6 bg-transparent border-none focus:ring-0 resize-none dark:text-white" />
-            ) : (
-              <div className="p-8 prose dark:prose-invert max-w-none"><ReactMarkdown>{content}</ReactMarkdown></div>
-            )}
+        {/* Editor Panel */}
+        <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col min-h-[700px]">
+          {/* Note: WYSIWYG replaces the need for separate Write/Preview tabs */}
+          <div className="flex-1 bg-white dark:bg-gray-900/50 editor-container text-black">
+            <JoditEditor
+              value={content}
+              config={editorConfig}
+              onBlur={(newContent) => setContent(newContent)} // prefer onBlur for performance reasons instead of onChange
+            />
           </div>
         </div>
       </div>
