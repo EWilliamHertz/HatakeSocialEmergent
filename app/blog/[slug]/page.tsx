@@ -3,7 +3,6 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, User, Share2, MessageSquareShare, Edit, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
@@ -122,7 +121,8 @@ export default function ArticleReaderPage({ params }: { params: Promise<{ slug: 
         </Link>
         
         <article className="prose prose-lg md:prose-xl dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 prose-headings:font-bold prose-a:text-blue-600 hover:prose-a:text-blue-500">
-          <ReactMarkdown>{article.content}</ReactMarkdown>
+          {/* Changed this to render HTML instead of Markdown */}
+          <div dangerouslySetInnerHTML={{ __html: article.content }} />
         </article>
       </div>
     </div>
