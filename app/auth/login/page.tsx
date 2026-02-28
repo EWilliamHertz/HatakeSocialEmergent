@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2, Send } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,11 +13,16 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showResendBtn, setShowResendBtn] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
+    setShowResendBtn(false);
     setLoading(true);
 
     try {
@@ -34,11 +39,42 @@ export default function LoginPage() {
         router.push('/feed');
       } else {
         setError(data.error || 'Login failed');
+        // Show the resend button if the specific unverified error is triggered
+        if (response.status === 403 && data.error?.includes('verify')) {
+          setShowResendBtn(true);
+        }
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setError('');
+    setSuccessMsg('');
+    setResending(true);
+
+    try {
+      const response = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMsg('Verification email sent! Please check your inbox.');
+        setShowResendBtn(false); // Hide button after success
+      } else {
+        setError(data.error || 'Failed to resend verification email');
+      }
+    } catch (err) {
+      setError('An error occurred while resending the email.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -66,8 +102,28 @@ export default function LoginPage() {
         <p className="text-gray-600 text-center mb-8">Sign in to continue to Hatake.Social</p>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 flex flex-col gap-3">
+            <p>{error}</p>
+            {showResendBtn && (
+              <button
+                onClick={handleResendVerification}
+                disabled={resending}
+                className="self-start text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1.5 rounded-md transition-colors font-medium flex items-center disabled:opacity-50"
+              >
+                {resending ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-1.5" />
+                )}
+                {resending ? 'Sending...' : 'Resend Verification Email'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
+            {successMsg}
           </div>
         )}
 
