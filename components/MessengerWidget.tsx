@@ -78,6 +78,7 @@ export default function MessengerWidget() {
   const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [initialLoad, setInitialLoad] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -236,17 +237,32 @@ export default function MessengerWidget() {
     }
   };
 
-  // Scroll when new messages arrive
+// Scroll to bottom when messages change
   useEffect(() => {
-    // Only auto-scroll if user hasn't scrolled up and there are new messages
-    if (!userScrolledUp.current && messages.length > lastMessageCount.current) {
+    if (initialLoad || !userScrolledUp.current) {
       // Use setTimeout to ensure DOM has updated
       setTimeout(() => {
-        scrollToBottom(true);
+        scrollToBottom(!initialLoad);
       }, 50);
+      
+      if (initialLoad && messages.length > 0) {
+        setInitialLoad(false);
+      }
     }
     lastMessageCount.current = messages.length;
-  }, [messages]);
+  }, [messages, initialLoad]);
+
+  // Reset scroll state when conversation or widget visibility changes
+  useEffect(() => {
+    setInitialLoad(true);
+    userScrolledUp.current = false;
+    lastMessageCount.current = 0;
+    
+    // Force an instant scroll down when opening the widget or changing the active chat
+    if (isOpen && !isMinimized && selectedConv) {
+      setTimeout(() => scrollToBottom(false), 100);
+    }
+  }, [selectedConv, isOpen, isMinimized]);
 
   // Handle scroll event to detect if user scrolled up
   const handleMessagesScroll = (e: React.UIEvent<HTMLDivElement>) => {

@@ -220,6 +220,7 @@ export default function MessagesPage() {
   };
 
   useEffect(() => {
+   useEffect(() => {
     if (initialLoad || !isUserScrolledUp) {
       // Use setTimeout to ensure DOM has updated
       setTimeout(() => {
@@ -231,12 +232,14 @@ export default function MessagesPage() {
     }
   }, [messages, initialLoad, isUserScrolledUp]);
 
-  // Reset initial load when conversation changes
+  // Reset initial load and force scroll when conversation changes
   useEffect(() => {
     setInitialLoad(true);
     setIsUserScrolledUp(false);
+    
+    // Force an immediate instant scroll to the bottom when entering a new chat
+    setTimeout(() => scrollToBottom(false), 100);
   }, [selectedConv, selectedGroup]);
-
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
