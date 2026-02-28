@@ -1155,10 +1155,13 @@ export default function MessagesPage() {
       {/* Video Call Component */}
       {(showVideoCall || showAudioCall) && (
         <VideoCall
+          isOpen={showVideoCall || showAudioCall}
           onClose={() => { setShowVideoCall(false); setShowAudioCall(false); }}
-          userId={selectedConv ? conversations.find(c => c.conversation_id === selectedConv)?.user_id || '' : ''}
-          userName={selectedConv ? conversations.find(c => c.conversation_id === selectedConv)?.name || '' : ''}
-          isAudioOnly={showAudioCall}
+          callType={showAudioCall ? 'audio' : 'video'}
+          remoteUserId={selectedConv ? conversations.find(c => c.conversation_id === selectedConv)?.user_id || '' : ''}
+          remoteUserName={selectedConv ? conversations.find(c => c.conversation_id === selectedConv)?.name || '' : ''}
+          currentUserId={currentUserId}
+          currentUserName={currentUserName}
         />
       )}
     </div>
