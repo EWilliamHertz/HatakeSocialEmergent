@@ -44,19 +44,23 @@ export async function GET(
       )
     `;
 
+    try {
+      await sql`ALTER TABLE group_messages ADD COLUMN IF NOT EXISTS reply_to VARCHAR(255)`;
+    } catch (e) {}
+
     // Get messages
     const messages = await sql`
       SELECT 
-        gm.message_id,
-        gm.content,
-        gm.message_type,
-        gm.media_url,
-        gm.created_at,
-        gm.user_id,
+        gm.*,
         u.name,
-        u.picture
+        u.picture,
+        rm.content as reply_content,
+        rm.user_id as reply_sender_id,
+        ru.name as reply_sender_name
       FROM group_messages gm
       JOIN users u ON gm.user_id = u.user_id
+      LEFT JOIN group_messages rm ON gm.reply_to = rm.message_id
+      LEFT JOIN users ru ON rm.user_id = ru.user_id
       WHERE gm.group_id = ${groupId}
       ORDER BY gm.created_at DESC
       LIMIT 100
@@ -101,7 +105,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { content, messageType = 'text', mediaUrl } = body;
+    const { content, messageType = 'text', mediaUrl, replyToId } = body;
 
     if (!content && !mediaUrl) {
       return NextResponse.json({ error: 'Message content required' }, { status: 400 });
@@ -120,22 +124,21 @@ export async function POST(
       )
     `;
 
+    try {
+      await sql`ALTER TABLE group_messages ADD COLUMN IF NOT EXISTS reply_to VARCHAR(255)`;
+    } catch (e) {}
+
     const messageId = generateId('gmsg');
 
     await sql`
-      INSERT INTO group_messages (message_id, group_id, user_id, content, message_type, media_url)
-      VALUES (${messageId}, ${groupId}, ${user.user_id}, ${content || ''}, ${messageType}, ${mediaUrl || null})
+      INSERT INTO group_messages (message_id, group_id, user_id, content, message_type, media_url, reply_to)
+      VALUES (${messageId}, ${groupId}, ${user.user_id}, ${content || ''}, ${messageType}, ${mediaUrl || null}, ${replyToId || null})
     `;
 
     // Get the message with user info
     const message = await sql`
       SELECT 
-        gm.message_id,
-        gm.content,
-        gm.message_type,
-        gm.media_url,
-        gm.created_at,
-        gm.user_id,
+        gm.*,
         u.name,
         u.picture
       FROM group_messages gm

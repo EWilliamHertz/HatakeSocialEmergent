@@ -309,6 +309,9 @@ export default function MessagesPage() {
   const sendGroupMessage = async (content: string, messageType = 'text') => {
     if (!selectedGroup) return;
     
+    const replyToMsg = replyTo;
+    setReplyTo(null);
+
     try {
       const res = await fetch(`/api/groups/${selectedGroup}/chat`, {
         method: 'POST',
@@ -316,7 +319,8 @@ export default function MessagesPage() {
         credentials: 'include',
         body: JSON.stringify({ 
           content,
-          message_type: messageType
+          message_type: messageType,
+          replyToId: replyToMsg?.message_id || null
         })
       });
       
@@ -1115,7 +1119,7 @@ export default function MessagesPage() {
                                   </div>
                                 </div>
                               )}
-                              <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2 items-end`}>
+                              <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} gap-2 items-end group/msg`}>
                                 {!isOwn && (
                                   <a href={`/profile/${msg.sender_id}`} className="flex flex-col items-center">
                                     {msg.picture ? (
@@ -1127,10 +1131,35 @@ export default function MessagesPage() {
                                     )}
                                   </a>
                                 )}
+                                
+                                {isOwn && (
+                                  <button 
+                                    onClick={() => setReplyTo(msg)}
+                                    className="opacity-0 group-hover/msg:opacity-100 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                                    title="Reply"
+                                  >
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                    </svg>
+                                  </button>
+                                )}
+
                                 <div className={`max-w-[70%] ${isOwn ? 'order-first' : ''}`}>
                                   {!isOwn && (
                                     <a href={`/profile/${msg.sender_id}`} className="text-xs text-gray-500 mb-0.5 ml-1 hover:text-blue-600 transition">{msg.name}</a>
                                   )}
+                                  
+                                  {msg.reply_content && (
+                                    <div className={`text-xs mb-1 px-3 py-1.5 rounded-lg border-l-2 ${
+                                      isOwn 
+                                        ? 'bg-blue-500/20 border-blue-300 text-blue-100' 
+                                        : 'bg-gray-200 dark:bg-gray-600 border-gray-400 text-gray-600 dark:text-gray-300'
+                                    }`}>
+                                      <span className="font-medium">{msg.reply_sender_name}</span>
+                                      <p className="truncate max-w-[200px]">{msg.reply_content}</p>
+                                    </div>
+                                  )}
+
                                   <div className={`rounded-2xl px-4 py-2 ${
                                     isOwn 
                                       ? 'bg-blue-600 text-white rounded-br-sm' 
@@ -1142,6 +1171,18 @@ export default function MessagesPage() {
                                     {formatMessageTime(msg.created_at)}
                                   </p>
                                 </div>
+                                
+                                {!isOwn && (
+                                  <button 
+                                    onClick={() => setReplyTo(msg)}
+                                    className="opacity-0 group-hover/msg:opacity-100 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                                    title="Reply"
+                                  >
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                    </svg>
+                                  </button>
+                                )}
                               </div>
                             </div>
                           );
@@ -1153,6 +1194,29 @@ export default function MessagesPage() {
 
                   {/* Send Group Message */}
                   <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+                    {replyTo && (
+                      <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 px-4 py-2 mb-3 rounded-lg border-l-4 border-blue-500">
+                        <div className="flex items-center gap-3">
+                          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                              Replying to {replyTo.sender_id === currentUserId ? 'yourself' : replyTo.name}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[300px]">
+                              {replyTo.content || (replyTo.media_url ? '[Media]' : '')}
+                            </p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setReplyTo(null)} 
+                          className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded"
+                        >
+                          <X className="w-4 h-4 text-gray-500" />
+                        </button>
+                      </div>
+                    )}
                     <div className="flex gap-2 items-end relative">
                       <div className="flex gap-1">
                         <button

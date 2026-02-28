@@ -77,6 +77,7 @@ export default function MessengerWidget() {
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -176,6 +177,8 @@ export default function MessengerWidget() {
       const isVideo = selectedMedia.type.startsWith('video/');
       const messageType = isVideo ? 'video' : 'image';
       
+      const replyToMsg = replyTo;
+      setReplyTo(null);
       // Send message with media
       await fetch('/api/messages', {
         method: 'POST',
@@ -185,7 +188,8 @@ export default function MessengerWidget() {
           recipientId: conv.user_id,
           content: '',
           messageType: messageType,
-          mediaUrl: mediaUrl
+          mediaUrl: mediaUrl,
+          replyToId: replyToMsg?.message_id || null
         })
       });
       
@@ -430,6 +434,9 @@ export default function MessengerWidget() {
     const conv = conversations.find(c => c.conversation_id === selectedConv);
     if (!conv) return;
 
+    const replyToMsg = replyTo;
+    setReplyTo(null);
+
     try {
       await fetch('/api/messages', {
         method: 'POST',
@@ -437,7 +444,8 @@ export default function MessengerWidget() {
         credentials: 'include',
         body: JSON.stringify({
           recipientId: conv.user_id,
-          content: newMessage
+          content: newMessage,
+          replyToId: replyToMsg?.message_id || null
         })
       });
       setNewMessage('');
@@ -673,7 +681,7 @@ export default function MessengerWidget() {
                             </div>
                           )}
                           
-                          <div className={`flex gap-2 ${msg.sender_id === currentUserId ? 'flex-row-reverse' : ''}`}>
+                          <div className={`flex gap-2 group/msg ${msg.sender_id === currentUserId ? 'flex-row-reverse' : ''}`}>
                             {msg.picture ? (
                               <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full flex-shrink-0" />
                             ) : (
@@ -681,7 +689,32 @@ export default function MessengerWidget() {
                                 {msg.name.charAt(0).toUpperCase()}
                               </div>
                             )}
+                            
+                            {msg.sender_id === currentUserId && (
+                              <button 
+                                onClick={() => setReplyTo(msg)}
+                                className="opacity-0 group-hover/msg:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition self-center"
+                                title="Reply"
+                              >
+                                <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                </svg>
+                              </button>
+                            )}
+
                             <div>
+                              {/* Reply Preview */}
+                              {(msg as any).reply_content && (
+                                <div className={`text-[10px] mb-1 px-2 py-1 rounded-md border-l-2 ${
+                                  msg.sender_id === currentUserId 
+                                    ? 'bg-blue-500/20 border-blue-300 text-blue-100' 
+                                    : 'bg-gray-200 dark:bg-gray-600 border-gray-400 text-gray-600 dark:text-gray-300'
+                                }`}>
+                                  <span className="font-semibold">{(msg as any).reply_sender_name}</span>
+                                  <p className="truncate max-w-[150px]">{(msg as any).reply_content}</p>
+                                </div>
+                              )}
+                              
                               <div className={`max-w-[200px] rounded-xl px-3 py-1.5 ${
                                 msg.sender_id === currentUserId 
                                   ? 'bg-blue-600 text-white' 
@@ -694,6 +727,18 @@ export default function MessengerWidget() {
                                 {formatMessageTime(msg.created_at)}
                               </p>
                             </div>
+
+                            {msg.sender_id !== currentUserId && (
+                              <button 
+                                onClick={() => setReplyTo(msg)}
+                                className="opacity-0 group-hover/msg:opacity-100 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition self-center"
+                                title="Reply"
+                              >
+                                <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                </svg>
+                              </button>
+                            )}
                           </div>
                         </div>
                       );
@@ -740,6 +785,30 @@ export default function MessengerWidget() {
                   )}
                   
                   <div className="border-t dark:border-gray-700 p-2">
+                    {/* Reply Banner */}
+                    {replyTo && (
+                      <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 mb-2 rounded-lg border-l-4 border-blue-500 text-xs">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                          <div className="truncate max-w-[150px]">
+                            <span className="font-semibold text-blue-600 dark:text-blue-400 block">
+                              Replying to {replyTo.sender_id === currentUserId ? 'yourself' : replyTo.name}
+                            </span>
+                            <span className="text-gray-600 dark:text-gray-400 truncate block">
+                              {replyTo.content || (replyTo.media_url ? '[Media]' : '')}
+                            </span>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setReplyTo(null)} 
+                          className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded"
+                        >
+                          <X className="w-3 h-3 text-gray-500" />
+                        </button>
+                      </div>
+                    )}
                     <div className="flex gap-1 mb-2">
                       <button
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
