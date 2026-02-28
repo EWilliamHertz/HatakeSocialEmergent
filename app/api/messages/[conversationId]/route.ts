@@ -8,14 +8,14 @@ import sql from '@/lib/db';
 // ─────────────────────────────────────────────────────────────
 export async function GET(
   request: Request,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   const user = await getUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { conversationId } = params;
+const { conversationId } = await params;
   const { searchParams } = new URL(request.url);
   const mediaOnly = searchParams.get('media_only') === 'true';
 
