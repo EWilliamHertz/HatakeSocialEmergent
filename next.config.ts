@@ -1,51 +1,50 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  serverExternalPackages: ['@neondatabase/serverless'],
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '2mb',
+import type { NextConfig } from "next";
+const withPWA = require("next-pwa")({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/api\.pokemontcg\.io\/.*/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "pokemon-api-cache",
+        expiration: { maxEntries: 200, maxAgeSeconds: 86400 },
+      },
     },
-  },
-  // Use Turbopack (Next.js 16 default)
+    {
+      urlPattern: /^https:\/\/api\.scryfall\.com\/.*/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "scryfall-api-cache",
+        expiration: { maxEntries: 200, maxAgeSeconds: 86400 },
+      },
+    },
+    {
+      urlPattern: /\/_next\/static\/.*/i,
+      handler: "CacheFirst",
+      options: { cacheName: "next-static" },
+    },
+    {
+      urlPattern: /\/_next\/image\?.*/i,
+      handler: "StaleWhileRevalidate",
+      options: { cacheName: "next-image" },
+    },
+  ],
+});
+
+const nextConfig: NextConfig = {
   turbopack: {},
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'i.imgur.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.pokemontcg.io',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cards.scryfall.io',
-      },
-      {
-        protocol: 'https',
-        hostname: 'c1.scryfall.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-      },
+      { protocol: "https", hostname: "images.pokemontcg.io" },
+      { protocol: "https", hostname: "cards.scryfall.io" },
+      { protocol: "https", hostname: "i.imgur.com" },
     ],
+    formats: ["image/avif", "image/webp"],
   },
-  // Enable CORS for mobile app web preview
-  async headers() {
-    return [
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, Cookie' },
-        ],
-      },
-    ];
-  },
+  compress: true,
 };
 
-export default nextConfig;
+module.exports = withPWA(nextConfig);
