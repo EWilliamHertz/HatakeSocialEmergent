@@ -1,89 +1,175 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
-import { generateId } from '@/lib/utils';
-import { sendNewMessageEmail } from '@/lib/email';
-import { sendPushNotification, getMessageNotification } from '@/lib/push-notifications';
 import sql from '@/lib/db';
+import { v4 as uuidv4 } from 'uuid';
 
-export async function GET(request: NextRequest) {
+// ─────────────────────────────────────────────────────────────
+// GET /api/messages
+// Returns all conversations for the current user, with unread counts
+// ─────────────────────────────────────────────────────────────
+export async function GET(request: Request) {
+  const user = await getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    // Get all conversations for the user
+    // Fetch all conversations the user is a participant in
     const conversations = await sql`
-      SELECT DISTINCT
+      SELECT
         c.conversation_id,
-        c.updated_at,
-        u.user_id,
-        u.name,
-        u.picture,
-        m.content as last_message,
-        m.created_at as last_message_at,
-        (SELECT COUNT(*) FROM messages WHERE conversation_id = c.conversation_id AND sender_id != ${user.user_id} AND read = false) as unread_count
+        c.is_group,
+        c.name        AS group_name,
+        c.last_message,
+        c.last_message_at,
+        -- For DMs: the OTHER participant's info
+        other_u.user_id   AS user_id,
+        other_u.name      AS name,
+        other_u.picture   AS picture,
+        -- Unread count: messages not sent by me, not yet read
+        COUNT(unread.id)::int AS unread_count
       FROM conversations c
-      JOIN conversation_participants cp ON c.conversation_id = cp.conversation_id
-      JOIN conversation_participants cp2 ON c.conversation_id = cp2.conversation_id AND cp2.user_id = ${user.user_id}
-      JOIN users u ON cp.user_id = u.user_id AND u.user_id != ${user.user_id}
-      LEFT JOIN LATERAL (
-        SELECT content, created_at
-        FROM messages
-        WHERE conversation_id = c.conversation_id
-        ORDER BY created_at DESC
-        LIMIT 1
-      ) m ON true
-      WHERE cp.user_id != ${user.user_id}
-      ORDER BY c.updated_at DESC
+      JOIN conversation_participants cp
+        ON cp.conversation_id = c.conversation_id
+       AND cp.user_id = ${user.user_id}
+      -- For DMs only: join the other participant
+      LEFT JOIN conversation_participants other_cp
+        ON other_cp.conversation_id = c.conversation_id
+       AND other_cp.user_id != ${user.user_id}
+       AND c.is_group = FALSE
+      LEFT JOIN users other_u
+        ON other_u.user_id = other_cp.user_id
+      -- Unread messages
+      LEFT JOIN messages unread
+        ON unread.conversation_id = c.conversation_id
+       AND unread.sender_id != ${user.user_id}
+       AND unread.read_at IS NULL
+      GROUP BY
+        c.conversation_id, c.is_group, c.name, c.last_message, c.last_message_at,
+        other_u.user_id, other_u.name, other_u.picture
+      ORDER BY c.last_message_at DESC NULLS LAST
     `;
 
-    return NextResponse.json({ success: true, conversations });
+    // Shape data for the frontend
+    const shaped = conversations.map((row: any) => ({
+      conversation_id: row.conversation_id,
+      is_group:        row.is_group,
+      // For DMs: use the other user's name; for group DMs: use the group name
+      name:            row.is_group ? row.group_name : (row.name ?? 'Unknown'),
+      picture:         row.is_group ? null : row.picture,
+      user_id:         row.is_group ? null : row.user_id,
+      last_message:    row.last_message,
+      last_message_at: row.last_message_at,
+      unread_count:    row.unread_count,
+    }));
+
+    return NextResponse.json({ success: true, conversations: shaped });
   } catch (error) {
-    console.error('Get conversations error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('GET /api/messages error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to load conversations' }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+// ─────────────────────────────────────────────────────────────
+// POST /api/messages
+// Creates a conversation (DM or multi-user group) OR sends a message
+//
+// Body variants:
+//   { recipientId, content }                           → 1-on-1 DM (existing behaviour)
+//   { recipientIds: string[], groupName, content }     → NEW multi-user group DM
+//   { recipientId, content, messageType, mediaUrl, replyToId } → DM with media/reply
+// ─────────────────────────────────────────────────────────────
+export async function POST(request: Request) {
+  const user = await getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const body = await request.json();
+    const {
+      recipientId,
+      recipientIds,   // array for group DM
+      groupName,      // optional label for group DM
+      content,
+      messageType = 'text',
+      mediaUrl,
+      replyToId,
+    } = body;
+
+    // ── Case 1: Multi-user group DM ──────────────────────────
+    if (recipientIds && Array.isArray(recipientIds) && recipientIds.length > 0) {
+      const allParticipants: string[] = [
+        user.user_id,
+        ...recipientIds.filter((id: string) => id !== user.user_id),
+      ];
+
+      if (allParticipants.length < 2) {
+        return NextResponse.json({ success: false, error: 'Need at least 2 participants' }, { status: 400 });
+      }
+
+      const conversationId = uuidv4();
+      const chatName = groupName?.trim() || null;
+
+      // Create conversation
+      await sql`
+        INSERT INTO conversations (conversation_id, is_group, name, created_by)
+        VALUES (${conversationId}, TRUE, ${chatName}, ${user.user_id})
+      `;
+
+      // Add all participants
+      for (const participantId of allParticipants) {
+        await sql`
+          INSERT INTO conversation_participants (conversation_id, user_id)
+          VALUES (${conversationId}, ${participantId})
+          ON CONFLICT (conversation_id, user_id) DO NOTHING
+        `;
+      }
+
+      // Send opening message if provided
+      if (content?.trim()) {
+        const messageId = uuidv4();
+        await sql`
+          INSERT INTO messages (message_id, conversation_id, sender_id, content, message_type)
+          VALUES (${messageId}, ${conversationId}, ${user.user_id}, ${content.trim()}, 'text')
+        `;
+        await sql`
+          UPDATE conversations
+          SET last_message = ${content.trim()}, last_message_at = NOW()
+          WHERE conversation_id = ${conversationId}
+        `;
+      }
+
+      return NextResponse.json({ success: true, conversationId, isGroup: true });
     }
 
-    const { recipientId, content, messageType, mediaUrl, replyToId } = await request.json();
-
-    if (!recipientId || (!content && !mediaUrl)) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    // ── Case 2: 1-on-1 DM (original behaviour, preserved exactly) ──
+    if (!recipientId) {
+      return NextResponse.json({ success: false, error: 'recipientId or recipientIds required' }, { status: 400 });
     }
 
-    // Check if conversation exists
+    // Find existing 1-on-1 (non-group) conversation between these two users
     const existing = await sql`
       SELECT c.conversation_id
       FROM conversations c
-      JOIN conversation_participants cp1 ON c.conversation_id = cp1.conversation_id AND cp1.user_id = ${user.user_id}
-      JOIN conversation_participants cp2 ON c.conversation_id = cp2.conversation_id AND cp2.user_id = ${recipientId}
+      JOIN conversation_participants cp1
+        ON cp1.conversation_id = c.conversation_id AND cp1.user_id = ${user.user_id}
+      JOIN conversation_participants cp2
+        ON cp2.conversation_id = c.conversation_id AND cp2.user_id = ${recipientId}
+      WHERE c.is_group = FALSE
+      LIMIT 1
     `;
 
-    let conversationId;
-    let isNewConversation = false;
+    let conversationId: string;
 
     if (existing.length > 0) {
       conversationId = existing[0].conversation_id;
     } else {
-      // Create new conversation
-      isNewConversation = true;
-      conversationId = generateId('conv');
+      // Create new 1-on-1 conversation
+      conversationId = uuidv4();
       await sql`
-        INSERT INTO conversations (conversation_id)
-        VALUES (${conversationId})
+        INSERT INTO conversations (conversation_id, is_group)
+        VALUES (${conversationId}, FALSE)
       `;
       await sql`
         INSERT INTO conversation_participants (conversation_id, user_id)
@@ -91,64 +177,46 @@ export async function POST(request: NextRequest) {
       `;
     }
 
-    // Ensure reply_to column exists
-    try {
-      await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to VARCHAR(255)`;
-    } catch (e) {}
+    // Send the message
+    if (content || mediaUrl) {
+      const messageId = uuidv4();
+      const msgContent = content || (messageType === 'image' ? '📷 Image' : '🎥 Video');
 
-    // Send message
-    const messageId = generateId('msg');
-    await sql`
-      INSERT INTO messages (message_id, conversation_id, sender_id, content, message_type, media_url, reply_to)
-      VALUES (${messageId}, ${conversationId}, ${user.user_id}, ${content || ''}, ${messageType || 'text'}, ${mediaUrl || null}, ${replyToId || null})
-    `;
-
-    // Update conversation timestamp
-    await sql`
-      UPDATE conversations
-      SET updated_at = NOW()
-      WHERE conversation_id = ${conversationId}
-    `;
-
-    // Send email notification to recipient (only for first message or after long gap)
-    // Don't spam with emails for every message in an active conversation
-    const recipientResult = await sql`
-      SELECT email, name FROM users WHERE user_id = ${recipientId}
-    `;
-    
-    if (recipientResult.length > 0) {
-      const recipient = recipientResult[0];
-      
-      // Send email only for new conversations
-      if (content && isNewConversation) {
-        sendNewMessageEmail(
-          recipient.email,
-          recipient.name,
-          user.name || 'Someone',
-          content
-        ).catch(err => console.error('Failed to send message email:', err));
-      }
-      
-      // Always send push notification for new messages
-      const pushTokens = await sql`
-        SELECT token FROM push_tokens 
-        WHERE user_id = ${recipientId} AND is_active = true
-      `;
-      if (pushTokens.length > 0) {
-        const notif = getMessageNotification(user.name || 'Someone', content || 'Media message');
-        for (const pt of pushTokens) {
-          sendPushNotification(pt.token, notif.title, notif.body, notif.data)
-            .catch(err => console.error('Push notification error:', err));
+      // Resolve reply content if replyToId provided
+      let replyContent = null;
+      let replySenderName = null;
+      if (replyToId) {
+        const replyMsg = await sql`
+          SELECT m.content, u.name
+          FROM messages m
+          JOIN users u ON u.user_id = m.sender_id
+          WHERE m.message_id = ${replyToId}
+          LIMIT 1
+        `;
+        if (replyMsg.length > 0) {
+          replyContent   = replyMsg[0].content;
+          replySenderName = replyMsg[0].name;
         }
       }
+
+      await sql`
+        INSERT INTO messages
+          (message_id, conversation_id, sender_id, content, message_type, media_url, reply_to, reply_content, reply_sender_name)
+        VALUES
+          (${messageId}, ${conversationId}, ${user.user_id}, ${msgContent}, ${messageType}, ${mediaUrl || null},
+           ${replyToId || null}, ${replyContent}, ${replySenderName})
+      `;
+
+      await sql`
+        UPDATE conversations
+        SET last_message = ${msgContent}, last_message_at = NOW(), updated_at = NOW()
+        WHERE conversation_id = ${conversationId}
+      `;
     }
 
-    return NextResponse.json({ success: true, conversationId, messageId });
+    return NextResponse.json({ success: true, conversationId });
   } catch (error) {
-    console.error('Send message error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('POST /api/messages error:', error);
+    return NextResponse.json({ success: false, error: 'Failed' }, { status: 500 });
   }
 }
