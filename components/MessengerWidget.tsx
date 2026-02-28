@@ -1142,16 +1142,19 @@ export default function MessengerWidget() {
       {showVideoCall && activeCallData && (
         <div className="fixed inset-0 z-[110] bg-black">
           <LiveKitCall
-            room={activeCallData.callerId}
-            userId={currentUserId}
-            userName={currentUserName}
+            isOpen={showVideoCall}
             onClose={() => {
               setShowVideoCall(false);
               setActiveCallData(null);
               setIsReceivingCall(false);
             }}
-            isAudioOnly={callType === 'audio'}
-            isIncoming={isReceivingCall}
+            callType={callType}
+            remoteUserId={activeCallData.callerId}
+            remoteUserName={activeCallData.callerName}
+            remoteUserPicture={activeCallData.callerPicture}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            isReceiver={isReceivingCall}
           />
         </div>
       )}
