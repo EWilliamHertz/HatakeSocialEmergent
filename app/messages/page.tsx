@@ -184,11 +184,6 @@ export default function MessagesPage() {
     }
   };
 
-  // Initialize audio - no longer needed with Web Audio API
-  useEffect(() => {
-    // Web Audio API is used directly in playNotificationChime
-  }, []);
-
   // Play notification sound
   const playNotificationSound = useCallback(() => {
     if (soundEnabled) {
@@ -203,8 +198,7 @@ export default function MessagesPage() {
     setIsUserScrolledUp(!isAtBottom);
   };
 
-  // Scroll to bottom when messages change (only if not scrolled up)
-  // Using scrollTop directly for more reliable scrolling
+  // Scroll to bottom when messages change
   const scrollToBottom = (smooth = true) => {
     const container = messagesContainerRef.current;
     if (container) {
@@ -219,10 +213,8 @@ export default function MessagesPage() {
     }
   };
 
-
-   useEffect(() => {
+  useEffect(() => {
     if (initialLoad || !isUserScrolledUp) {
-      // Use setTimeout to ensure DOM has updated
       setTimeout(() => {
         scrollToBottom(!initialLoad);
       }, 50);
@@ -236,10 +228,9 @@ export default function MessagesPage() {
   useEffect(() => {
     setInitialLoad(true);
     setIsUserScrolledUp(false);
-    
-    // Force an immediate instant scroll to the bottom when entering a new chat
     setTimeout(() => scrollToBottom(false), 100);
   }, [selectedConv, selectedGroup]);
+
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
@@ -294,7 +285,6 @@ export default function MessagesPage() {
       if (data.success) {
         const newMessages = data.messages || [];
         
-        // Check if there are new messages from other users
         if (!silent && newMessages.length > messages.length) {
           const latestMessage = newMessages[newMessages.length - 1];
           if (latestMessage && latestMessage.sender_id !== currentUserId) {
@@ -341,7 +331,6 @@ export default function MessagesPage() {
     setSelectedGroup(groupId);
     setSelectedConv(null);
     loadGroupMessages(groupId);
-    // Reset text area
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -355,7 +344,6 @@ export default function MessagesPage() {
         const newConversations = data.conversations || [];
         setConversations(newConversations);
         
-        // Check for new messages and play sound
         const totalUnread = newConversations.reduce((sum: number, c: Conversation) => sum + (c.unread_count || 0), 0);
         if (totalUnread > lastMessageCount.current && lastMessageCount.current > 0) {
           playNotificationSound();
@@ -376,7 +364,6 @@ export default function MessagesPage() {
       if (data.success) {
         const newMessages = data.messages || [];
         
-        // Check if there are new messages from other users
         if (!silent && newMessages.length > messages.length) {
           const latestMessage = newMessages[newMessages.length - 1];
           if (latestMessage && latestMessage.sender_id !== currentUserId) {
@@ -408,7 +395,6 @@ export default function MessagesPage() {
       const res = await fetch('/api/users/search?q=', { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
-        // Filter out current user
         setAllUsers((data.users || []).filter((u: User) => u.user_id !== currentUserId));
       }
     } catch (error) {
@@ -420,7 +406,6 @@ export default function MessagesPage() {
     setSelectedConv(convId);
     setSelectedGroup(null);
     loadMessages(convId);
-    // Reset text area
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -488,27 +473,22 @@ export default function MessagesPage() {
     }
   };
 
-  // Handle shift+enter for new line, enter to send
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
-    // Shift+Enter will naturally add a new line
   };
 
-  // Handle emoji selection
   const handleEmojiSelect = (emojiData: EmojiClickData) => {
     setNewMessage((prev) => prev + emojiData.emoji);
     textareaRef.current?.focus();
   };
 
-  // Handle file selection for media
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
     
@@ -517,36 +497,28 @@ export default function MessagesPage() {
       return;
     }
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       alert('File size must be less than 10MB');
       return;
     }
 
     setSelectedMedia(file);
-    
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setMediaPreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
-    
     setShowMediaModal(true);
   };
 
-  // Upload and send media
   const sendMediaMessage = async () => {
     if (!selectedMedia) return;
-    
     setUploading(true);
     
     try {
-      // Create form data
       const formData = new FormData();
       formData.append('file', selectedMedia);
       
-      // Upload file
       const uploadRes = await fetch('/api/upload', {
         method: 'POST',
         credentials: 'include',
@@ -559,13 +531,11 @@ export default function MessagesPage() {
         const isVideo = selectedMedia.type.startsWith('video/');
         await sendMessage(uploadData.url, isVideo ? 'video' : 'image');
       } else {
-        // Fallback: use data URL as the media (for demo purposes)
         const isVideo = selectedMedia.type.startsWith('video/');
         await sendMessage(mediaPreview || '', isVideo ? 'video' : 'image');
       }
     } catch (error) {
       console.error('Upload error:', error);
-      // Still try to send with data URL
       if (mediaPreview) {
         const isVideo = selectedMedia.type.startsWith('video/');
         await sendMessage(mediaPreview, isVideo ? 'video' : 'image');
@@ -578,23 +548,18 @@ export default function MessagesPage() {
     }
   };
 
-  // Auto-resize textarea
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
-    
-    // Auto-resize
     const textarea = e.target;
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
-  // Filter users for search
   const filteredUsers = allUsers.filter(u => 
     u.name.toLowerCase().includes(searchUser.toLowerCase()) ||
     u.email.toLowerCase().includes(searchUser.toLowerCase())
   );
 
-  // Render message content (text, image, or video)
   const renderMessageContent = (msg: Message) => {
     if (msg.message_type === 'image' && msg.media_url) {
       return (
@@ -646,14 +611,12 @@ export default function MessagesPage() {
                     onClick={() => setSoundEnabled(!soundEnabled)}
                     className={`p-2 rounded-lg transition ${soundEnabled ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}
                     title={soundEnabled ? 'Sound On' : 'Sound Off'}
-                    data-testid="toggle-sound-button"
                   >
                     {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
                   </button>
                   <button 
                     onClick={openNewConversationModal}
                     className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                    data-testid="start-conversation-button"
                     title="Start New Conversation"
                   >
                     <Plus className="w-5 h-5" />
@@ -670,7 +633,6 @@ export default function MessagesPage() {
                       ? 'text-blue-600 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
                       : 'text-gray-500 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
-                  data-testid="direct-messages-tab"
                 >
                   <MessageCircle className="w-4 h-4" />
                   Direct
@@ -687,7 +649,6 @@ export default function MessagesPage() {
                       ? 'text-blue-600 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
                       : 'text-gray-500 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
-                  data-testid="group-chats-tab"
                 >
                   <Users className="w-4 h-4" />
                   Groups ({groupChats.length})
@@ -708,7 +669,6 @@ export default function MessagesPage() {
                       <button
                         onClick={openNewConversationModal}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
-                        data-testid="start-first-conversation"
                       >
                         Start a Conversation
                       </button>
@@ -721,7 +681,6 @@ export default function MessagesPage() {
                         className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left ${
                           selectedConv === conv.conversation_id ? 'bg-blue-50 dark:bg-gray-700' : ''
                         }`}
-                        data-testid={`conversation-${conv.conversation_id}`}
                       >
                         {conv.picture ? (
                           <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" unoptimized />
@@ -732,7 +691,9 @@ export default function MessagesPage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <p className="font-semibold truncate dark:text-white"><a href={`/profile/${conv.user_id}`} onClick={(e) => e.stopPropagation()} className="hover:text-blue-600 dark:hover:text-blue-400 transition">{conv.name}</a></p>
+                            <p className="font-semibold truncate dark:text-white">
+                              <a href={`/profile/${conv.user_id}`} onClick={(e) => e.stopPropagation()} className="hover:text-blue-600 dark:hover:text-blue-400 transition">{conv.name}</a>
+                            </p>
                             <div className="flex items-center gap-2">
                               {conv.last_message_at && (
                                 <span className="text-xs text-gray-400 whitespace-nowrap">
@@ -760,7 +721,6 @@ export default function MessagesPage() {
                       <button
                         onClick={() => router.push('/groups')}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
-                        data-testid="join-group-button"
                       >
                         Find Groups
                       </button>
@@ -773,7 +733,6 @@ export default function MessagesPage() {
                         className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left ${
                           selectedGroup === group.group_id ? 'bg-blue-50 dark:bg-gray-700' : ''
                         }`}
-                        data-testid={`group-chat-${group.group_id}`}
                       >
                         {group.image ? (
                           <Image src={group.image} alt={group.name} width={40} height={40} className="rounded-xl" unoptimized />
@@ -817,7 +776,7 @@ export default function MessagesPage() {
                               </div>
                             )}
                             <div>
-                              <p className="font-semibold dark:text-white"><a href={`/profile/${conv.user_id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition" data-testid="messages-chat-profile-link">{conv.name}</a></p>
+                              <p className="font-semibold dark:text-white"><a href={`/profile/${conv.user_id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition">{conv.name}</a></p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">Active now</p>
                             </div>
                           </div>
@@ -830,7 +789,6 @@ export default function MessagesPage() {
                                 value={messageSearch}
                                 onChange={(e) => setMessageSearch(e.target.value)}
                                 className="pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white w-40 focus:w-52 transition-all"
-                                data-testid="message-search-input"
                               />
                               <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                             </div>
@@ -839,7 +797,6 @@ export default function MessagesPage() {
                               onClick={() => loadMediaGallery(selectedConv!)}
                               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                               title="View shared media"
-                              data-testid="media-gallery-btn"
                             >
                               <ImageIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                             </button>
@@ -847,7 +804,6 @@ export default function MessagesPage() {
                               onClick={() => setShowAudioCall(true)}
                               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                               title="Voice Call"
-                              data-testid="voice-call-button"
                             >
                               <Phone className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                             </button>
@@ -855,7 +811,6 @@ export default function MessagesPage() {
                               onClick={() => setShowVideoCall(true)}
                               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                               title="Video Call"
-                              data-testid="video-call-button"
                             >
                               <VideoIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                             </button>
@@ -999,7 +954,6 @@ export default function MessagesPage() {
                           onClick={() => fileInputRef.current?.click()}
                           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                           title="Send Image or Video"
-                          data-testid="attach-media-button"
                         >
                           <ImageIcon className="w-5 h-5 text-gray-500" />
                         </button>
@@ -1007,7 +961,6 @@ export default function MessagesPage() {
                           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                           title="Add Emoji"
-                          data-testid="emoji-button"
                         >
                           <Smile className="w-5 h-5 text-gray-500" />
                         </button>
@@ -1020,12 +973,11 @@ export default function MessagesPage() {
                         accept="image/*,video/*"
                         className="hidden"
                         onChange={handleFileSelect}
-                        data-testid="file-input"
                       />
                       
                       {/* Emoji Picker */}
                       {showEmojiPicker && (
-                        <div className="absolute bottom-16 left-0 z-50" data-testid="emoji-picker">
+                        <div className="absolute bottom-16 left-0 z-50">
                           <EmojiPicker 
                             onEmojiClick={handleEmojiSelect}
                             theme={Theme.LIGHT}
@@ -1044,14 +996,12 @@ export default function MessagesPage() {
                         placeholder="Type a message... (Shift+Enter for new line)"
                         className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[40px] max-h-[120px]"
                         rows={1}
-                        data-testid="message-input"
                       />
                       
                       <button
                         onClick={() => sendMessage()}
                         disabled={!newMessage.trim()}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                        data-testid="send-message-button"
                       >
                         <Send className="w-4 h-4" />
                         Send
@@ -1291,7 +1241,6 @@ export default function MessagesPage() {
                     <button
                       onClick={openNewConversationModal}
                       className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
-                      data-testid="start-new-conversation"
                     >
                       Start New Conversation
                     </button>
@@ -1305,7 +1254,7 @@ export default function MessagesPage() {
 
       {/* New Conversation Modal - Now allows messaging anyone */}
       {showNewConversationModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" data-testid="new-conversation-modal">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
               <h3 className="text-lg font-bold dark:text-white">Start New Conversation</h3>
@@ -1326,7 +1275,6 @@ export default function MessagesPage() {
                   onChange={(e) => setSearchUser(e.target.value)}
                   placeholder="Search users..."
                   className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
-                  data-testid="search-users-input"
                 />
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">You can message anyone on the platform</p>
@@ -1348,7 +1296,6 @@ export default function MessagesPage() {
                     key={user.user_id}
                     onClick={() => startConversation(user.user_id)}
                     className="w-full p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-left border-b dark:border-gray-700 last:border-b-0"
-                    data-testid={`select-user-${user.user_id}`}
                   >
                     {user.picture ? (
                       <Image src={user.picture} alt={user.name} width={40} height={40} className="rounded-full" />
@@ -1371,7 +1318,7 @@ export default function MessagesPage() {
 
       {/* Media Preview Modal */}
       {showMediaModal && mediaPreview && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" data-testid="media-preview-modal">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4">
             <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
               <h3 className="text-lg font-bold dark:text-white">Send Media</h3>
@@ -1410,7 +1357,6 @@ export default function MessagesPage() {
                 onClick={sendMediaMessage}
                 disabled={uploading}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                data-testid="send-media-button"
               >
                 {uploading ? (
                   <>
@@ -1459,7 +1405,7 @@ export default function MessagesPage() {
 
       {/* Media Gallery Modal */}
       {showMediaGallery && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" data-testid="media-gallery-modal">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
               <h3 className="text-lg font-bold dark:text-white">Shared Media</h3>
@@ -1514,7 +1460,6 @@ export default function MessagesPage() {
         <div 
           className="fixed inset-0 bg-black z-50 flex items-center justify-center"
           onClick={() => setFullscreenMedia(null)}
-          data-testid="fullscreen-media"
         >
           <button 
             className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-lg"
@@ -1545,3 +1490,4 @@ export default function MessagesPage() {
       )}
     </div>
   );
+}
