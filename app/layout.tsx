@@ -4,7 +4,7 @@ import "./globals.css";
 import MessengerWidget from "@/components/MessengerWidget";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import MobileNav from "@/components/MobileNav";
-
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 const syne = Syne({
   variable: "--font-syne",
   subsets: ["latin"],
@@ -56,7 +56,7 @@ export default function RootLayout({
           <div className="flex-1 flex flex-col pb-16 md:pb-0">
             {children}
           </div>
-
+           <PWAInstallPrompt />
           <footer className="hidden md:block w-full bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-8 mt-auto">
             <div className="container mx-auto px-4 max-w-7xl">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -72,7 +72,6 @@ export default function RootLayout({
               </div>
             </div>
           </footer>
-
           <MobileNav />
           <MessengerWidget />
         </ThemeProvider>
