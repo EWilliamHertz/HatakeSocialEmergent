@@ -219,7 +219,7 @@ export default function MessagesPage() {
     }
   };
 
-  useEffect(() => {
+
    useEffect(() => {
     if (initialLoad || !isUserScrolledUp) {
       // Use setTimeout to ensure DOM has updated
