@@ -109,6 +109,7 @@ export default function MessagesPage() {
   const [currentUserId,  setCurrentUserId]  = useState('');
   const [currentUserName, setCurrentUserName] = useState('');
   const [loading,        setLoading]        = useState(true);
+  const [groupMembers, setGroupMembers] = useState<{user_id: string; name: string; picture?: string}[]>([]);
 
   // new conversation modal
   const [showNewConvModal,     setShowNewConvModal]     = useState(false);
@@ -273,16 +274,30 @@ export default function MessagesPage() {
 
   const loadGroupMessages = async (groupId: string, silent = false) => {
     try {
-      const res  = await fetch(`/api/groups/${groupId}/chat`, { credentials: 'include' });
+      const res  = await fetch(`/api/groups/${groupId}/messages`, { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         const newMsgs = data.messages || [];
-        if (!silent && newMsgs.length > messages.length) {
-          const last = newMsgs[newMsgs.length - 1];
+        // Normalize field names from group messages API
+        const normalized = newMsgs.map((m: any) => ({
+          ...m,
+          name: m.sender_name || m.name || 'Unknown',
+          picture: m.sender_picture || m.picture || null,
+        }));
+        if (!silent && normalized.length > messages.length) {
+          const last = normalized[normalized.length - 1];
           if (last?.sender_id !== currentUserId) playNotificationSound();
         }
-        setMessages(newMsgs);
+        setMessages(normalized);
       }
+    } catch {}
+  };
+
+  const loadGroupMembers = async (groupId: string) => {
+    try {
+      const res = await fetch(`/api/groups/${groupId}/members`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) setGroupMembers(data.members || []);
     } catch {}
   };
 
@@ -318,6 +333,7 @@ export default function MessagesPage() {
     setSelectedGroup(groupId);
     setSelectedConv(null);
     loadGroupMessages(groupId);
+    loadGroupMembers(groupId);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
@@ -419,7 +435,7 @@ export default function MessagesPage() {
     const replyToMsg = replyTo;
     setReplyTo(null);
     try {
-      await fetch(`/api/groups/${selectedGroup}/chat`, {
+      await fetch(`/api/groups/${selectedGroup}/messages`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -635,7 +651,7 @@ export default function MessagesPage() {
                     ))
                   )
                 ) : (
-                  /* Groups tab — unchanged */
+                  /* Groups tab */
                   groupChats.length === 0 ? (
                     <div className="p-8 text-center">
                       <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
@@ -654,19 +670,23 @@ export default function MessagesPage() {
                         }`}
                       >
                         {group.image ? (
-                          <Image src={group.image} alt={group.name} width={40} height={40} className="rounded-xl" unoptimized />
+                          <Image src={group.image} alt={group.name} width={40} height={40} className="rounded-xl flex-shrink-0" unoptimized />
                         ) : (
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
+                          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white font-semibold flex-shrink-0">
                             <Users className="w-5 h-5" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <p className="font-semibold truncate dark:text-white">{group.name}</p>
-                            <span className="text-xs text-gray-400">{group.member_count} members</span>
+                            {group.last_message_at && (
+                              <span className="text-xs text-gray-400 whitespace-nowrap">
+                                {formatMessageTime(group.last_message_at)}
+                              </span>
+                            )}
                           </div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                            {group.last_message || 'No messages yet'}
+                            {group.last_message || `${group.member_count} members`}
                           </p>
                         </div>
                       </button>
@@ -676,592 +696,362 @@ export default function MessagesPage() {
               </div>
             </div>
 
-            {/* ── Chat area ────────────────────────────────── */}
-            <div className="flex-1 flex flex-col relative">
-
-              {/* Scroll-to-bottom button — shown when user has scrolled up */}
-              {isUserScrolledUp && (selectedConv || selectedGroup) && (
-                <button
-                  onClick={() => scrollToBottom(true)}
-                  className="absolute bottom-24 right-6 z-20 bg-blue-600 text-white rounded-full px-3 py-1.5 text-xs font-semibold shadow-lg hover:bg-blue-700 flex items-center gap-1 transition"
-                >
-                  ↓ Latest
-                </button>
-              )}
-
-              {selectedConv ? (
+            {/* ── Chat area ─────────────────────────────────── */}
+            <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 relative">
+              {(selectedConv || selectedGroup) ? (
                 <>
                   {/* Header */}
-                  {(() => {
-                    const conv = conversations.find(c => c.conversation_id === selectedConv);
-                    if (!conv) return null;
-                    return (
-                      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {conv.is_group ? (
-                            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white">
-                              <Users className="w-5 h-5" />
-                            </div>
-                          ) : conv.picture ? (
-                            <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" />
-                          ) : (
-                            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                              {conv.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-semibold dark:text-white">
-                              {conv.user_id
-                                ? <a href={`/profile/${conv.user_id}`} className="hover:text-blue-600">{conv.name}</a>
-                                : conv.name
-                              }
-                            </p>
-                            <p className="text-xs text-gray-500">{conv.is_group ? 'Group chat' : 'Active now'}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="relative">
-                            <input
-                              type="text" placeholder="Search messages..."
-                              value={messageSearch} onChange={e => setMessageSearch(e.target.value)}
-                              className="pl-8 pr-3 py-1.5 text-sm border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white w-40 focus:w-52 transition-all"
-                            />
-                            <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                          </div>
-                          <button onClick={() => loadMediaGallery(selectedConv!)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Shared media">
-                            <ImageIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                          </button>
-                          {!conv.is_group && (
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {selectedConv ? (
+                        (() => {
+                          const conv = conversations.find(c => c.conversation_id === selectedConv);
+                          return (
                             <>
-                              <button onClick={() => setShowAudioCall(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Voice Call">
-                                <Phone className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                              </button>
-                              <button onClick={() => setShowVideoCall(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Video Call">
-                                <VideoIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                              </button>
+                              {conv?.picture ? (
+                                <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" unoptimized />
+                              ) : (
+                                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                  {conv?.name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <h3 className="font-bold dark:text-white">{conv?.name}</h3>
+                                <p className="text-xs text-green-500">Online</p>
+                              </div>
                             </>
-                          )}
-                        </div>
+                          );
+                        })()
+                      ) : (
+                        (() => {
+                          const group = groupChats.find(g => g.group_id === selectedGroup);
+                          return (
+                            <>
+                              {group?.image ? (
+                                <Image src={group.image} alt={group.name} width={40} height={40} className="rounded-xl" unoptimized />
+                              ) : (
+                                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white font-semibold">
+                                  <Users className="w-5 h-5" />
+                                </div>
+                              )}
+                              <div>
+                                <h3 className="font-bold dark:text-white">{group?.name}</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {groupMembers.length > 0
+                                    ? groupMembers.slice(0, 4).map(m => m.name).join(', ') + (groupMembers.length > 4 ? ` +${groupMembers.length - 4} more` : '')
+                                    : `${group?.member_count || 0} members`}
+                                </p>
+                              </div>
+                            </>
+                          );
+                        })()
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          if (selectedConv) loadMediaGallery(selectedConv);
+                        }}
+                        className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                        title="Media Gallery"
+                      >
+                        <ImageIcon className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setShowAudioCall(true)}
+                        className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                        title="Audio Call"
+                      >
+                        <Phone className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setShowVideoCall(true)}
+                        className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                        title="Video Call"
+                      >
+                        <VideoIcon className="w-5 h-5" />
+                      </button>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search messages..."
+                          value={messageSearch}
+                          onChange={e => setMessageSearch(e.target.value)}
+                          className="pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                        <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-2" />
                       </div>
-                    );
-                  })()}
+                    </div>
+                  </div>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-1" onScroll={handleScroll} ref={messagesContainerRef}>
-                    {filteredMessages.length === 0 ? (
-                      <div className="text-center py-8">
-                        <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
-                          {messageSearch ? 'No messages match your search' : 'No messages yet. Say hi!'}
-                        </p>
-                      </div>
-                    ) : (
-                      filteredMessages.map((msg, index) => {
-                        const prevMsg  = index > 0 ? filteredMessages[index - 1] : null;
-                        const isOwn    = msg.sender_id === currentUserId;
-                        const isLast   = index === filteredMessages.length - 1 ||
-                                         filteredMessages[index + 1].sender_id !== msg.sender_id;
+                  <div
+                    ref={messagesContainerRef}
+                    onScroll={handleScroll}
+                    className="flex-1 overflow-y-auto p-4 space-y-4"
+                  >
+                    {filteredMessages.map((msg, idx) => {
+                      const prev = idx > 0 ? filteredMessages[idx - 1] : null;
+                      const showSeparator = needsDateSeparator(msg, prev);
+                      const isSender = msg.sender_id === currentUserId;
 
-                        return (
-                          <div key={msg.message_id}>
-                            {needsDateSeparator(msg, prevMsg) && (
-                              <div className="flex items-center justify-center my-6">
-                                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-                                <span className="px-4 text-xs text-gray-500 font-medium">
-                                  {formatDateSeparator(msg.created_at)}
-                                </span>
-                                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                      return (
+                        <div key={msg.message_id}>
+                          {showSeparator && (
+                            <div className="flex items-center justify-center my-6">
+                              <div className="h-px flex-1 bg-gray-100 dark:bg-gray-700" />
+                              <span className="px-4 text-xs text-gray-400 font-medium">
+                                {formatDateSeparator(msg.created_at)}
+                              </span>
+                              <div className="h-px flex-1 bg-gray-100 dark:bg-gray-700" />
+                            </div>
+                          )}
+
+                          <div className={`flex items-end gap-2 ${isSender ? 'flex-row-reverse' : ''}`}>
+                            {!isSender && (
+                              <div className="flex-shrink-0 mb-1">
+                                {msg.picture ? (
+                                  <Image src={msg.picture} alt={msg.name} width={32} height={32} className="rounded-full" unoptimized />
+                                ) : (
+                                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                    {msg.name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
                               </div>
                             )}
 
-                            <div className={`flex gap-3 group ${isOwn ? 'flex-row-reverse' : ''}`}>
-                              {/* Avatar */}
-                              {msg.picture ? (
-                                <a href={`/profile/${msg.sender_id}`} className="flex-shrink-0">
-                                  <Image src={msg.picture} alt={msg.name} width={32} height={32} className="rounded-full" />
-                                </a>
-                              ) : (
-                                <a href={`/profile/${msg.sender_id}`} className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                                  {msg.name.charAt(0).toUpperCase()}
-                                </a>
+                            <div className={`flex flex-col max-w-[70%] ${isSender ? 'items-end' : 'items-start'}`}>
+                              {/* Reply context */}
+                              {msg.reply_content && (
+                                <div className={`mb-1 px-3 py-1.5 rounded-lg text-xs border-l-4 ${
+                                  isSender
+                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-300'
+                                    : 'bg-gray-100 dark:bg-gray-700 border-gray-400 text-gray-600 dark:text-gray-400'
+                                }`}>
+                                  <p className="font-semibold">{msg.reply_sender_name}</p>
+                                  <p className="truncate">{msg.reply_content}</p>
+                                </div>
                               )}
 
-                              {/* Reply button */}
-                              <button
-                                onClick={() => setReplyTo(msg)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full self-center"
-                              >
-                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                </svg>
-                              </button>
-
-                              <div>
-                                {/* Reply preview */}
-                                {msg.reply_content && (
-                                  <div className={`text-xs mb-1 px-3 py-1.5 rounded-lg border-l-2 ${
-                                    isOwn
-                                      ? 'bg-blue-500/20 border-blue-300 text-blue-100'
-                                      : 'bg-gray-200 dark:bg-gray-600 border-gray-400 text-gray-600 dark:text-gray-300'
-                                  }`}>
-                                    <span className="font-medium">{msg.reply_sender_name}</span>
-                                    <p className="truncate max-w-[200px]">{msg.reply_content}</p>
-                                  </div>
+                              <div className={`group relative px-4 py-2 rounded-2xl ${
+                                isSender
+                                  ? 'bg-blue-600 text-white rounded-br-none'
+                                  : 'bg-gray-100 dark:bg-gray-700 dark:text-white rounded-bl-none'
+                              }`}>
+                                {!isSender && selectedGroup && (
+                                  <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-0.5">{msg.name}</p>
                                 )}
+                                {renderMessageContent(msg)}
 
-                                {/* Bubble */}
-                                <div className={`max-w-sm rounded-2xl px-4 py-2 ${
-                                  isOwn ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
-                                }`}>
-                                  {renderMessageContent(msg)}
-                                </div>
+                                {/* Hover actions */}
+                                <button
+                                  onClick={() => setReplyTo(msg)}
+                                  className={`absolute top-0 opacity-0 group-hover:opacity-100 p-1.5 bg-white dark:bg-gray-800 shadow-md rounded-full transition-opacity ${
+                                    isSender ? '-left-10' : '-right-10'
+                                  }`}
+                                  title="Reply"
+                                >
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                  </svg>
+                                </button>
+                              </div>
 
-                                {/* Timestamp + read receipt — only on last bubble in a group */}
-                                {isLast && (
-                                  <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
-                                    <span className="text-xs text-gray-400">
-                                      {formatMessageTime(msg.created_at)}
-                                    </span>
-                                    {/* ← Read receipt tick */}
-                                    <ReadStatus readAt={msg.read_at} isSender={isOwn} />
-                                  </div>
-                                )}
+                              <div className="flex items-center gap-1.5 mt-1 px-1">
+                                <span className="text-[10px] text-gray-400">
+                                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                <ReadStatus readAt={msg.read_at} isSender={isSender} />
                               </div>
                             </div>
                           </div>
-                        );
-                      })
-                    )}
+                        </div>
+                      );
+                    })}
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Input */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+                  {/* Input area */}
+                  <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                     {replyTo && (
-                      <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 px-4 py-2 mb-3 rounded-lg border-l-4 border-blue-500">
-                        <div className="flex items-center gap-3">
-                          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                          </svg>
-                          <div>
-                            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                              Replying to {replyTo.sender_id === currentUserId ? 'yourself' : replyTo.name}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[300px]">
-                              {replyTo.content || (replyTo.media_url ? '[Media]' : '')}
-                            </p>
-                          </div>
-                        </div>
-                        <button onClick={() => setReplyTo(null)} className="p-1 hover:bg-blue-100 rounded">
-                          <X className="w-4 h-4 text-gray-500" />
-                        </button>
-                      </div>
-                    )}
-                    <div className="flex gap-2 items-end relative">
-                      <div className="flex gap-1">
-                        <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                          <ImageIcon className="w-5 h-5 text-gray-500" />
-                        </button>
-                        <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                          <Smile className="w-5 h-5 text-gray-500" />
-                        </button>
-                      </div>
-                      <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFileSelect} />
-                      {showEmojiPicker && (
-                        <div className="absolute bottom-16 left-0 z-50">
-                          <EmojiPicker onEmojiClick={handleEmojiSelect} theme={Theme.LIGHT} width={350} height={400} />
-                        </div>
-                      )}
-                      <textarea
-                        ref={textareaRef} value={newMessage}
-                        onChange={handleTextareaChange} onKeyDown={handleKeyDown}
-                        placeholder="Type a message… (Shift+Enter for new line)"
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px] max-h-[120px]"
-                        rows={1}
-                      />
-                      <button
-                        onClick={() => selectedGroup ? sendGroupMessage(newMessage) : sendMessage()}
-                        disabled={!newMessage.trim()}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                      >
-                        <Send className="w-4 h-4" /> Send
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1 ml-2">Enter to send · Shift+Enter for new line</p>
-                  </div>
-                </>
-              ) : selectedGroup ? (
-                /* ── Group Chat View ─────────────────────────── */
-                <>
-                  {/* Group Header */}
-                  {(() => {
-                    const group = groupChats.find(g => g.group_id === selectedGroup);
-                    if (!group) return null;
-                    return (
-                      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {group.image ? (
-                            <Image src={group.image} alt={group.name} width={40} height={40} className="rounded-xl" unoptimized />
-                          ) : (
-                            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white">
-                              <Users className="w-5 h-5" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-semibold dark:text-white">{group.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{group.member_count} members</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => router.push(`/groups/${selectedGroup}`)}
-                          className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                        >
-                          View Group
-                        </button>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Group Messages */}
-                  <div
-                    className="flex-1 overflow-y-auto p-4 space-y-1"
-                    onScroll={handleScroll}
-                    ref={messagesContainerRef}
-                  >
-                    {messages.length === 0 ? (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                          <p className="text-gray-500 dark:text-gray-400">No messages yet</p>
-                          <p className="text-gray-400 text-sm">Be the first to say something!</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        {filteredMessages.map((msg, idx) => {
-                          const isOwn    = msg.sender_id === currentUserId;
-                          const prevMsg  = idx > 0 ? filteredMessages[idx - 1] : null;
-                          const isLast   = idx === filteredMessages.length - 1 ||
-                                           filteredMessages[idx + 1].sender_id !== msg.sender_id;
-
-                          return (
-                            <div key={msg.message_id}>
-                              {needsDateSeparator(msg, prevMsg) && (
-                                <div className="flex items-center justify-center my-4">
-                                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-                                  <span className="px-3 text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                    {formatDateSeparator(msg.created_at)}
-                                  </span>
-                                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-                                </div>
-                              )}
-
-                              <div className={`flex gap-2 items-end group/msg ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                                {/* Avatar (other users only) */}
-                                {!isOwn && (
-                                  <a href={`/profile/${msg.sender_id}`} className="flex-shrink-0">
-                                    {msg.picture ? (
-                                      <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full hover:ring-2 hover:ring-blue-400 transition" unoptimized />
-                                    ) : (
-                                      <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                                        {msg.name?.charAt(0).toUpperCase() || '?'}
-                                      </div>
-                                    )}
-                                  </a>
-                                )}
-
-                                {/* Reply button (own messages) */}
-                                {isOwn && (
-                                  <button
-                                    onClick={() => setReplyTo(msg)}
-                                    className="opacity-0 group-hover/msg:opacity-100 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition self-center"
-                                    title="Reply"
-                                  >
-                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                    </svg>
-                                  </button>
-                                )}
-
-                                <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
-                                  {/* Sender name (other users only) */}
-                                  {!isOwn && (
-                                    <a href={`/profile/${msg.sender_id}`} className="text-xs text-gray-500 mb-0.5 ml-1 hover:text-blue-600 transition">
-                                      {msg.name}
-                                    </a>
-                                  )}
-
-                                  {/* Reply preview */}
-                                  {msg.reply_content && (
-                                    <div className={`text-xs mb-1 px-3 py-1.5 rounded-lg border-l-2 ${
-                                      isOwn
-                                        ? 'bg-blue-500/20 border-blue-300 text-blue-100'
-                                        : 'bg-gray-200 dark:bg-gray-600 border-gray-400 text-gray-600 dark:text-gray-300'
-                                    }`}>
-                                      <span className="font-medium">{msg.reply_sender_name}</span>
-                                      <p className="truncate max-w-[200px]">{msg.reply_content}</p>
-                                    </div>
-                                  )}
-
-                                  {/* Bubble */}
-                                  <div className={`rounded-2xl px-4 py-2 ${
-                                    isOwn
-                                      ? 'bg-blue-600 text-white rounded-br-sm'
-                                      : 'bg-gray-100 dark:bg-gray-700 dark:text-white rounded-bl-sm'
-                                  }`}>
-                                    {renderMessageContent(msg)}
-                                  </div>
-
-                                  {/* Timestamp — only on last bubble in group */}
-                                  {isLast && (
-                                    <p className={`text-xs text-gray-400 mt-0.5 ${isOwn ? 'text-right mr-1' : 'ml-1'}`}>
-                                      {formatMessageTime(msg.created_at)}
-                                    </p>
-                                  )}
-                                </div>
-
-                                {/* Reply button (other messages) */}
-                                {!isOwn && (
-                                  <button
-                                    onClick={() => setReplyTo(msg)}
-                                    className="opacity-0 group-hover/msg:opacity-100 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition self-center"
-                                    title="Reply"
-                                  >
-                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                    </svg>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        <div ref={messagesEndRef} />
-                      </>
-                    )}
-                  </div>
-
-                  {/* Group Message Input */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-                    {replyTo && (
-                      <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 px-4 py-2 mb-3 rounded-lg border-l-4 border-blue-500">
-                        <div className="flex items-center gap-3">
-                          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                          </svg>
-                          <div>
-                            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                              Replying to {replyTo.sender_id === currentUserId ? 'yourself' : replyTo.name}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[300px]">
-                              {replyTo.content || (replyTo.media_url ? '[Media]' : '')}
-                            </p>
-                          </div>
+                      <div className="mb-3 flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border-l-4 border-blue-600">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-blue-600 dark:text-blue-400">Replying to {replyTo.name}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{replyTo.content}</p>
                         </div>
                         <button onClick={() => setReplyTo(null)} className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded">
                           <X className="w-4 h-4 text-gray-500" />
                         </button>
                       </div>
                     )}
-                    <div className="flex gap-2 items-end relative">
-                      <div className="flex gap-1">
-                        <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                          <ImageIcon className="w-5 h-5 text-gray-500" />
-                        </button>
-                        <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                          <Smile className="w-5 h-5 text-gray-500" />
-                        </button>
-                      </div>
-                      {showEmojiPicker && (
-                        <div className="absolute bottom-16 left-0 z-50">
-                          <EmojiPicker onEmojiClick={handleEmojiSelect} theme={Theme.LIGHT} width={350} height={400} />
+
+                    <div className="flex items-end gap-3">
+                      <div className="flex items-center gap-1 pb-1">
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                          >
+                            <Smile className="w-6 h-6" />
+                          </button>
+                          {showEmojiPicker && (
+                            <div className="absolute bottom-12 left-0 z-50 shadow-2xl">
+                              <EmojiPicker
+                                onEmojiClick={handleEmojiSelect}
+                                theme={Theme.AUTO}
+                                width={320}
+                                height={400}
+                              />
+                            </div>
+                          )}
                         </div>
-                      )}
-                      <textarea
-                        ref={textareaRef}
-                        value={newMessage}
-                        onChange={handleTextareaChange}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendGroupMessage(newMessage); }
-                        }}
-                        placeholder="Type a message to the group…"
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px] max-h-[120px]"
-                        rows={1}
-                      />
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition"
+                        >
+                          <Plus className="w-6 h-6" />
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*,video/*"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                        />
+                      </div>
+
+                      <div className="flex-1 relative">
+                        <textarea
+                          ref={textareaRef}
+                          value={newMessage}
+                          onChange={handleTextareaChange}
+                          onKeyDown={handleKeyDown}
+                          placeholder="Type a message..."
+                          className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-32"
+                          rows={1}
+                        />
+                      </div>
+
                       <button
-                        onClick={() => sendGroupMessage(newMessage)}
+                        onClick={() => {
+                          if (selectedConv) sendMessage();
+                          else if (selectedGroup) sendGroupMessage(newMessage);
+                        }}
                         disabled={!newMessage.trim()}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                        className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 shadow-md"
                       >
-                        <Send className="w-4 h-4" /> Send
+                        <Send className="w-6 h-6" />
                       </button>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 mb-2">Select a conversation to start messaging</p>
-                    <div className="flex gap-2 justify-center">
-                      <button onClick={() => openNewConvModal('dm')} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
-                        New Message
-                      </button>
-                      <button onClick={() => openNewConvModal('group')} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700">
-                        New Group Chat
-                      </button>
-                    </div>
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                  <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
+                    <MessageCircle className="w-10 h-10 text-blue-600" />
                   </div>
+                  <h3 className="text-xl font-bold dark:text-white mb-2">Your Messages</h3>
+                  <p className="text-gray-500 dark:text-gray-400 max-w-xs mb-6">
+                    Select a conversation or group from the sidebar to start chatting.
+                  </p>
+                  <button
+                    onClick={() => openNewConvModal('dm')}
+                    className="px-6 py-2.5 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition shadow-md"
+                  >
+                    Start a New Chat
+                  </button>
                 </div>
               )}
             </div>
+
           </div>
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════
-          NEW CONVERSATION MODAL
-          Supports both DM mode and multi-user group DM mode
-      ══════════════════════════════════════════════════════ */}
+      {/* ── Modals ─────────────────────────────────────────── */}
       {showNewConvModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4">
-            {/* Modal header + mode tabs */}
-            <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <h3 className="text-lg font-bold dark:text-white">
-                {newConvMode === 'group' ? 'New Group Chat' : 'New Conversation'}
+                {newConvMode === 'dm' ? 'New Message' : 'Create Group Chat'}
               </h3>
-              <button onClick={() => setShowNewConvModal(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                <X className="w-5 h-5 dark:text-gray-300" />
+              <button onClick={() => setShowNewConvModal(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                <X className="w-5 h-5 dark:text-gray-400" />
               </button>
             </div>
 
-            {/* Mode toggle */}
-            <div className="flex border-b dark:border-gray-700">
-              <button
-                onClick={() => { setNewConvMode('dm'); setSelectedGroupMembers([]); }}
-                className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border-b-2 transition ${
-                  newConvMode === 'dm'
-                    ? 'text-blue-600 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                    : 'text-gray-500 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                <MessageCircle className="w-4 h-4" /> Direct Message
-              </button>
-              <button
-                onClick={() => setNewConvMode('group')}
-                className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border-b-2 transition ${
-                  newConvMode === 'group'
-                    ? 'text-purple-600 border-purple-600 bg-purple-50 dark:bg-purple-900/20'
-                    : 'text-gray-500 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Users className="w-4 h-4" /> Group Chat
-              </button>
-            </div>
-
-            {/* Group name input (group mode only) */}
             {newConvMode === 'group' && (
-              <div className="px-4 pt-3">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <input
                   type="text"
+                  placeholder="Group Name (optional)"
                   value={groupChatName}
                   onChange={e => setGroupChatName(e.target.value)}
-                  placeholder="Group name (optional)"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             )}
 
-            {/* Selected members chips (group mode) */}
-            {newConvMode === 'group' && selectedGroupMembers.length > 0 && (
-              <div className="px-4 pt-2 flex flex-wrap gap-1.5">
-                {selectedGroupMembers.map(u => (
-                  <span
-                    key={u.user_id}
-                    className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-medium px-2 py-1 rounded-full"
+            <div className="p-4">
+              <div className="relative mb-4">
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchUser}
+                  onChange={e => setSearchUser(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
+                />
+                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+              </div>
+
+              <div className="max-h-60 overflow-y-auto space-y-2">
+                {filteredUsers.map(user => (
+                  <button
+                    key={user.user_id}
+                    onClick={() => {
+                      if (newConvMode === 'dm') startDirectConversation(user.user_id);
+                      else toggleGroupMember(user);
+                    }}
+                    className={`w-full p-3 flex items-center gap-3 rounded-xl transition ${
+                      selectedGroupMembers.find(m => m.user_id === user.user_id)
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 border'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700 border border-transparent'
+                    }`}
                   >
-                    {u.name}
-                    <button onClick={() => toggleGroupMember(u)}>
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
+                    {user.picture ? (
+                      <Image src={user.picture} alt={user.name} width={40} height={40} className="rounded-full" unoptimized />
+                    ) : (
+                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="text-left">
+                      <p className="font-semibold dark:text-white">{user.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                    </div>
+                    {newConvMode === 'group' && (
+                      <div className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        selectedGroupMembers.find(m => m.user_id === user.user_id)
+                          ? 'bg-blue-600 border-blue-600'
+                          : 'border-gray-300'
+                      }`}>
+                        {selectedGroupMembers.find(m => m.user_id === user.user_id) && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                    )}
+                  </button>
                 ))}
               </div>
-            )}
-
-            {/* Search */}
-            <div className="p-4 border-b dark:border-gray-700">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text" value={searchUser}
-                  onChange={e => setSearchUser(e.target.value)}
-                  placeholder="Search users…"
-                  className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-                {newConvMode === 'group'
-                  ? `Select at least 2 people · ${selectedGroupMembers.length} selected`
-                  : 'You can message anyone on the platform'}
-              </p>
             </div>
 
-            {/* User list */}
-            <div className="max-h-72 overflow-y-auto">
-              {filteredUsers.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">
-                    {allUsers.length === 0 ? 'Loading…' : 'No users found'}
-                  </p>
-                </div>
-              ) : (
-                filteredUsers.map(u => {
-                  const isSelected = selectedGroupMembers.some(m => m.user_id === u.user_id);
-                  return (
-                    <button
-                      key={u.user_id}
-                      onClick={() => newConvMode === 'dm' ? startDirectConversation(u.user_id) : toggleGroupMember(u)}
-                      className={`w-full p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-left border-b dark:border-gray-700 last:border-b-0 ${
-                        isSelected ? 'bg-purple-50 dark:bg-purple-900/20' : ''
-                      }`}
-                    >
-                      {u.picture ? (
-                        <Image src={u.picture} alt={u.name} width={40} height={40} className="rounded-full" />
-                      ) : (
-                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                          {u.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <p className="font-semibold dark:text-white">{u.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{u.email}</p>
-                      </div>
-                      {newConvMode === 'group' && (
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                          isSelected ? 'bg-purple-600 border-purple-600' : 'border-gray-300 dark:border-gray-600'
-                        }`}>
-                          {isSelected && <Check className="w-3 h-3 text-white" />}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Create group button */}
             {newConvMode === 'group' && (
-              <div className="p-4 border-t dark:border-gray-700">
+              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                 <button
-                  onClick={createGroupDM}
                   disabled={selectedGroupMembers.length < 2}
-                  className="w-full py-2.5 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  onClick={createGroupDM}
+                  className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition shadow-lg"
                 >
-                  <Users className="w-4 h-4" />
-                  Create Group Chat ({selectedGroupMembers.length} selected)
+                  Create Group ({selectedGroupMembers.length} members)
                 </button>
               </div>
             )}
@@ -1269,102 +1059,107 @@ export default function MessagesPage() {
         </div>
       )}
 
-      {/* ── Remaining modals (unchanged from your original) ─── */}
-
-      {/* Media Preview Modal */}
-      {showMediaModal && mediaPreview && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4">
-            <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
-              <h3 className="text-lg font-bold dark:text-white">Send Media</h3>
-              <button onClick={() => { setShowMediaModal(false); setSelectedMedia(null); setMediaPreview(null); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                <X className="w-5 h-5 dark:text-gray-300" />
-              </button>
+      {/* Media Upload Modal */}
+      {showMediaModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[70] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-w-lg w-full">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="font-bold dark:text-white">Preview Media</h3>
+              <button onClick={() => setShowMediaModal(false)}><X className="w-6 h-6 dark:text-gray-400" /></button>
             </div>
-            <div className="p-4">
-              {selectedMedia?.type.startsWith('video/')
-                ? <video src={mediaPreview} controls className="w-full rounded-lg max-h-80" />
-                : <img src={mediaPreview} alt="Preview" className="w-full rounded-lg max-h-80 object-contain" />
-              }
-            </div>
-            <div className="p-4 border-t dark:border-gray-700 flex justify-end gap-2">
-              <button onClick={() => { setShowMediaModal(false); setSelectedMedia(null); setMediaPreview(null); }} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                Cancel
-              </button>
-              <button onClick={sendMediaMessage} disabled={uploading} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
-                {uploading ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Sending…</> : <><Send className="w-4 h-4" /> Send</>}
-              </button>
+            <div className="p-4 flex flex-col items-center">
+              {selectedMedia?.type.startsWith('video/') ? (
+                <video src={mediaPreview || ''} controls className="max-h-[60vh] rounded-lg" />
+              ) : (
+                <img src={mediaPreview || ''} alt="Preview" className="max-h-[60vh] rounded-lg" />
+              )}
+              <div className="w-full mt-4 flex gap-3">
+                <input
+                  type="text"
+                  placeholder="Add a caption..."
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={sendMediaMessage}
+                  disabled={uploading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {uploading ? 'Sending...' : 'Send'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Video Call */}
-      {showVideoCall && selectedConv && (
-        <VideoCall
-          isOpen={showVideoCall} onClose={() => setShowVideoCall(false)} callType="video"
-          remoteUserId={conversations.find(c => c.conversation_id === selectedConv)?.user_id || ''}
-          remoteUserName={conversations.find(c => c.conversation_id === selectedConv)?.name || 'User'}
-          remoteUserPicture={conversations.find(c => c.conversation_id === selectedConv)?.picture}
-          currentUserId={currentUserId} currentUserName={currentUserName}
-        />
-      )}
-
-      {/* Audio Call */}
-      {showAudioCall && selectedConv && (
-        <VideoCall
-          isOpen={showAudioCall} onClose={() => setShowAudioCall(false)} callType="audio"
-          remoteUserId={conversations.find(c => c.conversation_id === selectedConv)?.user_id || ''}
-          remoteUserName={conversations.find(c => c.conversation_id === selectedConv)?.name || 'User'}
-          remoteUserPicture={conversations.find(c => c.conversation_id === selectedConv)?.picture}
-          currentUserId={currentUserId} currentUserName={currentUserName}
-        />
-      )}
-
-      {/* Media Gallery */}
+      {/* Media Gallery Modal */}
       {showMediaGallery && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
-              <h3 className="text-lg font-bold dark:text-white">Shared Media</h3>
-              <button onClick={() => setShowMediaGallery(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                <X className="w-5 h-5 dark:text-gray-300" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {mediaGallery.length === 0 ? (
-                <div className="text-center py-12">
-                  <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No shared media yet</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {mediaGallery.map(media => (
-                    <div key={media.message_id} onClick={() => setFullscreenMedia(media)} className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition">
-                      {media.message_type === 'video'
-                        ? <video src={media.media_url} className="w-full h-full object-cover" />
-                        : <img src={media.media_url} alt="" className="w-full h-full object-cover" />
-                      }
+        <div className="fixed inset-0 bg-black/90 flex flex-col z-[80]">
+          <div className="p-4 flex items-center justify-between text-white">
+            <h3 className="font-bold">Media Gallery</h3>
+            <button onClick={() => setShowMediaGallery(false)}><X className="w-8 h-8" /></button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {mediaGallery.map(m => (
+                <div
+                  key={m.message_id}
+                  className="aspect-square rounded-xl overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition"
+                  onClick={() => setFullscreenMedia(m)}
+                >
+                  {m.message_type === 'video' ? (
+                    <div className="w-full h-full bg-gray-800 flex items-center justify-center relative">
+                      <VideoIcon className="w-8 h-8 text-white/50" />
+                      <video src={m.media_url} className="absolute inset-0 w-full h-full object-cover opacity-50" />
                     </div>
-                  ))}
+                  ) : (
+                    <img src={m.media_url} alt="" className="w-full h-full object-cover" />
+                  )}
                 </div>
-              )}
+              ))}
             </div>
+            {mediaGallery.length === 0 && (
+              <div className="h-full flex flex-col items-center justify-center text-white/50">
+                <ImageIcon className="w-16 h-16 mb-4" />
+                <p>No media shared in this chat yet</p>
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* Fullscreen Media */}
       {fullscreenMedia && (
-        <div className="fixed inset-0 bg-black z-50 flex items-center justify-center" onClick={() => setFullscreenMedia(null)}>
-          <button className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-lg" onClick={() => setFullscreenMedia(null)}>
-            <X className="w-6 h-6" />
+        <div className="fixed inset-0 bg-black z-[90] flex items-center justify-center p-4">
+          <button
+            onClick={() => setFullscreenMedia(null)}
+            className="absolute top-6 right-6 text-white hover:bg-white/10 p-2 rounded-full transition"
+          >
+            <X className="w-8 h-8" />
           </button>
-          {fullscreenMedia.message_type === 'video'
-            ? <video src={fullscreenMedia.media_url} controls autoPlay className="max-w-full max-h-full" onClick={e => e.stopPropagation()} />
-            : <img src={fullscreenMedia.media_url} alt="" className="max-w-full max-h-full object-contain" onClick={e => e.stopPropagation()} />
-          }
+          {fullscreenMedia.message_type === 'video' ? (
+            <video src={fullscreenMedia.media_url} controls autoPlay className="max-w-full max-h-full" />
+          ) : (
+            <img src={fullscreenMedia.media_url} alt="" className="max-w-full max-h-full object-contain" />
+          )}
+          {fullscreenMedia.content && fullscreenMedia.content !== '📷 Image' && (
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-6 py-3 rounded-2xl text-white max-w-lg text-center">
+              {fullscreenMedia.content}
+            </div>
+          )}
         </div>
+      )}
+
+      {/* Video Call Component */}
+      {(showVideoCall || showAudioCall) && (
+        <VideoCall
+          onClose={() => { setShowVideoCall(false); setShowAudioCall(false); }}
+          userId={selectedConv ? conversations.find(c => c.conversation_id === selectedConv)?.user_id || '' : ''}
+          userName={selectedConv ? conversations.find(c => c.conversation_id === selectedConv)?.name || '' : ''}
+          isAudioOnly={showAudioCall}
+        />
       )}
     </div>
   );
