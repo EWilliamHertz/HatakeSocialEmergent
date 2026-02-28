@@ -40,6 +40,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // NEW: Check if the email is verified before allowing them to log in
+    if (!user.email_verified) {
+      return NextResponse.json(
+        { error: 'Please verify your email address before logging in. Check your inbox for the verification link.' },
+        { status: 403 }
+      );
+    }
+
     // Generate session token
     const sessionToken = generateId('session');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
