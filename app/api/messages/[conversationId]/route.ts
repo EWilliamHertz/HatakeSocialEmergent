@@ -95,7 +95,7 @@ export async function GET(
       // If twin lookup fails, fall back to single conversation
     }
 
-    // Fetch messages from all matching conversations (merged & sorted)
+// Fetch messages from all matching conversations (merged & sorted)
     let messages: any[];
     try {
       messages = mediaOnly
@@ -120,43 +120,48 @@ export async function GET(
             ORDER BY m.created_at ASC
           `
         : await sql`
-            SELECT
-              m.message_id,
-              m.sender_id,
-              m.content,
-              m.message_type,
-              m.media_url,
-              m.read_at,
-              m.reply_to,
-              m.reply_content,
-              m.reply_sender_name,
-              m.created_at,
-              u.name,
-              u.picture
-            FROM messages m
-            JOIN users u ON u.user_id = m.sender_id
-            WHERE m.conversation_id = ANY(${allConvIds})
-            ORDER BY m.created_at ASC
-            LIMIT 200
+            SELECT * FROM (
+              SELECT
+                m.message_id,
+                m.sender_id,
+                m.content,
+                m.message_type,
+                m.media_url,
+                m.read_at,
+                m.reply_to,
+                m.reply_content,
+                m.reply_sender_name,
+                m.created_at,
+                u.name,
+                u.picture
+              FROM messages m
+              JOIN users u ON u.user_id = m.sender_id
+              WHERE m.conversation_id = ANY(${allConvIds})
+              ORDER BY m.created_at DESC
+              LIMIT 200
+            ) AS recent_messages
+            ORDER BY recent_messages.created_at ASC
           `;
     } catch (colError) {
       // Fallback: query without new columns if they don't exist yet
       messages = await sql`
-        SELECT
-          m.message_id,
-          m.sender_id,
-          m.content,
-          m.created_at,
-          u.name,
-          u.picture
-        FROM messages m
-        JOIN users u ON u.user_id = m.sender_id
-        WHERE m.conversation_id = ANY(${allConvIds})
-        ORDER BY m.created_at ASC
-        LIMIT 200
+        SELECT * FROM (
+          SELECT
+            m.message_id,
+            m.sender_id,
+            m.content,
+            m.created_at,
+            u.name,
+            u.picture
+          FROM messages m
+          JOIN users u ON u.user_id = m.sender_id
+          WHERE m.conversation_id = ANY(${allConvIds})
+          ORDER BY m.created_at DESC
+          LIMIT 200
+        ) AS recent_messages
+        ORDER BY recent_messages.created_at ASC
       `;
     }
-
     return NextResponse.json({ success: true, messages });
   } catch (error) {
     console.error(`GET /api/messages/${conversationId} error:`, error);
