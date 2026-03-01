@@ -627,11 +627,11 @@ export default function MessagesPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 12rem)' }}>
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 10rem)' }}>
           <div className="flex h-full">
-            {/* Conversations List */}
-            <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+            {/* Conversations List - hidden on mobile when chat is open */}
+            <div className={`${selectedConv || selectedGroup ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700 flex-col`}>
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <h2 className="text-xl font-bold dark:text-white">Messages</h2>
                 <div className="flex items-center gap-2">
