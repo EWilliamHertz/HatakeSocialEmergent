@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Users, UserPlus, UserMinus, Search, Check, X, MessageCircle } from 'lucide-react';
 import Image from 'next/image';
-
+import Link from 'next/link';
 interface Friend {
   user_id: string;
   name: string;
@@ -239,8 +239,9 @@ export default function FriendsPage() {
                         </div>
                       )}
                       <div>
-                        <p className="font-semibold dark:text-white">{friend.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Friend</p>
+<Link href={`/profile/${friend.user_id}`} className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">
+  {friend.name}
+</Link>                        <p className="text-sm text-gray-500 dark:text-gray-400">Friend</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -362,8 +363,9 @@ export default function FriendsPage() {
                           </div>
                         )}
                         <div>
-                          <p className="font-semibold dark:text-white">{user.name}</p>
-                          {user.email && <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>}
+<Link href={`/profile/${user.user_id}`} className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">
+  {user.name}
+</Link>                          {user.email && <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>}
                         </div>
                       </div>
                       <button
