@@ -29,6 +29,8 @@ export default function Navbar() {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showEventManager, setShowEventManager] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -36,7 +38,13 @@ export default function Navbar() {
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+      setShowSearch(false);
     }
+  };
+
+  const openSearch = () => {
+    setShowSearch(true);
+    setTimeout(() => searchInputRef.current?.focus(), 50);
   };
 
   useEffect(() => {
@@ -87,7 +95,31 @@ export default function Navbar() {
   return (
     <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50" data-testid="navbar">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="relative flex items-center justify-between h-16">
+          {/* Search Overlay - covers entire navbar row */}
+          {showSearch && (
+            <div className="absolute inset-0 z-50 flex items-center px-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+              <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 w-full">
+                <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search users, decks, cards, posts..."
+                  className="flex-1 bg-transparent text-base text-gray-700 dark:text-gray-200 outline-none placeholder-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setShowSearch(false); setSearchQuery(''); }}
+                  className="p-1 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </form>
+            </div>
+          )}
+
           {/* Logo */}
           <Link href="/feed" className="flex items-center gap-3">
             <Image
@@ -101,18 +133,6 @@ export default function Navbar() {
               Hatake.Social
             </span>
           </Link>
-
-          {/* Inline Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-1.5 gap-2 flex-1 max-w-xs mx-4">
-            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search cards, users, decks..."
-              className="bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none w-full placeholder-gray-400"
-            />
-          </form>
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center gap-2">
@@ -142,6 +162,14 @@ export default function Navbar() {
 
           {/* User Menu */}
           <div className="flex items-center gap-2">
+            {/* Search Icon Button */}
+            <button
+              onClick={openSearch}
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              title="Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
             <ThemeToggle />
             <NotificationsDropdown />
 
