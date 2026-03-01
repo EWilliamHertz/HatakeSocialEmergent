@@ -801,8 +801,8 @@ export default function MessagesPage() {
                                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-300'
                                     : 'bg-gray-100 dark:bg-gray-700 border-gray-400 text-gray-600 dark:text-gray-400'
                                 }`}>
-                                  <p className="font-semibold">{msg.reply_sender_name}</p>
-                                  <p className="truncate">{msg.reply_content}</p>
+                                  <p className="font-semibold truncate">{msg.reply_sender_name}</p>
+                                  <p className="line-clamp-1 overflow-hidden">{msg.reply_content}</p>
                                 </div>
                               )}
 
@@ -821,7 +821,7 @@ export default function MessagesPage() {
                                 {/* Hover actions */}
                                 <button
                                   onClick={() => setReplyTo(msg)}
-                                  className={`absolute top-0 opacity-0 group-hover:opacity-100 p-1.5 bg-white dark:bg-gray-800 shadow-md rounded-full transition-opacity ${
+                                  className={`absolute top-0 p-1.5 bg-white dark:bg-gray-800 shadow-md rounded-full transition-opacity opacity-60 hover:opacity-100 active:opacity-100 ${
                                     isSender ? '-left-10' : '-right-10'
                                   }`}
                                   title="Reply"
