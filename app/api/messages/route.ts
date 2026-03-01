@@ -63,7 +63,38 @@ export async function GET(request: Request) {
       unread_count:    row.unread_count,
     }));
 
-    return NextResponse.json({ success: true, conversations: shaped });
+    // Deduplicate twin DM conversations (same 2 participants, different conversation rows)
+    // Keep the conversation with the most recent last_message_at for each user pair.
+    // The messages API already merges messages from twins, so whichever ID we show
+    // will return the full history.
+    const dmByUserId = new Map<string, (typeof shaped)[0]>();
+    const deduped: (typeof shaped) = [];
+    for (const conv of shaped) {
+      if (conv.is_group) {
+        deduped.push(conv);
+      } else {
+        const key = conv.user_id ?? conv.conversation_id;
+        const existing = dmByUserId.get(key);
+        if (!existing) {
+          dmByUserId.set(key, conv);
+          deduped.push(conv);
+        } else {
+          // Replace existing entry if this conversation has more recent activity
+          const existingTime = existing.last_message_at ? new Date(existing.last_message_at).getTime() : 0;
+          const convTime = conv.last_message_at ? new Date(conv.last_message_at).getTime() : 0;
+          if (convTime > existingTime) {
+            const idx = deduped.indexOf(existing);
+            if (idx !== -1) deduped[idx] = conv;
+            dmByUserId.set(key, conv);
+          }
+          // Also accumulate unread counts from twin conversations
+          const winner = dmByUserId.get(key)!;
+          winner.unread_count = (winner.unread_count ?? 0) + (conv === winner ? 0 : (conv.unread_count ?? 0));
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, conversations: deduped });
   } catch (error) {
     console.error('GET /api/messages error:', error);
     return NextResponse.json({ success: false, error: 'Failed to load conversations' }, { status: 500 });

@@ -27,20 +27,75 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
-    // Mark messages as read — wrapped so a missing column doesn't kill the whole request
+    // Mark messages as read
     try {
       await sql`
         UPDATE messages
         SET read_at = NOW()
         WHERE conversation_id = ${conversationId}
-          AND sender_id        != ${user.user_id}
-          AND read_at          IS NULL
+          AND sender_id != ${user.user_id}
+          AND read_at IS NULL
       `;
     } catch (_) {
       // read_at column may not exist yet — safe to ignore
     }
 
-    // Fetch messages — use COALESCE for new columns so missing columns degrade gracefully
+    // ─────────────────────────────────────────────────────────
+    // DUPLICATE CONVERSATION FIX
+    // For 1-on-1 DMs, find any "twin" conversations with the
+    // exact same 2 participants. This handles the case where
+    // duplicate conversations were created (is_group=NULL vs FALSE).
+    // We merge messages from ALL matching conversations so the
+    // user always sees the full history.
+    // ─────────────────────────────────────────────────────────
+    let allConvIds: string[] = [conversationId];
+    try {
+      const participantRows = await sql`
+        SELECT user_id FROM conversation_participants
+        WHERE conversation_id = ${conversationId}
+      `;
+      if (participantRows.length === 2) {
+        const p1 = participantRows[0].user_id as string;
+        const p2 = participantRows[1].user_id as string;
+        const twins = await sql`
+          SELECT c.conversation_id
+          FROM conversations c
+          WHERE (c.is_group = FALSE OR c.is_group IS NULL)
+            AND c.conversation_id != ${conversationId}
+            AND EXISTS (
+              SELECT 1 FROM conversation_participants
+              WHERE conversation_id = c.conversation_id AND user_id = ${p1}
+            )
+            AND EXISTS (
+              SELECT 1 FROM conversation_participants
+              WHERE conversation_id = c.conversation_id AND user_id = ${p2}
+            )
+            AND (
+              SELECT COUNT(*) FROM conversation_participants
+              WHERE conversation_id = c.conversation_id
+            ) = 2
+        `;
+        if (twins.length > 0) {
+          allConvIds = [conversationId, ...twins.map((r: any) => r.conversation_id as string)];
+          // Also mark twin conversation messages as read
+          for (const twin of twins) {
+            try {
+              await sql`
+                UPDATE messages
+                SET read_at = NOW()
+                WHERE conversation_id = ${twin.conversation_id}
+                  AND sender_id != ${user.user_id}
+                  AND read_at IS NULL
+              `;
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (_) {
+      // If twin lookup fails, fall back to single conversation
+    }
+
+    // Fetch messages from all matching conversations (merged & sorted)
     let messages: any[];
     try {
       messages = mediaOnly
@@ -60,7 +115,7 @@ export async function GET(
               u.picture
             FROM messages m
             JOIN users u ON u.user_id = m.sender_id
-            WHERE m.conversation_id = ${conversationId}
+            WHERE m.conversation_id = ANY(${allConvIds})
               AND m.message_type IN ('image', 'video')
             ORDER BY m.created_at ASC
           `
@@ -80,7 +135,7 @@ export async function GET(
               u.picture
             FROM messages m
             JOIN users u ON u.user_id = m.sender_id
-            WHERE m.conversation_id = ${conversationId}
+            WHERE m.conversation_id = ANY(${allConvIds})
             ORDER BY m.created_at ASC
             LIMIT 200
           `;
@@ -96,7 +151,7 @@ export async function GET(
           u.picture
         FROM messages m
         JOIN users u ON u.user_id = m.sender_id
-        WHERE m.conversation_id = ${conversationId}
+        WHERE m.conversation_id = ANY(${allConvIds})
         ORDER BY m.created_at ASC
         LIMIT 200
       `;
