@@ -268,6 +268,18 @@ export async function POST(request: NextRequest) {
 
     const awardedBadges: string[] = [];
 
+    // Auto-award beta_tester to all early members (joined before July 2026)
+    try {
+      const [userInfo] = await sql`SELECT created_at FROM users WHERE user_id = ${user.user_id}`;
+      if (userInfo && new Date(userInfo.created_at) < new Date('2026-07-01')) {
+        const existing = await sql`SELECT 1 FROM user_badges WHERE user_id = ${user.user_id} AND badge_type = 'beta_tester'`;
+        if (existing.length === 0) {
+          await sql`INSERT INTO user_badges (user_id, badge_type, awarded_at) VALUES (${user.user_id}, 'beta_tester', NOW())`;
+          awardedBadges.push('beta_tester');
+        }
+      }
+    } catch (_) {}
+
     // Get user stats (all in one query for efficiency)
     const [tradeStats] = await sql`
       SELECT 

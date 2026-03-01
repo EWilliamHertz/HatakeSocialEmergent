@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       LEFT JOIN conversation_participants other_cp
         ON other_cp.conversation_id = c.conversation_id
        AND other_cp.user_id != ${user.user_id}
-       AND c.is_group = FALSE
+       AND (c.is_group = FALSE OR c.is_group IS NULL)
       LEFT JOIN users other_u
         ON other_u.user_id = other_cp.user_id
       -- Unread messages
@@ -210,7 +210,7 @@ export async function POST(request: Request) {
         ON cp1.conversation_id = c.conversation_id AND cp1.user_id = ${user.user_id}
       JOIN conversation_participants cp2
         ON cp2.conversation_id = c.conversation_id AND cp2.user_id = ${recipientId}
-      WHERE c.is_group = FALSE
+      WHERE (c.is_group = FALSE OR c.is_group IS NULL)
       LIMIT 1
     `;
 

@@ -61,6 +61,7 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState('');
   const [game, setGame] = useState('all');
+  const [category, setCategory] = useState('all');
   const [setCode, setSetCode] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [results, setResults] = useState<Card[]>([]);
@@ -107,7 +108,9 @@ function SearchContent() {
     try {
       const params = new URLSearchParams();
       if (searchQuery) params.append('q', searchQuery);
-      params.append('game', gameType || game);
+      // Map category to game param
+      const activeGame = gameType || game;
+      params.append('game', activeGame);
       params.append('type', 'all'); // Search everything
       if (set) params.append('set', set);
       if (num) params.append('number', num);
@@ -252,44 +255,50 @@ function SearchContent() {
         {/* Search Bar */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
           <form onSubmit={handleSearch}>
-            <div className="flex gap-4 mb-4">
+            <div className="flex gap-3 mb-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search Pokemon, Magic, or any TCG card..."
+                  placeholder="Search Pokémon, Magic, users, decks..."
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   data-testid="search-input"
                 />
               </div>
-              <select
-                value={game}
-                onChange={(e) => setGame(e.target.value)}
-                className="px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
-                data-testid="game-select"
-              >
-                <option value="all">All Games</option>
-                <option value="pokemon">Pokemon</option>
-                <option value="mtg">Magic: The Gathering</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-                data-testid="advanced-filters-toggle"
-              >
-                <Filter className="w-5 h-5" />
-                {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
               <button
                 type="submit"
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
                 data-testid="search-button"
               >
                 Search
               </button>
+            </div>
+            
+            {/* Category tabs */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'all', label: 'All', color: 'blue' },
+                { id: 'users', label: 'Users', color: 'purple' },
+                { id: 'decks', label: 'Decks', color: 'green' },
+                { id: 'posts', label: 'Posts', color: 'blue' },
+                { id: 'pokemon', label: 'Pokémon', color: 'yellow' },
+                { id: 'mtg', label: 'Magic', color: 'red' },
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => { setCategory(cat.id); if (['pokemon','mtg'].includes(cat.id)) setGame(cat.id); else setGame('all'); }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+                    category === cat.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
             </div>
             
             {/* Advanced Filters */}
@@ -329,7 +338,7 @@ function SearchContent() {
         {/* View Toggle */}
         <div className="flex justify-between items-center mb-6">
           <p className="text-gray-600 dark:text-gray-400" data-testid="results-count">
-            {loading ? 'Searching...' : `${results.length} cards, ${users.length} users, ${decks.length} decks, ${posts.length} posts found`}
+            {loading ? 'Searching...' : `${results.length + users.length + decks.length + posts.length} results found`}
           </p>
           <div className="flex gap-2">
             <button
@@ -350,7 +359,7 @@ function SearchContent() {
         </div>
 
         {/* Users Section */}
-        {users.length > 0 && (
+        {users.length > 0 && (category === 'all' || category === 'users') && (
           <div className="mb-8">
             <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-purple-500"></span>
@@ -381,7 +390,7 @@ function SearchContent() {
         )}
 
         {/* Decks Section */}
-        {decks.length > 0 && (
+        {decks.length > 0 && (category === 'all' || category === 'decks') && (
           <div className="mb-8">
             <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
@@ -418,7 +427,7 @@ function SearchContent() {
         )}
 
         {/* Posts Section */}
-        {posts.length > 0 && (
+        {posts.length > 0 && (category === 'all' || category === 'posts') && (
           <div className="mb-8">
             <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-500"></span>
@@ -452,7 +461,7 @@ function SearchContent() {
         )}
 
         {/* Cards Section */}
-        {results.length > 0 && (
+        {results.length > 0 && (category === 'all' || category === 'pokemon' || category === 'mtg') && (
           <div>
             <h2 className="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-yellow-500"></span>

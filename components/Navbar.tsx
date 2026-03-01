@@ -28,7 +28,16 @@ export default function Navbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showEventManager, setShowEventManager] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -65,7 +74,6 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/feed', icon: Home, label: 'Feed' },
-    { href: '/search', icon: Search, label: 'Search' },
     { href: '/collection', icon: Package, label: 'Collection' },
     { href: '/decks', icon: Layers, label: 'Decks' },
     { href: '/marketplace', icon: ShoppingBag, label: 'Market' },
@@ -93,6 +101,18 @@ export default function Navbar() {
               Hatake.Social
             </span>
           </Link>
+
+          {/* Inline Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-1.5 gap-2 flex-1 max-w-xs mx-4">
+            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search cards, users, decks..."
+              className="bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none w-full placeholder-gray-400"
+            />
+          </form>
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center gap-2">
@@ -256,6 +276,17 @@ export default function Navbar() {
         {/* Mobile Navigation Menu */}
         {showMobileMenu && (
           <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 py-4">
+            {/* Mobile Search */}
+            <form onSubmit={handleSearchSubmit} className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 gap-2 mb-4">
+              <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="bg-transparent text-sm text-gray-700 dark:text-gray-300 outline-none w-full placeholder-gray-400"
+              />
+            </form>
             <div className="grid grid-cols-4 gap-2">
               {navLinks.map((link) => {
                 const Icon = link.icon;

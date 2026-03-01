@@ -17,6 +17,11 @@ export async function GET(request: NextRequest) {
   };
 
   // users columns
+  // Fix old DMs that have is_group=NULL instead of FALSE
+  await run('conversations: fix is_group null', () =>
+    sql`UPDATE conversations SET is_group = FALSE WHERE is_group IS NULL`
+  );
+
   await run('users: is_admin', () => sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE`);
   await run('users: is_organizer', () => sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_organizer BOOLEAN DEFAULT FALSE`);
 

@@ -98,6 +98,9 @@ export async function PATCH(
   }
 }
 
+// PUT is an alias for PATCH (some clients send PUT for updates)
+export const PUT = PATCH;
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ eventId: string }> }

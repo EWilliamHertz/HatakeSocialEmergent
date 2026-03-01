@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { User, Package, ShoppingBag, Users, Settings, Camera, Save, X, Edit, CreditCard, MapPin, Image as ImageIcon, Award, Shield, Star, Trophy, Flame, Zap, QrCode, Download } from 'lucide-react';
@@ -68,6 +68,7 @@ export default function MyProfilePage() {
   const [badges, setBadges] = useState<any[]>([]);
   const [badgeLoading, setBadgeLoading] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const profilePicInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -193,6 +194,32 @@ export default function MyProfilePage() {
     }
   };
 
+
+  const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', credentials: 'include', body: formData });
+      const data = await res.json();
+      if (data.success && data.url) {
+        await fetch('/api/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ picture: data.url })
+        });
+        setUser(prev => prev ? { ...prev, picture: data.url } : null);
+      } else {
+        alert('Failed to upload profile picture');
+      }
+    } catch (error) {
+      console.error('Profile pic upload error:', error);
+      alert('Failed to upload profile picture');
+    }
+  };
+
   const saveProfile = async () => {
     if (!editName.trim()) return;
     setSaving(true);
@@ -284,8 +311,8 @@ export default function MyProfilePage() {
           
           {/* Profile Info */}
           <div className="px-6 pb-6">
-            <div className="flex flex-col md:flex-row items-start md:items-end gap-4 -mt-12">
-              <div className="relative">
+            <div className="flex flex-col md:flex-row items-start md:items-end gap-4">
+              <div className="relative -mt-12 flex-shrink-0">
                 {user.picture ? (
                   <Image 
                     src={user.picture} 
@@ -299,9 +326,14 @@ export default function MyProfilePage() {
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <button className="absolute bottom-0 right-0 p-2 bg-white dark:bg-gray-700 rounded-full shadow-lg hover:bg-gray-100 dark:hover:bg-gray-600">
+                <button 
+                  onClick={() => profilePicInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 p-2 bg-white dark:bg-gray-700 rounded-full shadow-lg hover:bg-gray-100 dark:hover:bg-gray-600"
+                  title="Change profile picture"
+                >
                   <Camera className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </button>
+                <input ref={profilePicInputRef} type="file" accept="image/*" onChange={handleProfilePicUpload} className="hidden" />
               </div>
               
               <div className="flex-1">
@@ -584,20 +616,74 @@ export default function MyProfilePage() {
             </div>
             
             <div className="p-6 space-y-6">
-              {/* Banner Image */}
+              {/* Display Name */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <User className="w-4 h-4" />
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  placeholder="Your display name"
+                />
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <Edit className="w-4 h-4" />
+                  Bio
+                </label>
+                <textarea
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-none"
+                  placeholder="Tell people about yourself..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Profile Picture Upload */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <Camera className="w-4 h-4" />
+                  Profile Picture
+                </label>
+                <div className="flex items-center gap-4">
+                  {user.picture ? (
+                    <Image src={user.picture} alt={user.name} width={64} height={64} className="rounded-full border-2 border-gray-200 dark:border-gray-600" />
+                  ) : (
+                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold border-2 border-gray-200 dark:border-gray-600">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <label className="cursor-pointer px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 transition flex items-center gap-2">
+                    <Camera className="w-4 h-4" />
+                    Upload new photo
+                    <input type="file" accept="image/*" onChange={handleProfilePicUpload} className="hidden" />
+                  </label>
+                </div>
+              </div>
+
+              {/* Banner Image Upload */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <ImageIcon className="w-4 h-4" />
-                  Profile Banner URL
+                  Profile Banner
                 </label>
-                <input
-                  type="url"
-                  value={editBanner}
-                  onChange={(e) => setEditBanner(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
-                  placeholder="https://example.com/banner.jpg"
-                />
-                <p className="text-xs text-gray-500 mt-1">Enter a URL for your profile banner image</p>
+                {user.banner_url && (
+                  <div className="mb-2 h-20 relative rounded-lg overflow-hidden">
+                    <Image src={user.banner_url} alt="Banner" fill className="object-cover" unoptimized />
+                  </div>
+                )}
+                <label className="cursor-pointer w-full px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 transition flex items-center justify-center gap-2">
+                  <ImageIcon className="w-4 h-4" />
+                  {user.banner_url ? 'Change banner image' : 'Upload banner image'}
+                  <input type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" />
+                </label>
               </div>
 
               {/* Shipping Address */}
