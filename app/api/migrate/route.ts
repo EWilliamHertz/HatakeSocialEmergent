@@ -7,7 +7,7 @@ import sql from '@/lib/db';
 export async function POST(request: NextRequest) {
   const user = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (user.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!user.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const results: string[] = [];
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
   };
 
-  // ── conversations ────────────────────────────────────────────
+  // ── conversations ────────────────────────────────────────────────
   await run('conversations: is_group',        `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS is_group BOOLEAN NOT NULL DEFAULT FALSE`);
   await run('conversations: name',            `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS name TEXT`);
   await run('conversations: created_by',      `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS created_by TEXT`);
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   await run('conversations: last_message_at', `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS last_message_at TIMESTAMPTZ`);
   await run('conversations: updated_at',      `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`);
 
-  // ── conversation_participants unique constraint ───────────────
+  // ── conversation_participants unique constraint ───────────────────
   await run('participants: unique constraint', `
     DO $$ BEGIN
       IF NOT EXISTS (
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     END $$
   `);
 
-  // ── messages ─────────────────────────────────────────────────
+  // ── messages ─────────────────────────────────────────────────────
   await run('messages: message_type',      `ALTER TABLE messages ADD COLUMN IF NOT EXISTS message_type TEXT NOT NULL DEFAULT 'text'`);
   await run('messages: media_url',         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS media_url TEXT`);
   await run('messages: read_at',           `ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ`);
@@ -50,11 +50,11 @@ export async function POST(request: NextRequest) {
   await run('messages: reply_content',     `ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_content TEXT`);
   await run('messages: reply_sender_name', `ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_sender_name TEXT`);
 
-  // ── posts (feed) ─────────────────────────────────────────────
+  // ── posts (feed) ──────────────────────────────────────────────────
   await run('posts: updated_at', `ALTER TABLE posts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ`);
   await run('posts: edited',     `ALTER TABLE posts ADD COLUMN IF NOT EXISTS edited BOOLEAN DEFAULT FALSE`);
 
-  // ── events tables ────────────────────────────────────────────
+  // ── events tables ─────────────────────────────────────────────────
   await run('events table', `
     CREATE TABLE IF NOT EXISTS events (
       event_id      TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
@@ -111,14 +111,13 @@ export async function POST(request: NextRequest) {
       event_id   TEXT NOT NULL REFERENCES events(event_id) ON DELETE CASCADE,
       user_id    TEXT NOT NULL,
       content    TEXT,
-      media_url  TEXT,
-      media_type TEXT,
+      media_urls JSONB DEFAULT '[]',
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
 
-  // ── seed events if empty ─────────────────────────────────────
+  // ── seed events if empty ──────────────────────────────────────────
   const existing = await sql`SELECT COUNT(*)::int AS cnt FROM events`;
   if (existing[0].cnt === 0) {
     await run('seed: Svenska Pokémonmässan 2026', `
@@ -127,7 +126,7 @@ export async function POST(request: NextRequest) {
         'Svenska Pokémonmässan 2026',
         'Nordens största Pokémon-mässa! Samlare, spelare och fans möts för en helg fylld av trading, turneringar och utställare. Hatake är på plats som utställare!',
         'pokemon',
-        ARRAY[''pokemon'',''convention'',''trading'',''tcg''],
+        ARRAY['pokemon','convention','trading','tcg'],
         'Valandhuset', 'Göteborg',
         '2026-03-07', '2026-03-08', '10:00', '18:00',
         'https://www.pokemonmassan.se/', 'https://www.pokemonmassan.se/',
@@ -140,7 +139,7 @@ export async function POST(request: NextRequest) {
         'SweCard Jönköping 2026',
         'Sveriges ledande TCG-event med turneringar i Pokémon, Magic: The Gathering, Yu-Gi-Oh! och mer.',
         'tcg',
-        ARRAY[''tcg'',''pokemon'',''magic'',''tournament'',''convention''],
+        ARRAY['tcg','pokemon','magic','tournament','convention'],
         'RC Arena', 'Jönköping',
         '2026-05-30', '2026-05-31', '09:00', '19:00',
         'https://swecard.se/',
@@ -153,7 +152,7 @@ export async function POST(request: NextRequest) {
         'SweCard Autumn 2025',
         'SweCard Autumn 2025 i Svedala – hundratals deltagare och turneringar i Pokémon och Magic.',
         'tcg',
-        ARRAY[''tcg'',''pokemon'',''magic'',''tournament''],
+        ARRAY['tcg','pokemon','magic','tournament'],
         'Svedala Arena', 'Svedala',
         '2025-10-11', '2025-10-12',
         'https://swecard.se/',

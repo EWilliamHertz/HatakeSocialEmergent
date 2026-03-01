@@ -25,8 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ eve
   const { eventId } = await params;
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  const isAdmin = user.role === 'admin';
-  if (!isAdmin) {
+  if (!user.is_admin) {
     const orgCheck = await sql`SELECT role FROM event_organizers WHERE event_id = ${eventId} AND user_id = ${user.user_id}`;
     if (!orgCheck[0]) return NextResponse.json({ success: false, error: 'Only admins and organizers/exhibitors can post' }, { status: 403 });
   }
@@ -54,7 +53,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ e
   try {
     const post = await sql`SELECT user_id FROM event_posts WHERE post_id = ${postId} AND event_id = ${eventId}`;
     if (!post[0]) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
-    if (user.role !== 'admin' && post[0].user_id !== user.user_id) {
+    if (!user.is_admin && post[0].user_id !== user.user_id) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await sql`DELETE FROM event_posts WHERE post_id = ${postId}`;
