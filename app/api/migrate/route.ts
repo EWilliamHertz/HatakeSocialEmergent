@@ -22,6 +22,53 @@ export async function GET(request: NextRequest) {
     sql`UPDATE conversations SET is_group = FALSE WHERE is_group IS NULL`
   );
 
+  // Merge duplicate DM conversations between same user pairs
+  await run('merge duplicate DM conversations', async () => {
+    // Find all pairs of users that share multiple non-group conversations
+    const dupes = await sql`
+      SELECT 
+        LEAST(cp1.user_id, cp2.user_id) AS user_a,
+        GREATEST(cp1.user_id, cp2.user_id) AS user_b,
+        array_agg(c.conversation_id ORDER BY c.created_at ASC) AS conv_ids
+      FROM conversations c
+      JOIN conversation_participants cp1 ON cp1.conversation_id = c.conversation_id
+      JOIN conversation_participants cp2 ON cp2.conversation_id = c.conversation_id
+        AND cp2.user_id > cp1.user_id
+      WHERE (c.is_group = FALSE OR c.is_group IS NULL)
+      GROUP BY LEAST(cp1.user_id, cp2.user_id), GREATEST(cp1.user_id, cp2.user_id)
+      HAVING COUNT(DISTINCT c.conversation_id) > 1
+    `;
+    
+    let merged = 0;
+    for (const dupe of dupes) {
+      const convIds: string[] = dupe.conv_ids;
+      const keeper = convIds[0]; // oldest conversation
+      const toMerge = convIds.slice(1);
+      
+      for (const oldId of toMerge) {
+        // Move all messages to the keeper conversation
+        await sql`UPDATE messages SET conversation_id = ${keeper} WHERE conversation_id = ${oldId}`;
+        // Remove old conversation participants (keeper already has them)
+        await sql`DELETE FROM conversation_participants WHERE conversation_id = ${oldId}`;
+        // Delete the duplicate conversation
+        await sql`DELETE FROM conversations WHERE conversation_id = ${oldId}`;
+        merged++;
+      }
+      
+      // Update keeper's last_message from actual messages
+      await sql`
+        UPDATE conversations SET
+          last_message = (SELECT content FROM messages WHERE conversation_id = ${keeper} ORDER BY created_at DESC LIMIT 1),
+          last_message_at = (SELECT created_at FROM messages WHERE conversation_id = ${keeper} ORDER BY created_at DESC LIMIT 1)
+        WHERE conversation_id = ${keeper}
+      `;
+    }
+    
+    if (merged > 0) {
+      results.push(\`   ↳ Merged \${merged} duplicate conversation(s)\`);
+    }
+  });
+
   await run('users: is_admin', () => sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE`);
   await run('users: is_organizer', () => sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_organizer BOOLEAN DEFAULT FALSE`);
 

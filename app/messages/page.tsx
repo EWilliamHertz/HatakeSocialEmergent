@@ -460,7 +460,7 @@ export default function MessagesPage() {
   // ── UI Logic ─────────────────────────────────────────────
   const activeMessages = selectedConv ? messages : groupMessages;
   const filteredMessages = activeMessages.filter(m =>
-    m.content.toLowerCase().includes(messageSearch.toLowerCase())
+    (m.content || '').toLowerCase().includes(messageSearch.toLowerCase())
   );
 
   const renderMessageContent = (msg: Message) => {
@@ -585,7 +585,7 @@ export default function MessagesPage() {
                           <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" unoptimized />
                         ) : (
                           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                            {conv.name.charAt(0).toUpperCase()}
+                            {(conv.name || '?').charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
@@ -673,17 +673,22 @@ export default function MessagesPage() {
                       {selectedConv ? (
                         (() => {
                           const conv = conversations.find(c => c.conversation_id === selectedConv);
+                          const convName = conv?.name || (conv?.is_group ? 'Group Chat' : 'Chat');
                           return (
                             <>
-                              {conv?.picture ? (
-                                <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" unoptimized />
+                              {conv?.is_group ? (
+                                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                  <Users className="w-5 h-5" />
+                                </div>
+                              ) : conv?.picture ? (
+                                <Image src={conv.picture} alt={convName} width={40} height={40} className="rounded-full" unoptimized />
                               ) : (
                                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                  {conv?.name.charAt(0).toUpperCase()}
+                                  {convName.charAt(0).toUpperCase()}
                                 </div>
                               )}
                               <div>
-                                <h3 className="font-bold dark:text-white">{conv?.name}</h3>
+                                <h3 className="font-bold dark:text-white">{convName}</h3>
                                 <p className="text-xs text-green-500">Online</p>
                               </div>
                             </>
@@ -781,7 +786,7 @@ export default function MessagesPage() {
                                   <Image src={msg.picture} alt={msg.name} width={32} height={32} className="rounded-full" unoptimized />
                                 ) : (
                                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                                    {msg.name.charAt(0).toUpperCase()}
+                                    {(msg.name || '?').charAt(0).toUpperCase()}
                                   </div>
                                 )}
                               </div>

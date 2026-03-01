@@ -161,9 +161,6 @@ export default function MessengerWidget() {
   const uploadAndSendMedia = async () => {
     if (!selectedMedia || !selectedConv) return;
     
-    const conv = conversations.find(c => c.conversation_id === selectedConv);
-    if (!conv) return;
-    
     setUploading(true);
     try {
       // Upload media first
@@ -193,7 +190,7 @@ export default function MessengerWidget() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          conversationId: conv.conversation_id,
+          conversationId: selectedConv,
           content: '',
           messageType,
           mediaUrl,
@@ -480,9 +477,6 @@ export default function MessengerWidget() {
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConv) return;
-    
-    const conv = conversations.find(c => c.conversation_id === selectedConv);
-    if (!conv) return;
 
     const content = newMessage.trim();
     const replyToMsg = replyTo;
@@ -497,7 +491,7 @@ export default function MessengerWidget() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          conversationId: conv.conversation_id,
+          conversationId: selectedConv,
           content,
           replyToId: replyToMsg?.message_id || null,
         })
@@ -762,7 +756,7 @@ export default function MessengerWidget() {
                                 <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full flex-shrink-0" unoptimized />
                               ) : (
                                 <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                                  {msg.name.charAt(0).toUpperCase()}
+                                  {(msg.name || '?').charAt(0).toUpperCase()}
                                 </div>
                               )}
                               
@@ -1064,7 +1058,7 @@ export default function MessengerWidget() {
                       <div key={msg.message_id} className={`flex gap-2 ${msg.sender_id === currentUserId ? 'flex-row-reverse' : ''}`}>
                         {msg.picture
                           ? <Image src={msg.picture} alt={msg.name} width={24} height={24} className="rounded-full flex-shrink-0" unoptimized />
-                          : <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">{msg.name.charAt(0).toUpperCase()}</div>
+                          : <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">{(msg.name || '?').charAt(0).toUpperCase()}</div>
                         }
                         <div>
                           {msg.sender_id !== currentUserId && (
