@@ -237,6 +237,8 @@ export default function EventsPage() {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [attendance, setAttendance] = useState<Record<string, { myStatus: string | null; interestedCount: number; goingCount: number }>>({});
   const [error, setError] = useState('');
   const [showPast, setShowPast] = useState(false);
 

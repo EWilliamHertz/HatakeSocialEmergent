@@ -2,117 +2,139 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 
-const ADMIN_EMAILS = ['zudran@gmail.com', 'ernst@hatake.eu'];
+export async function POST(req: NextRequest) {
+  const user = await getUserFromRequest(req);
+  if (!user || user.role !== 'admin') {
+    return NextResponse.json({ success: false, error: 'Admin only' }, { status: 403 });
+  }
 
-export async function POST(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    const isAdmin = ADMIN_EMAILS.includes((user as any).email) || (user as any).is_admin;
-    if (!isAdmin) return NextResponse.json({ error: 'Admin only' }, { status: 403 });
-
-    // Create table
+    // Events table
     await sql`
       CREATE TABLE IF NOT EXISTS events (
         event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        title VARCHAR(255) NOT NULL,
+        title TEXT NOT NULL,
         description TEXT,
-        categories TEXT[] DEFAULT '{}',
-        location_name VARCHAR(255),
-        location_city VARCHAR(100),
-        location_country VARCHAR(100) DEFAULT 'Sweden',
-        start_date DATE NOT NULL,
-        end_date DATE,
-        start_time VARCHAR(20),
-        end_time VARCHAR(20),
-        image_url TEXT,
+        category TEXT NOT NULL DEFAULT 'tcg',
+        event_type TEXT NOT NULL DEFAULT 'convention',
+        start_date TIMESTAMPTZ NOT NULL,
+        end_date TIMESTAMPTZ NOT NULL,
+        venue TEXT,
+        city TEXT,
+        country TEXT DEFAULT 'Sweden',
         website_url TEXT,
         ticket_url TEXT,
-        is_sold_out BOOLEAN DEFAULT FALSE,
-        is_past BOOLEAN DEFAULT FALSE,
-        featured BOOLEAN DEFAULT FALSE,
-        hatake_exhibitor BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
+        image_url TEXT,
+        is_featured BOOLEAN DEFAULT false,
+        is_sold_out BOOLEAN DEFAULT false,
+        hatake_present BOOLEAN DEFAULT false,
+        organizer_name TEXT,
+        created_by UUID,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
 
-    // Check if already seeded
-    const existing = await sql`SELECT COUNT(*) as count FROM events`;
-    if (parseInt(existing[0].count) > 0) {
-      return NextResponse.json({ message: 'Already seeded', count: existing[0].count });
-    }
+    // Event attendance table
+    await sql`
+      CREATE TABLE IF NOT EXISTS event_attendance (
+        event_id UUID NOT NULL,
+        user_id UUID NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('interested', 'going')),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (event_id, user_id)
+      )
+    `;
+
+    // Event organizers table
+    await sql`
+      CREATE TABLE IF NOT EXISTS event_organizers (
+        event_id UUID NOT NULL,
+        user_id UUID NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('organizer', 'exhibitor')),
+        assigned_by UUID,
+        assigned_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (event_id, user_id)
+      )
+    `;
+
+    // Event posts table
+    await sql`
+      CREATE TABLE IF NOT EXISTS event_posts (
+        post_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        event_id UUID NOT NULL,
+        user_id UUID NOT NULL,
+        content TEXT NOT NULL DEFAULT '',
+        media_urls JSONB DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
 
     // Seed events
+    await sql`DELETE FROM events`;
+
     await sql`
-      INSERT INTO events (title, description, categories, location_name, location_city, start_date, end_date, start_time, end_time, image_url, website_url, ticket_url, is_sold_out, is_past, featured, hatake_exhibitor)
+      INSERT INTO events (title, description, category, event_type, start_date, end_date, venue, city, website_url, ticket_url, is_featured, is_sold_out, hatake_present, organizer_name)
       VALUES (
         'Svenska Pokémonmässan 2026',
-        'Årets mest episka event! Två dagar fyllda med äventyr, samlarskatter och gemenskap. Köp, sälj och byt Pokémon-kort med fans från hela Sverige. Med bytesmarknad, Trade Zone, PSA-gradering, och massa aktiviteter för hela familjen. Valandhuset förvandlas till en samlingsplats för Pokémon-fans i alla åldrar. Hatake är utställare!',
-        ARRAY['pokemon', 'tcg', 'convention'],
+        'Sveriges största Pokémon-mässa! Valandhallen i Göteborg fylls med Pokémon-samlare, turneringar, utställare och massor av sällsynta kort. Hatake är på plats som utställare – kom och hälsa på oss! Mässan har förtursbilett till turneringar och ett fantastiskt utbud av vintage och moderna kort.',
+        'pokemon',
+        'convention',
+        '2026-03-07 10:00:00+01',
+        '2026-03-08 18:00:00+01',
         'Valandhuset',
         'Göteborg',
-        '2026-03-07',
-        '2026-03-08',
-        '10:00',
-        '18:00',
-        'https://www.pokemonmassan.se/assets/pikachu-Cy6hVz7n.png',
         'https://www.pokemonmassan.se',
-        'https://secure.tickster.com/sv/jcm5v8yvzmrrxwk/selectproductgroup',
-        TRUE,
-        FALSE,
-        TRUE,
-        TRUE
+        'https://www.pokemonmassan.se',
+        true,
+        true,
+        true,
+        'Pokémonmässan AB'
       )
     `;
 
     await sql`
-      INSERT INTO events (title, description, categories, location_name, location_city, start_date, end_date, start_time, end_time, image_url, website_url, ticket_url, is_sold_out, is_past, featured, hatake_exhibitor)
+      INSERT INTO events (title, description, category, event_type, start_date, end_date, venue, city, website_url, ticket_url, is_featured, is_sold_out, hatake_present, organizer_name)
       VALUES (
         'SweCard Jönköping 2026',
-        'Sveriges största och mest spännande event för samlarkort! SweCard samlar spelare och samlare av Pokémon, Magic: The Gathering, och många andra TCG-spel under ett tak. Kom för att köpa, sälja, byta och tävla. RC Arena i Jönköping fylls med hundratals utställare och tusentals besökare.',
-        ARRAY['tcg', 'pokemon', 'magic', 'convention'],
-        'RC Arena, Elmiaområdet',
+        'SweCard är Sveriges ledande TCG-mässa med fokus på Pokémon, Magic: The Gathering, One Piece, Yu-Gi-Oh och mycket mer. RC Arena i Jönköping erbjuder ett fantastiskt utrymme för handel, turneringar och träffar med det svenska TCG-communityt.',
+        'tcg',
+        'convention',
+        '2026-05-30 10:00:00+02',
+        '2026-05-31 18:00:00+02',
+        'RC Arena',
         'Jönköping',
-        '2026-05-30',
-        '2026-05-31',
-        '10:00',
-        '18:00',
-        'https://swecard.org/wp-content/uploads/2024/01/SweCard-Logo-Transparent.png',
-        'https://swecard.org',
-        'https://swecard.org',
-        FALSE,
-        FALSE,
-        TRUE,
-        FALSE
+        'https://swecard.se',
+        'https://swecard.se',
+        true,
+        false,
+        false,
+        'SweCard'
       )
     `;
 
-    // Past event
     await sql`
-      INSERT INTO events (title, description, categories, location_name, location_city, start_date, end_date, start_time, end_time, image_url, website_url, is_sold_out, is_past, featured, hatake_exhibitor)
+      INSERT INTO events (title, description, category, event_type, start_date, end_date, venue, city, website_url, is_featured, is_sold_out, hatake_present, organizer_name)
       VALUES (
-        'SweCard Autumn 2025',
-        'SweCard i Svedala – Sveriges största mässa för samlarkort. Utställd i Svedala Idrottshall nära Malmö. Alla bord utsålda med rekordmånga utställare och besökare. En stor framgång för den svenska TCG-gemenskapen.',
-        ARRAY['tcg', 'pokemon', 'magic', 'convention'],
+        'SweCard Höst 2025',
+        'SweCard:s höstomgång i Svedala – ett välbesökt TCG-event med stark närvaro av Pokémon och Magic-spelare. Bra handel, trevlig stämning och massor av kort att hitta.',
+        'tcg',
+        'convention',
+        '2025-10-11 10:00:00+02',
+        '2025-10-12 18:00:00+02',
         'Svedala Idrottshall',
         'Svedala',
-        '2025-10-11',
-        '2025-10-12',
-        '10:00',
-        '15:00',
-        'https://swecard.org/wp-content/uploads/2024/01/SweCard-Logo-Transparent.png',
-        'https://swecard.org',
-        TRUE,
-        TRUE,
-        FALSE,
-        FALSE
+        'https://swecard.se',
+        false,
+        false,
+        false,
+        'SweCard'
       )
     `;
 
-    return NextResponse.json({ success: true, message: 'Events seeded successfully' });
-  } catch (error) {
-    console.error('Seed error:', error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'All tables created and events seeded!' });
+  } catch (e) {
+    return NextResponse.json({ success: false, error: String(e) }, { status: 500 });
   }
 }
