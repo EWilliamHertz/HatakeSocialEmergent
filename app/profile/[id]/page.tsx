@@ -41,6 +41,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
   const [isFriend, setIsFriend] = useState(false);
   const [friendshipPending, setFriendshipPending] = useState(false);
   const [badges, setBadges] = useState<any[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
 
   useEffect(() => {
     // Check auth and load profile
@@ -80,6 +81,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
         // Check friendship status
         checkFriendship();
         loadBadges();
+        loadPosts();
       } else {
         router.push('/');
       }
@@ -136,7 +138,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
   };
 
   const startMessage = () => {
-    router.push('/messages');
+    router.push(`/messages?user=${resolvedParams.id}`);
   };
 
   const loadBadges = async () => {
@@ -148,6 +150,18 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
       }
     } catch (error) {
       console.error('Load badges error:', error);
+    }
+  };
+
+  const loadPosts = async () => {
+    try {
+      const res = await fetch(`/api/feed?userId=${resolvedParams.id}&limit=10`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setPosts(data.posts || []);
+      }
+    } catch (error) {
+      console.error('Load posts error:', error);
     }
   };
 
@@ -187,8 +201,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
           
           {/* Profile Info */}
           <div className="px-6 pb-6">
-            <div className="flex flex-col md:flex-row items-start md:items-end gap-4 -mt-12">
-              <div className="relative">
+            {/* Row 1: Avatar + action buttons */}
+            <div className="flex items-start justify-between -mt-12">
+              <div className="relative flex-shrink-0">
                 {user.picture ? (
                   <Image 
                     src={user.picture} 
@@ -203,18 +218,10 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
                   </div>
                 )}
               </div>
-              
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{user.name}</h1>
-                <p className="text-gray-600 dark:text-gray-400">{user.bio || 'No bio yet'}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                  Member since {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
-                </p>
-              </div>
 
               {/* Action Buttons */}
               {!isOwnProfile && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-14">
                   <button
                     onClick={startMessage}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
@@ -258,6 +265,14 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
                   Edit Profile
                 </button>
               )}
+            </div>
+            {/* Row 2: Name + bio — always below banner */}
+            <div className="mt-3">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{user.name}</h1>
+              <p className="text-gray-600 dark:text-gray-400">{user.bio || 'No bio yet'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                Member since {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
+              </p>
             </div>
           </div>
         </div>
@@ -324,10 +339,36 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
           <UserReputation userId={resolvedParams.id} />
         </div>
 
-        {/* Activity placeholder */}
+        {/* Recent Posts */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
-          <p className="text-gray-500 dark:text-gray-400 text-center py-8">No recent activity to show</p>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Recent Posts</h2>
+          {posts.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">No posts yet</p>
+          ) : (
+            <div className="space-y-4">
+              {posts.map((post: any) => (
+                <div key={post.post_id} className="border border-gray-100 dark:border-gray-700 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    {post.picture ? (
+                      <Image src={post.picture} alt={post.name} width={32} height={32} className="rounded-full" unoptimized />
+                    ) : (
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        {(post.name || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-semibold dark:text-white">{post.name}</p>
+                      <p className="text-xs text-gray-400">{post.created_at ? new Date(post.created_at).toLocaleDateString() : ''}</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">{post.content}</p>
+                  {post.image && (
+                    <img src={post.image} alt="" className="mt-2 rounded-lg max-h-64 object-cover w-full" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

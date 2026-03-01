@@ -384,9 +384,6 @@ export default function MessagesPage() {
     if (!content && !mediaUrl) return;
     if (!selectedConv) return;
 
-    const conv = conversations.find(c => c.conversation_id === selectedConv);
-    if (!conv) return;
-
     const replyToMsg = replyTo;
     setReplyTo(null);
 

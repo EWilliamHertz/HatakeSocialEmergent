@@ -99,17 +99,34 @@ export async function GET(request: NextRequest) {
         `;
       }
     } else {
-      posts = await sql`
-        SELECT p.*, u.name, u.picture,
-          (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as like_count,
-          (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comment_count,
-          EXISTS(SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ${user.user_id}) as liked
-        FROM posts p
-        JOIN users u ON p.user_id = u.user_id
-        WHERE p.visibility = 'public'
-        ORDER BY p.created_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
+      const filterUserId = searchParams.get('userId');
+      if (filterUserId) {
+        // Profile page: show a specific user's public posts
+        posts = await sql`
+          SELECT p.*, u.name, u.picture,
+            (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as like_count,
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comment_count,
+            EXISTS(SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ${user.user_id}) as liked
+          FROM posts p
+          JOIN users u ON p.user_id = u.user_id
+          WHERE p.user_id = ${filterUserId}
+            AND p.visibility = 'public'
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `;
+      } else {
+        posts = await sql`
+          SELECT p.*, u.name, u.picture,
+            (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as like_count,
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comment_count,
+            EXISTS(SELECT 1 FROM likes WHERE post_id = p.post_id AND user_id = ${user.user_id}) as liked
+          FROM posts p
+          JOIN users u ON p.user_id = u.user_id
+          WHERE p.visibility = 'public'
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `;
+      }
     }
 
     // Enrich each post with badges + reactions
