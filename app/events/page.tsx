@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Navbar from '@/components/Navbar';
 import { useRouter } from 'next/navigation';
 import { Calendar, MapPin, Clock, ExternalLink, Ticket, ChevronDown, ChevronUp, Star, Users, CheckCircle, Heart } from 'lucide-react';
 
@@ -304,7 +305,8 @@ export default function EventsPage() {
   useEffect(() => { fetchEvents(activeCategory); }, [activeCategory]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+      <Navbar />
       <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-2xl">

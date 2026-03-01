@@ -192,13 +192,11 @@ export default function MessengerWidget() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          recipientId: conv.user_id,
-          content: '',
-          messageType: messageType,
-          mediaUrl: mediaUrl,
-          replyToId: replyToMsg?.message_id || null
-        })
+        body: JSON.stringify(
+          (conv.is_group || !conv.user_id)
+            ? { conversationId: conv.conversation_id, content: '', messageType, mediaUrl, replyToId: replyToMsg?.message_id || null }
+            : { recipientId: conv.user_id, content: '', messageType, mediaUrl, replyToId: replyToMsg?.message_id || null }
+        )
       });
       
       cancelMedia();
@@ -497,7 +495,7 @@ export default function MessengerWidget() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(
-          conv.is_group
+          (conv.is_group || !conv.user_id)
             ? {
                 conversationId: conv.conversation_id,
                 content,
@@ -1029,7 +1027,7 @@ export default function MessengerWidget() {
                               <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" unoptimized />
                             ) : (
                               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                {conv.name.charAt(0).toUpperCase()}
+                                {(conv.name || '?').charAt(0).toUpperCase()}
                               </div>
                             )}
                             <div className="flex-1 min-w-0">

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Home, Newspaper, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound, Layers, Settings, ChevronDown, Shield, Heart, Archive, CalendarDays, Star } from 'lucide-react';
 import Link from 'next/link';
 import NotificationsDropdown from './NotificationsDropdown';
+import EventManagerModal from './EventManagerModal';
 import ThemeToggle from './ThemeToggle';
 
 const ADMIN_EMAILS = ['zudran@gmail.com', 'ernst@hatake.eu'];
@@ -26,6 +27,7 @@ export default function Navbar() {
   const [loading, setLoading] = useState(true);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showEventManager, setShowEventManager] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -201,15 +203,14 @@ export default function Navbar() {
 
                     {/* Manage Events - for organizers and admins */}
                     {(isAdmin || isOrganizer) && (
-                      <Link
-                        href="/events"
-                        onClick={() => setShowUserDropdown(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                      <button
+                        onClick={() => { setShowEventManager(true); setShowUserDropdown(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
                         data-testid="dropdown-events"
                       >
                         <CalendarDays className="w-4 h-4" />
                         <span>Manage Events</span>
-                      </Link>
+                      </button>
                     )}
 
                     {/* Admin Panel - only for admins */}
@@ -281,6 +282,7 @@ export default function Navbar() {
           </div>
         )}
       </div>
+      {showEventManager && <EventManagerModal onClose={() => setShowEventManager(false)} />}
     </nav>
   );
 }
