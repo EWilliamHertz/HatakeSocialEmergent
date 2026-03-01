@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     }
     
     if (merged > 0) {
-      results.push(\`   ↳ Merged \${merged} duplicate conversation(s)\`);
+      results.push(`   ↳ Merged ${merged} duplicate conversation(s)`);
     }
   });
 
