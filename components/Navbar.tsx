@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { Home, Newspaper, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound, Layers, Settings, ChevronDown, Shield, Heart, Archive } from 'lucide-react';
+import { Home, Newspaper, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound, Layers, Settings, ChevronDown, Shield, Heart, Archive, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import NotificationsDropdown from './NotificationsDropdown';
 import ThemeToggle from './ThemeToggle';
@@ -61,7 +61,6 @@ export default function Navbar() {
 
   if (!user) return null;
 
-  // Simplified nav links - combined Friends + Groups into Community
   const navLinks = [
     { href: '/feed', icon: Home, label: 'Feed' },
     { href: '/search', icon: Search, label: 'Search' },
@@ -70,6 +69,7 @@ export default function Navbar() {
     { href: '/marketplace', icon: ShoppingBag, label: 'Market' },
     { href: '/trades', icon: ArrowRightLeft, label: 'Trades' },
     { href: '/community', icon: Users, label: 'Community' },
+    { href: '/events', icon: CalendarDays, label: 'Events' },
     { href: '/blog', icon: Newspaper, label: 'News' },
     { href: '/messages', icon: MessageCircle, label: 'Messages' },
   ];
@@ -96,24 +96,22 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-2">
             {navLinks.map((link) => {
               const Icon = link.icon;
-              // Handle community link to also highlight when on friends or groups
-              const active = link.href === '/community' 
+              const active = link.href === '/community'
                 ? (pathname === '/community' || pathname === '/friends' || pathname === '/groups' || pathname?.startsWith('/groups/'))
                 : isActive(link.href);
               return (
-                <Link 
+                <Link
                   key={link.href}
-                  href={link.href} 
+                  href={link.href}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
-                    active 
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                    active
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                       : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                   data-testid={`nav-${link.label.toLowerCase()}`}
-                  title={link.label} // Adds a nice native tooltip on hover since the text is hidden!
+                  title={link.label}
                 >
                   <Icon className="w-5 h-5" />
-                  {/* TEXT IS HIDDEN HERE USING sr-only */}
                   <span className="sr-only">{link.label}</span>
                 </Link>
               );
@@ -124,7 +122,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <NotificationsDropdown />
-            
+
             {/* User Avatar Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
@@ -165,7 +163,7 @@ export default function Navbar() {
                       <User className="w-4 h-4" />
                       <span>My Profile</span>
                     </Link>
-                    
+
                     <Link
                       href="/settings"
                       onClick={() => setShowUserDropdown(false)}
@@ -175,7 +173,7 @@ export default function Navbar() {
                       <Settings className="w-4 h-4" />
                       <span>Settings</span>
                     </Link>
-                    
+
                     {/* Admin Panel - only for admins */}
                     {isAdmin && (
                       <Link
@@ -206,7 +204,7 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button 
+            <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="lg:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               data-testid="mobile-menu-btn"
@@ -222,17 +220,17 @@ export default function Navbar() {
             <div className="grid grid-cols-4 gap-2">
               {navLinks.map((link) => {
                 const Icon = link.icon;
-                const active = link.href === '/community' 
+                const active = link.href === '/community'
                   ? (pathname === '/community' || pathname === '/friends' || pathname === '/groups')
                   : isActive(link.href);
                 return (
-                  <Link 
+                  <Link
                     key={link.href}
-                    href={link.href} 
+                    href={link.href}
                     onClick={() => setShowMobileMenu(false)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${
-                      active 
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                      active
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >

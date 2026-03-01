@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, Library, ShoppingBag, MessageCircle } from "lucide-react";
+import { Home, Search, Library, ShoppingBag, CalendarDays } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/feed",        label: "Feed",       icon: Home },
-  { href: "/search",      label: "Search",     icon: Search },
-  { href: "/collection",  label: "Cards",      icon: Library },
-  { href: "/marketplace", label: "Market",     icon: ShoppingBag },
-  { href: "/messages",    label: "Messages",   icon: MessageCircle },
+  { href: "/feed",        label: "Feed",    icon: Home },
+  { href: "/search",      label: "Search",  icon: Search },
+  { href: "/collection",  label: "Cards",   icon: Library },
+  { href: "/events",      label: "Events",  icon: CalendarDays },
+  { href: "/marketplace", label: "Market",  icon: ShoppingBag },
 ];
 
 export default function MobileNav() {
