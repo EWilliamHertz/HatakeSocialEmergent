@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { Calendar, MapPin, Clock, ExternalLink, Ticket, Tag, ChevronDown, ChevronUp, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Calendar, MapPin, Clock, ExternalLink, Ticket, ChevronDown, ChevronUp, Star, Users, CheckCircle, Heart } from 'lucide-react';
 
 interface Event {
   event_id: string;
@@ -23,6 +23,12 @@ interface Event {
   is_past: boolean;
   featured: boolean;
   hatake_exhibitor: boolean;
+}
+
+interface AttendanceData {
+  myStatus: string | null;
+  interestedCount: number;
+  goingCount: number;
 }
 
 const CATEGORY_TABS = [
@@ -49,9 +55,9 @@ function formatDateRange(start: string, end?: string) {
   if (!end || end === start) return startDate.toLocaleDateString(locale, options);
   const endDate = new Date(end);
   if (startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear()) {
-    return `${startDate.getDate()}–${endDate.getDate()} ${startDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`;
+    return `${startDate.getDate()}\u2013${endDate.getDate()} ${startDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`;
   }
-  return `${startDate.toLocaleDateString(locale, options)} – ${endDate.toLocaleDateString(locale, options)}`;
+  return `${startDate.toLocaleDateString(locale, options)} \u2013 ${endDate.toLocaleDateString(locale, options)}`;
 }
 
 function getDaysUntil(dateStr: string) {
@@ -68,9 +74,22 @@ function getDaysUntil(dateStr: string) {
   return `${months} month${months > 1 ? 's' : ''} away`;
 }
 
-function EventCard({ event, past = false }: { event: Event; past?: boolean }) {
+function EventCard({
+  event,
+  past = false,
+  attendance,
+  onAttend,
+  onClick,
+}: {
+  event: Event;
+  past?: boolean;
+  attendance?: AttendanceData;
+  onAttend?: (eventId: string, status: string | null) => void;
+  onClick?: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [attendLoading, setAttendLoading] = useState(false);
 
   const gradients: Record<string, string> = {
     pokemon: 'from-yellow-400 to-orange-500',
@@ -83,25 +102,29 @@ function EventCard({ event, past = false }: { event: Event; past?: boolean }) {
   const firstCat = event.categories?.[0] || 'tcg';
   const gradient = gradients[firstCat] || 'from-blue-500 to-purple-600';
 
+  const handleAttend = async (e: React.MouseEvent, status: string) => {
+    e.stopPropagation();
+    if (!onAttend) return;
+    setAttendLoading(true);
+    const newStatus = attendance?.myStatus === status ? null : status;
+    await onAttend(event.event_id, newStatus);
+    setAttendLoading(false);
+  };
+
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 ${past ? 'opacity-80' : ''}`}>
-      {/* Image / Banner */}
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${past ? 'opacity-80' : ''}`}
+      onClick={onClick}
+    >
       <div className={`relative h-44 bg-gradient-to-br ${gradient} flex items-center justify-center overflow-hidden`}>
         {event.image_url && !imgError ? (
           <div className="absolute inset-0">
-            <img
-              src={event.image_url}
-              alt={event.title}
-              className="w-full h-full object-cover"
-              onError={() => setImgError(true)}
-            />
+            <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" onError={() => setImgError(true)} />
             <div className="absolute inset-0 bg-black/30" />
           </div>
         ) : (
           <div className="text-6xl opacity-30 select-none">🎴</div>
         )}
-
-        {/* Badges overlay */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
           {event.featured && !past && (
             <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-500 text-white text-xs font-bold rounded-full shadow">
@@ -109,37 +132,25 @@ function EventCard({ event, past = false }: { event: Event; past?: boolean }) {
             </span>
           )}
           {event.hatake_exhibitor && (
-            <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-full shadow">
-              🏪 Hatake Here!
-            </span>
+            <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-full shadow">🏪 Hatake Here!</span>
           )}
           {event.is_sold_out && (
-            <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded-full shadow">
-              SOLD OUT
-            </span>
+            <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded-full shadow">SOLD OUT</span>
           )}
         </div>
-
         {!past && (
           <div className="absolute top-3 right-3">
-            <span className="px-2 py-1 bg-black/50 backdrop-blur text-white text-xs font-medium rounded-full">
-              {getDaysUntil(event.start_date)}
-            </span>
+            <span className="px-2 py-1 bg-black/50 backdrop-blur text-white text-xs font-medium rounded-full">{getDaysUntil(event.start_date)}</span>
           </div>
         )}
-
         {past && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="px-3 py-1 bg-black/60 backdrop-blur text-gray-300 text-sm font-semibold rounded-full">
-              Past Event
-            </span>
+            <span className="px-3 py-1 bg-black/60 backdrop-blur text-gray-300 text-sm font-semibold rounded-full">Past Event</span>
           </div>
         )}
       </div>
 
-      {/* Content */}
       <div className="p-4">
-        {/* Categories */}
         <div className="flex flex-wrap gap-1.5 mb-2">
           {(event.categories || []).map(cat => (
             <span key={cat} className={`px-2 py-0.5 text-xs font-medium rounded-full ${CATEGORY_COLORS[cat] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
@@ -150,7 +161,6 @@ function EventCard({ event, past = false }: { event: Event; past?: boolean }) {
 
         <h3 className="font-bold text-lg text-gray-900 dark:text-white leading-tight mb-1">{event.title}</h3>
 
-        {/* Date & Location */}
         <div className="space-y-1.5 text-sm text-gray-600 dark:text-gray-400 mb-3">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 flex-shrink-0 text-blue-500" />
@@ -159,71 +169,64 @@ function EventCard({ event, past = false }: { event: Event; past?: boolean }) {
           {event.start_time && (
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 flex-shrink-0 text-blue-500" />
-              <span>{event.start_time}{event.end_time ? ` – ${event.end_time}` : ''}</span>
+              <span>{event.start_time}{event.end_time ? ` \u2013 ${event.end_time}` : ''}</span>
             </div>
           )}
           {(event.location_name || event.location_city) && (
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 flex-shrink-0 text-blue-500" />
-              <span>
-                {[event.location_name, event.location_city].filter(Boolean).join(', ')}
-              </span>
+              <span>{[event.location_name, event.location_city].filter(Boolean).join(', ')}</span>
             </div>
           )}
         </div>
 
-        {/* Description toggle */}
         {event.description && (
           <div className="mb-3">
-            <p className={`text-sm text-gray-600 dark:text-gray-400 leading-relaxed ${!expanded ? 'line-clamp-2' : ''}`}>
-              {event.description}
-            </p>
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 mt-1 hover:underline"
-            >
+            <p className={`text-sm text-gray-600 dark:text-gray-400 leading-relaxed ${!expanded ? 'line-clamp-2' : ''}`}>{event.description}</p>
+            <button onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 mt-1 hover:underline">
               {expanded ? <><ChevronUp className="w-3 h-3" /> Show less</> : <><ChevronDown className="w-3 h-3" /> Read more</>}
             </button>
           </div>
         )}
 
-        {/* Action buttons */}
+        {attendance && !past && (
+          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
+            <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{attendance.goingCount} going</span>
+            <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" />{attendance.interestedCount} interested</span>
+          </div>
+        )}
+
         {!past && (
           <div className="flex gap-2 flex-wrap">
+            <button onClick={(e) => handleAttend(e, 'going')} disabled={attendLoading}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                attendance?.myStatus === 'going' ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-700 dark:hover:text-green-400'
+              }`}>
+              <CheckCircle className="w-4 h-4" /> Going
+            </button>
+            <button onClick={(e) => handleAttend(e, 'interested')} disabled={attendLoading}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                attendance?.myStatus === 'interested' ? 'bg-yellow-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 hover:text-yellow-700 dark:hover:text-yellow-400'
+              }`}>
+              <Heart className="w-4 h-4" /> Interested
+            </button>
             {event.ticket_url && !event.is_sold_out && (
-              <a
-                href={event.ticket_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
-              >
-                <Ticket className="w-4 h-4" /> Buy Tickets
+              <a href={event.ticket_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition">
+                <Ticket className="w-4 h-4" /> Tickets
               </a>
             )}
-            {event.ticket_url && event.is_sold_out && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm font-medium rounded-lg cursor-not-allowed">
-                <Ticket className="w-4 h-4" /> Sold Out
-              </span>
-            )}
             {event.website_url && (
-              <a
-                href={event.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition"
-              >
+              <a href={event.website_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition">
                 <ExternalLink className="w-4 h-4" /> Website
               </a>
             )}
           </div>
         )}
         {past && event.website_url && (
-          <a
-            href={event.website_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"
-          >
+          <a href={event.website_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition">
             <ExternalLink className="w-3 h-3" /> More info
           </a>
         )}
@@ -233,12 +236,12 @@ function EventCard({ event, past = false }: { event: Event; past?: boolean }) {
 }
 
 export default function EventsPage() {
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('all');
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const [attendance, setAttendance] = useState<Record<string, { myStatus: string | null; interestedCount: number; goingCount: number }>>({});
+  const [attendance, setAttendance] = useState<Record<string, AttendanceData>>({});
   const [error, setError] = useState('');
   const [showPast, setShowPast] = useState(false);
 
@@ -248,17 +251,31 @@ export default function EventsPage() {
     try {
       const param = cat === 'all' ? '' : `?category=${cat}`;
       const pastParam = cat === 'all' ? '?past=true' : `?category=${cat}&past=true`;
-      
       const [upRes, pastRes] = await Promise.all([
         fetch(`/api/events${param}`, { credentials: 'include' }),
         fetch(`/api/events${pastParam}`, { credentials: 'include' }),
       ]);
-      
       const upData = await upRes.json();
       const pastData = await pastRes.json();
-      
-      setUpcomingEvents(upData.events || []);
-      setPastEvents(pastData.events || []);
+      const upcoming = upData.events || [];
+      const past = pastData.events || [];
+      setUpcomingEvents(upcoming);
+      setPastEvents(past);
+      if (upcoming.length > 0) {
+        const attendanceResults = await Promise.all(
+          upcoming.map((e: Event) =>
+            fetch(`/api/events/${e.event_id}/attend`, { credentials: 'include' })
+              .then(r => r.json())
+              .then(d => ({ id: e.event_id, data: d }))
+              .catch(() => ({ id: e.event_id, data: { myStatus: null, interestedCount: 0, goingCount: 0 } }))
+          )
+        );
+        const map: Record<string, AttendanceData> = {};
+        attendanceResults.forEach(({ id, data }) => {
+          map[id] = { myStatus: data.myStatus, interestedCount: data.interestedCount || 0, goingCount: data.goingCount || 0 };
+        });
+        setAttendance(map);
+      }
     } catch {
       setError('Failed to load events');
     } finally {
@@ -266,40 +283,46 @@ export default function EventsPage() {
     }
   };
 
-  useEffect(() => {
-    fetchEvents(activeCategory);
-  }, [activeCategory]);
+  const handleAttend = async (eventId: string, status: string | null) => {
+    try {
+      const res = await fetch(`/api/events/${eventId}/attend`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAttendance(prev => ({
+          ...prev,
+          [eventId]: { myStatus: data.myStatus, interestedCount: data.interestedCount || 0, goingCount: data.goingCount || 0 },
+        }));
+      }
+    } catch { /* silent */ }
+  };
+
+  useEffect(() => { fetchEvents(activeCategory); }, [activeCategory]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Hero Header */}
       <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-2xl">
             <h1 className="text-4xl font-bold mb-2">Events</h1>
-            <p className="text-blue-100 text-lg">
-              Tournaments, conventions & TCG events across Sweden
-            </p>
+            <p className="text-blue-100 text-lg">Tournaments, conventions & TCG events across Sweden</p>
           </div>
         </div>
       </div>
 
-      {/* Category Tabs */}
       <div className="sticky top-16 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4">
           <div className="flex gap-1 overflow-x-auto py-3 scrollbar-hide">
             {CATEGORY_TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveCategory(tab.id)}
+              <button key={tab.id} onClick={() => setActiveCategory(tab.id)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  activeCategory === tab.id
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <span>{tab.emoji}</span>
-                {tab.label}
+                  activeCategory === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}>
+                <span>{tab.emoji}</span>{tab.label}
               </button>
             ))}
           </div>
@@ -309,13 +332,12 @@ export default function EventsPage() {
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[1, 2, 3].map(i => (
+            {[1,2,3].map(i => (
               <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 animate-pulse">
                 <div className="h-44 bg-gray-200 dark:bg-gray-700" />
                 <div className="p-4 space-y-3">
                   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
                   <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
                 </div>
               </div>
             ))}
@@ -323,61 +345,42 @@ export default function EventsPage() {
         ) : error ? (
           <div className="text-center py-16">
             <p className="text-red-500 mb-4">{error}</p>
-            <button onClick={() => fetchEvents(activeCategory)} className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-              Try again
-            </button>
+            <button onClick={() => fetchEvents(activeCategory)} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Try again</button>
           </div>
         ) : (
           <>
-            {/* Upcoming Events */}
             <section>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
                 <span className="w-1 h-6 bg-blue-600 rounded-full inline-block" />
                 Upcoming Events
-                {upcomingEvents.length > 0 && (
-                  <span className="ml-1 text-sm font-normal text-gray-500 dark:text-gray-400">
-                    ({upcomingEvents.length})
-                  </span>
-                )}
+                {upcomingEvents.length > 0 && <span className="ml-1 text-sm font-normal text-gray-500 dark:text-gray-400">({upcomingEvents.length})</span>}
               </h2>
-
               {upcomingEvents.length === 0 ? (
                 <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
                   <div className="text-5xl mb-3">📅</div>
                   <p className="text-gray-500 dark:text-gray-400">No upcoming events in this category</p>
-                  <button onClick={() => setActiveCategory('all')} className="mt-3 text-blue-600 hover:underline text-sm">
-                    View all events
-                  </button>
+                  <button onClick={() => setActiveCategory('all')} className="mt-3 text-blue-600 hover:underline text-sm">View all events</button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {upcomingEvents.map(event => (
-                    <EventCard key={event.event_id} event={event} />
+                    <EventCard key={event.event_id} event={event} attendance={attendance[event.event_id]} onAttend={handleAttend} onClick={() => router.push(`/events/${event.event_id}`)} />
                   ))}
                 </div>
               )}
             </section>
-
-            {/* Past Events */}
             {pastEvents.length > 0 && (
               <section className="mt-12">
-                <button
-                  onClick={() => setShowPast(!showPast)}
-                  className="flex items-center gap-2 text-xl font-bold text-gray-700 dark:text-gray-300 mb-5 hover:text-gray-900 dark:hover:text-white transition group"
-                >
+                <button onClick={() => setShowPast(!showPast)} className="flex items-center gap-2 text-xl font-bold text-gray-700 dark:text-gray-300 mb-5 hover:text-gray-900 dark:hover:text-white transition group">
                   <span className="w-1 h-6 bg-gray-400 rounded-full inline-block" />
                   Previous Events
                   <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({pastEvents.length})</span>
-                  {showPast
-                    ? <ChevronUp className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition" />
-                    : <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition" />
-                  }
+                  {showPast ? <ChevronUp className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition" /> : <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition" />}
                 </button>
-
                 {showPast && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {pastEvents.map(event => (
-                      <EventCard key={event.event_id} event={event} past />
+                      <EventCard key={event.event_id} event={event} past onClick={() => router.push(`/events/${event.event_id}`)} />
                     ))}
                   </div>
                 )}
