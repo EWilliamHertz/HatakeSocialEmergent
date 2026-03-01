@@ -80,6 +80,9 @@ export default function MessengerWidget() {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
+  const loadingMoreRef = useRef(false);
   
   const [widgetTab, setWidgetTab] = useState<'dms' | 'groups'>('dms');
   const [groupChats, setGroupChats] = useState<{group_id: string; name: string; image?: string; member_count: number; last_message?: string}[]>([]);
@@ -273,6 +276,21 @@ export default function MessengerWidget() {
     const element = e.currentTarget;
     const isAtBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 50;
     userScrolledUp.current = !isAtBottom;
+    // Load older messages when scrolled to top
+    if (element.scrollTop < 80 && hasMoreMessages && !loadingMoreRef.current) {
+      loadingMoreRef.current = true;
+      setLoadingMoreMessages(true);
+      const oldest = messages[0]?.created_at;
+      if (oldest && selectedConv) {
+        loadMessages(selectedConv, oldest).finally(() => {
+          loadingMoreRef.current = false;
+          setLoadingMoreMessages(false);
+        });
+      } else {
+        loadingMoreRef.current = false;
+        setLoadingMoreMessages(false);
+      }
+    }
   };
 
   // Auth check
@@ -378,14 +396,28 @@ export default function MessengerWidget() {
     } catch {}
   };
 
-  const loadMessages = async (convId: string) => {
+  const loadMessages = async (convId: string, before?: string) => {
     if (!convId) return;
     try {
-      const res = await fetch(`/api/messages/${convId}`, { credentials: 'include' });
+      const url = before
+        ? `/api/messages/${convId}?before=${encodeURIComponent(before)}`
+        : `/api/messages/${convId}`;
+      const res = await fetch(url, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.messages)) {
-          setMessages(data.messages);
+          if (before) {
+            const container = messagesContainerRef.current;
+            const prevScrollHeight = container?.scrollHeight ?? 0;
+            setMessages(prev => [...data.messages, ...prev]);
+            setHasMoreMessages(data.hasMore ?? false);
+            requestAnimationFrame(() => {
+              if (container) container.scrollTop = container.scrollHeight - prevScrollHeight;
+            });
+          } else {
+            setMessages(data.messages);
+            setHasMoreMessages(data.hasMore ?? false);
+          }
         }
       }
     } catch (err) {
@@ -734,6 +766,11 @@ export default function MessengerWidget() {
                       className="flex-1 overflow-y-auto p-3 space-y-2"
                       onScroll={handleMessagesScroll}
                     >
+                      {loadingMoreMessages && (
+                        <div className="flex justify-center py-1">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500" />
+                        </div>
+                      )}
                       {messages.map((msg, index) => {
                         const prevMsg = index > 0 ? messages[index - 1] : null;
                         const showDateSeparator = needsDateSeparator(msg, prevMsg);
@@ -792,10 +829,17 @@ export default function MessengerWidget() {
                                 }`}>
                                   {renderMessageContent(msg)}
                                 </div>
-                                {/* Timestamp */}
-                                <p className={`text-[10px] text-gray-400 mt-0.5 ${msg.sender_id === currentUserId ? 'text-right' : ''}`}>
-                                  {formatMessageTime(msg.created_at)}
-                                </p>
+                                {/* Timestamp + read receipt */}
+                                <div className={`flex items-center gap-1 mt-0.5 ${msg.sender_id === currentUserId ? 'justify-end' : ''}`}>
+                                  <p className="text-[10px] text-gray-400">
+                                    {formatMessageTime(msg.created_at)}
+                                  </p>
+                                  {msg.sender_id === currentUserId && (
+                                    <span className={`text-[10px] ${(msg as any).read_at ? 'text-blue-500' : 'text-gray-400'}`}>
+                                      {(msg as any).read_at ? '✓✓' : '✓'}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
                               {msg.sender_id !== currentUserId && (

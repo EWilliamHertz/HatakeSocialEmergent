@@ -579,6 +579,9 @@ export default function CollectionPage() {
       if (card.prices?.usd) return { value: parseFloat(card.prices.usd) * 0.92, currency: 'EUR' };
       if (card.prices?.usd_foil && item.foil) return { value: parseFloat(card.prices.usd_foil) * 0.92, currency: 'EUR' };
     }
+      if (card.purchase_price && card.purchase_price > 0) {
+        return { value: card.purchase_price, currency: 'EUR' };
+      }
     return { value: 0, currency: 'EUR' };
   };
   

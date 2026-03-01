@@ -14,6 +14,7 @@ export async function GET(
   const { conversationId } = await params;
   const { searchParams } = new URL(request.url);
   const mediaOnly = searchParams.get('media_only') === 'true';
+  const before = searchParams.get('before'); // ISO timestamp cursor
 
   try {
     const participation = await sql`
@@ -119,21 +120,72 @@ export async function GET(
               AND m.message_type IN ('image', 'video')
             ORDER BY m.created_at ASC
           `
+        : before
+          ? await sql`
+              SELECT * FROM (
+                SELECT
+                  m.message_id,
+                  m.sender_id,
+                  m.content,
+                  m.message_type,
+                  m.media_url,
+                  m.read_at,
+                  m.reply_to,
+                  m.reply_content,
+                  m.reply_sender_name,
+                  m.created_at,
+                  u.name,
+                  u.picture
+                FROM messages m
+                JOIN users u ON u.user_id = m.sender_id
+                WHERE m.conversation_id = ANY(${allConvIds})
+                  AND m.created_at < ${before}::timestamptz
+                ORDER BY m.created_at DESC
+                LIMIT 200
+              ) AS recent_messages
+              ORDER BY recent_messages.created_at ASC
+            `
+          : await sql`
+              SELECT * FROM (
+                SELECT
+                  m.message_id,
+                  m.sender_id,
+                  m.content,
+                  m.message_type,
+                  m.media_url,
+                  m.read_at,
+                  m.reply_to,
+                  m.reply_content,
+                  m.reply_sender_name,
+                  m.created_at,
+                  u.name,
+                  u.picture
+                FROM messages m
+                JOIN users u ON u.user_id = m.sender_id
+                WHERE m.conversation_id = ANY(${allConvIds})
+                ORDER BY m.created_at DESC
+                LIMIT 200
+              ) AS recent_messages
+              ORDER BY recent_messages.created_at ASC
+            `;
+    } catch (colError) {
+      // Fallback: query without new columns if they don't exist yet
+      messages = before
+        ? await sql`
+            SELECT * FROM (
+              SELECT m.message_id, m.sender_id, m.content, m.created_at, u.name, u.picture
+              FROM messages m
+              JOIN users u ON u.user_id = m.sender_id
+              WHERE m.conversation_id = ANY(${allConvIds})
+                AND m.created_at < ${before}::timestamptz
+              ORDER BY m.created_at DESC
+              LIMIT 200
+            ) AS recent_messages
+            ORDER BY recent_messages.created_at ASC
+          `
         : await sql`
             SELECT * FROM (
-              SELECT
-                m.message_id,
-                m.sender_id,
-                m.content,
-                m.message_type,
-                m.media_url,
-                m.read_at,
-                m.reply_to,
-                m.reply_content,
-                m.reply_sender_name,
-                m.created_at,
-                u.name,
-                u.picture
+              SELECT m.message_id, m.sender_id, m.content, m.created_at, u.name, u.picture
               FROM messages m
               JOIN users u ON u.user_id = m.sender_id
               WHERE m.conversation_id = ANY(${allConvIds})
@@ -142,27 +194,8 @@ export async function GET(
             ) AS recent_messages
             ORDER BY recent_messages.created_at ASC
           `;
-    } catch (colError) {
-      // Fallback: query without new columns if they don't exist yet
-      messages = await sql`
-        SELECT * FROM (
-          SELECT
-            m.message_id,
-            m.sender_id,
-            m.content,
-            m.created_at,
-            u.name,
-            u.picture
-          FROM messages m
-          JOIN users u ON u.user_id = m.sender_id
-          WHERE m.conversation_id = ANY(${allConvIds})
-          ORDER BY m.created_at DESC
-          LIMIT 200
-        ) AS recent_messages
-        ORDER BY recent_messages.created_at ASC
-      `;
     }
-    return NextResponse.json({ success: true, messages });
+    return NextResponse.json({ success: true, messages, hasMore: messages.length === 200 });
   } catch (error) {
     console.error(`GET /api/messages/${conversationId} error:`, error);
     return NextResponse.json({ success: false, error: 'Failed to load messages' }, { status: 500 });

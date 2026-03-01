@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Bell, Check, CheckCheck, Users, MessageCircle, ShoppingBag, ArrowRightLeft, Heart, Trash2 } from 'lucide-react';
+import { Bell, Check, CheckCheck, Users, MessageCircle, ShoppingBag, ArrowRightLeft, Heart, Trash2, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Notification {
@@ -76,6 +76,25 @@ export default function NotificationsPage() {
       loadNotifications();
     } catch (error) {
       console.error('Delete notification error:', error);
+    }
+  };
+
+  const respondToFriendRequest = async (senderId: string, action: 'accept' | 'reject', notificationId: string) => {
+    try {
+      const res = await fetch('/api/friends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ friendId: senderId, action }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Delete the notification after responding
+        await deleteNotification(notificationId);
+        loadNotifications();
+      }
+    } catch (error) {
+      console.error('Respond to friend request error:', error);
     }
   };
 
@@ -226,6 +245,29 @@ export default function NotificationsPage() {
                         View details →
                       </a>
                     )}
+                    {notification.type === 'friend_request' && notification.link && (() => {
+                      const params = new URLSearchParams(notification.link.split('?')[1] || '');
+                      const senderId = params.get('from');
+                      if (!senderId) return null;
+                      return (
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={() => respondToFriendRequest(senderId, 'accept', notification.notification_id)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition"
+                          >
+                            <Check className="w-4 h-4" />
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => respondToFriendRequest(senderId, 'reject', notification.notification_id)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                          >
+                            <X className="w-4 h-4" />
+                            Decline
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

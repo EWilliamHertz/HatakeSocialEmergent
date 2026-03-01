@@ -190,7 +190,8 @@ export async function POST(request: NextRequest) {
           let cardId: string;
           let game = actualFormat === 'pokemon' ? 'pokemon' : 'mtg';
           let quantity = parseInt(card['Quantity']) || 1;
-          let purchasePrice = parseFloat(card[actualFormat === 'pokemon' ? 'Price' : 'Purchase price']) || 0;
+          const rawPrice = card[actualFormat === 'pokemon' ? 'Price' : 'Purchase price'] || '0';
+          let purchasePrice = parseFloat(rawPrice.toString().replace(',', '.')) || 0;
           let condition = mapCondition(card['Condition']);
           let isFoil = card['Foil'] === 'true' || card['Foil'] === 'foil';
 

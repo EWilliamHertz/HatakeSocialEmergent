@@ -99,6 +99,9 @@ export default function MessagesPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastMessageCount = useRef(0);
   const isInitialLoad = useRef(true);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
+  const loadingMoreRef = useRef(false);
 
   // ─────────────────────────────────────────────────────────────
   // HELPERS
@@ -227,19 +230,37 @@ export default function MessagesPage() {
     } catch {}
   };
 
-  const loadMessages = async (convId: string, silent = false) => {
+  const loadMessages = async (convId: string, silent = false, before?: string) => {
     if (!convId) return;
     try {
-      const res  = await fetch(`/api/messages/${convId}`, { credentials: 'include' });
+      const url = before
+        ? `/api/messages/${convId}?before=${encodeURIComponent(before)}`
+        : `/api/messages/${convId}`;
+      const res = await fetch(url, { credentials: 'include' });
       if (!res.ok) return;
       const data = await res.json();
       if (data.success && Array.isArray(data.messages)) {
-        const newMsgs = data.messages;
-        if (!silent && newMsgs.length > messages.length) {
-          const last = newMsgs[newMsgs.length - 1];
-          if (last?.sender_id !== currentUserId) playNotificationSound();
+        if (before) {
+          // Prepend older messages — preserve scroll position
+          const container = messagesContainerRef.current;
+          const prevScrollHeight = container?.scrollHeight ?? 0;
+          setMessages(prev => [...data.messages, ...prev]);
+          setHasMoreMessages(data.hasMore ?? false);
+          // Restore scroll position so the view doesn't jump
+          requestAnimationFrame(() => {
+            if (container) {
+              container.scrollTop = container.scrollHeight - prevScrollHeight;
+            }
+          });
+        } else {
+          const newMsgs = data.messages;
+          if (!silent && newMsgs.length > messages.length) {
+            const last = newMsgs[newMsgs.length - 1];
+            if (last?.sender_id !== currentUserId) playNotificationSound();
+          }
+          setMessages(newMsgs);
+          setHasMoreMessages(data.hasMore ?? false);
         }
-        setMessages(newMsgs);
       }
     } catch (err) {
       console.error('Load messages error:', err);
@@ -454,7 +475,22 @@ export default function MessagesPage() {
   };
 
   const handleScroll = () => {
-    // Could implement pagination here
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    if (container.scrollTop < 80 && hasMoreMessages && !loadingMoreRef.current) {
+      loadingMoreRef.current = true;
+      setLoadingMoreMessages(true);
+      const oldest = messages[0]?.created_at;
+      if (oldest && selectedConv) {
+        loadMessages(selectedConv, false, oldest).finally(() => {
+          loadingMoreRef.current = false;
+          setLoadingMoreMessages(false);
+        });
+      } else {
+        loadingMoreRef.current = false;
+        setLoadingMoreMessages(false);
+      }
+    }
   };
 
   // ── UI Logic ─────────────────────────────────────────────
@@ -762,6 +798,29 @@ export default function MessagesPage() {
                     onScroll={handleScroll}
                     className="flex-1 overflow-y-auto p-4 space-y-4"
                   >
+                    {loadingMoreMessages && (
+                      <div className="flex justify-center py-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500" />
+                      </div>
+                    )}
+                    {hasMoreMessages && !loadingMoreMessages && messages.length > 0 && (
+                      <button
+                        onClick={() => {
+                          const oldest = messages[0]?.created_at;
+                          if (oldest && selectedConv && !loadingMoreRef.current) {
+                            loadingMoreRef.current = true;
+                            setLoadingMoreMessages(true);
+                            loadMessages(selectedConv, false, oldest).finally(() => {
+                              loadingMoreRef.current = false;
+                              setLoadingMoreMessages(false);
+                            });
+                          }
+                        }}
+                        className="w-full py-1 text-xs text-blue-500 hover:text-blue-700 text-center"
+                      >
+                        ↑ Load older messages
+                      </button>
+                    )}
                     {filteredMessages.map((msg, idx) => {
                       const prev = idx > 0 ? filteredMessages[idx - 1] : null;
                       const showSeparator = needsDateSeparator(msg, prev);

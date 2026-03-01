@@ -84,6 +84,23 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+
+      // Create in-app notification
+      try {
+        await sql`
+          INSERT INTO notifications (user_id, type, title, message, link, read)
+          VALUES (
+            ${friendId},
+            'friend_request',
+            ${`${user.name || 'Someone'} sent you a friend request`},
+            'Tap to accept or decline',
+            ${`/friends?tab=requests&from=${user.user_id}`},
+            false
+          )
+        `;
+      } catch (_) {
+        // Ignore if notifications table doesn't exist or has different schema
+      }
     } else if (action === 'accept') {
       // Accept friend request
       await sql`
