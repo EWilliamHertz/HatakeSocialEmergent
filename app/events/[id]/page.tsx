@@ -17,19 +17,21 @@ interface Event {
   title: string;
   description: string;
   category: string;
-  event_type: string;
+  categories: string[];
   start_date: string;
   end_date: string;
-  venue: string;
-  city: string;
-  country: string;
+  start_time?: string;
+  end_time?: string;
+  venue?: string;
+  city?: string;
+  country?: string;
   website_url?: string;
   ticket_url?: string;
   image_url?: string;
   is_featured: boolean;
   is_sold_out: boolean;
   hatake_present: boolean;
-  organizer_name?: string;
+  is_past: boolean;
 }
 
 interface Attendee {
@@ -333,7 +335,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const isAdmin = currentUser?.role === 'admin';
+  // FIXED: use is_admin boolean, not role string
+  const isAdmin = currentUser?.is_admin === true;
   const canPost = isAdmin || isOrganizer;
   const live = event ? isEventLive(event.start_date, event.end_date) : false;
   const upcoming = event ? isEventUpcoming(event.start_date) : false;
@@ -397,8 +400,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               <h1 className="text-3xl md:text-5xl font-black text-white mb-3 leading-tight">{event.title}</h1>
               <div className="flex flex-wrap gap-4 text-white/80 text-sm mb-4">
                 <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />{formatDate(event.start_date, event.end_date)}</span>
-                {event.venue && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{event.venue}, {event.city}</span>}
-                {event.organizer_name && <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4" />{event.organizer_name}</span>}
+                {(event.venue || event.city) && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{[event.venue, event.city].filter(Boolean).join(', ')}</span>}
               </div>
               {upcoming && getCountdown(event.start_date) && (
                 <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-xl font-semibold text-sm border border-white/30">
@@ -524,18 +526,19 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
                 <h3 className="font-bold dark:text-white mb-3 flex items-center gap-2"><Calendar className="w-4 h-4 text-blue-500" />Date & Time</h3>
                 <p className="text-gray-700 dark:text-gray-300 font-medium">{formatDate(event.start_date, event.end_date)}</p>
-                <p className="text-gray-500 text-sm mt-1">
-                  {new Date(event.start_date).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })} –{' '}
-                  {new Date(event.end_date).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
-                </p>
+                {event.start_time && (
+                  <p className="text-gray-500 text-sm mt-1">
+                    {event.start_time}{event.end_time ? ` – ${event.end_time}` : ''}
+                  </p>
+                )}
               </div>
-              {event.venue && (
+              {(event.venue || event.city) && (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
                   <h3 className="font-bold dark:text-white mb-3 flex items-center gap-2"><MapPin className="w-4 h-4 text-red-500" />Location</h3>
-                  <p className="text-gray-700 dark:text-gray-300 font-medium">{event.venue}</p>
-                  <p className="text-gray-500 text-sm">{event.city}, {event.country}</p>
+                  {event.venue && <p className="text-gray-700 dark:text-gray-300 font-medium">{event.venue}</p>}
+                  <p className="text-gray-500 text-sm">{[event.city, event.country].filter(Boolean).join(', ')}</p>
                   <a
-                    href={`https://maps.google.com/?q=${encodeURIComponent(`${event.venue} ${event.city}`)}`}
+                    href={`https://maps.google.com/?q=${encodeURIComponent([event.venue, event.city].filter(Boolean).join(' '))}`}
                     target="_blank" rel="noopener noreferrer"
                     className="text-blue-600 hover:underline text-sm mt-2 inline-flex items-center gap-1"
                   >
@@ -765,7 +768,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     <Zap className="w-5 h-5 text-yellow-300" />
                     <span className="text-yellow-300 font-bold text-sm uppercase tracking-wider">Live Convention Mode</span>
                   </div>
-                  <p className="text-white/80 text-sm">{checkins.length} attendee{checkins.length !== 1 ? 's' : ''} checked in at {event.venue}</p>
+                  <p className="text-white/80 text-sm">{checkins.length} attendee{checkins.length !== 1 ? 's' : ''} checked in{event.venue ? ` at ${event.venue}` : ''}</p>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setShowQR(true)} className="flex items-center gap-2 px-4 py-2.5 bg-white/20 text-white rounded-xl font-semibold text-sm border border-white/30 hover:bg-white/30 transition">

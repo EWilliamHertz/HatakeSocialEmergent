@@ -4,6 +4,50 @@ import sql from '@/lib/db';
 
 const ADMIN_EMAILS = ['zudran@gmail.com', 'ernst@hatake.eu'];
 
+// GET /api/events/[eventId]  – fetch a single event for the detail page
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ eventId: string }> }
+) {
+  try {
+    const { eventId } = await params;
+    const result = await sql`SELECT * FROM events WHERE event_id = ${eventId} LIMIT 1`;
+    if (result.length === 0) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+    const row = result[0] as any;
+
+    // Map DB columns → shape expected by the detail page
+    const event = {
+      event_id:       row.event_id,
+      title:          row.title,
+      description:    row.description,
+      // support both schemas
+      category:       (row.categories && row.categories[0]) || row.category || 'tcg',
+      categories:     row.categories || (row.category ? [row.category] : []),
+      start_date:     row.start_date,
+      end_date:       row.end_date || row.start_date,
+      start_time:     row.start_time || null,
+      end_time:       row.end_time   || null,
+      venue:          row.location_name  || row.venue_name  || null,
+      city:           row.location_city  || row.venue_city  || null,
+      country:        row.location_country || row.venue_country || 'Sweden',
+      image_url:      row.image_url  || null,
+      website_url:    row.website_url || null,
+      ticket_url:     row.ticket_url  || null,
+      is_featured:    row.featured    ?? row.is_featured   ?? false,
+      is_sold_out:    row.is_sold_out ?? false,
+      hatake_present: row.hatake_exhibitor ?? row.is_hatake ?? false,
+      is_past:        row.is_past     ?? false,
+    };
+
+    return NextResponse.json({ event });
+  } catch (error) {
+    console.error('Event GET error:', error);
+    return NextResponse.json({ error: 'Failed to fetch event' }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ eventId: string }> }

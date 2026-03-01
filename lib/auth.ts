@@ -49,7 +49,7 @@ export async function getUserFromToken(token: string): Promise<User | null> {
   if (!decoded) return null;
 
   const result = await sql`
-    SELECT user_id, email, name, picture, email_verified
+    SELECT user_id, email, name, picture, email_verified, is_admin
     FROM users
     WHERE user_id = ${decoded.user_id}
   `;
