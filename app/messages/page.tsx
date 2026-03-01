@@ -791,8 +791,8 @@ export default function MessagesPage() {
               </div>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 flex flex-col">
+            {/* Messages Area - full width on mobile */}
+            <div className={`${selectedConv || selectedGroup ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>
               {selectedConv ? (
                 <>
                   {/* Direct Chat Header */}
