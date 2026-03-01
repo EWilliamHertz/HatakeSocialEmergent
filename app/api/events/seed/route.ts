@@ -4,7 +4,7 @@ import sql from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req);
-  if (!user || user.role !== 'admin') {
+  if (!user || !user.is_admin) {
     return NextResponse.json({ success: false, error: 'Admin only' }, { status: 403 });
   }
 
