@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
-import { Users, UsersRound, UserPlus, Search, Check, X, MessageCircle, Plus, ChevronRight } from 'lucide-react';
+import { Users, UsersRound, UserPlus, Search, Check, X, MessageCircle, Plus, ChevronRight, Link as LinkIcon } from 'lucide-react';
 
 interface Friend {
   user_id: string;
@@ -164,7 +164,7 @@ export default function CommunityPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ targetUserId: userId })
+        body: JSON.stringify({ friendId: userId, action: 'request' })
       });
       const data = await res.json();
       if (data.success) {
@@ -177,8 +177,8 @@ export default function CommunityPage() {
 
   const acceptRequest = async (requestId: string) => {
     try {
-      const res = await fetch('/api/friends/requests', {
-        method: 'PUT',
+      const res = await fetch('/api/friends', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ requestId, action: 'accept' })
@@ -191,8 +191,8 @@ export default function CommunityPage() {
 
   const rejectRequest = async (requestId: string) => {
     try {
-      const res = await fetch('/api/friends/requests', {
-        method: 'PUT',
+      const res = await fetch('/api/friends', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ requestId, action: 'reject' })
@@ -289,6 +289,14 @@ export default function CommunityPage() {
               </span>
             </button>
           )}
+          <a
+            href="/friends"
+            className="flex-1 py-3 px-4 rounded-lg font-semibold transition flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            title="Go to Friends List page"
+          >
+            <LinkIcon className="w-5 h-5" />
+            <span className="text-sm">Friends List</span>
+          </a>
         </div>
 
         {/* Content */}
