@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Users, Plus, Search, Lock, Globe, Settings, UserPlus, Crown, ChevronRight, Loader2, MessageSquare, Activity, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
+import { Users, Plus, Search, Lock, Globe, Settings, UserPlus, Crown, ChevronRight, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface Group {
@@ -11,13 +11,10 @@ interface Group {
   name: string;
   description?: string;
   image?: string;
-  banner_image?: string;
   privacy: 'public' | 'private';
   member_count: number;
   role?: string;
   created_at: string;
-  recent_activity?: number; // Number of posts in last 7 days
-  last_activity?: string; // Last post date
 }
 
 export default function GroupsPage() {
@@ -26,12 +23,10 @@ export default function GroupsPage() {
   const [loading, setLoading] = useState(true);
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [discoverGroups, setDiscoverGroups] = useState<Group[]>([]);
-  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
-  const [tab, setTab] = useState<'my' | 'discover' | 'invites'>('my');
+  const [tab, setTab] = useState<'my' | 'discover'>('my');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [newGroup, setNewGroup] = useState({
     name: '',
     description: '',
@@ -51,49 +46,21 @@ export default function GroupsPage() {
       .then(() => {
         loadMyGroups();
         loadDiscoverGroups();
-        loadPendingInvites();
       })
       .catch(() => router.push('/auth/login'));
   }, [router]);
-
-  const loadPendingInvites = async () => {
-    try {
-      const res = await fetch('/api/groups/invites?type=pending', { credentials: 'include' });
-      const data = await res.json();
-      if (data.success) {
-        setPendingInvites(data.invites || []);
-      }
-    } catch (error) {
-      console.error('Load pending invites error:', error);
-    }
-  };
-
-  const respondToInvite = async (inviteId: string, accept: boolean) => {
-    try {
-      const res = await fetch(`/api/groups/invites`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ invite_id: inviteId, accept })
-      });
-      const data = await res.json();
-      if (data.success) {
-        loadPendingInvites();
-        if (accept) {
-          loadMyGroups();
-        }
-      }
-    } catch (error) {
-      console.error('Respond to invite error:', error);
-    }
-  };
 
   const loadMyGroups = async () => {
     try {
       const res = await fetch('/api/groups?type=my', { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
-        setMyGroups(data.groups || []);
+        // Convert member_count from BigInt string to number
+        const groupsWithCount = (data.groups || []).map((g: any) => ({
+          ...g,
+          member_count: typeof g.member_count === 'string' ? parseInt(g.member_count, 10) : (g.member_count || 0)
+        }));
+        setMyGroups(groupsWithCount);
       }
     } catch (error) {
       console.error('Load my groups error:', error);
@@ -107,7 +74,12 @@ export default function GroupsPage() {
       const res = await fetch('/api/groups?type=discover', { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
-        setDiscoverGroups(data.groups || []);
+        // Convert member_count from BigInt string to number
+        const groupsWithCount = (data.groups || []).map((g: any) => ({
+          ...g,
+          member_count: typeof g.member_count === 'string' ? parseInt(g.member_count, 10) : (g.member_count || 0)
+        }));
+        setDiscoverGroups(groupsWithCount);
       }
     } catch (error) {
       console.error('Load discover groups error:', error);
@@ -176,56 +148,14 @@ export default function GroupsPage() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Groups</h1>
             <p className="text-gray-600 dark:text-gray-400">Join communities of TCG collectors</p>
           </div>
-          <div className="flex gap-2">
-            <a
-              href="/community"
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-              data-testid="view-community-btn"
-            >
-              <Users className="w-5 h-5" />
-              Friends
-            </a>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-              data-testid="create-group-btn"
-            >
-              <Plus className="w-5 h-5" />
-              Create Group
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
-              <Users className="w-4 h-4" />
-              <span className="text-xs font-medium uppercase tracking-wider">My Groups</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{myGroups.length}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 mb-1">
-              <Globe className="w-4 h-4" />
-              <span className="text-xs font-medium uppercase tracking-wider">Public</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{discoverGroups.length}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
-              <Crown className="w-4 h-4" />
-              <span className="text-xs font-medium uppercase tracking-wider">Admin</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{myGroups.filter(g => g.role === 'admin').length}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-xs font-medium uppercase tracking-wider">Total Members</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{myGroups.reduce((sum, g) => sum + (g.member_count || 0), 0)}</p>
-          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+            data-testid="create-group-btn"
+          >
+            <Plus className="w-5 h-5" />
+            Create Group
+          </button>
         </div>
 
         {/* Tabs */}
@@ -254,87 +184,23 @@ export default function GroupsPage() {
             <Search className="w-5 h-5 inline mr-2" />
             Discover
           </button>
-          <button
-            onClick={() => setTab('invites')}
-            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition relative ${
-              tab === 'invites'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-            data-testid="invites-tab"
-          >
-            Invites
-            {pendingInvites.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                {pendingInvites.length}
-              </span>
-            )}
-          </button>
         </div>
 
-        {/* Search - only for my and discover tabs */}
-        {(tab === 'my' || tab === 'discover') && (
-          <div className="relative mb-6">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search groups..."
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white"
-              data-testid="search-groups-input"
-            />
-          </div>
-        )}
-
-        {/* Pending Invites */}
-        {tab === 'invites' && (
-          <div className="space-y-4">
-            {pendingInvites.length === 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
-                <Users className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">No pending invites</p>
-              </div>
-            ) : (
-              pendingInvites.map((invite) => (
-                <div 
-                  key={invite.invite_id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center justify-between"
-                  data-testid={`invite-${invite.invite_id}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white">
-                      <Users className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">{invite.group_name}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Invited by {invite.inviter_name}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => respondToInvite(invite.invite_id, false)}
-                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                    >
-                      Decline
-                    </button>
-                    <button
-                      onClick={() => respondToInvite(invite.invite_id, true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
-                    >
-                      Accept
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        {/* Search */}
+        <div className="relative mb-6">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search groups..."
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white"
+            data-testid="search-groups-input"
+          />
+        </div>
 
         {/* Groups List */}
-        {(tab === 'my' || tab === 'discover') && (loading ? (
+        {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           </div>
@@ -363,19 +229,6 @@ export default function GroupsPage() {
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition"
                 data-testid={`group-${group.group_id}`}
               >
-                {/* Banner Image (if available) */}
-                {group.banner_image && (
-                  <div className="h-20 relative">
-                    <Image
-                      src={group.banner_image}
-                      alt={`${group.name} banner`}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  </div>
-                )}
-                
                 <div className="p-4">
                   <div className="flex items-start gap-4">
                     {group.image ? (
@@ -385,19 +238,10 @@ export default function GroupsPage() {
                         width={64}
                         height={64}
                         className="rounded-xl object-cover"
-                        unoptimized
                       />
                     ) : (
-                      <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-white ${
-                        group.privacy === 'private' 
-                          ? 'bg-gradient-to-br from-purple-500 to-pink-600' 
-                          : 'bg-gradient-to-br from-blue-500 to-cyan-500'
-                      }`}>
-                        {group.privacy === 'private' ? (
-                          <Lock className="w-7 h-7" />
-                        ) : (
-                          <Users className="w-8 h-8" />
-                        )}
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white">
+                        <Users className="w-8 h-8" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -406,13 +250,9 @@ export default function GroupsPage() {
                           {group.name}
                         </h3>
                         {group.privacy === 'private' ? (
-                          <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs rounded-full font-medium">
-                            Private
-                          </span>
+                          <Lock className="w-4 h-4 text-gray-400" />
                         ) : (
-                          <span className="px-2 py-0.5 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 text-xs rounded-full font-medium">
-                            Public
-                          </span>
+                          <Globe className="w-4 h-4 text-gray-400" />
                         )}
                         {group.role === 'admin' && (
                           <Crown className="w-4 h-4 text-yellow-500" />
@@ -421,138 +261,48 @@ export default function GroupsPage() {
                       <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
                         {group.description || 'No description'}
                       </p>
-                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5" />
-                          {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
-                        </span>
-                        {group.recent_activity !== undefined && group.recent_activity > 0 && (
-                          <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                            <Activity className="w-3.5 h-3.5" />
-                            {group.recent_activity} posts this week
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
+                        {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Action Bar */}
-                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                  {/* Expand Button */}
-                  <button
-                    onClick={() => setExpandedGroup(expandedGroup === group.group_id ? null : group.group_id)}
-                    className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition"
-                    data-testid={`expand-group-${group.group_id}`}
-                  >
-                    {expandedGroup === group.group_id ? (
-                      <>
-                        <ChevronUp className="w-3.5 h-3.5" />
-                        Less
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-3.5 h-3.5" />
-                        More
-                      </>
-                    )}
-                  </button>
-                  
-                  <div className="flex gap-2">
-                    {tab === 'my' ? (
-                      <>
-                        <button
-                          onClick={() => router.push(`/groups/${group.group_id}`)}
-                          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition"
-                          data-testid={`view-group-${group.group_id}`}
-                        >
-                          Enter
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
-                        {group.role === 'admin' && (
-                          <button
-                            onClick={() => router.push(`/groups/${group.group_id}?tab=settings`)}
-                            className="p-1.5 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition"
-                            title="Group Settings"
-                          >
-                            <Settings className="w-4 h-4" />
-                          </button>
-                        )}
-                      </>
-                    ) : (
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
+                  {tab === 'my' ? (
+                    <>
                       <button
-                        onClick={() => joinGroup(group.group_id)}
-                        className="flex items-center gap-1 px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 transition"
-                        data-testid={`join-group-${group.group_id}`}
+                        onClick={() => router.push(`/groups/${group.group_id}`)}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg font-medium transition"
+                        data-testid={`view-group-${group.group_id}`}
                       >
-                        <UserPlus className="w-4 h-4" />
-                        Join Group
+                        View
+                        <ChevronRight className="w-4 h-4" />
                       </button>
-                    )}
-                  </div>
+                      {group.role === 'admin' && (
+                        <button
+                          onClick={() => router.push(`/groups/${group.group_id}/settings`)}
+                          className="p-1.5 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition"
+                        >
+                          <Settings className="w-4 h-4" />
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => joinGroup(group.group_id)}
+                      className="flex items-center gap-1 px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 transition"
+                      data-testid={`join-group-${group.group_id}`}
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Join
+                    </button>
+                  )}
                 </div>
-
-                {/* Expanded Preview */}
-                {expandedGroup === group.group_id && (
-                  <div className="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50/50 dark:bg-gray-800/50 animate-in slide-in-from-top-2 duration-200">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Created</p>
-                        <p className="text-gray-800 dark:text-gray-200">
-                          {new Date(group.created_at).toLocaleDateString(undefined, { 
-                            year: 'numeric', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Type</p>
-                        <p className="text-gray-800 dark:text-gray-200 flex items-center gap-1">
-                          {group.privacy === 'private' ? (
-                            <>
-                              <Lock className="w-3.5 h-3.5 text-purple-500" />
-                              Invite Only
-                            </>
-                          ) : (
-                            <>
-                              <Globe className="w-3.5 h-3.5 text-cyan-500" />
-                              Open to All
-                            </>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {group.description && group.description.length > 80 && (
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Full Description</p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          {group.description}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {group.last_activity && (
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Last Activity</p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          {new Date(group.last_activity).toLocaleDateString(undefined, { 
-                            year: 'numeric', 
-                            month: 'short', 
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             ))}
           </div>
-        ))}
+        )}
       </div>
 
       {/* Create Group Modal */}
