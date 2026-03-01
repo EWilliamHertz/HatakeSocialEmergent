@@ -512,7 +512,7 @@ export default function MessagesPage() {
           <div className="flex h-full">
 
             {/* ── Conversations sidebar ─────────────────────── */}
-            <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+            <div className={`${(selectedConv || selectedGroup) ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700 flex-col`}>
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <h2 className="text-xl font-bold dark:text-white">Messages</h2>
                 <div className="flex items-center gap-2">
@@ -670,12 +670,19 @@ export default function MessagesPage() {
             </div>
 
             {/* ── Chat area ─────────────────────────────────── */}
-            <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 relative">
+            <div className={`${(selectedConv || selectedGroup) ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-white dark:bg-gray-800 relative`}>
               {(selectedConv || selectedGroup) ? (
                 <>
                   {/* Header */}
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                      {/* Mobile back button */}
+                      <button
+                        className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
+                        onClick={() => { setSelectedConv(null); setSelectedGroup(null); }}
+                      >
+                        <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                      </button>
                       {selectedConv ? (
                         (() => {
                           const conv = conversations.find(c => c.conversation_id === selectedConv);
@@ -832,6 +839,11 @@ export default function MessagesPage() {
                               <span className="text-[10px] text-gray-400 mt-1 px-1">
                                 {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
+                              {isSender && (
+                                <span className={`text-[10px] px-1 ${(msg as any).read_at ? 'text-blue-500' : 'text-gray-400'}`}>
+                                  {(msg as any).read_at ? '✓✓' : '✓'}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -886,7 +898,18 @@ export default function MessagesPage() {
                               else if (selectedGroup) sendGroupMessage(newMessage);
                             }
                           }}
-                          placeholder="Type a message..."
+                          onPaste={e => {
+                            const items = e.clipboardData.items;
+                            for (let i = 0; i < items.length; i++) {
+                              if (items[i].type.indexOf('image') !== -1) {
+                                e.preventDefault();
+                                const file = items[i].getAsFile();
+                                if (file) uploadMedia(file);
+                                return;
+                              }
+                            }
+                          }}
+                          placeholder="Type a message... (paste images with Ctrl+V)"
                           className="w-full pl-4 pr-12 py-3 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-32"
                           rows={1}
                         />
