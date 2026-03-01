@@ -1,13 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserFromRequest } from '@/lib/auth';
+import { getSessionUser } from '@/lib/auth';
 import sql from '@/lib/db';
 
+const ADMIN_EMAILS = ['zudran@gmail.com', 'ernst@hatake.eu'];
+
+async function isAdminUser(request: NextRequest): Promise<boolean> {
+  const sessionToken = request.cookies.get('session_token')?.value;
+  if (sessionToken) {
+    const user = await getSessionUser(sessionToken).catch(() => null);
+    if (user) {
+      if (ADMIN_EMAILS.includes(user.email)) return true;
+      if (user.is_admin) return true;
+    }
+  }
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const { getUserFromToken } = await import('@/lib/auth');
+    const user = await getUserFromToken(authHeader.substring(7)).catch(() => null);
+    if (user) {
+      if (ADMIN_EMAILS.includes(user.email)) return true;
+      if (user.is_admin) return true;
+    }
+  }
+  return false;
+}
+
 // POST /api/migrate  (GET also works for easy browser use)
-// Safe one-time migration: adds ALL missing columns without touching existing data.
 export async function POST(request: NextRequest) {
-  const user = await getUserFromRequest(request);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!user.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!await isAdminUser(request)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   const results: string[] = [];
 
@@ -19,6 +41,10 @@ export async function POST(request: NextRequest) {
       results.push(`⚠️  ${label}: ${e.message}`);
     }
   };
+
+  // ── users ──────────────────────────────────────────────────────────
+  await run('users: is_admin',      `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE`);
+  await run('users: is_organizer',  `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_organizer BOOLEAN DEFAULT FALSE`);
 
   // ── conversations ────────────────────────────────────────────────
   await run('conversations: is_group',        `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS is_group BOOLEAN NOT NULL DEFAULT FALSE`);

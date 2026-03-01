@@ -32,6 +32,7 @@ interface User {
   picture?: string;
   created_at: string;
   isAdmin: boolean;
+  isOrganizer: boolean;
   stats: {
     posts: number;
     decks: number;
@@ -203,6 +204,30 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Toggle admin error:', error);
+    }
+  };
+
+  const toggleOrganizer = async (userId: string, userName: string, currentIsOrganizer: boolean) => {
+    const action = currentIsOrganizer ? 'remove organizer role from' : 'make organizer';
+    if (!confirm(`Are you sure you want to ${action} "${userName}"?`)) return;
+    
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ user_id: userId, is_organizer: !currentIsOrganizer })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        loadUsers();
+        alert(`${userName} ${currentIsOrganizer ? 'is no longer an organizer' : 'is now an organizer'}`);
+      } else {
+        alert(data.error || 'Failed to update organizer status');
+      }
+    } catch (error) {
+      console.error('Toggle organizer error:', error);
     }
   };
 
@@ -768,11 +793,18 @@ export default function AdminPage() {
                           <td className="px-6 py-4 text-gray-900 dark:text-white">{user.stats.decks}</td>
                           <td className="px-6 py-4 text-gray-900 dark:text-white">{user.stats.cards}</td>
                           <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              user.isAdmin ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300'
-                            }`}>
-                              {user.isAdmin ? 'Admin' : 'User'}
-                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                user.isAdmin ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300'
+                              }`}>
+                                {user.isAdmin ? 'Admin' : 'User'}
+                              </span>
+                              {user.isOrganizer && (
+                                <span className="px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">
+                                  Organizer
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
@@ -786,6 +818,17 @@ export default function AdminPage() {
                                 title={user.isAdmin ? 'Remove admin' : 'Make admin'}
                               >
                                 {user.isAdmin ? 'Remove Admin' : 'Make Admin'}
+                              </button>
+                              <button
+                                onClick={() => toggleOrganizer(user.user_id, user.name, user.isOrganizer)}
+                                className={`px-3 py-1 rounded text-xs font-medium ${
+                                  user.isOrganizer 
+                                    ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200' 
+                                    : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300 hover:bg-orange-200'
+                                }`}
+                                title={user.isOrganizer ? 'Remove organizer' : 'Make organizer'}
+                              >
+                                {user.isOrganizer ? 'Remove Organizer' : 'Make Organizer'}
                               </button>
                               {!ADMIN_EMAILS.includes(user.email) && (
                                 <button

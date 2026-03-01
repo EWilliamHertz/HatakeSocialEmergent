@@ -8,11 +8,7 @@ async function isAdmin(sessionToken: string | undefined): Promise<boolean> {
   if (!sessionToken) return false;
   const user = await getSessionUser(sessionToken);
   if (!user) return false;
-  
-  // Check if in admin emails list
   if (ADMIN_EMAILS.includes(user.email)) return true;
-  
-  // Also check database is_admin field
   try {
     const result = await sql`SELECT is_admin FROM users WHERE user_id = ${user.user_id}`;
     return result[0]?.is_admin === true;
@@ -40,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       users = await sql`
-        SELECT user_id, name, email, picture, created_at 
+        SELECT user_id, name, email, picture, created_at, is_admin, is_organizer
         FROM users 
         WHERE name ILIKE ${'%' + search + '%'} OR email ILIKE ${'%' + search + '%'}
         ORDER BY created_at DESC
@@ -53,7 +49,7 @@ export async function GET(request: NextRequest) {
       totalCount = Number(countResult[0]?.count || 0);
     } else {
       users = await sql`
-        SELECT user_id, name, email, picture, created_at 
+        SELECT user_id, name, email, picture, created_at, is_admin, is_organizer
         FROM users 
         ORDER BY created_at DESC
         LIMIT ${limit} OFFSET ${offset}
@@ -62,18 +58,17 @@ export async function GET(request: NextRequest) {
       totalCount = Number(countResult[0]?.count || 0);
     }
 
-    // Get additional info for each user
     const usersWithInfo = await Promise.all(users.map(async (user: any) => {
-      const [postCount, deckCount, collectionCount, isAdminResult] = await Promise.all([
+      const [postCount, deckCount, collectionCount] = await Promise.all([
         sql`SELECT COUNT(*) as count FROM posts WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
         sql`SELECT COUNT(*) as count FROM decks WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
         sql`SELECT COUNT(*) as count FROM collection_items WHERE user_id = ${user.user_id}`.then(r => Number(r[0]?.count || 0)).catch(() => 0),
-        sql`SELECT is_admin FROM users WHERE user_id = ${user.user_id}`.then(r => r[0]?.is_admin === true).catch(() => false)
       ]);
 
       return {
         ...user,
-        isAdmin: ADMIN_EMAILS.includes(user.email) || isAdminResult,
+        isAdmin: ADMIN_EMAILS.includes(user.email) || user.is_admin === true,
+        isOrganizer: user.is_organizer === true,
         stats: {
           posts: postCount,
           decks: deckCount,
@@ -110,20 +105,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
     }
 
-    // Check if trying to delete an admin
     const user = await sql`SELECT email FROM users WHERE user_id = ${userId}`;
     if (user.length > 0 && ADMIN_EMAILS.includes(user[0].email)) {
       return NextResponse.json({ error: 'Cannot delete admin users' }, { status: 403 });
     }
 
-    // Delete user's related data first
     await sql`DELETE FROM posts WHERE user_id = ${userId}`.catch(() => {});
     await sql`DELETE FROM collection_items WHERE user_id = ${userId}`.catch(() => {});
     await sql`DELETE FROM decks WHERE user_id = ${userId}`.catch(() => {});
     await sql`DELETE FROM friends WHERE user_id = ${userId} OR friend_id = ${userId}`.catch(() => {});
     await sql`DELETE FROM messages WHERE sender_id = ${userId}`.catch(() => {});
-    
-    // Finally delete the user
     await sql`DELETE FROM users WHERE user_id = ${userId}`;
 
     return NextResponse.json({ success: true });
@@ -133,7 +124,7 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
-// PUT - Update user (toggle admin status)
+// PUT - Update user (toggle admin or organizer status)
 export async function PUT(request: NextRequest) {
   try {
     const sessionToken = request.cookies.get('session_token')?.value;
@@ -142,23 +133,22 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { user_id, is_admin } = body;
+    const { user_id, is_admin, is_organizer } = body;
 
     if (!user_id) {
       return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
     }
 
-    // Ensure is_admin column exists
-    try {
-      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false`;
-    } catch (e) {}
+    // Ensure columns exist
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE`.catch(() => {});
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_organizer BOOLEAN DEFAULT FALSE`.catch(() => {});
 
-    // Update admin status
-    await sql`
-      UPDATE users 
-      SET is_admin = ${is_admin}
-      WHERE user_id = ${user_id}
-    `;
+    if (is_admin !== undefined) {
+      await sql`UPDATE users SET is_admin = ${is_admin} WHERE user_id = ${user_id}`;
+    }
+    if (is_organizer !== undefined) {
+      await sql`UPDATE users SET is_organizer = ${is_organizer} WHERE user_id = ${user_id}`;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

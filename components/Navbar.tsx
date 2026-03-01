@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { Home, Newspaper, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound, Layers, Settings, ChevronDown, Shield, Heart, Archive, CalendarDays } from 'lucide-react';
+import { Home, Newspaper, Search, Package, ShoppingBag, MessageCircle, User, LogOut, Users, ArrowRightLeft, Menu, X, UsersRound, Layers, Settings, ChevronDown, Shield, Heart, Archive, CalendarDays, Star } from 'lucide-react';
 import Link from 'next/link';
 import NotificationsDropdown from './NotificationsDropdown';
 import ThemeToggle from './ThemeToggle';
@@ -16,6 +16,7 @@ interface User {
   name: string;
   picture?: string;
   is_admin?: boolean;
+  is_organizer?: boolean;
 }
 
 export default function Navbar() {
@@ -37,7 +38,6 @@ export default function Navbar() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -56,9 +56,9 @@ export default function Navbar() {
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/');
   const isAdmin = user && (ADMIN_EMAILS.includes(user.email) || user.is_admin);
+  const isOrganizer = user && user.is_organizer;
 
   if (loading) return null;
-
   if (!user) return null;
 
   const navLinks = [
@@ -130,13 +130,26 @@ export default function Navbar() {
                 className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                 data-testid="user-menu-btn"
               >
-                {user.picture ? (
-                  <Image src={user.picture} alt={user.name} width={32} height={32} className="rounded-full" />
-                ) : (
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    {(user.name || '?').charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className="relative">
+                  {user.picture ? (
+                    <Image src={user.picture} alt={user.name} width={32} height={32} className="rounded-full" />
+                  ) : (
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                      {(user.name || '?').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  {/* Organizer badge on avatar */}
+                  {isOrganizer && !isAdmin && (
+                    <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                      <Star className="w-2.5 h-2.5 text-white fill-white" />
+                    </span>
+                  )}
+                  {isAdmin && (
+                    <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-purple-600 rounded-full flex items-center justify-center">
+                      <Shield className="w-2.5 h-2.5 text-white" />
+                    </span>
+                  )}
+                </div>
                 <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-300">
                   {user.name ? user.name.split(' ')[0] : 'User'}
                 </span>
@@ -148,7 +161,19 @@ export default function Navbar() {
                 <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50" data-testid="user-dropdown">
                   {/* User Info */}
                   <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                    <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+                      {isAdmin && (
+                        <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-medium rounded">
+                          Admin
+                        </span>
+                      )}
+                      {!isAdmin && isOrganizer && (
+                        <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 text-xs font-medium rounded">
+                          Organizer
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                   </div>
 
@@ -173,6 +198,19 @@ export default function Navbar() {
                       <Settings className="w-4 h-4" />
                       <span>Settings</span>
                     </Link>
+
+                    {/* Manage Events - for organizers and admins */}
+                    {(isAdmin || isOrganizer) && (
+                      <Link
+                        href="/events"
+                        onClick={() => setShowUserDropdown(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                        data-testid="dropdown-events"
+                      >
+                        <CalendarDays className="w-4 h-4" />
+                        <span>Manage Events</span>
+                      </Link>
+                    )}
 
                     {/* Admin Panel - only for admins */}
                     {isAdmin && (
