@@ -504,11 +504,11 @@ export default function MessagesPage() {
   // RENDER
   // ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 12rem)' }}>
+      <div className="flex-1 overflow-hidden min-h-0 container mx-auto px-4 py-3">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
           <div className="flex h-full">
 
             {/* ── Conversations sidebar ─────────────────────── */}

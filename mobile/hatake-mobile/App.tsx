@@ -4,6 +4,7 @@ import { NavigationContainer, NavigationContainerRef } from '@react-navigation/n
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet, View, ActivityIndicator, Text, Alert, Platform, Modal } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
 import LoginScreen from './src/screens/LoginScreen';
@@ -92,30 +93,25 @@ function AppContent() {
 
   const checkSession = async () => {
     try {
-      if (typeof localStorage !== 'undefined') {
-        const storedToken = localStorage.getItem('auth_token');
-        const storedUser = localStorage.getItem('user_data');
-        if (storedToken && storedUser) {
-          // Verify token is still valid
-          try {
-            const response = await fetch(`${API_URL}/api/auth/me`, {
-              headers: { 'Authorization': `Bearer ${storedToken}` },
-            });
-            const data = await response.json();
-            
-            if (data.user) {
-              setUser(data.user);
-              setToken(storedToken);
-            } else {
-              // Use cached data if API fails but we have token
-              setUser(JSON.parse(storedUser));
-              setToken(storedToken);
-            }
-          } catch {
-            // Network error, use cached user
+      const storedToken = await AsyncStorage.getItem('auth_token');
+      const storedUser = await AsyncStorage.getItem('user_data');
+      if (storedToken && storedUser) {
+        try {
+          const response = await fetch(`${API_URL}/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${storedToken}` },
+          });
+          const data = await response.json();
+          if (data.user) {
+            setUser(data.user);
+            setToken(storedToken);
+          } else {
             setUser(JSON.parse(storedUser));
             setToken(storedToken);
           }
+        } catch {
+          // Network error — use cached session
+          setUser(JSON.parse(storedUser));
+          setToken(storedToken);
         }
       }
     } catch (e) {
@@ -127,8 +123,8 @@ function AppContent() {
   const handleLoginSuccess = async (loggedInUser: User, authToken: string) => {
     setUser(loggedInUser);
     setToken(authToken);
-    
-    // Check if we should show onboarding for new users
+    await AsyncStorage.setItem('auth_token', authToken);
+    await AsyncStorage.setItem('user_data', JSON.stringify(loggedInUser));
     const needsOnboarding = await shouldShowOnboarding();
     if (needsOnboarding) {
       setShowOnboarding(true);
@@ -137,20 +133,15 @@ function AppContent() {
 
   const handleLogout = async () => {
     try {
-      const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : token;
       await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${authToken}` },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
     } catch (e) {
       // Ignore logout errors
     }
-    
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('user_data');
-      localStorage.removeItem('auth_token');
-    }
-    
+    await AsyncStorage.removeItem('user_data');
+    await AsyncStorage.removeItem('auth_token');
     setUser(null);
     setToken(null);
     setDrawerOpen(false);
@@ -350,7 +341,7 @@ function AppContent() {
                 {() => (
                   <ProfileScreen 
                     user={user} 
-                    token={authToken}
+                    token={token}
                     onLogout={handleLogout} 
                     onOpenMenu={() => setDrawerOpen(true)}
                     onSettings={() => setShowSettings(true)}

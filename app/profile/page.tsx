@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { User, Package, ShoppingBag, Users, Settings, Camera, Save, X, Edit, CreditCard, MapPin, Image as ImageIcon, Award, Shield, Star, Trophy, Flame, Zap } from 'lucide-react';
+import { User, Package, ShoppingBag, Users, Settings, Camera, Save, X, Edit, CreditCard, MapPin, Image as ImageIcon, Award, Shield, Star, Trophy, Flame, Zap, QrCode, Download } from 'lucide-react';
 import Image from 'next/image';
 
 interface UserProfile {
@@ -67,6 +67,7 @@ export default function MyProfilePage() {
   const [myListings, setMyListings] = useState<Listing[]>([]);
   const [badges, setBadges] = useState<any[]>([]);
   const [badgeLoading, setBadgeLoading] = useState(false);
+  const [showQR, setShowQR] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -356,13 +357,20 @@ export default function MyProfilePage() {
                     </button>
                   </>
                 ) : (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => setEditing(true)}
                       className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
                     >
                       <Edit className="w-4 h-4" />
                       Edit Profile
+                    </button>
+                    <button
+                      onClick={() => setShowQR(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                    >
+                      <QrCode className="w-4 h-4" />
+                      Share Profile
                     </button>
                     <button
                       onClick={() => setShowSettings(true)}
@@ -515,6 +523,54 @@ export default function MyProfilePage() {
           )}
         </div>
       </div>
+
+
+      {/* QR Code Share Modal */}
+      {showQR && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm text-center p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold dark:text-white">Share Your Profile</h3>
+              <button onClick={() => setShowQR(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                <X className="w-5 h-5 dark:text-white" />
+              </button>
+            </div>
+            <div className="flex justify-center mb-4">
+              <div className="p-4 bg-white rounded-2xl shadow-inner border border-gray-100">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent('https://hatake.eu/profile/' + user.user_id)}`}
+                  alt="Profile QR Code"
+                  width={200}
+                  height={200}
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 font-semibold">{user.name}</p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs mb-6 break-all">hatake.eu/profile/{user.user_id}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard?.writeText('https://hatake.eu/profile/' + user.user_id);
+                }}
+                className="flex-1 py-3 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm"
+              >
+                Copy Link
+              </button>
+              <a
+                href={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=20&data=${encodeURIComponent('https://hatake.eu/profile/' + user.user_id)}`}
+                download={`hatake-qr-${user.name.replace(/\s+/g, '-').toLowerCase()}.png`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2 text-sm"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings Modal */}
       {showSettings && (
