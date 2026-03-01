@@ -77,6 +77,7 @@ export async function GET(request: Request) {
 // Body variants:
 //   { recipientId, content }                           → 1-on-1 DM (existing behaviour)
 //   { recipientIds: string[], groupName, content }     → NEW multi-user group DM
+//   { conversationId, content, ... }                   → Send to existing conversation (group DMs)
 //   { recipientId, content, messageType, mediaUrl, replyToId } → DM with media/reply
 // ─────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
@@ -89,8 +90,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       recipientId,
-      recipientIds,   // array for group DM
-      groupName,      // optional label for group DM
+      recipientIds,            // array for group DM creation
+      groupName,               // optional label for group DM
+      conversationId: existingConversationId, // send to existing conversation
       content,
       messageType = 'text',
       mediaUrl,
@@ -143,9 +145,61 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, conversationId, isGroup: true });
     }
 
-    // ── Case 2: 1-on-1 DM (original behaviour, preserved exactly) ──
+    // ── Case 2: Send to existing conversation by ID (group DMs) ──
+    if (existingConversationId) {
+      // Verify user is a participant in this conversation
+      const participation = await sql`
+        SELECT 1 FROM conversation_participants
+        WHERE conversation_id = ${existingConversationId} AND user_id = ${user.user_id}
+        LIMIT 1
+      `;
+
+      if (participation.length === 0) {
+        return NextResponse.json({ success: false, error: 'Not a participant in this conversation' }, { status: 403 });
+      }
+
+      if (content || mediaUrl) {
+        const messageId = uuidv4();
+        const msgContent = content || (messageType === 'image' ? '📷 Image' : '🎥 Video');
+
+        // Resolve reply content if replyToId provided
+        let replyContent = null;
+        let replySenderName = null;
+        if (replyToId) {
+          const replyMsg = await sql`
+            SELECT m.content, u.name
+            FROM messages m
+            JOIN users u ON u.user_id = m.sender_id
+            WHERE m.message_id = ${replyToId}
+            LIMIT 1
+          `;
+          if (replyMsg.length > 0) {
+            replyContent    = replyMsg[0].content;
+            replySenderName = replyMsg[0].name;
+          }
+        }
+
+        await sql`
+          INSERT INTO messages
+            (message_id, conversation_id, sender_id, content, message_type, media_url, reply_to, reply_content, reply_sender_name)
+          VALUES
+            (${messageId}, ${existingConversationId}, ${user.user_id}, ${msgContent}, ${messageType}, ${mediaUrl || null},
+             ${replyToId || null}, ${replyContent}, ${replySenderName})
+        `;
+
+        await sql`
+          UPDATE conversations
+          SET last_message = ${msgContent}, last_message_at = NOW(), updated_at = NOW()
+          WHERE conversation_id = ${existingConversationId}
+        `;
+      }
+
+      return NextResponse.json({ success: true, conversationId: existingConversationId });
+    }
+
+    // ── Case 3: 1-on-1 DM (original behaviour, preserved exactly) ──
     if (!recipientId) {
-      return NextResponse.json({ success: false, error: 'recipientId or recipientIds required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'recipientId, recipientIds, or conversationId required' }, { status: 400 });
     }
 
     // Find existing 1-on-1 (non-group) conversation between these two users

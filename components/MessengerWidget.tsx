@@ -18,6 +18,7 @@ interface Conversation {
   last_message: string;
   last_message_at: string;
   unread_count: number;
+  is_group?: boolean;
 }
 
 interface Message {
@@ -495,11 +496,19 @@ export default function MessengerWidget() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ 
-          recipientId: conv.user_id, 
-          content,
-          replyToId: replyToMsg?.message_id || null
-        })
+        body: JSON.stringify(
+          conv.is_group
+            ? {
+                conversationId: conv.conversation_id,
+                content,
+                replyToId: replyToMsg?.message_id || null,
+              }
+            : {
+                recipientId: conv.user_id,
+                content,
+                replyToId: replyToMsg?.message_id || null,
+              }
+        )
       });
       
       if (res.ok) {
@@ -758,7 +767,7 @@ export default function MessengerWidget() {
                             
                             <div className={`flex gap-2 group/msg ${msg.sender_id === currentUserId ? 'flex-row-reverse' : ''}`}>
                               {msg.picture ? (
-                                <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full flex-shrink-0" />
+                                <Image src={msg.picture} alt={msg.name} width={28} height={28} className="rounded-full flex-shrink-0" unoptimized />
                               ) : (
                                 <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                                   {msg.name.charAt(0).toUpperCase()}
@@ -963,7 +972,7 @@ export default function MessengerWidget() {
                             data-testid={`widget-user-${user.user_id}`}
                           >
                             {user.picture ? (
-                              <Image src={user.picture} alt={user.name} width={36} height={36} className="rounded-full" />
+                              <Image src={user.picture} alt={user.name} width={36} height={36} className="rounded-full" unoptimized />
                             ) : (
                               <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                                 {user.name.charAt(0).toUpperCase()}
@@ -1012,8 +1021,12 @@ export default function MessengerWidget() {
                             className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-left border-b dark:border-gray-700"
                             data-testid={`widget-conv-${conv.conversation_id}`}
                           >
-                            {conv.picture ? (
-                              <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" />
+                            {conv.is_group ? (
+                              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                <Users className="w-5 h-5" />
+                              </div>
+                            ) : conv.picture ? (
+                              <Image src={conv.picture} alt={conv.name} width={40} height={40} className="rounded-full" unoptimized />
                             ) : (
                               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                                 {conv.name.charAt(0).toUpperCase()}
@@ -1058,7 +1071,7 @@ export default function MessengerWidget() {
                     {groupMessages.map((msg) => (
                       <div key={msg.message_id} className={`flex gap-2 ${msg.sender_id === currentUserId ? 'flex-row-reverse' : ''}`}>
                         {msg.picture
-                          ? <Image src={msg.picture} alt={msg.name} width={24} height={24} className="rounded-full flex-shrink-0" />
+                          ? <Image src={msg.picture} alt={msg.name} width={24} height={24} className="rounded-full flex-shrink-0" unoptimized />
                           : <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">{msg.name.charAt(0).toUpperCase()}</div>
                         }
                         <div>
