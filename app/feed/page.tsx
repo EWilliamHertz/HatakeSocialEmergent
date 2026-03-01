@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Users, Globe, Hash, ThumbsUp, MessageCircle, Send, ChevronDown, ChevronUp, Reply, Smile, X, MoreHorizontal, Trash2, Award, Share2 } from 'lucide-react';
@@ -54,6 +54,7 @@ const QUICK_REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '🔥', '💯
 
 export default function FeedPage() {
   const router = useRouter();
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [tab, setTab] = useState('public');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,6 +152,16 @@ export default function FeedPage() {
     }
   }, [tab, authenticated, selectedGroup]);
 
+  // Auto-refresh every 30 seconds to show new posts from others
+  useEffect(() => {
+    if (!authenticated) return;
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(() => {
+      loadPosts();
+    }, 30000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [tab, authenticated, selectedGroup]);
+
   const loadMyGroups = async () => {
     try {
       const res = await fetch('/api/groups?type=my', { credentials: 'include' });
@@ -207,6 +218,7 @@ export default function FeedPage() {
       const res = await fetch('/api/feed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(postData),
       });
       if (res.ok) {

@@ -395,23 +395,13 @@ export default function MessagesPage() {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(
-          conv.is_group
-            ? {
-                conversationId: conv.conversation_id,
-                content:     content || (messageType === 'image' ? '📷 Image' : '🎥 Video'),
-                messageType: messageType || 'text',
-                mediaUrl,
-                replyToId: replyToMsg?.message_id || null,
-              }
-            : {
-                recipientId: conv.user_id,
-                content:     content || (messageType === 'image' ? '📷 Image' : '🎥 Video'),
-                messageType: messageType || 'text',
-                mediaUrl,
-                replyToId: replyToMsg?.message_id || null,
-              }
-        ),
+        body: JSON.stringify({
+          conversationId: selectedConv,
+          content:     content || (messageType === 'image' ? '📷 Image' : '🎥 Video'),
+          messageType: messageType || 'text',
+          mediaUrl,
+          replyToId: replyToMsg?.message_id || null,
+        }),
       });
       setNewMessage('');
       setShowEmojiPicker(false);

@@ -192,11 +192,13 @@ export default function MessengerWidget() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(
-          (conv.is_group || !conv.user_id)
-            ? { conversationId: conv.conversation_id, content: '', messageType, mediaUrl, replyToId: replyToMsg?.message_id || null }
-            : { recipientId: conv.user_id, content: '', messageType, mediaUrl, replyToId: replyToMsg?.message_id || null }
-        )
+        body: JSON.stringify({
+          conversationId: conv.conversation_id,
+          content: '',
+          messageType,
+          mediaUrl,
+          replyToId: replyToMsg?.message_id || null,
+        })
       });
       
       cancelMedia();
@@ -494,19 +496,11 @@ export default function MessengerWidget() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(
-          (conv.is_group || !conv.user_id)
-            ? {
-                conversationId: conv.conversation_id,
-                content,
-                replyToId: replyToMsg?.message_id || null,
-              }
-            : {
-                recipientId: conv.user_id,
-                content,
-                replyToId: replyToMsg?.message_id || null,
-              }
-        )
+        body: JSON.stringify({
+          conversationId: conv.conversation_id,
+          content,
+          replyToId: replyToMsg?.message_id || null,
+        })
       });
       
       if (res.ok) {

@@ -311,8 +311,8 @@ export default function MyProfilePage() {
           
           {/* Profile Info */}
           <div className="px-6 pb-6">
-            <div className="flex flex-col md:flex-row items-start md:items-end gap-4">
-              <div className="relative -mt-12 flex-shrink-0">
+            <div className="flex items-start justify-between">
+              <div className="relative -mt-14 flex-shrink-0">
                 {user.picture ? (
                   <Image 
                     src={user.picture} 
@@ -335,38 +335,7 @@ export default function MyProfilePage() {
                 </button>
                 <input ref={profilePicInputRef} type="file" accept="image/*" onChange={handleProfilePicUpload} className="hidden" />
               </div>
-              
-              <div className="flex-1">
-                {editing ? (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
-                      placeholder="Your name"
-                    />
-                    <textarea
-                      value={editBio}
-                      onChange={(e) => setEditBio(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
-                      placeholder="Tell us about yourself..."
-                      rows={2}
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{user.name}</h1>
-                    <p className="text-gray-600 dark:text-gray-400">{user.bio || 'No bio yet'}</p>
-                  </>
-                )}
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                  Member since {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                {editing ? (
+                            {editing ? (
                   <>
                     <button
                       onClick={() => {
@@ -413,7 +382,35 @@ export default function MyProfilePage() {
                     </button>
                   </div>
                 )}
-              </div>
+            </div>
+            {/* Name + Bio — always below banner */}
+            <div className="mt-3">
+              {editing ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Your name"
+                    />
+                    <textarea
+                      value={editBio}
+                      onChange={(e) => setEditBio(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                      placeholder="Tell us about yourself..."
+                      rows={2}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{user.name}</h1>
+                    <p className="text-gray-600 dark:text-gray-400">{user.bio || 'No bio yet'}</p>
+                  </>
+                )}
+                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                  Member since {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
+                </p>
             </div>
           </div>
         </div>
