@@ -1063,13 +1063,19 @@ export default function MessagesPage() {
                 /* Group Chat View */
                 <>
                   {/* Group Chat Header */}
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
                     {(() => {
                       const group = groupChats.find(g => g.group_id === selectedGroup);
                       if (!group) return null;
                       return (
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <button
+                              onClick={() => setSelectedGroup(null)}
+                              className="md:hidden p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+                            </button>
                             {group.image ? (
                               <Image src={group.image} alt={group.name} width={40} height={40} className="rounded-xl" unoptimized />
                             ) : (
