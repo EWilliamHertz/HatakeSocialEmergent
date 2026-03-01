@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+
+// next-pwa is incompatible with Turbopack — turbopack must be disabled
+// for the service worker to be generated correctly during build
 const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
@@ -31,11 +34,20 @@ const withPWA = require("next-pwa")({
       handler: "StaleWhileRevalidate",
       options: { cacheName: "next-image" },
     },
+    {
+      // Cache all same-origin navigation requests for offline support
+      urlPattern: /^https:\/\/hatake\.social\/.*/i,
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "pages-cache",
+        expiration: { maxEntries: 50, maxAgeSeconds: 3600 },
+      },
+    },
   ],
 });
 
 const nextConfig: NextConfig = {
-  turbopack: {},
+  // NOTE: Turbopack removed — it breaks next-pwa service worker generation
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.pokemontcg.io" },
