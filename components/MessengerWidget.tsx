@@ -381,12 +381,13 @@ export default function MessengerWidget() {
   };
 
   const loadMessages = async (convId: string) => {
+    if (!convId) return;
     try {
       const res = await fetch(`/api/messages/${convId}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        if (data.success) {
-          setMessages(data.messages || []);
+        if (data.success && Array.isArray(data.messages)) {
+          setMessages(data.messages);
         }
       }
     } catch (err) {
@@ -395,17 +396,21 @@ export default function MessengerWidget() {
   };
 
   const loadGroupMessages = async (groupId: string) => {
+    if (!groupId) return;
     try {
       const res = await fetch(`/api/groups/${groupId}/messages`, { credentials: 'include' });
+      if (!res.ok) return;
       const data = await res.json();
-      if (data.success) {
-        setGroupMessages((data.messages || []).map((m: any) => ({
+      if (data.success && Array.isArray(data.messages)) {
+        setGroupMessages(data.messages.map((m: any) => ({
           ...m,
           name: m.sender_name || m.name || 'Unknown',
           picture: m.sender_picture || m.picture || null,
         })));
       }
-    } catch {}
+    } catch (err) {
+      console.error('Load group messages error:', err);
+    }
   };
 
   const loadAllUsers = async () => {
@@ -785,7 +790,7 @@ export default function MessengerWidget() {
                                   </div>
                                 )}
                                 
-                                <div className={`max-w-[200px] rounded-xl px-3 py-1.5 ${
+                                <div className={`max-w-[220px] rounded-xl px-3 py-1.5 break-words overflow-hidden ${
                                   msg.sender_id === currentUserId 
                                     ? 'bg-blue-600 text-white' 
                                     : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
@@ -1060,7 +1065,7 @@ export default function MessengerWidget() {
                           {msg.sender_id !== currentUserId && (
                             <p className="text-[10px] text-gray-500 mb-0.5 ml-1">{msg.name}</p>
                           )}
-                          <div className={`max-w-[180px] rounded-xl px-3 py-1.5 ${msg.sender_id === currentUserId ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'}`}>
+                          <div className={`max-w-[200px] rounded-xl px-3 py-1.5 break-words overflow-hidden ${msg.sender_id === currentUserId ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'}`}>
                             <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                           </div>
                           <p className={`text-[10px] text-gray-400 mt-0.5 ${msg.sender_id === currentUserId ? 'text-right' : ''}`}>

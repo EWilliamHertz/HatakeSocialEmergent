@@ -293,21 +293,32 @@ export default function MessagesPage() {
     } catch {}
   };
 
-  const loadGroupMembers = async (groupId: string) => {
+  const loadMessages = async (convId: string) => {
+    if (!convId) return;
     try {
-      const res = await fetch(`/api/groups/${groupId}/members`, { credentials: 'include' });
+      const res = await fetch(`/api/messages/${convId}`, { credentials: 'include' });
+      if (!res.ok) return;
       const data = await res.json();
-      if (data.success) setGroupMembers(data.members || []);
-    } catch {}
+      if (data.success && Array.isArray(data.messages)) {
+        setMessages(data.messages);
+      }
+    } catch (err) {
+      console.error('Load messages error:', err);
+    }
   };
 
-  const loadAllUsers = async () => {
+  const loadGroupMessages = async (groupId: string) => {
+    if (!groupId) return;
     try {
-      const res  = await fetch('/api/users/search?q=', { credentials: 'include' });
+      const res = await fetch(`/api/groups/${groupId}/messages`, { credentials: 'include' });
+      if (!res.ok) return;
       const data = await res.json();
-      if (data.success)
-        setAllUsers((data.users || []).filter((u: User) => u.user_id !== currentUserId));
-    } catch {}
+      if (data.success && Array.isArray(data.messages)) {
+        setGroupMessages(data.messages);
+      }
+    } catch (err) {
+      console.error('Load group messages error:', err);
+    }
   };
 
   const loadMediaGallery = async (convId: string) => {
@@ -820,10 +831,10 @@ export default function MessagesPage() {
                               </div>
                             )}
 
-                            <div className={`flex flex-col max-w-[70%] ${isSender ? 'items-end' : 'items-start'}`}>
+                            <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] ${isSender ? 'items-end' : 'items-start'}`}>
                               {/* Reply context */}
                               {msg.reply_content && (
-                                <div className={`mb-1 px-3 py-1.5 rounded-lg text-xs border-l-4 ${
+                                <div className={`mb-1 px-3 py-1.5 rounded-lg text-xs border-l-4 w-full ${
                                   isSender
                                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-300'
                                     : 'bg-gray-100 dark:bg-gray-700 border-gray-400 text-gray-600 dark:text-gray-400'
@@ -833,7 +844,7 @@ export default function MessagesPage() {
                                 </div>
                               )}
 
-                              <div className={`group relative px-4 py-2 rounded-2xl ${
+                              <div className={`group relative px-4 py-2 rounded-2xl w-full break-words ${
                                 isSender
                                   ? 'bg-blue-600 text-white rounded-br-none'
                                   : 'bg-gray-100 dark:bg-gray-700 dark:text-white rounded-bl-none'
@@ -841,7 +852,9 @@ export default function MessagesPage() {
                                 {!isSender && selectedGroup && (
                                   <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-0.5">{msg.name}</p>
                                 )}
-                                {renderMessageContent(msg)}
+                                <div className="overflow-hidden">
+                                  {renderMessageContent(msg)}
+                                </div>
 
                                 {/* Hover actions */}
                                 <button
