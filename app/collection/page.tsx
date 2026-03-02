@@ -656,9 +656,8 @@ export default function CollectionPage() {
                 fetchFromLang('zh-tw').catch(() => [] as any[]),
               ]);
             }
-            // Cap EN at 15 so JA/ZH always make it into the slice(0,60) window
             const seen = new Set<string>();
-            for (const card of [...enCards.slice(0, 15), ...jaCards, ...zhCards]) {
+            for (const card of [...enCards, ...jaCards, ...zhCards]) {
               if (!seen.has(card.id)) { seen.add(card.id); cards.push(card); }
             }
           } else if (
@@ -696,8 +695,7 @@ export default function CollectionPage() {
           }
           clearTimeout(timeoutId);
           
-          const resultLimit = addCardLang === 'all' ? 60 : 30;
-          const mappedCards = cards.slice(0, resultLimit).map((card: any) => ({
+          const mappedCards = cards.map((card: any) => ({
             id: card.id,
             name: card.name,
             game: 'pokemon',
