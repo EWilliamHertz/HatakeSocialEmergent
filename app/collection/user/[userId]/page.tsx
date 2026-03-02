@@ -82,7 +82,7 @@ export default function UserCollectionPage() {
     try {
       const res = await fetch(`/api/bookmarks/check/${userId}`, { credentials: 'include' });
       const data = await res.json();
-      setIsBookmarked(data.isBookmarked || false);
+      setIsBookmarked(data.bookmarked || false);
     } catch (error) {
       console.error('Check bookmark error:', error);
     }
@@ -101,13 +101,13 @@ export default function UserCollectionPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          targetUserId: userId,
-          action: isBookmarked ? 'unbookmark' : 'bookmark'
+          userId: userId
         })
       });
 
       if (res.ok) {
-        setIsBookmarked(!isBookmarked);
+        const data = await res.json();
+        setIsBookmarked(data.bookmarked || false);
       }
     } catch (error) {
       console.error('Toggle bookmark error:', error);
