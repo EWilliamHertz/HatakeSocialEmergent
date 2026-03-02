@@ -20,11 +20,11 @@ export async function GET(
     const { userId } = await params;
     const gameFilter = request.nextUrl.searchParams.get('game');
 
-    // Get user info
+    // Get user info - use user_id field, not id
     const userResult = await sql`
-      SELECT id, username, profile_picture_url
+      SELECT user_id as id, username, profile_picture_url
       FROM users
-      WHERE id = ${userId}
+      WHERE user_id = ${userId}
     `;
 
     if (userResult.length === 0) {
