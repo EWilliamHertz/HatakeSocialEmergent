@@ -211,6 +211,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
                     width={96} 
                     height={96} 
                     className="rounded-full border-4 border-white dark:border-gray-800 shadow-lg"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-24 h-24 bg-blue-600 rounded-full border-4 border-white dark:border-gray-800 shadow-lg flex items-center justify-center text-white text-3xl font-bold">

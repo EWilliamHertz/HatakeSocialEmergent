@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Users, UsersRound, UserPlus, Search, Check, X, MessageCircle, Plus, ChevronRight, Link as LinkIcon } from 'lucide-react';
 
@@ -327,14 +328,14 @@ export default function CommunityPage() {
                         <div key={friend.user_id} className="p-4 flex items-center justify-between" data-testid={`friend-${friend.user_id}`}>
                           <div className="flex items-center gap-4">
                             {friend.picture ? (
-                              <Image src={friend.picture} alt={friend.name} width={48} height={48} className="rounded-full" />
+                              <Image src={friend.picture} alt={friend.name} width={48} height={48} className="rounded-full"  unoptimized />
                             ) : (
                               <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
                                 {friend.name.charAt(0).toUpperCase()}
                               </div>
                             )}
                             <div>
-                              <p className="font-semibold dark:text-white">{friend.name}</p>
+                              <Link href={`/profile/${friend.user_id}`} className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition block">{friend.name}</Link>
                               <p className="text-sm text-gray-500 dark:text-gray-400">{friend.email}</p>
                             </div>
                           </div>
@@ -392,7 +393,7 @@ export default function CommunityPage() {
                           >
                             <div className="flex items-center gap-4">
                               {group.picture ? (
-                                <Image src={group.picture} alt={group.name} width={48} height={48} className="rounded-xl" />
+                                <Image src={group.picture} alt={group.name} width={48} height={48} className="rounded-xl"  unoptimized />
                               ) : (
                                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-white text-lg font-bold">
                                   {group.name.charAt(0).toUpperCase()}
@@ -461,7 +462,7 @@ export default function CommunityPage() {
                         <div key={request.request_id} className="p-4 flex items-center justify-between" data-testid={`request-${request.request_id}`}>
                           <div className="flex items-center gap-4">
                             {request.picture ? (
-                              <Image src={request.picture} alt={request.name} width={48} height={48} className="rounded-full" />
+                              <Image src={request.picture} alt={request.name} width={48} height={48} className="rounded-full"  unoptimized />
                             ) : (
                               <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
                                 {request.name.charAt(0).toUpperCase()}
@@ -529,7 +530,7 @@ export default function CommunityPage() {
                         <div key={user.user_id} className="p-4 flex items-center justify-between" data-testid={`search-result-${user.user_id}`}>
                           <div className="flex items-center gap-4">
                             {user.picture ? (
-                              <Image src={user.picture} alt={user.name} width={48} height={48} className="rounded-full" />
+                              <Image src={user.picture} alt={user.name} width={48} height={48} className="rounded-full"  unoptimized />
                             ) : (
                               <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg font-semibold">
                                 {user.name.charAt(0).toUpperCase()}
@@ -579,7 +580,7 @@ export default function CommunityPage() {
                         <div key={invite.invite_id} className="p-4 flex items-center justify-between" data-testid={`invite-${invite.invite_id}`}>
                           <div className="flex items-center gap-4">
                             {invite.group_image ? (
-                              <Image src={invite.group_image} alt={invite.group_name} width={56} height={56} className="rounded-lg object-cover" />
+                              <Image src={invite.group_image} alt={invite.group_name} width={56} height={56} className="rounded-lg object-cover"  unoptimized />
                             ) : (
                               <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                                 <UsersRound className="w-7 h-7 text-white" />

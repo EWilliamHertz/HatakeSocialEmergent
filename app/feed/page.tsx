@@ -156,7 +156,7 @@ export default function FeedPage() {
                 {/* Post Header */}
                 <div className="flex items-center gap-3 mb-4">
                   {post.picture ? (
-                    <Image src={post.picture} alt={post.name} width={40} height={40} className="rounded-full" />
+                    <Image src={post.picture} alt={post.name} width={40} height={40} className="rounded-full" unoptimized />
                   ) : (
                     <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                       {post.name.charAt(0).toUpperCase()}
@@ -181,6 +181,7 @@ export default function FeedPage() {
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       priority={false}
+                      unoptimized
                     />
                   </div>
                 )}
