@@ -22,16 +22,16 @@ export async function GET(
     // Check if user has bookmarked this collection
     const result = await sql`
       SELECT id FROM collection_bookmarks
-      WHERE user_id = ${user.id} AND bookmarked_user_id = ${userId}
+      WHERE user_id = ${user.user_id} AND bookmarked_user_id = ${userId}
       LIMIT 1
     `;
 
     return NextResponse.json({ 
       success: true, 
-      isBookmarked: result.length > 0 
+      bookmarked: result.length > 0 
     });
-  } catch (error: any) {
-    console.error('Check bookmark error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error('Bookmark check error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
