@@ -604,7 +604,7 @@ export default function CollectionPage() {
           const fetchByDexId = async (lang: string, dexIds: number[]): Promise<any[]> => {
             const res = await Promise.allSettled(
               dexIds.map(async (dexId) => {
-                const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards?dexId=${dexId}`, { signal: controller.signal });
+                const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards?dexId=eq:${dexId}`, { signal: controller.signal });
                 if (!r.ok) return [] as any[];
                 const c = await r.json();
                 return (Array.isArray(c) ? c : []).map((x: any) => ({ ...x, _srcLang: lang }));
