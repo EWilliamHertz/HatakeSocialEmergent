@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Users, Globe, Hash, Heart, MessageCircle, Send } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Post {
   post_id: string;
   content: string;
   name: string;
+  user_id: string;
   image_url?: string;
   picture?: string;
   like_count: number;
@@ -163,7 +165,7 @@ export default function FeedPage() {
                     </div>
                   )}
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{post.name}</p>
+                    <Link href={`/profile/${post.user_id}`}><p className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition">{post.name}</p></Link>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(post.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
