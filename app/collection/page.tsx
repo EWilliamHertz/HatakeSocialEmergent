@@ -1140,6 +1140,7 @@ export default function CollectionPage() {
             )}
           </>
         )}
+        </>)}
 
         {/* SEALED PRODUCTS TAB */}
         {activeTab === 'sealed' && (
