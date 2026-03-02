@@ -21,6 +21,31 @@ interface Post {
   card_data?: any;
 }
 
+// Render post text with clickable hyperlinks
+function renderContent(text: string) {
+  const URL_REGEX = /(https?:\/\/[^\s<>"]+)/g;
+  const parts = text.split(URL_REGEX);
+  return parts.map((part, i) => {
+    if (URL_REGEX.test(part)) {
+      // Reset lastIndex after test()
+      URL_REGEX.lastIndex = 0;
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:text-blue-700 underline break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 export default function FeedPage() {
   const router = useRouter();
   const [tab, setTab] = useState('public');
@@ -170,8 +195,10 @@ export default function FeedPage() {
                   </div>
                 </div>
 
-                {/* Post Content */}
-                <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">{post.content}</p>
+                {/* Post Content — URLs rendered as clickable links */}
+                <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">
+                  {renderContent(post.content)}
+                </p>
 
                 {/* Post Image */}
                 {post.image_url && (
