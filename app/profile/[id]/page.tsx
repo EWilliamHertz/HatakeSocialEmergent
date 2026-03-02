@@ -111,7 +111,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ friendId: resolvedParams.id })
+        body: JSON.stringify({ friendId: resolvedParams.id, action: 'request' })
       });
       const data = await res.json();
       if (data.success) {

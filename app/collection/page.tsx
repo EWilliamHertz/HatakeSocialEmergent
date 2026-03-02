@@ -2027,7 +2027,7 @@ export default function CollectionPage() {
                   <div className="flex flex-wrap gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
                     {([{code:'all',label:'🌐 All (EN·JA·ZH)'},{code:'en',label:'🇬🇧 English'},{code:'ja',label:'🇯🇵 Japanese'},{code:'zh-tw',label:'🇹🇼 Chinese'},{code:'ko',label:'🇰🇷 Korean'},{code:'fr',label:'🇫🇷 French'},{code:'de',label:'🇩🇪 German'},{code:'it',label:'🇮🇹 Italian'},{code:'pt',label:'🇵🇹 Portuguese'},{code:'es',label:'🇪🇸 Spanish'}] as {code:'all'|'en'|'ja'|'fr'|'de'|'it'|'pt'|'es'|'ko'|'zh-tw',label:string}[]).map(({code,label}) => (
                       <button
-                        key={lang}
+                        key={code}
                         onClick={() => { setAddCardLang(code); setAddCardSearchResults([]); }}
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
                           addCardLang === code

@@ -15,10 +15,9 @@ interface Friend {
 }
 
 interface FriendRequest {
-  request_id: string;
-  from_user_id: string;
+  user_id: string;
   name: string;
-  email: string;
+  email?: string;
   picture?: string;
   created_at: string;
 }
@@ -176,13 +175,13 @@ export default function CommunityPage() {
     } catch (e) { console.error('Send request error:', e); }
   };
 
-  const acceptRequest = async (requestId: string) => {
+  const acceptRequest = async (fromUserId: string) => {
     try {
       const res = await fetch('/api/friends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ requestId, action: 'accept' })
+        body: JSON.stringify({ friendId: fromUserId, action: 'accept' })
       });
       if (res.ok) {
         await Promise.all([loadFriends(), loadRequests()]);
@@ -190,13 +189,13 @@ export default function CommunityPage() {
     } catch (e) { console.error('Accept request error:', e); }
   };
 
-  const rejectRequest = async (requestId: string) => {
+  const rejectRequest = async (fromUserId: string) => {
     try {
       const res = await fetch('/api/friends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ requestId, action: 'reject' })
+        body: JSON.stringify({ friendId: fromUserId, action: 'reject' })
       });
       if (res.ok) await loadRequests();
     } catch (e) { console.error('Reject request error:', e); }
@@ -459,7 +458,7 @@ export default function CommunityPage() {
                   ) : (
                     <div className="divide-y dark:divide-gray-700">
                       {requests.map((request) => (
-                        <div key={request.request_id} className="p-4 flex items-center justify-between" data-testid={`request-${request.request_id}`}>
+                        <div key={request.user_id} className="p-4 flex items-center justify-between" data-testid={`request-${request.user_id}`}>
                           <div className="flex items-center gap-4">
                             {request.picture ? (
                               <Image src={request.picture} alt={request.name} width={48} height={48} className="rounded-full"  unoptimized />
@@ -475,14 +474,14 @@ export default function CommunityPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => acceptRequest(request.request_id)}
+                              onClick={() => acceptRequest(request.user_id)}
                               className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg"
                               title="Accept"
                             >
                               <Check className="w-5 h-5" />
                             </button>
                             <button
-                              onClick={() => rejectRequest(request.request_id)}
+                              onClick={() => rejectRequest(request.user_id)}
                               className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
                               title="Decline"
                             >
