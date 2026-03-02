@@ -20,9 +20,9 @@ export async function GET(
     const { userId } = await params;
     const gameFilter = request.nextUrl.searchParams.get('game');
 
-    // Get user info - use user_id field, not id
+    // Get user info - use name field (not username), picture (not profile_picture_url)
     const userResult = await sql`
-      SELECT user_id as id, username, profile_picture_url
+      SELECT user_id, name, picture as profile_picture_url
       FROM users
       WHERE user_id = ${userId}
     `;
@@ -68,7 +68,6 @@ export async function GET(
 
     const items = await itemsQuery;
 
-    // Transform to match expected format
     const transformedItems = items.map((item: any) => {
       const cardData = typeof item.card_data === 'string' 
         ? JSON.parse(item.card_data) 

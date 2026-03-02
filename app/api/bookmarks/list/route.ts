@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    // Get user_id from email
     const userResult = await sql`
       SELECT user_id FROM users WHERE email = ${user.email}
     `;
@@ -25,12 +24,12 @@ export async function GET(request: NextRequest) {
 
     const userId = userResult[0].user_id;
 
-    // Get all bookmarked collections
+    // Use name and picture fields (correct column names)
     const bookmarks = await sql`
       SELECT 
         cb.bookmarked_user_id,
-        u.username,
-        u.profile_picture_url,
+        u.name,
+        u.picture as profile_picture_url,
         COUNT(ci.id) as card_count,
         COALESCE(SUM(
           CASE 
@@ -57,13 +56,13 @@ export async function GET(request: NextRequest) {
       JOIN users u ON cb.bookmarked_user_id = u.user_id
       LEFT JOIN collection_items ci ON u.user_id = ci.user_id AND ci.quantity > 0
       WHERE cb.user_id = ${userId}
-      GROUP BY cb.bookmarked_user_id, u.username, u.profile_picture_url
-      ORDER BY u.username ASC
+      GROUP BY cb.bookmarked_user_id, u.name, u.picture
+      ORDER BY u.name ASC
     `;
 
     const collections = bookmarks.map((bookmark: any) => ({
       user_id: bookmark.bookmarked_user_id,
-      username: bookmark.username,
+      name: bookmark.name,
       profile_picture_url: bookmark.profile_picture_url,
       card_count: parseInt(bookmark.card_count || '0'),
       total_value: parseFloat(bookmark.total_value || '0')
