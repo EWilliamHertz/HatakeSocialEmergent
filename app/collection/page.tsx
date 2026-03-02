@@ -656,17 +656,19 @@ export default function CollectionPage() {
                 fetchFromLang('zh-tw').catch(() => [] as any[]),
               ]);
             }
+            // Cap EN at 15 so JA/ZH always make it into the slice(0,60) window
             const seen = new Set<string>();
-            for (const card of [...enCards, ...jaCards, ...zhCards]) {
+            for (const card of [...enCards.slice(0, 15), ...jaCards, ...zhCards]) {
               if (!seen.has(card.id)) { seen.add(card.id); cards.push(card); }
             }
           } else if (
-            ['ja', 'ko', 'zh-tw'].includes(addCardLang) &&
+            addCardLang !== 'en' &&
             addCardName.trim().length >= 2 &&
             /^[\x00-\x7F]+$/.test(addCardName.trim()) &&
             !addCardSetCode.trim()
           ) {
-            // ASCII query + non-EN language: use dexId to find all cards incl. JA-exclusive sets
+            // ASCII query + any non-EN language: use dexId so we find cards by Pokédex number
+            // (DE searches "Charmander" directly returns nothing; dexId finds "Glurak" etc.)
             const targetLang = addCardLang;
             const enResults = await fetchFromLang('en').catch(() => [] as any[]);
             const dexIds = await getDexIds(enResults);
@@ -694,7 +696,8 @@ export default function CollectionPage() {
           }
           clearTimeout(timeoutId);
           
-          const mappedCards = cards.slice(0, 30).map((card: any) => ({
+          const resultLimit = addCardLang === 'all' ? 60 : 30;
+          const mappedCards = cards.slice(0, resultLimit).map((card: any) => ({
             id: card.id,
             name: card.name,
             game: 'pokemon',
