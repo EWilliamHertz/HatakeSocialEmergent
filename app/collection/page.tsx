@@ -4,10 +4,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Package, Trash2, CheckSquare, Square, MoreHorizontal, Edit2, ShoppingBag, Search, Upload, FileSpreadsheet, X, AlertCircle, CheckCircle, Plus, Loader2, Camera, Star, Share2 } from 'lucide-react';
+import { Package, Trash2, CheckSquare, Square, MoreHorizontal, Edit2, ShoppingBag, Search, Upload, FileSpreadsheet, X, AlertCircle, CheckCircle, Plus, Loader2, Camera, Star, Share2, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import { LayoutGrid, List as ListIcon, Grid3X3, BookOpen } from 'lucide-react'; // Add these icons
 import CollectionDashboard from '@/components/CollectionDashboard'; // Import the new component
+import CollectionValueChart from '@/components/CollectionValueChart';
 
 interface CollectionItem {
   id: number;
@@ -53,7 +54,7 @@ export default function CollectionPage() {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [showBulkMenu, setShowBulkMenu] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'binder'>('grid'); // New State
-  const [activeTab, setActiveTab] = useState<'cards' | 'sealed' | 'wishlist' | 'bookmarks'>('cards'); // Tab state
+  const [activeTab, setActiveTab] = useState<'cards' | 'sealed' | 'wishlist' | 'bookmarks' | 'analytics'>('cards'); // Tab state
   
   // Wishlist and Sealed Products state
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
@@ -963,6 +964,19 @@ export default function CollectionPage() {
                 Bookmarks
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`px-4 py-3 font-semibold transition border-b-2 -mb-px ${
+                activeTab === 'analytics' 
+                  ? 'border-blue-600 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Analytics
+              </span>
+            </button>
           </div>
 
           {/* Cards Tab Header */}
@@ -1487,6 +1501,13 @@ export default function CollectionPage() {
               ))}
             </div>
           )}
+          </div>
+        )}
+
+        {/* ANALYTICS TAB */}
+        {activeTab === 'analytics' && (
+          <div className="py-2">
+            <CollectionValueChart />
           </div>
         )}
 

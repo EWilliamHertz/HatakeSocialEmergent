@@ -199,5 +199,21 @@ export async function GET(request: NextRequest) {
     ) ON CONFLICT DO NOTHING
   `);
 
+  // Price history tables
+  await run('collection_value_snapshots table', () => sql`
+    CREATE TABLE IF NOT EXISTS collection_value_snapshots (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT REFERENCES users(user_id) ON DELETE CASCADE,
+      total_value_eur DECIMAL(10,2) NOT NULL DEFAULT 0,
+      card_count INTEGER NOT NULL DEFAULT 0,
+      snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(user_id, snapshot_date)
+    )
+  `);
+  await run('idx_snapshots_user_id', () => sql`
+    CREATE INDEX IF NOT EXISTS idx_snapshots_user_id ON collection_value_snapshots(user_id)
+  `);
+
   return NextResponse.json({ success: true, results });
 }
