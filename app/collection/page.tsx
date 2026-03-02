@@ -1067,7 +1067,6 @@ export default function CollectionPage() {
           </div>}
           </div>
         </div>
-        </div>
       </div>
 
       {/* Scrollable content */}
