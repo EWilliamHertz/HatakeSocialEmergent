@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Package, BookOpen, LayoutGrid, List as ListIcon, Star, Search } from 'lucide-react';
+import { Package, BookOpen, LayoutGrid, List as ListIcon, Star, Search, Share2, Check } from 'lucide-react';
 import Image from 'next/image';
 
 interface CollectionItem {
@@ -19,7 +19,7 @@ interface CollectionItem {
 interface UserInfo {
   user_id: string;
   name: string;
-  profile_picture_url?: string;
+  picture?: string;
 }
 
 export default function UserCollectionPage() {
@@ -36,46 +36,25 @@ export default function UserCollectionPage() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    loadCurrentUser();
-  }, []);
-
-  useEffect(() => {
-    if (userId) {
-      loadCollection();
-      checkIfBookmarked();
-    }
-  }, [userId, filter]);
+  useEffect(() => { loadCurrentUser(); }, []);
+  useEffect(() => { if (userId) { loadCollection(); checkIfBookmarked(); } }, [userId, filter]);
 
   const loadCurrentUser = async () => {
     try {
       const res = await fetch('/api/auth/me', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setCurrentUser(data);
-      }
-    } catch (error) {
-      console.error('Load current user error:', error);
-    }
+      if (res.ok) setCurrentUser(await res.json());
+    } catch {}
   };
 
   const loadCollection = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/collection/user/${userId}?game=${filter === 'all' ? '' : filter}`, {
-        credentials: 'include'
-      });
+      const res = await fetch(`/api/collection/user/${userId}?game=${filter === 'all' ? '' : filter}`, { credentials: 'include' });
       const data = await res.json();
-      if (data.success) {
-        setItems(data.items || []);
-        setUserInfo(data.user || null);
-      }
-    } catch (error) {
-      console.error('Load collection error:', error);
-    } finally {
-      setLoading(false);
-    }
+      if (data.success) { setItems(data.items || []); setUserInfo(data.user || null); }
+    } catch {} finally { setLoading(false); }
   };
 
   const checkIfBookmarked = async () => {
@@ -83,33 +62,29 @@ export default function UserCollectionPage() {
       const res = await fetch(`/api/bookmarks/check/${userId}`, { credentials: 'include' });
       const data = await res.json();
       setIsBookmarked(data.bookmarked || false);
-    } catch (error) {
-      console.error('Check bookmark error:', error);
-    }
+    } catch {}
   };
 
   const toggleBookmark = async () => {
-    if (!currentUser) {
-      router.push('/auth/login');
-      return;
-    }
+    if (!currentUser) { router.push('/auth/login'); return; }
     setBookmarkLoading(true);
     try {
-      const res = await fetch('/api/bookmarks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ userId })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setIsBookmarked(data.bookmarked || false);
+      const res = await fetch('/api/bookmarks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ userId }) });
+      if (res.ok) { const data = await res.json(); setIsBookmarked(data.bookmarked || false); }
+    } catch {} finally { setBookmarkLoading(false); }
+  };
+
+  const shareCollection = async () => {
+    const shareUrl = `${window.location.origin}/share/${userId}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${displayName}'s Collection on Hatake`, text: `Check out ${displayName}'s TCG collection!`, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
       }
-    } catch (error) {
-      console.error('Toggle bookmark error:', error);
-    } finally {
-      setBookmarkLoading(false);
-    }
+    } catch {}
   };
 
   const getCardImage = (item: CollectionItem) => {
@@ -123,118 +98,75 @@ export default function UserCollectionPage() {
 
   const getCardPrice = (item: CollectionItem) => {
     const card = item.card_data;
-    if (!card) return { value: 0, currency: 'EUR' };
+    if (!card) return { value: 0 };
     if (item.game === 'pokemon') {
-      if (card.pricing?.cardmarket) {
-        return { value: card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0, currency: 'EUR' };
-      }
-      if (card.tcgplayer?.prices) {
-        const prices = card.tcgplayer.prices;
-        const usdPrice = prices.holofoil?.market || prices.normal?.market || 0;
-        return { value: usdPrice * 0.92, currency: 'EUR' };
-      }
+      if (card.pricing?.cardmarket) return { value: card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0 };
+      if (card.tcgplayer?.prices) { const p = card.tcgplayer.prices; return { value: (p.holofoil?.market || p.normal?.market || 0) * 0.92 }; }
     } else if (item.game === 'mtg') {
-      if (card.prices?.eur) return { value: parseFloat(card.prices.eur), currency: 'EUR' };
-      if (card.prices?.eur_foil && item.is_foil) return { value: parseFloat(card.prices.eur_foil), currency: 'EUR' };
-      if (card.prices?.usd) return { value: parseFloat(card.prices.usd) * 0.92, currency: 'EUR' };
+      if (card.prices?.eur) return { value: parseFloat(card.prices.eur) };
+      if (card.prices?.eur_foil && item.is_foil) return { value: parseFloat(card.prices.eur_foil) };
+      if (card.prices?.usd) return { value: parseFloat(card.prices.usd) * 0.92 };
     }
-    return { value: 0, currency: 'EUR' };
+    return { value: 0 };
   };
 
   const calculateTotalValue = () => {
-    let totalEUR = 0;
-    items.forEach(item => {
-      const price = getCardPrice(item);
-      totalEUR += price.value * item.quantity;
-    });
-    return totalEUR > 0 ? `€${totalEUR.toFixed(2)}` : '€0.00';
+    const total = items.reduce((sum, item) => sum + getCardPrice(item).value * item.quantity, 0);
+    return `€${total.toFixed(2)}`;
   };
 
-  const filteredItems = items.filter(item => {
-    if (!searchQuery) return true;
-    return item.card_data?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-  });
-
+  const filteredItems = items.filter(item => !searchQuery || item.card_data?.name?.toLowerCase().includes(searchQuery.toLowerCase()));
   const displayName = userInfo?.name || 'User';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <div>
-              <h1 className="text-3xl font-bold dark:text-white">
-                {displayName}&apos;s Collection
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                {items.length} cards • Total Value: {calculateTotalValue()}
-              </p>
+              <h1 className="text-3xl font-bold dark:text-white">{displayName}&apos;s Collection</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">{items.length} cards · Total Value: {calculateTotalValue()}</p>
             </div>
-            <button
-              onClick={toggleBookmark}
-              disabled={bookmarkLoading}
-              className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${
-                isBookmarked
-                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
-              } disabled:opacity-50`}
-            >
-              <Star className={`w-5 h-5 ${isBookmarked ? 'fill-current' : ''}`} />
-              {bookmarkLoading ? 'Loading...' : isBookmarked ? 'Bookmarked' : 'Bookmark'}
-            </button>
+            <div className="flex gap-2">
+              <button onClick={shareCollection} className="px-4 py-2 rounded-lg font-semibold text-sm transition flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200">
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+                {copied ? 'Copied!' : 'Share'}
+              </button>
+              <button onClick={toggleBookmark} disabled={bookmarkLoading} className={`px-4 py-2 rounded-lg font-semibold text-sm transition flex items-center gap-2 disabled:opacity-50 ${isBookmarked ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200'}`}>
+                <Star className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                {bookmarkLoading ? '...' : isBookmarked ? 'Bookmarked' : 'Bookmark'}
+              </button>
+            </div>
           </div>
 
-          {/* Filter Buttons */}
           <div className="flex gap-2 mb-6">
             {[{key:'all',label:'All'},{key:'pokemon',label:'Pokémon'},{key:'mtg',label:'Magic'}].map(({key,label}) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key)}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${
-                  filter === key ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                }`}
-              >
-                {label}
-              </button>
+              <button key={key} onClick={() => setFilter(key)} className={`px-4 py-2 rounded-lg font-semibold transition ${filter === key ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>{label}</button>
             ))}
           </div>
 
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search cards..."
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            />
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search cards..." className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" />
           </div>
         </div>
 
-        {/* View Toggle */}
         <div className="flex justify-end mb-4">
           <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-            <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500'}`} title="Grid"><LayoutGrid className="w-4 h-4" /></button>
-            <button onClick={() => setViewMode('binder')} className={`p-2 rounded-md transition ${viewMode === 'binder' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500'}`} title="Binder"><BookOpen className="w-4 h-4" /></button>
-            <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500'}`} title="List"><ListIcon className="w-4 h-4" /></button>
+            <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500'}`}><LayoutGrid className="w-4 h-4" /></button>
+            <button onClick={() => setViewMode('binder')} className={`p-2 rounded-md transition ${viewMode === 'binder' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500'}`}><BookOpen className="w-4 h-4" /></button>
+            <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow text-blue-600' : 'text-gray-500'}`}><ListIcon className="w-4 h-4" /></button>
           </div>
         </div>
 
-        {/* Collection Content */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          </div>
+          <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div></div>
         ) : filteredItems.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
             <Package className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">
-              {items.length === 0 ? `${displayName} hasn't added any cards yet` : 'No cards match your search'}
-            </p>
+            <p className="text-gray-500 dark:text-gray-400">{items.length === 0 ? `${displayName} hasn't added any cards yet` : 'No cards match your search'}</p>
           </div>
         ) : (
           <>
@@ -244,23 +176,12 @@ export default function UserCollectionPage() {
                   <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition">
                     <div className="relative aspect-[2/3]">
                       <Image src={getCardImage(item)} alt={item.card_data?.name || 'Card'} fill className="object-cover" unoptimized />
-                      {item.quantity > 1 && (
-                        <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">x{item.quantity}</div>
-                      )}
-                      {item.is_foil && (
-                        <div className="absolute bottom-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">FOIL</div>
-                      )}
+                      {item.quantity > 1 && <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">x{item.quantity}</div>}
+                      {item.is_foil && <div className="absolute bottom-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">FOIL</div>}
                     </div>
                     <div className="p-3">
                       <h3 className="font-semibold text-sm mb-1 truncate dark:text-white">{item.card_data?.name || 'Unknown Card'}</h3>
-                      <div className="flex items-center gap-1 mb-1">
-                        {(item.card_data?.set?.id || item.card_data?.set_code) && (
-                          <span className="text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded font-mono uppercase">
-                            {item.card_data?.set?.id || item.card_data?.set_code}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mt-1">
                         <span className="text-xs text-gray-500 dark:text-gray-400">{item.condition || 'NM'}</span>
                         <span className="text-sm font-bold text-blue-600 dark:text-blue-400">€{getCardPrice(item).value.toFixed(2)}</span>
                       </div>
@@ -269,7 +190,6 @@ export default function UserCollectionPage() {
                 ))}
               </div>
             )}
-
             {viewMode === 'binder' && (
               <div className="bg-gray-200 dark:bg-gray-800 p-8 rounded-xl shadow-inner min-h-[600px]">
                 <div className="grid grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -281,7 +201,6 @@ export default function UserCollectionPage() {
                 </div>
               </div>
             )}
-
             {viewMode === 'list' && (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
                 <table className="w-full text-sm text-left">
@@ -297,14 +216,8 @@ export default function UserCollectionPage() {
                     {filteredItems.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td className="p-4 font-medium dark:text-white">{item.card_data?.name}</td>
-                        <td className="p-4">
-                          <span className="uppercase text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                            {item.card_data?.set?.id || item.card_data?.set_code}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <span className="px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">{item.condition || 'NM'}</span>
-                        </td>
+                        <td className="p-4"><span className="uppercase text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{item.card_data?.set?.id || item.card_data?.set_code}</span></td>
+                        <td className="p-4"><span className="px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">{item.condition || 'NM'}</span></td>
                         <td className="p-4 text-right font-mono dark:text-white">€{getCardPrice(item).value.toFixed(2)}</td>
                       </tr>
                     ))}
