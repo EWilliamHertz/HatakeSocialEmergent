@@ -590,12 +590,35 @@ export default function CollectionPage() {
           };
 
           if (addCardLang === 'all') {
-            // Parallel: EN + JA + ZH-TW, then deduplicate by card id
-            const [enCards, jaCards, zhCards] = await Promise.all([
-              fetchFromLang('en').catch(() => [] as any[]),
-              fetchFromLang('ja').catch(() => [] as any[]),
-              fetchFromLang('zh-tw').catch(() => [] as any[]),
-            ]);
+            const isAsciiOnly = addCardName.trim().length >= 2 && /^[\x00-\x7F]+$/.test(addCardName.trim()) && !addCardSetCode.trim();
+            // Always fetch EN
+            const enCards = await fetchFromLang('en').catch(() => [] as any[]);
+            let jaCards: any[] = [];
+            let zhCards: any[] = [];
+            if (isAsciiOnly) {
+              // ASCII query: cross-fetch JA & ZH using EN set+localId (TCGdex foreign endpoints need native names)
+              const crossFetch = async (lang: string): Promise<any[]> => {
+                const res = await Promise.allSettled(
+                  enCards.map(async (enCard: any) => {
+                    const setId = enCard.set?.id || enCard.id?.split('-')[0];
+                    const localId = enCard.localId || enCard.id?.split('-').pop();
+                    if (!setId || !localId) return null;
+                    const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${setId}-${localId}`, { signal: controller.signal });
+                    if (!r.ok) return null;
+                    const fc = await r.json();
+                    return { ...fc, _srcLang: lang };
+                  })
+                );
+                return res.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null).map(r => r.value);
+              };
+              [jaCards, zhCards] = await Promise.all([crossFetch('ja').catch(() => []), crossFetch('zh-tw').catch(() => [])]);
+            } else {
+              // Non-ASCII (native characters): direct name search in each language
+              [jaCards, zhCards] = await Promise.all([
+                fetchFromLang('ja').catch(() => [] as any[]),
+                fetchFromLang('zh-tw').catch(() => [] as any[]),
+              ]);
+            }
             const seen = new Set<string>();
             for (const card of [...enCards, ...jaCards, ...zhCards]) {
               if (!seen.has(card.id)) { seen.add(card.id); cards.push(card); }
@@ -698,7 +721,7 @@ export default function CollectionPage() {
     return '/placeholder-card.png';
   };
 
-  const getCardPrice = (item: CollectionItem): { value: number; currency: string; noPrice?: boolean } => {
+  const getCardPrice = (item: CollectionItem): { value: number; currency: string; noPrice?: boolean; isEstimated?: boolean } => {
     const card = item.card_data;
     if (item.game === 'pokemon') {
       if (card?.pricing?.cardmarket) {
@@ -713,7 +736,7 @@ export default function CollectionPage() {
       // Check override cache (EN equivalent for foreign cards)
       if (item.id in priceOverrides) {
         const overridePrice = priceOverrides[item.id];
-        if (overridePrice !== null) return { value: overridePrice, currency: 'EUR' };
+        if (overridePrice !== null) return { value: overridePrice, currency: 'EUR', isEstimated: true };
         return { value: 0, currency: 'EUR', noPrice: true };
       }
       return { value: 0, currency: 'EUR' };
@@ -735,7 +758,7 @@ export default function CollectionPage() {
     if (result.value === 0 && item.game === 'pokemon' && pricesLoading && !(item.id in priceOverrides)) {
       return '...';
     }
-    return `€${result.value.toFixed(2)}`;
+    return `${result.isEstimated ? '~' : ''}€${result.value.toFixed(2)}`;
   };
   
   const calculateTotalValue = () => {
@@ -835,11 +858,11 @@ export default function CollectionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900" style={{ height: '100dvh' }}>
       <Navbar />
 
-      {/* Sticky toolbar — sticks below the navbar (h-16 = top-16) */}
-      <div className="sticky top-16 z-40 bg-gray-50 dark:bg-gray-900 shadow-sm">
+      {/* Toolbar — always visible above the scroll area */}
+      <div className="shrink-0 z-40 bg-gray-50 dark:bg-gray-900 shadow-sm">
         <div className="container mx-auto px-4 pt-4 pb-2">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
           {/* Main Tabs */}
@@ -1070,7 +1093,8 @@ export default function CollectionPage() {
       </div>
 
       {/* Scrollable content */}
-      <div className="container mx-auto px-4 pb-8 pt-4">
+      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="container mx-auto px-4 pb-24 md:pb-8 pt-4">
 
         {/* CARDS TAB CONTENT */}
         {activeTab === 'cards' && (<>
@@ -1413,6 +1437,7 @@ export default function CollectionPage() {
           </div>
         )}
 
+      </div>
       </div>
       {/* End scrollable content */}
 
