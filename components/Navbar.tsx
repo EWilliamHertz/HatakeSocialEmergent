@@ -182,7 +182,7 @@ export default function Navbar() {
               >
                 <div className="relative">
                   {user.picture ? (
-                    <Image src={user.picture} alt={user.name} width={32} height={32} className="rounded-full" />
+                    <Image src={user.picture} alt={user.name} width={32} height={32} className="rounded-full" unoptimized />
                   ) : (
                     <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                       {(user.name || '?').charAt(0).toUpperCase()}
