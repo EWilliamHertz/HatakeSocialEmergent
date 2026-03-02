@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Package, Trash2, CheckSquare, Square, MoreHorizontal, Edit2, ShoppingBag, Search, Upload, FileSpreadsheet, X, AlertCircle, CheckCircle, Plus, Loader2, Camera, Star } from 'lucide-react';
+import { Package, Trash2, CheckSquare, Square, MoreHorizontal, Edit2, ShoppingBag, Search, Upload, FileSpreadsheet, X, AlertCircle, CheckCircle, Plus, Loader2, Camera, Star, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import { LayoutGrid, List as ListIcon, Grid3X3, BookOpen } from 'lucide-react'; // Add these icons
 import CollectionDashboard from '@/components/CollectionDashboard'; // Import the new component
@@ -63,6 +63,13 @@ export default function CollectionPage() {
   const [bookmarkedCollections, setBookmarkedCollections] = useState<any[]>([]);
   const [loadingBookmarks, setLoadingBookmarks] = useState(false);
   
+  // Current user (for share button)
+  const [currentUser, setCurrentUser] = useState<{user_id: string; name?: string} | null>(null);
+
+  // Foreign card price overrides (Fix 4)
+  const [priceOverrides, setPriceOverrides] = useState<Record<number, number | null>>({});
+  const [pricesLoading, setPricesLoading] = useState(false);
+
   // Edit State
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -155,8 +162,13 @@ export default function CollectionPage() {
       .then((res) => {
         if (!res.ok) {
           router.push('/auth/login');
-          return;
+          return null;
         }
+        return res.json();
+      })
+      .then((data) => {
+        if (!data) return;
+        if (data.user) setCurrentUser(data.user);
         return loadCollection();
       })
       .catch(() => router.push('/auth/login'));
@@ -234,6 +246,59 @@ export default function CollectionPage() {
     }
   };
 
+  const enrichForeignPrices = async (loadedItems: CollectionItem[]) => {
+    // Find Pokémon items that have no price data (likely foreign cards)
+    const needsLookup = loadedItems.filter(item => {
+      if (item.game !== 'pokemon') return false;
+      const card = item.card_data;
+      if (!card) return false;
+      if (card.pricing?.cardmarket?.avg || card.pricing?.cardmarket?.trend) return false;
+      if (card.tcgplayer?.prices?.holofoil?.market || card.tcgplayer?.prices?.normal?.market) return false;
+      return true;
+    });
+
+    if (needsLookup.length === 0) return;
+
+    setPricesLoading(true);
+
+    // Fetch all EN equivalents in parallel, then update state once
+    const results = await Promise.allSettled(
+      needsLookup.map(async (item) => {
+        const card = item.card_data;
+        const setId = card?.set?.id || card?.set_code;
+        const localId = card?.collector_number || card?.localId || card?.number;
+        if (!setId || !localId) return { id: item.id, price: null };
+
+        // Try padded and unpadded localId
+        const attempts = [
+          `https://api.tcgdex.net/v2/en/cards/${setId}-${localId}`,
+          `https://api.tcgdex.net/v2/en/cards/${setId}-${String(parseInt(String(localId))).padStart(3, '0')}`,
+        ];
+        for (const url of attempts) {
+          try {
+            const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+            if (!r.ok) continue;
+            const data = await r.json();
+            const price = data.pricing?.cardmarket?.avg || data.pricing?.cardmarket?.trend || null;
+            return { id: item.id, price };
+          } catch { /* try next */ }
+        }
+        return { id: item.id, price: null };
+      })
+    );
+
+    const newOverrides: Record<number, number | null> = {};
+    results.forEach(result => {
+      if (result.status === 'fulfilled') {
+        newOverrides[result.value.id] = result.value.price;
+      }
+    });
+
+    // Single state update — prevents fluctuating total
+    setPriceOverrides(prev => ({ ...prev, ...newOverrides }));
+    setPricesLoading(false);
+  };
+
   const loadCollection = async () => {
     setLoading(true);
     try {
@@ -242,7 +307,10 @@ export default function CollectionPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setItems(data.items || []);
+        const loadedItems = data.items || [];
+        setItems(loadedItems);
+        // Fire and forget — enrichForeignPrices updates state once all settled
+        enrichForeignPrices(loadedItems);
       }
     } catch (error) {
       console.error('Load collection error:', error);
@@ -532,6 +600,29 @@ export default function CollectionPage() {
             for (const card of [...enCards, ...jaCards, ...zhCards]) {
               if (!seen.has(card.id)) { seen.add(card.id); cards.push(card); }
             }
+          } else if (
+            ['ja', 'ko', 'zh-tw'].includes(addCardLang) &&
+            addCardName.trim().length >= 2 &&
+            /^[\x00-\x7F]+$/.test(addCardName.trim()) &&
+            !addCardSetCode.trim()
+          ) {
+            // ASCII query + non-EN language: search EN first, then fetch foreign equivalents
+            const targetLang = addCardLang;
+            const enResults = await fetchFromLang('en').catch(() => [] as any[]);
+            const foreignResults = await Promise.allSettled(
+              enResults.map(async (enCard: any) => {
+                const setId = enCard.set?.id || enCard.id?.split('-')[0];
+                const localId = enCard.localId || enCard.id?.split('-').pop();
+                if (!setId || !localId) return null;
+                const r = await fetch(`https://api.tcgdex.net/v2/${targetLang}/cards/${setId}-${localId}`, { signal: controller.signal });
+                if (!r.ok) return null;
+                const fc = await r.json();
+                return { ...fc, _srcLang: targetLang };
+              })
+            );
+            cards = foreignResults
+              .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null)
+              .map(r => r.value);
           } else {
             cards = await fetchFromLang(addCardLang);
           }
@@ -607,30 +698,44 @@ export default function CollectionPage() {
     return '/placeholder-card.png';
   };
 
-  const getCardPrice = (item: CollectionItem) => {
+  const getCardPrice = (item: CollectionItem): { value: number; currency: string; noPrice?: boolean } => {
     const card = item.card_data;
     if (item.game === 'pokemon') {
-      if (card.pricing?.cardmarket) {
-        return { value: card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0, currency: 'EUR' };
+      if (card?.pricing?.cardmarket) {
+        const v = card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0;
+        if (v > 0) return { value: v, currency: 'EUR' };
       }
-      if (card.tcgplayer?.prices) {
+      if (card?.tcgplayer?.prices) {
         const prices = card.tcgplayer.prices;
-        // Convert USD to EUR for consistency
         const usdPrice = prices.holofoil?.market || prices.normal?.market || 0;
-        return { value: usdPrice * 0.92, currency: 'EUR' };
+        if (usdPrice > 0) return { value: usdPrice * 0.92, currency: 'EUR' };
+      }
+      // Check override cache (EN equivalent for foreign cards)
+      if (item.id in priceOverrides) {
+        const overridePrice = priceOverrides[item.id];
+        if (overridePrice !== null) return { value: overridePrice, currency: 'EUR' };
+        return { value: 0, currency: 'EUR', noPrice: true };
       }
       return { value: 0, currency: 'EUR' };
     } else if (item.game === 'mtg') {
-      // Prefer EUR prices, convert USD to EUR if needed
-      if (card.prices?.eur) return { value: parseFloat(card.prices.eur), currency: 'EUR' };
-      if (card.prices?.eur_foil && item.foil) return { value: parseFloat(card.prices.eur_foil), currency: 'EUR' };
-      if (card.prices?.usd) return { value: parseFloat(card.prices.usd) * 0.92, currency: 'EUR' };
-      if (card.prices?.usd_foil && item.foil) return { value: parseFloat(card.prices.usd_foil) * 0.92, currency: 'EUR' };
+      if (card?.prices?.eur) return { value: parseFloat(card.prices.eur), currency: 'EUR' };
+      if (card?.prices?.eur_foil && item.foil) return { value: parseFloat(card.prices.eur_foil), currency: 'EUR' };
+      if (card?.prices?.usd) return { value: parseFloat(card.prices.usd) * 0.92, currency: 'EUR' };
+      if (card?.prices?.usd_foil && item.foil) return { value: parseFloat(card.prices.usd_foil) * 0.92, currency: 'EUR' };
     }
-      if (card.purchase_price && card.purchase_price > 0) {
-        return { value: card.purchase_price, currency: 'EUR' };
-      }
+    if (card?.purchase_price && card.purchase_price > 0) {
+      return { value: card.purchase_price, currency: 'EUR' };
+    }
     return { value: 0, currency: 'EUR' };
+  };
+
+  const getPriceDisplay = (item: CollectionItem): string => {
+    const result = getCardPrice(item);
+    if (result.noPrice) return 'N/A';
+    if (result.value === 0 && item.game === 'pokemon' && pricesLoading && !(item.id in priceOverrides)) {
+      return '...';
+    }
+    return `€${result.value.toFixed(2)}`;
   };
   
   const calculateTotalValue = () => {
@@ -640,6 +745,23 @@ export default function CollectionPage() {
       totalEUR += price.value * item.quantity;
     });
     return totalEUR > 0 ? `€${totalEUR.toFixed(2)}` : '€0.00';
+  };
+
+  const handleShareCollection = async () => {
+    if (!currentUser) return;
+    const url = `https://hatake.eu/share/${currentUser.user_id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'My Hatake Collection', url });
+      } catch { /* user cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        alert('Collection link copied to clipboard!');
+      } catch {
+        alert(`Share this link: ${url}`);
+      }
+    }
   };
 
   const filteredItems = items.filter(item => {
@@ -715,10 +837,11 @@ export default function CollectionPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      
-      <div className="container mx-auto px-4 py-8">
-        {/* Header with Tabs */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+
+      {/* Sticky toolbar — sticks below the navbar (h-16 = top-16) */}
+      <div className="sticky top-16 z-40 bg-gray-50 dark:bg-gray-900 shadow-sm">
+        <div className="container mx-auto px-4 pt-4 pb-2">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
           {/* Main Tabs */}
           <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
             <button
@@ -783,6 +906,14 @@ export default function CollectionPage() {
                   <h1 className="text-3xl font-bold dark:text-white">My Collection</h1>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    onClick={handleShareCollection}
+                    className="px-4 py-2 rounded-lg font-semibold transition bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2"
+                    title="Share your collection"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Share
+                  </button>
                             <button
                     onClick={() => setShowAddCardModal(true)}
                     className="px-4 py-2 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
@@ -934,13 +1065,19 @@ export default function CollectionPage() {
               </div>
             )}
           </div>}
+          </div>
         </div>
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="container mx-auto px-4 pb-8 pt-4">
 
         {/* CARDS TAB CONTENT */}
         {activeTab === 'cards' && (<>
 
         {/* 1. NEW DASHBOARD STATS */}
-        <CollectionDashboard items={items} />
+        <CollectionDashboard items={items} priceOverrides={priceOverrides} pricesLoading={pricesLoading} />
 
         {/* View Toggles */}
         <div className="flex justify-end mb-4">
@@ -1083,7 +1220,7 @@ export default function CollectionPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500 dark:text-gray-400">{item.condition || 'Near Mint'}</span>
                         <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                          €{getCardPrice(item).value.toFixed(2)}
+                          {getPriceDisplay(item)}
                         </span>
                       </div>
                     </div>
@@ -1140,7 +1277,7 @@ export default function CollectionPage() {
                             {item.condition}
                           </span>
                         </td>
-                        <td className="p-4 text-right font-mono">€{getCardPrice(item).value.toFixed(2)}</td>
+                        <td className="p-4 text-right font-mono">{getPriceDisplay(item)}</td>
                         <td className="p-4 text-center">
                           <button onClick={() => { setEditingItem(item); setShowEditModal(true); }} className="text-blue-600 hover:underline">Edit</button>
                         </td>
@@ -1278,6 +1415,7 @@ export default function CollectionPage() {
         )}
 
       </div>
+      {/* End scrollable content */}
 
 
       {/* Edit Modal (Keep existing logic) */}

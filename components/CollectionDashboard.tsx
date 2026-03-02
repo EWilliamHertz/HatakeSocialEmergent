@@ -14,9 +14,11 @@ interface CollectionItem {
 
 interface DashboardProps {
   items: CollectionItem[];
+  priceOverrides?: Record<number, number | null>;
+  pricesLoading?: boolean;
 }
 
-export default function CollectionDashboard({ items }: DashboardProps) {
+export default function CollectionDashboard({ items, priceOverrides = {}, pricesLoading = false }: DashboardProps) {
   const [showDetailedStats, setShowDetailedStats] = useState(false);
 
   // Robust pricing calculator (Matches your main collection page)
@@ -24,12 +26,17 @@ export default function CollectionDashboard({ items }: DashboardProps) {
     const card = item.card_data || {};
     if (item.game === 'pokemon') {
       if (card.pricing?.cardmarket) {
-        return card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0;
+        const v = card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0;
+        if (v > 0) return v;
       }
       if (card.tcgplayer?.prices) {
         const prices = card.tcgplayer.prices;
         const usdPrice = prices.holofoil?.market || prices.normal?.market || 0;
-        return usdPrice * 0.92; // Convert USD to EUR
+        if (usdPrice > 0) return usdPrice * 0.92; // Convert USD to EUR
+      }
+      // Use override price (EN equivalent for foreign cards)
+      if (item.id in priceOverrides) {
+        return priceOverrides[item.id] ?? 0;
       }
       return 0;
     } else if (item.game === 'mtg') {
@@ -128,8 +135,11 @@ export default function CollectionDashboard({ items }: DashboardProps) {
             <TrendingUp className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Portfolio Value</span>
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
             €{totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {pricesLoading && (
+              <span className="inline-block w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" title="Fetching foreign card prices..." />
+            )}
           </h2>
           <p className="text-xs text-gray-500 mt-1">{totalCards} total cards ({uniqueCards} unique cards)</p>
         </div>
