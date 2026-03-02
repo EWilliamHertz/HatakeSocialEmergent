@@ -99,7 +99,7 @@ export default function CollectionPage() {
   const [addCardQuantity, setAddCardQuantity] = useState(1);
   const [addCardCondition, setAddCardCondition] = useState('Near Mint');
   const [addCardFoil, setAddCardFoil] = useState(false);
-  const [addCardLang, setAddCardLang] = useState<'en' | 'ja'>('en');
+  const [addCardLang, setAddCardLang] = useState<'all' | 'en' | 'ja' | 'fr' | 'de' | 'it' | 'pt' | 'es' | 'ko' | 'zh-tw'>('en');
   const [addingCard, setAddingCard] = useState(false);
   
   // Enhanced add card modal state
@@ -483,47 +483,58 @@ export default function CollectionPage() {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
           let cards: any[] = [];
-          
-          if (resolvedSetCode && addCardCollectorNum.trim() && !addCardName.trim()) {
-            const collNum = addCardCollectorNum.trim().padStart(3, '0');
-            const cardId = `${resolvedSetCode}-${collNum}`;
-            const directRes = await fetch(`https://api.tcgdex.net/v2/${addCardLang}/cards/${cardId}`, { signal: controller.signal });
-            if (directRes.ok) {
-              const card = await directRes.json();
-              cards = [card];
-            } else {
-              const cardIdNoPad = `${resolvedSetCode}-${addCardCollectorNum.trim()}`;
-              const directRes2 = await fetch(`https://api.tcgdex.net/v2/${addCardLang}/cards/${cardIdNoPad}`, { signal: controller.signal });
-              if (directRes2.ok) {
-                const card = await directRes2.json();
-                cards = [card];
+
+          // Helper: fetch from one TCGdex language endpoint
+          const fetchFromLang = async (lang: string): Promise<any[]> => {
+            let langCards: any[] = [];
+            if (resolvedSetCode && addCardCollectorNum.trim() && !addCardName.trim()) {
+              const collNum = addCardCollectorNum.trim().padStart(3, '0');
+              const cardId = `${resolvedSetCode}-${collNum}`;
+              const r1 = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${cardId}`, { signal: controller.signal });
+              if (r1.ok) { langCards = [await r1.json()]; }
+              else {
+                const cardIdNoPad = `${resolvedSetCode}-${addCardCollectorNum.trim()}`;
+                const r2 = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${cardIdNoPad}`, { signal: controller.signal });
+                if (r2.ok) langCards = [await r2.json()];
               }
+            } else {
+              const searchParams = new URLSearchParams();
+              if (addCardName.trim()) searchParams.append('name', addCardName.trim());
+              const apiUrl = `https://api.tcgdex.net/v2/${lang}/cards` + (searchParams.toString() ? '?' + searchParams.toString() : '');
+              const res = await fetch(apiUrl, { signal: controller.signal });
+              if (res.ok) {
+                langCards = await res.json();
+                if (addCardSetCode.trim()) {
+                  langCards = langCards.filter((c: any) => c.id?.toLowerCase().includes(resolvedSetCode) || c.set?.id?.toLowerCase() === resolvedSetCode);
+                }
+                if (addCardCollectorNum.trim()) {
+                  const collNum = addCardCollectorNum.trim();
+                  const paddedCollNum = collNum.padStart(3, '0');
+                  langCards = langCards.filter((c: any) => {
+                    const localId = c.localId?.toString() || '';
+                    const idNum = c.id?.split('-').pop() || '';
+                    return localId === collNum || localId === paddedCollNum || idNum === collNum || idNum === paddedCollNum;
+                  });
+                }
+              }
+            }
+            return langCards.map((c: any) => ({ ...c, _srcLang: lang }));
+          };
+
+          if (addCardLang === 'all') {
+            // Parallel: EN + JA + ZH-TW, then deduplicate by card id
+            const [enCards, jaCards, zhCards] = await Promise.all([
+              fetchFromLang('en').catch(() => [] as any[]),
+              fetchFromLang('ja').catch(() => [] as any[]),
+              fetchFromLang('zh-tw').catch(() => [] as any[]),
+            ]);
+            const seen = new Set<string>();
+            for (const card of [...enCards, ...jaCards, ...zhCards]) {
+              if (!seen.has(card.id)) { seen.add(card.id); cards.push(card); }
             }
           } else {
-            let searchUrl = `https://api.tcgdex.net/v2/${addCardLang}/cards`;
-            const params = new URLSearchParams();
-            if (addCardName.trim()) params.append('name', addCardName.trim());
-            let apiUrl = searchUrl;
-            if (params.toString()) apiUrl += '?' + params.toString();
-            
-            const res = await fetch(apiUrl, { signal: controller.signal });
-            if (res.ok) {
-              cards = await res.json();
-              if (addCardSetCode.trim()) {
-                cards = cards.filter((card: any) => card.id?.toLowerCase().includes(resolvedSetCode) || card.set?.id?.toLowerCase() === resolvedSetCode);
-              }
-              if (addCardCollectorNum.trim()) {
-                const collNum = addCardCollectorNum.trim();
-                const paddedCollNum = collNum.padStart(3, '0');
-                cards = cards.filter((card: any) => {
-                  const cardLocalId = card.localId?.toString() || '';
-                  const cardIdNum = card.id?.split('-').pop() || '';
-                  return cardLocalId === collNum || cardLocalId === paddedCollNum || cardIdNum === collNum || cardIdNum === paddedCollNum;
-                });
-              }
-            }
+            cards = await fetchFromLang(addCardLang);
           }
-          
           clearTimeout(timeoutId);
           
           const mappedCards = cards.slice(0, 30).map((card: any) => ({
@@ -2013,21 +2024,24 @@ export default function CollectionPage() {
               {addCardGame === 'pokemon' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
-                  <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg w-fit">
-                    {(['en', 'ja'] as const).map((lang) => (
+                  <div className="flex flex-wrap gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                    {([{code:'all',label:'🌐 All (EN·JA·ZH)'},{code:'en',label:'🇬🇧 English'},{code:'ja',label:'🇯🇵 Japanese'},{code:'zh-tw',label:'🇹🇼 Chinese'},{code:'ko',label:'🇰🇷 Korean'},{code:'fr',label:'🇫🇷 French'},{code:'de',label:'🇩🇪 German'},{code:'it',label:'🇮🇹 Italian'},{code:'pt',label:'🇵🇹 Portuguese'},{code:'es',label:'🇪🇸 Spanish'}] as {code:'all'|'en'|'ja'|'fr'|'de'|'it'|'pt'|'es'|'ko'|'zh-tw',label:string}[]).map(({code,label}) => (
                       <button
                         key={lang}
-                        onClick={() => { setAddCardLang(lang); setAddCardSearchResults([]); }}
+                        onClick={() => { setAddCardLang(code); setAddCardSearchResults([]); }}
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
-                          addCardLang === lang
+                          addCardLang === code
                             ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400'
                             : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
                         }`}
                       >
-                        {lang === 'en' ? '🇬🇧 English' : '🇯🇵 Japanese'}
+                        {label}
                       </button>
                     ))}
                   </div>
+                  {addCardLang === 'all' && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">⚡ Searches English, Japanese &amp; Chinese simultaneously</p>
+                  )}
                 </div>
               )}
 
