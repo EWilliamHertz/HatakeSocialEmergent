@@ -99,6 +99,7 @@ export default function CollectionPage() {
   const [addCardQuantity, setAddCardQuantity] = useState(1);
   const [addCardCondition, setAddCardCondition] = useState('Near Mint');
   const [addCardFoil, setAddCardFoil] = useState(false);
+  const [addCardLang, setAddCardLang] = useState<'en' | 'ja'>('en');
   const [addingCard, setAddingCard] = useState(false);
   
   // Enhanced add card modal state
@@ -486,20 +487,20 @@ export default function CollectionPage() {
           if (resolvedSetCode && addCardCollectorNum.trim() && !addCardName.trim()) {
             const collNum = addCardCollectorNum.trim().padStart(3, '0');
             const cardId = `${resolvedSetCode}-${collNum}`;
-            const directRes = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`, { signal: controller.signal });
+            const directRes = await fetch(`https://api.tcgdex.net/v2/${addCardLang}/cards/${cardId}`, { signal: controller.signal });
             if (directRes.ok) {
               const card = await directRes.json();
               cards = [card];
             } else {
               const cardIdNoPad = `${resolvedSetCode}-${addCardCollectorNum.trim()}`;
-              const directRes2 = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardIdNoPad}`, { signal: controller.signal });
+              const directRes2 = await fetch(`https://api.tcgdex.net/v2/${addCardLang}/cards/${cardIdNoPad}`, { signal: controller.signal });
               if (directRes2.ok) {
                 const card = await directRes2.json();
                 cards = [card];
               }
             }
           } else {
-            let searchUrl = 'https://api.tcgdex.net/v2/en/cards';
+            let searchUrl = `https://api.tcgdex.net/v2/${addCardLang}/cards`;
             const params = new URLSearchParams();
             if (addCardName.trim()) params.append('name', addCardName.trim());
             let apiUrl = searchUrl;
@@ -2008,6 +2009,28 @@ export default function CollectionPage() {
                 </div>
               </div>
               
+              {/* Language Toggle (Pokémon only) */}
+              {addCardGame === 'pokemon' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
+                  <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg w-fit">
+                    {(['en', 'ja'] as const).map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => { setAddCardLang(lang); setAddCardSearchResults([]); }}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
+                          addCardLang === lang
+                            ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
+                        }`}
+                      >
+                        {lang === 'en' ? '🇬🇧 English' : '🇯🇵 Japanese'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Card Name Search */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Card Name</label>
