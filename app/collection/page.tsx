@@ -589,29 +589,66 @@ export default function CollectionPage() {
             return langCards.map((c: any) => ({ ...c, _srcLang: lang }));
           };
 
+          // Helper: given a list of EN cards, fetch the dexId from the first Pokémon card
+          const getDexIds = async (enCards: any[]): Promise<number[]> => {
+            if (enCards.length === 0) return [];
+            try {
+              const r = await fetch(`https://api.tcgdex.net/v2/en/cards/${enCards[0].id}`, { signal: controller.signal });
+              if (!r.ok) return [];
+              const detail = await r.json();
+              return Array.isArray(detail.dexId) && detail.dexId.length > 0 ? detail.dexId : [];
+            } catch { return []; }
+          };
+
+          // Helper: search a language by dexId(s) — finds JA-exclusive sets too
+          const fetchByDexId = async (lang: string, dexIds: number[]): Promise<any[]> => {
+            const res = await Promise.allSettled(
+              dexIds.map(async (dexId) => {
+                const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards?dexId=${dexId}`, { signal: controller.signal });
+                if (!r.ok) return [] as any[];
+                const c = await r.json();
+                return (Array.isArray(c) ? c : []).map((x: any) => ({ ...x, _srcLang: lang }));
+              })
+            );
+            return res.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+          };
+
+          // Helper: cross-fetch by EN set+localId (fallback for trainer/energy with no dexId)
+          const crossFetchBySetId = async (lang: string, enCards: any[]): Promise<any[]> => {
+            const res = await Promise.allSettled(
+              enCards.map(async (enCard: any) => {
+                const setId = enCard.set?.id || enCard.id?.split('-')[0];
+                const localId = enCard.localId || enCard.id?.split('-').pop();
+                if (!setId || !localId) return null;
+                const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${setId}-${localId}`, { signal: controller.signal });
+                if (!r.ok) return null;
+                const fc = await r.json();
+                return { ...fc, _srcLang: lang };
+              })
+            );
+            return res.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null).map(r => r.value);
+          };
+
           if (addCardLang === 'all') {
             const isAsciiOnly = addCardName.trim().length >= 2 && /^[\x00-\x7F]+$/.test(addCardName.trim()) && !addCardSetCode.trim();
-            // Always fetch EN
             const enCards = await fetchFromLang('en').catch(() => [] as any[]);
             let jaCards: any[] = [];
             let zhCards: any[] = [];
             if (isAsciiOnly) {
-              // ASCII query: cross-fetch JA & ZH using EN set+localId (TCGdex foreign endpoints need native names)
-              const crossFetch = async (lang: string): Promise<any[]> => {
-                const res = await Promise.allSettled(
-                  enCards.map(async (enCard: any) => {
-                    const setId = enCard.set?.id || enCard.id?.split('-')[0];
-                    const localId = enCard.localId || enCard.id?.split('-').pop();
-                    if (!setId || !localId) return null;
-                    const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${setId}-${localId}`, { signal: controller.signal });
-                    if (!r.ok) return null;
-                    const fc = await r.json();
-                    return { ...fc, _srcLang: lang };
-                  })
-                );
-                return res.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null).map(r => r.value);
-              };
-              [jaCards, zhCards] = await Promise.all([crossFetch('ja').catch(() => []), crossFetch('zh-tw').catch(() => [])]);
+              // Get dexId to find JA-exclusive sets (e.g. SV4A Mimikyu that has no EN equivalent)
+              const dexIds = await getDexIds(enCards);
+              if (dexIds.length > 0) {
+                [jaCards, zhCards] = await Promise.all([
+                  fetchByDexId('ja', dexIds).catch(() => []),
+                  fetchByDexId('zh-tw', dexIds).catch(() => []),
+                ]);
+              } else {
+                // Trainer/energy: no dexId, fall back to set+localId cross-fetch
+                [jaCards, zhCards] = await Promise.all([
+                  crossFetchBySetId('ja', enCards).catch(() => []),
+                  crossFetchBySetId('zh-tw', enCards).catch(() => []),
+                ]);
+              }
             } else {
               // Non-ASCII (native characters): direct name search in each language
               [jaCards, zhCards] = await Promise.all([
@@ -629,23 +666,29 @@ export default function CollectionPage() {
             /^[\x00-\x7F]+$/.test(addCardName.trim()) &&
             !addCardSetCode.trim()
           ) {
-            // ASCII query + non-EN language: search EN first, then fetch foreign equivalents
+            // ASCII query + non-EN language: use dexId to find all cards incl. JA-exclusive sets
             const targetLang = addCardLang;
             const enResults = await fetchFromLang('en').catch(() => [] as any[]);
-            const foreignResults = await Promise.allSettled(
-              enResults.map(async (enCard: any) => {
-                const setId = enCard.set?.id || enCard.id?.split('-')[0];
-                const localId = enCard.localId || enCard.id?.split('-').pop();
-                if (!setId || !localId) return null;
-                const r = await fetch(`https://api.tcgdex.net/v2/${targetLang}/cards/${setId}-${localId}`, { signal: controller.signal });
-                if (!r.ok) return null;
-                const fc = await r.json();
-                return { ...fc, _srcLang: targetLang };
-              })
-            );
-            cards = foreignResults
-              .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null)
-              .map(r => r.value);
+            const dexIds = await getDexIds(enResults);
+            if (dexIds.length > 0) {
+              cards = await fetchByDexId(targetLang, dexIds).catch(() => []);
+            } else {
+              // Trainer/energy fallback
+              const foreignResults = await Promise.allSettled(
+                enResults.map(async (enCard: any) => {
+                  const setId = enCard.set?.id || enCard.id?.split('-')[0];
+                  const localId = enCard.localId || enCard.id?.split('-').pop();
+                  if (!setId || !localId) return null;
+                  const r = await fetch(`https://api.tcgdex.net/v2/${targetLang}/cards/${setId}-${localId}`, { signal: controller.signal });
+                  if (!r.ok) return null;
+                  const fc = await r.json();
+                  return { ...fc, _srcLang: targetLang };
+                })
+              );
+              cards = foreignResults
+                .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null)
+                .map(r => r.value);
+            }
           } else {
             cards = await fetchFromLang(addCardLang);
           }
@@ -1053,6 +1096,14 @@ export default function CollectionPage() {
                 </button>
                 
                 {selectedItems.size > 0 && (
+                  <>
+                  <button
+                    onClick={() => setSelectedItems(new Set())}
+                    className="flex items-center gap-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white text-sm"
+                    title="Clear selection"
+                  >
+                    ✕ Clear
+                  </button>
                   <div className="relative">
                     <button
                       onClick={() => setShowBulkMenu(!showBulkMenu)}
@@ -1084,6 +1135,7 @@ export default function CollectionPage() {
                       </div>
                     )}
                   </div>
+                  </>
                 )}
               </div>
             )}
