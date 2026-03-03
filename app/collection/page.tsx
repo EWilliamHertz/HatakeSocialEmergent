@@ -284,6 +284,34 @@ export default function CollectionPage() {
             return { id: item.id, price };
           } catch { /* try next */ }
         }
+
+        // Fallback: use dexId to find any EN print of this Pokémon
+        const dexIds: number[] = Array.isArray(card.dexId) ? card.dexId : (card.dexId ? [card.dexId] : []);
+        if (dexIds.length > 0) {
+          const dexId = dexIds[0];
+          try {
+            const searchRes = await fetch(
+              `https://api.tcgdex.net/v2/en/cards?dexId=eq:${dexId}&limit=10`,
+              { signal: AbortSignal.timeout(8000) }
+            );
+            if (searchRes.ok) {
+              const enCards: any[] = await searchRes.json();
+              // Try each EN card until we find one with a price
+              for (const enCard of enCards) {
+                try {
+                  const fullRes = await fetch(
+                    `https://api.tcgdex.net/v2/en/cards/${enCard.id}`,
+                    { signal: AbortSignal.timeout(8000) }
+                  );
+                  if (!fullRes.ok) continue;
+                  const fullData = await fullRes.json();
+                  const price = fullData.pricing?.cardmarket?.avg || fullData.pricing?.cardmarket?.trend || null;
+                  if (price) return { id: item.id, price };
+                } catch { /* try next */ }
+              }
+            }
+          } catch { /* ignore dexId fallback error */ }
+        }
         return { id: item.id, price: null };
       })
     );

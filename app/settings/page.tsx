@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
   // Shipping
   const [shippingAddress, setShippingAddress] = useState('');
@@ -111,15 +112,24 @@ export default function SettingsPage() {
   };
 
   const changePassword = async () => {
+    setPasswordMessage(null);
     if (newPassword !== confirmPassword) {
-      alert('Passwords do not match');
+      setPasswordMessage({ type: 'error', text: 'Passwords do not match' });
       return;
     }
-    if (newPassword.length < 6) {
-      alert('Password must be at least 6 characters');
+    if (newPassword.length < 8) {
+      setPasswordMessage({ type: 'error', text: 'Password must be at least 8 characters' });
       return;
     }
-    
+    if (!/[A-Z]/.test(newPassword)) {
+      setPasswordMessage({ type: 'error', text: 'Password must contain at least one uppercase letter' });
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      setPasswordMessage({ type: 'error', text: 'Password must contain at least one number' });
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await fetch('/api/auth/change-password', {
@@ -130,16 +140,16 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Password changed successfully');
+        setPasswordMessage({ type: 'success', text: '✓ Password changed successfully' });
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       } else {
-        alert(data.error || 'Failed to change password');
+        setPasswordMessage({ type: 'error', text: data.error || 'Failed to change password' });
       }
     } catch (e) {
       console.error('Change password error:', e);
-      alert('Failed to change password');
+      setPasswordMessage({ type: 'error', text: 'Failed to change password. Please try again.' });
     }
     setSaving(false);
   };
@@ -231,25 +241,47 @@ export default function SettingsPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => { setNewPassword(e.target.value); setPasswordMessage(null); }}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
               />
+              {/* Password criteria */}
+              <div className="mt-2 space-y-1">
+                {[
+                  { ok: newPassword.length >= 8, text: 'At least 8 characters' },
+                  { ok: /[A-Z]/.test(newPassword), text: 'At least one uppercase letter' },
+                  { ok: /[0-9]/.test(newPassword), text: 'At least one number' },
+                ].map(({ ok, text }) => (
+                  <p key={text} className={`text-xs flex items-center gap-1 ${newPassword ? (ok ? 'text-green-600' : 'text-red-500') : 'text-gray-400'}`}>
+                    <span>{newPassword ? (ok ? '✓' : '✗') : '○'}</span> {text}
+                  </p>
+                ))}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => { setConfirmPassword(e.target.value); setPasswordMessage(null); }}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
               />
+              {confirmPassword && (
+                <p className={`text-xs mt-1 flex items-center gap-1 ${newPassword === confirmPassword ? 'text-green-600' : 'text-red-500'}`}>
+                  {newPassword === confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+                </p>
+              )}
             </div>
+            {passwordMessage && (
+              <div className={`px-4 py-2 rounded-lg text-sm font-medium ${passwordMessage.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                {passwordMessage.text}
+              </div>
+            )}
             <button
               onClick={changePassword}
               disabled={saving || !currentPassword || !newPassword || !confirmPassword}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
             >
-              Change Password
+              {saving ? 'Changing...' : 'Change Password'}
             </button>
           </div>
         </div>
