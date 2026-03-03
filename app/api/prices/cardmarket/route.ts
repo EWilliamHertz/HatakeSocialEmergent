@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
          WHERE tcgdex_id = ANY($1) AND updated_at > $2`,
         [ids, sevenDaysAgo]
       );
-      const cacheMap = new Map(rows.rows.map((r: any) => [r.tcgdex_id, r.price]));
+      const cacheMap = new Map(rows.map((r: any) => [r.tcgdex_id, r.price]));
 
       for (const card of cards) {
         if (cacheMap.has(card.tcgdexId)) {
