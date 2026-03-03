@@ -91,14 +91,14 @@ export default function CollectionPage() {
   const [importLoading, setImportLoading] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'preview' | 'importing' | 'done'>('idle');
   const [importResult, setImportResult] = useState<{ imported: number; errors?: string[] } | null>(null);
-  const [importGameType, setImportGameType] = useState<'mtg' | 'pokemon'>('mtg');
+  const [importGameType, setImportGameType] = useState<'mtg' | 'pokemon' | 'lorcana'>('mtg');
   const [originalCsvContent, setOriginalCsvContent] = useState<string>(''); // Store original CSV for full import
   const [totalCardsToImport, setTotalCardsToImport] = useState<number>(0); // Track total cards in CSV
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Manual add card state
   const [showAddCardModal, setShowAddCardModal] = useState(false);
-  const [addCardGame, setAddCardGame] = useState<'mtg' | 'pokemon'>('mtg');
+  const [addCardGame, setAddCardGame] = useState<'mtg' | 'pokemon' | 'lorcana'>('mtg');
   const [addCardSetCode, setAddCardSetCode] = useState('');
   const [addCardCollectorNum, setAddCardCollectorNum] = useState('');
   const [addCardName, setAddCardName] = useState('');
@@ -131,6 +131,8 @@ export default function CollectionPage() {
     'Special Art Rare',
     'Illustration Rare'
   ];
+
+  const lorcanaFinishOptions = ['Normal', 'Foil', 'Cold Foil'];
 
   // MTG finish options
   const mtgFinishOptions = [
@@ -249,7 +251,7 @@ export default function CollectionPage() {
 
   const enrichForeignPrices = async (loadedItems: CollectionItem[]) => {
     // Find Pokémon items that have no price data (likely foreign/JA/ZH cards)
-    const needsLookup = loadedItems.filter(item => {
+    const allForeignItems = loadedItems.filter(item => {
       if (item.game !== 'pokemon') return false;
       const card = item.card_data;
       if (!card) return false;
@@ -257,6 +259,26 @@ export default function CollectionPage() {
       if (card.tcgplayer?.prices?.holofoil?.market || card.tcgplayer?.prices?.normal?.market) return false;
       return true;
     });
+
+    // Chinese pricing is not available — mark these immediately without API call
+    const zhItems = allForeignItems.filter(item => {
+      const lang = item.card_data?.language || item.card_data?._srcLang || '';
+      return lang === 'zh-tw' || lang === 'zh';
+    });
+    const needsLookup = allForeignItems.filter(item => {
+      const lang = item.card_data?.language || item.card_data?._srcLang || '';
+      return lang !== 'zh-tw' && lang !== 'zh';
+    });
+
+    if (zhItems.length > 0) {
+      setPriceOverrides(prev => {
+        const next = { ...prev };
+        for (const item of zhItems) {
+          if (!(item.id in next)) next[item.id] = null; // null = no pricing for ZH
+        }
+        return next;
+      });
+    }
 
     if (needsLookup.length === 0) return;
 
@@ -552,6 +574,26 @@ export default function CollectionPage() {
           }
         } catch (mtgError) {
           console.error('MTG API error:', mtgError);
+          setAddCardSearchResults([]);
+        }
+      } else if (addCardGame === 'lorcana') {
+        // Lorcana search via ScryDex (server-side proxy to keep API key private)
+        try {
+          const params = new URLSearchParams();
+          if (addCardName.trim()) params.append('q', addCardName.trim());
+          if (!params.toString()) { setAddCardSearchResults([]); return; }
+          const searchRes = await fetch(`/api/search/lorcana?${params.toString()}`, {
+            credentials: 'include',
+            signal: AbortSignal.timeout(15000),
+          });
+          if (searchRes.ok) {
+            const data = await searchRes.json();
+            setAddCardSearchResults(data.cards || []);
+          } else {
+            setAddCardSearchResults([]);
+          }
+        } catch (lorcanaError) {
+          console.error('Lorcana search error:', lorcanaError);
           setAddCardSearchResults([]);
         }
       } else {
@@ -1027,6 +1069,13 @@ export default function CollectionPage() {
                     All
                   </button>
                   <button
+                    onClick={() => setFilter('mtg')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                    data-testid="filter-mtg"
+                  >
+                    Magic
+                  </button>
+                  <button
                     onClick={() => setFilter('pokemon')}
                     className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'pokemon' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
                     data-testid="filter-pokemon"
@@ -1034,11 +1083,11 @@ export default function CollectionPage() {
                     Pokémon
                   </button>
                   <button
-                    onClick={() => setFilter('mtg')}
-                    className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'mtg' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-                    data-testid="filter-mtg"
+                    onClick={() => setFilter('lorcana')}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${filter === 'lorcana' ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                    data-testid="filter-lorcana"
                   >
-                    Magic
+                    Lorcana
                   </button>
                 </div>
               </div>
@@ -1653,7 +1702,7 @@ export default function CollectionPage() {
                           (document.getElementById('edit-foil') as HTMLInputElement).checked = isFoil;
                         }}
                       >
-                        {(editingItem.game === 'pokemon' ? pokemonFinishOptions : mtgFinishOptions).map(opt => (
+                        {(editingItem.game === 'pokemon' ? pokemonFinishOptions : editingItem.game === 'lorcana' ? lorcanaFinishOptions : mtgFinishOptions).map(opt => (
                           <option key={opt} value={opt}>{opt}</option>
                         ))}
                       </select>
@@ -2018,6 +2067,17 @@ export default function CollectionPage() {
                       >
                         ⚡ Pokémon TCG
                       </button>
+                      <button
+                        onClick={() => setImportGameType('lorcana')}
+                        className={`flex-1 py-2 rounded-lg font-medium transition text-sm ${
+                          importGameType === 'lorcana'
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                        }`}
+                        data-testid="import-game-lorcana"
+                      >
+                        🕯️ Disney Lorcana
+                      </button>
                     </div>
                   </div>
                   
@@ -2038,14 +2098,14 @@ export default function CollectionPage() {
                       <div>
                         <p className="font-semibold text-gray-700 dark:text-gray-300">Click to upload CSV</p>
                         <p className="text-sm text-gray-500">
-                          {importGameType === 'mtg' ? 'ManaBox export format' : 'Pokémon TCG export format'}
+                          {importGameType === 'mtg' ? 'ManaBox export format' : importGameType === 'lorcana' ? 'Lorcana CSV format' : 'Pokémon TCG export format'}
                         </p>
                       </div>
                     </label>
                     <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
                       {importGameType === 'mtg' 
                         ? 'Export your collection from ManaBox and upload the CSV file here'
-                        : 'Export your Pokémon collection and upload the CSV file here'}
+                        : importGameType === 'lorcana' ? 'Export your Lorcana collection and upload the CSV file here' : 'Export your Pokémon collection and upload the CSV file here'}
                     </p>
                   </div>
                 </div>
@@ -2254,13 +2314,14 @@ export default function CollectionPage() {
                   <select
                     value={addCardGame}
                     onChange={(e) => {
-                      setAddCardGame(e.target.value as 'mtg' | 'pokemon');
+                      setAddCardGame(e.target.value as 'mtg' | 'pokemon' | 'lorcana');
                       setAddCardSearchResults([]);
                     }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
                   >
                     <option value="mtg">Magic: The Gathering</option>
-                    <option value="pokemon">Pokemon TCG</option>
+                    <option value="pokemon">Pokémon TCG</option>
+                    <option value="lorcana">Disney Lorcana</option>
                   </select>
                 </div>
               </div>
@@ -2545,6 +2606,12 @@ export default function CollectionPage() {
                             )}
                           </>
                         )}
+                        {addCardGame === 'lorcana' && cardPriceData.usd && (
+                          <>
+                            <p className="text-lg font-bold text-green-600">${cardPriceData.usd}</p>
+                            <p className="text-xs text-gray-400">US market price (TCGPlayer)</p>
+                          </>
+                        )}
                         {addCardGame === 'mtg' && (
                           <>
                             {cardPriceData.eur && <p className="text-lg font-bold text-green-600">€{cardPriceData.eur}</p>}
@@ -2554,7 +2621,13 @@ export default function CollectionPage() {
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">Price not available</p>
+                      {(() => {
+                        const _lang = selectedCardToAdd?.card_data?.language || selectedCardToAdd?.card_data?._srcLang || '';
+                        const _isZh = _lang === 'zh-tw' || _lang === 'zh';
+                        return _isZh
+                          ? <p className="text-sm text-amber-600 dark:text-amber-400">Pricing not available for Chinese cards</p>
+                          : <p className="text-sm text-gray-500">Price not available</p>;
+                      })()}
                     )}
                   </div>
                 </div>
@@ -2586,7 +2659,7 @@ export default function CollectionPage() {
                     onChange={(e) => setCardFinish(e.target.value)}
                     className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   >
-                    {(addCardGame === 'pokemon' ? pokemonFinishOptions : mtgFinishOptions).map(opt => (
+                    {(addCardGame === 'pokemon' ? pokemonFinishOptions : addCardGame === 'lorcana' ? lorcanaFinishOptions : mtgFinishOptions).map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
@@ -2633,6 +2706,11 @@ export default function CollectionPage() {
                     Graded card
                   </span>
                 </label>
+                {isGraded && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 ml-6">
+                    Graded card prices reflect US market values (TCGPlayer)
+                  </p>
+                )}
               </div>
 
               {/* Grading Options (shown if graded) */}
