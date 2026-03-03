@@ -215,5 +215,16 @@ export async function GET(request: NextRequest) {
     CREATE INDEX IF NOT EXISTS idx_snapshots_user_id ON collection_value_snapshots(user_id)
   `);
 
+  // CardMarket price cache (Apify scraping results, 7-day TTL)
+  await run('card_price_cache table', () => sql`
+    CREATE TABLE IF NOT EXISTS card_price_cache (
+      tcgdex_id TEXT PRIMARY KEY,
+      price DECIMAL(10,2),
+      cm_url TEXT,
+      source TEXT DEFAULT 'cardmarket',
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
   return NextResponse.json({ success: true, results });
 }

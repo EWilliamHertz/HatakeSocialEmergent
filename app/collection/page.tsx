@@ -107,7 +107,7 @@ export default function CollectionPage() {
   const [addCardQuantity, setAddCardQuantity] = useState(1);
   const [addCardCondition, setAddCardCondition] = useState('Near Mint');
   const [addCardFoil, setAddCardFoil] = useState(false);
-  const [addCardLang, setAddCardLang] = useState<'all' | 'en' | 'ja' | 'fr' | 'de' | 'it' | 'pt' | 'es' | 'ko' | 'zh-tw'>('en');
+  const [addCardLang, setAddCardLang] = useState<'all' | 'en' | 'ja' | 'fr' | 'de' | 'it' | 'pt' | 'es' | 'zh-tw'>('en');
   const [addingCard, setAddingCard] = useState(false);
   
   // Enhanced add card modal state
@@ -248,7 +248,7 @@ export default function CollectionPage() {
   };
 
   const enrichForeignPrices = async (loadedItems: CollectionItem[]) => {
-    // Find Pokémon items that have no price data (likely foreign cards)
+    // Find Pokémon items that have no price data (likely foreign/JA/ZH cards)
     const needsLookup = loadedItems.filter(item => {
       if (item.game !== 'pokemon') return false;
       const card = item.card_data;
@@ -262,70 +262,40 @@ export default function CollectionPage() {
 
     setPricesLoading(true);
 
-    // Fetch all EN equivalents in parallel, then update state once
-    const results = await Promise.allSettled(
-      needsLookup.map(async (item) => {
+    try {
+      // Build payload for batch CardMarket price lookup
+      const cardsPayload = needsLookup.map(item => {
         const card = item.card_data;
-        const setId = card?.set?.id || card?.set_code;
-        const localId = card?.collector_number || card?.localId || card?.number;
-        if (!setId || !localId) return { id: item.id, price: null };
+        const tcgdexId = card?.id || `${card?.set?.id || card?.set_code}-${card?.localId || card?.number}`;
+        const dexIds: number[] = Array.isArray(card?.dexId)
+          ? card.dexId
+          : (card?.dexId ? [card.dexId] : []);
+        return {
+          collectionId: item.id,
+          tcgdexId,
+          lang: item.lang || 'ja',
+          dexIds,
+        };
+      });
 
-        // Try padded and unpadded localId
-        const attempts = [
-          `https://api.tcgdex.net/v2/en/cards/${setId}-${localId}`,
-          `https://api.tcgdex.net/v2/en/cards/${setId}-${String(parseInt(String(localId))).padStart(3, '0')}`,
-        ];
-        for (const url of attempts) {
-          try {
-            const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-            if (!r.ok) continue;
-            const data = await r.json();
-            const price = data.pricing?.cardmarket?.avg || data.pricing?.cardmarket?.trend || null;
-            return { id: item.id, price };
-          } catch { /* try next */ }
-        }
+      const res = await fetch('/api/prices/cardmarket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ cards: cardsPayload }),
+      });
 
-        // Fallback: use dexId to find any EN print of this Pokémon
-        const dexIds: number[] = Array.isArray(card.dexId) ? card.dexId : (card.dexId ? [card.dexId] : []);
-        if (dexIds.length > 0) {
-          const dexId = dexIds[0];
-          try {
-            const searchRes = await fetch(
-              `https://api.tcgdex.net/v2/en/cards?dexId=eq:${dexId}&limit=10`,
-              { signal: AbortSignal.timeout(8000) }
-            );
-            if (searchRes.ok) {
-              const enCards: any[] = await searchRes.json();
-              // Try each EN card until we find one with a price
-              for (const enCard of enCards) {
-                try {
-                  const fullRes = await fetch(
-                    `https://api.tcgdex.net/v2/en/cards/${enCard.id}`,
-                    { signal: AbortSignal.timeout(8000) }
-                  );
-                  if (!fullRes.ok) continue;
-                  const fullData = await fullRes.json();
-                  const price = fullData.pricing?.cardmarket?.avg || fullData.pricing?.cardmarket?.trend || null;
-                  if (price) return { id: item.id, price };
-                } catch { /* try next */ }
-              }
-            }
-          } catch { /* ignore dexId fallback error */ }
-        }
-        return { id: item.id, price: null };
-      })
-    );
-
-    const newOverrides: Record<number, number | null> = {};
-    results.forEach(result => {
-      if (result.status === 'fulfilled') {
-        newOverrides[result.value.id] = result.value.price;
+      if (res.ok) {
+        const data = await res.json();
+        const prices: Record<number, number | null> = data.prices || {};
+        // Single state update — prevents fluctuating total
+        setPriceOverrides(prev => ({ ...prev, ...prices }));
       }
-    });
-
-    // Single state update — prevents fluctuating total
-    setPriceOverrides(prev => ({ ...prev, ...newOverrides }));
-    setPricesLoading(false);
+    } catch (err) {
+      console.error('CardMarket price enrichment failed:', err);
+    } finally {
+      setPricesLoading(false);
+    }
   };
 
   const loadCollection = async () => {
@@ -2289,7 +2259,7 @@ export default function CollectionPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
                   <div className="flex flex-wrap gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                    {([{code:'all',label:'🌐 All (EN·JA·ZH)'},{code:'en',label:'🇬🇧 English'},{code:'ja',label:'🇯🇵 Japanese'},{code:'zh-tw',label:'🇹🇼 Chinese'},{code:'ko',label:'🇰🇷 Korean'},{code:'fr',label:'🇫🇷 French'},{code:'de',label:'🇩🇪 German'},{code:'it',label:'🇮🇹 Italian'},{code:'pt',label:'🇵🇹 Portuguese'},{code:'es',label:'🇪🇸 Spanish'}] as {code:'all'|'en'|'ja'|'fr'|'de'|'it'|'pt'|'es'|'ko'|'zh-tw',label:string}[]).map(({code,label}) => (
+                    {([{code:'all',label:'🌐 All (EN·JA·ZH)'},{code:'en',label:'🇬🇧 English'},{code:'ja',label:'🇯🇵 Japanese'},{code:'zh-tw',label:'🇹🇼 Chinese'},{code:'fr',label:'🇫🇷 French'},{code:'de',label:'🇩🇪 German'},{code:'it',label:'🇮🇹 Italian'},{code:'pt',label:'🇵🇹 Portuguese'},{code:'es',label:'🇪🇸 Spanish'}] as {code:'all'|'en'|'ja'|'fr'|'de'|'it'|'pt'|'es'|'zh-tw',label:string}[]).map(({code,label}) => (
                       <button
                         key={code}
                         onClick={() => { setAddCardLang(code); setAddCardSearchResults([]); }}
