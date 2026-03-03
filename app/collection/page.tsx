@@ -2234,7 +2234,8 @@ export default function CollectionPage() {
               </button>
             </div>
 
-            {/* Search Form */}
+            {/* Search Form - collapses when results are shown */}
+            {addCardSearchResults.length === 0 && (
             <div className="p-6 border-b dark:border-gray-700 space-y-4">
               {/* Game Selection */}
               <div className="flex gap-4">
@@ -2335,9 +2336,31 @@ export default function CollectionPage() {
                 Tip: Search by card name, or use set code + collector number for exact matches
               </p>
             </div>
+            )}
+
+            {/* Compact search summary bar — shown when results exist */}
+            {addCardSearchResults.length > 0 && (
+              <div className="px-4 py-2 border-b dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 shrink-0">
+                <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                  <span className="font-medium">{addCardSearchResults.length} results</span>
+                  {(addCardName || addCardSetCode) && (
+                    <> for &quot;{addCardName || `${addCardSetCode} #${addCardCollectorNum}`}&quot;</>
+                  )}
+                  {addCardLang !== 'en' && addCardLang !== 'all' && (
+                    <span className="ml-1 text-xs text-gray-400 uppercase">[{addCardLang}]</span>
+                  )}
+                </span>
+                <button
+                  onClick={() => setAddCardSearchResults([])}
+                  className="ml-3 text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+                >
+                  ← New search
+                </button>
+              </div>
+            )}
 
             {/* Search Results */}
-            <div className="flex-1 overflow-auto p-4">
+            <div className="flex-1 overflow-auto p-4 min-h-[320px]">
               {addCardSearching ? (
                 <div className="text-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
@@ -2409,7 +2432,28 @@ export default function CollectionPage() {
                             setIsGraded(false);
                             // Fetch full card data with pricing if Pokemon
                             if (addCardGame === 'pokemon' && card.id && !card.pricing) {
+                              const cardLang = (card as any)._srcLang || addCardLang;
+                              const isForeign = cardLang === 'ja' || cardLang === 'zh-tw' || cardLang === 'zh';
                               setLoadingCardPrice(true);
+                              if (isForeign) {
+                                // Use real CardMarket/Apify prices for JA/ZH cards
+                                const dexIds: number[] = Array.isArray((card as any).dexId)
+                                  ? (card as any).dexId
+                                  : ((card as any).dexId ? [(card as any).dexId] : []);
+                                fetch('/api/prices/cardmarket', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ cards: [{ collectionId: -1, tcgdexId: card.id, lang: cardLang, dexIds }] }),
+                                })
+                                  .then(r => r.json())
+                                  .then(data => {
+                                    // Route keys by collectionId; -1 used as sentinel
+                                    const price = (data.prices as Record<string, number | null>)?.['-1'] ?? (data.prices as Record<number, number | null>)?.[-1];
+                                    if (price != null) setCardPriceData({ cardmarket: { avg: price } });
+                                    setLoadingCardPrice(false);
+                                  })
+                                  .catch(() => setLoadingCardPrice(false));
+                              } else {
                               fetch(`https://api.tcgdex.net/v2/en/cards/${card.id}`)
                                 .then(res => res.json())
                                 .then(data => {
@@ -2417,6 +2461,7 @@ export default function CollectionPage() {
                                   setLoadingCardPrice(false);
                                 })
                                 .catch(() => setLoadingCardPrice(false));
+                              }
                             } else {
                               setCardPriceData(card.pricing || card.prices);
                             }
