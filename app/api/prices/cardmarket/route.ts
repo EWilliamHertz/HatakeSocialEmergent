@@ -70,16 +70,19 @@ function extractPrice(item: any): number | null {
   return null;
 }
 
-/** Fetch English card name from TCGdex using dexId */
+/** Fetch English card name from TCGdex using dexId.
+ *  Uses the list-level name directly (avoids a second round-trip). */
 async function fetchEnglishName(dexId: number): Promise<string | null> {
   try {
-    const r = await fetch(`https://api.tcgdex.net/v2/en/cards?dexId=eq:${dexId}&limit=1`, {
+    const r = await fetch(`https://api.tcgdex.net/v2/en/cards?dexId=eq:${dexId}`, {
       signal: AbortSignal.timeout(8000),
     });
     if (!r.ok) return null;
     const cards = await r.json();
     if (!Array.isArray(cards) || cards.length === 0) return null;
-    // Fetch full card for name
+    // TCGdex list items include `name` — use it directly to avoid a second fetch
+    if (cards[0].name) return cards[0].name as string;
+    // Fallback: full card fetch
     const full = await fetch(`https://api.tcgdex.net/v2/en/cards/${cards[0].id}`, {
       signal: AbortSignal.timeout(8000),
     });
@@ -91,12 +94,32 @@ async function fetchEnglishName(dexId: number): Promise<string | null> {
   }
 }
 
+/** Resolve dexId for a card — either use what was provided or fetch from TCGdex */
+async function resolveDexId(tcgdexId: string, lang: string, providedDexIds?: number[]): Promise<number | null> {
+  if (providedDexIds && providedDexIds.length > 0) return providedDexIds[0];
+  // card_data was stored without dexId (cards found via list search have no dexId in payload)
+  // — fetch full card detail to get it
+  try {
+    const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${tcgdexId}`, {
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) return null;
+    const detail = await r.json();
+    const ids: number[] = Array.isArray(detail.dexId)
+      ? detail.dexId
+      : (detail.dexId ? [detail.dexId] : []);
+    return ids[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const cards: Array<{
       collectionId: number;
-      tcgdexId: string;   // e.g. "sv2a-168"
+      tcgdexId: string;   // e.g. "SV2a-168"
       lang: string;
       dexIds?: number[];
     }> = body.cards || [];
@@ -143,28 +166,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ prices: cachedPrices });
     }
 
-    // ------ 2. Build CardMarket URLs for uncached cards ------
+    // ------ 2. Build CardMarket URLs for uncached cards (parallel) ------
+    const resolvedCards = await Promise.all(
+      uncached.map(async (card) => {
+        const dashIdx = card.tcgdexId.lastIndexOf('-');
+        if (dashIdx < 0) return null;
+        const setId = card.tcgdexId.slice(0, dashIdx);
+        const localId = card.tcgdexId.slice(dashIdx + 1);
+
+        // Check we have a CM slug for this set before doing expensive fetches
+        if (!CM_SET_SLUGS[setId.toUpperCase()]) return null;
+
+        // Resolve dexId — use stored value or fetch from TCGdex
+        const dexId = await resolveDexId(card.tcgdexId, card.lang || 'ja', card.dexIds);
+        if (!dexId) return null;
+
+        // Get English name
+        const enName = await fetchEnglishName(dexId);
+        if (!enName) return null;
+
+        const urls = buildCmUrl(setId, localId, enName);
+        if (urls.length === 0) return null;
+
+        return { card, url: urls[0] };
+      })
+    );
+
     const urlToCard = new Map<string, (typeof cards)[0]>();
-
-    for (const card of uncached) {
-      // Parse "sv2a-168" → setId="sv2a", localId="168"
-      const dashIdx = card.tcgdexId.lastIndexOf('-');
-      if (dashIdx < 0) continue;
-      const setId = card.tcgdexId.slice(0, dashIdx);
-      const localId = card.tcgdexId.slice(dashIdx + 1);
-
-      // Get English name via dexId
-      const dexId = card.dexIds?.[0];
-      if (!dexId) continue; // skip non-Pokémon cards for now
-
-      const enName = await fetchEnglishName(dexId);
-      if (!enName) continue;
-
-      const urls = buildCmUrl(setId, localId, enName);
-      if (urls.length === 0) continue;
-
-      // Use the primary URL; store mapping
-      urlToCard.set(urls[0], card);
+    for (const result of resolvedCards) {
+      if (result) urlToCard.set(result.url, result.card);
     }
 
     const urlsToScrape = Array.from(urlToCard.keys());
