@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import db from '@/lib/db';
 
 // Map TCGdex set ID (uppercase) → CardMarket set slug
 const CM_SET_SLUGS: Record<string, string> = {
