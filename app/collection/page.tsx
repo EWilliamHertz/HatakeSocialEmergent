@@ -288,8 +288,18 @@ export default function CollectionPage() {
       if (res.ok) {
         const data = await res.json();
         const prices: Record<number, number | null> = data.prices || {};
-        // Single state update — prevents fluctuating total
-        setPriceOverrides(prev => ({ ...prev, ...prices }));
+        // Single state update — never overwrite an existing real price with null
+        setPriceOverrides(prev => {
+          const next = { ...prev };
+          for (const [k, v] of Object.entries(prices)) {
+            const id = Number(k);
+            // Only write null if we have never seen a price for this card
+            if (v !== null || !(id in next)) {
+              next[id] = v as number | null;
+            }
+          }
+          return next;
+        });
       }
     } catch (err) {
       console.error('CardMarket price enrichment failed:', err);

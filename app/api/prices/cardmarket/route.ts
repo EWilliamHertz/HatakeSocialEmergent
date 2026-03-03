@@ -38,11 +38,9 @@ function buildCmUrl(setId: string, localId: string, enName: string): string[] {
   const cmSlug = CM_SET_SLUGS[key];
   if (!cmSlug) return [];
 
-  // setId in URL is lowercase as-is: sv2a, sv4k, etc.
   const setCode = setId.toLowerCase();
   const num = String(parseInt(localId)).padStart(3, '0');
 
-  // Sanitize English name → kebab
   const nameKebab = enName
     .replace(/[''`]/g, '')
     .replace(/[^a-zA-Z0-9\s\-]/g, '')
@@ -50,7 +48,6 @@ function buildCmUrl(setId: string, localId: string, enName: string): string[] {
     .replace(/\s+/g, '-');
 
   const base = `https://www.cardmarket.com/en/Pokemon/Products/Singles/${cmSlug}/${nameKebab}-${setCode}${num}`;
-  // Return base URL plus versioned fallbacks (V1, V2, V3)
   return [base, `${nameKebab}-V1-${setCode}${num}`, `${nameKebab}-V2-${setCode}${num}`].map(
     (slug, i) => i === 0 ? base : `https://www.cardmarket.com/en/Pokemon/Products/Singles/${cmSlug}/${slug.split('/').pop()}`
   );
@@ -59,7 +56,6 @@ function buildCmUrl(setId: string, localId: string, enName: string): string[] {
 /** Extract Price Trend (or 30d avg) from Apify scraper result info array */
 function extractPrice(item: any): number | null {
   if (!item?.info || !Array.isArray(item.info)) return null;
-  // Prefer 30-day average, fall back to Price Trend, then "From" price
   const keys = ['30-days average price', '7-days average price', 'Price Trend', 'From'];
   for (const key of keys) {
     const entry = item.info.find((i: any) => i.key === key);
@@ -70,8 +66,7 @@ function extractPrice(item: any): number | null {
   return null;
 }
 
-/** Fetch English card name from TCGdex using dexId.
- *  Uses the list-level name directly (avoids a second round-trip). */
+/** Fetch English card name from TCGdex using dexId */
 async function fetchEnglishName(dexId: number): Promise<string | null> {
   try {
     const r = await fetch(`https://api.tcgdex.net/v2/en/cards?dexId=eq:${dexId}`, {
@@ -80,9 +75,7 @@ async function fetchEnglishName(dexId: number): Promise<string | null> {
     if (!r.ok) return null;
     const cards = await r.json();
     if (!Array.isArray(cards) || cards.length === 0) return null;
-    // TCGdex list items include `name` — use it directly to avoid a second fetch
     if (cards[0].name) return cards[0].name as string;
-    // Fallback: full card fetch
     const full = await fetch(`https://api.tcgdex.net/v2/en/cards/${cards[0].id}`, {
       signal: AbortSignal.timeout(8000),
     });
@@ -97,8 +90,6 @@ async function fetchEnglishName(dexId: number): Promise<string | null> {
 /** Resolve dexId for a card — either use what was provided or fetch from TCGdex */
 async function resolveDexId(tcgdexId: string, lang: string, providedDexIds?: number[]): Promise<number | null> {
   if (providedDexIds && providedDexIds.length > 0) return providedDexIds[0];
-  // card_data was stored without dexId (cards found via list search have no dexId in payload)
-  // — fetch full card detail to get it
   try {
     const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${tcgdexId}`, {
       signal: AbortSignal.timeout(6000),
@@ -109,6 +100,35 @@ async function resolveDexId(tcgdexId: string, lang: string, providedDexIds?: num
       ? detail.dexId
       : (detail.dexId ? [detail.dexId] : []);
     return ids[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch EN equivalent CardMarket price from pokemontcg.io (free, no key needed).
+ * Returns the best EUR CardMarket price found for any English print of this Pokémon.
+ */
+async function fetchEnEquivalentPrice(dexId: number): Promise<number | null> {
+  try {
+    const r = await fetch(
+      `https://api.pokemontcg.io/v2/cards?q=nationalPokedexNumbers:${dexId}&pageSize=20`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    if (!r.ok) return null;
+    const data = await r.json();
+    const cards: any[] = data.data || [];
+    // Find best CardMarket EUR price across all English prints
+    let best: number | null = null;
+    for (const card of cards) {
+      const cm = card.cardmarket?.prices;
+      if (!cm) continue;
+      const price = cm.averageSellPrice || cm.trendPrice || cm.avg1;
+      if (price && price > 0) {
+        if (best === null || price > best) best = price;
+      }
+    }
+    return best;
   } catch {
     return null;
   }
@@ -129,12 +149,6 @@ export async function POST(req: NextRequest) {
     }
 
     const APIFY_TOKEN = process.env.APIFY_API_TOKEN;
-    if (!APIFY_TOKEN) {
-      return NextResponse.json(
-        { error: 'APIFY_API_TOKEN not configured', prices: {} },
-        { status: 503 }
-      );
-    }
 
     // ------ 1. Check DB cache ------
     const cachedPrices: Record<number, number | null> = {};
@@ -152,13 +166,19 @@ export async function POST(req: NextRequest) {
 
       for (const card of cards) {
         if (cacheMap.has(card.tcgdexId)) {
-          cachedPrices[card.collectionId] = cacheMap.get(card.tcgdexId);
+          // Only include cached prices that are non-null (null means "known no-price" — skip)
+          const cachedVal = cacheMap.get(card.tcgdexId);
+          if (cachedVal !== null && cachedVal !== undefined) {
+            cachedPrices[card.collectionId] = cachedVal;
+          } else {
+            // Cached as null → treat as uncached so we try EN fallback fresh
+            uncached.push(card);
+          }
         } else {
           uncached.push(card);
         }
       }
     } catch {
-      // Table might not exist yet — treat all as uncached
       uncached.push(...cards);
     }
 
@@ -166,81 +186,111 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ prices: cachedPrices });
     }
 
-    // ------ 2. Build CardMarket URLs for uncached cards (parallel) ------
+    // ------ 2. Resolve dexIds + English names for uncached cards (parallel) ------
     const resolvedCards = await Promise.all(
       uncached.map(async (card) => {
         const dashIdx = card.tcgdexId.lastIndexOf('-');
-        if (dashIdx < 0) return null;
+        if (dashIdx < 0) return { card, url: null, dexId: null, enName: null };
         const setId = card.tcgdexId.slice(0, dashIdx);
         const localId = card.tcgdexId.slice(dashIdx + 1);
 
-        // Check we have a CM slug for this set before doing expensive fetches
-        if (!CM_SET_SLUGS[setId.toUpperCase()]) return null;
-
-        // Resolve dexId — use stored value or fetch from TCGdex
         const dexId = await resolveDexId(card.tcgdexId, card.lang || 'ja', card.dexIds);
-        if (!dexId) return null;
+        const enName = dexId ? await fetchEnglishName(dexId) : null;
 
-        // Get English name
-        const enName = await fetchEnglishName(dexId);
-        if (!enName) return null;
+        // Only build CM URL if set has a slug
+        let url: string | null = null;
+        if (CM_SET_SLUGS[setId.toUpperCase()] && enName) {
+          const urls = buildCmUrl(setId, localId, enName);
+          url = urls[0] || null;
+        }
 
-        const urls = buildCmUrl(setId, localId, enName);
-        if (urls.length === 0) return null;
-
-        return { card, url: urls[0] };
+        return { card, url, dexId, enName };
       })
     );
 
-    const urlToCard = new Map<string, (typeof cards)[0]>();
-    for (const result of resolvedCards) {
-      if (result) urlToCard.set(result.url, result.card);
-    }
+    const freshPrices: Record<number, number> = {};
+    const cacheInserts: Array<{ tcgdexId: string; price: number; cmUrl: string }> = [];
 
-    const urlsToScrape = Array.from(urlToCard.keys());
-    if (urlsToScrape.length === 0) {
-      return NextResponse.json({ prices: cachedPrices });
-    }
-
-    // ------ 3. Run Apify scraper ------
-    const apifyRes = await fetch(
-      `https://api.apify.com/v2/acts/ecomscrape~cardmarket-card-page-details-scraper/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=120`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          urls: urlsToScrape,
-          max_retries_per_url: 2,
-          proxy: { useApifyProxy: true },
-        }),
-        signal: AbortSignal.timeout(130_000),
+    // ------ 3. Run Apify scraper if token is available ------
+    if (APIFY_TOKEN) {
+      const urlToResolved = new Map<string, typeof resolvedCards[0]>();
+      for (const rc of resolvedCards) {
+        if (rc.url) urlToResolved.set(rc.url, rc);
       }
+
+      const urlsToScrape = Array.from(urlToResolved.keys());
+
+      if (urlsToScrape.length > 0) {
+        try {
+          const apifyRes = await fetch(
+            `https://api.apify.com/v2/acts/ecomscrape~cardmarket-card-page-details-scraper/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=120`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                urls: urlsToScrape,
+                max_retries_per_url: 2,
+                proxy: { useApifyProxy: true },
+              }),
+              signal: AbortSignal.timeout(130_000),
+            }
+          );
+
+          if (apifyRes.ok) {
+            const scrapedItems: any[] = await apifyRes.json();
+            const successfulIds = new Set<number>();
+
+            for (const item of scrapedItems) {
+              const url = item.url as string;
+              if (!url) continue;
+              const rc = urlToResolved.get(url);
+              if (!rc) continue;
+
+              const price = extractPrice(item);
+              if (price !== null && price > 0) {
+                freshPrices[rc.card.collectionId] = price;
+                successfulIds.add(rc.card.collectionId);
+                cacheInserts.push({ tcgdexId: rc.card.tcgdexId, price, cmUrl: url });
+              }
+            }
+
+            // For cards Apify couldn't price, fall through to EN fallback below
+            resolvedCards.forEach(rc => {
+              if (!successfulIds.has(rc.card.collectionId)) {
+                // Will be handled by EN fallback
+              }
+            });
+          }
+        } catch (apifyErr) {
+          console.error('Apify call failed, using EN fallback:', apifyErr);
+        }
+      }
+    }
+
+    // ------ 4. EN equivalent fallback for cards not yet priced ------
+    // Covers: no APIFY_TOKEN, Apify failure, Apify returned no price for a card
+    const needsEnFallback = resolvedCards.filter(
+      rc => !(rc.card.collectionId in freshPrices) && rc.dexId !== null
     );
 
-    if (!apifyRes.ok) {
-      const errText = await apifyRes.text();
-      console.error('Apify error:', errText);
-      return NextResponse.json({ prices: cachedPrices, apifyError: errText });
-    }
+    await Promise.all(
+      needsEnFallback.map(async (rc) => {
+        if (!rc.dexId) return;
+        const enPrice = await fetchEnEquivalentPrice(rc.dexId);
+        if (enPrice !== null && enPrice > 0) {
+          freshPrices[rc.card.collectionId] = enPrice;
+          // Cache with a shorter TTL marker by using a special prefix? No — just cache normally.
+          // We cache EN fallback prices too, to avoid re-fetching every page load.
+          cacheInserts.push({
+            tcgdexId: rc.card.tcgdexId,
+            price: enPrice,
+            cmUrl: `en-fallback:dexId:${rc.dexId}`,
+          });
+        }
+      })
+    );
 
-    const scrapedItems: any[] = await apifyRes.json();
-
-    // ------ 4. Map results back to collection IDs ------
-    const freshPrices: Record<number, number | null> = {};
-    const cacheInserts: Array<{ tcgdexId: string; price: number | null; cmUrl: string }> = [];
-
-    for (const item of scrapedItems) {
-      const url = item.url as string;
-      if (!url) continue;
-      const card = urlToCard.get(url);
-      if (!card) continue;
-
-      const price = extractPrice(item);
-      freshPrices[card.collectionId] = price;
-      cacheInserts.push({ tcgdexId: card.tcgdexId, price, cmUrl: url });
-    }
-
-    // ------ 5. Store in DB cache ------
+    // ------ 5. Store in DB cache (only real prices, not nulls) ------
     try {
       for (const { tcgdexId, price, cmUrl } of cacheInserts) {
         await db.query(
