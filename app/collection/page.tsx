@@ -273,7 +273,7 @@ export default function CollectionPage() {
         return {
           collectionId: item.id,
           tcgdexId,
-          lang: item.lang || 'ja',
+          lang: item.language || 'ja',
           dexIds,
         };
       });
