@@ -2621,13 +2621,13 @@ export default function CollectionPage() {
                         )}
                       </div>
                     ) : (
-                      {(() => {
+                      (() => {
                         const _lang = selectedCardToAdd?.card_data?.language || selectedCardToAdd?.card_data?._srcLang || '';
                         const _isZh = _lang === 'zh-tw' || _lang === 'zh';
                         return _isZh
                           ? <p className="text-sm text-amber-600 dark:text-amber-400">Pricing not available for Chinese cards</p>
                           : <p className="text-sm text-gray-500">Price not available</p>;
-                      })()}
+                      })()
                     )}
                   </div>
                 </div>
