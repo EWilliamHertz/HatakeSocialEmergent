@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       // Use Promise.all for parallel API calls when game='all'
       if (game === 'all') {
         const searchPromises: Promise<any>[] = [
-          // Pokemon: Library now uses the global /cards endpoint and filters by lang
+          // Pokemon: Now uses global /cards endpoint and Lucene language filters
           searchPokemonCards(query, page, limit, setCode, cardNumber, lang).catch(err => {
             console.error('Pokemon search error:', err);
             return { data: [], totalCount: 0 };
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
           const lorcanaSearch = async () => {
             try {
               const terms = query.split(/\s+/).filter(Boolean);
-              const luceneQuery = terms.map(t => `name:*${t}*`).join(' AND ');
+              const luceneQuery = terms.map(t => `name:${t}*`).join(' AND ');
               const res = await fetch(`${SCRYDEX_BASE}/lorcana/v1/cards?q=${encodeURIComponent(luceneQuery)}&pageSize=${limit}&include=prices&casing=camel`, {
                 headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID },
                 signal: AbortSignal.timeout(10000)

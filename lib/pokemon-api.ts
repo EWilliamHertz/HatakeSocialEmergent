@@ -149,7 +149,6 @@ function mapScrydexCard(card: any): PokemonCard {
 export async function getPokemonCard(cardId: string): Promise<PokemonCard | null> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return null;
   try {
-    // Root endpoint for specific cards
     const response = await fetch(`${SCRYDEX_BASE}/cards/${cardId}?include=prices&casing=camel`, {
       headers: {
         'X-Api-Key': SCRYDEX_API_KEY,
@@ -174,7 +173,7 @@ export async function searchPokemonCards(
   limit: number = 50,
   setCode?: string,
   cardNumber?: string,
-  forceLang?: string // Now supports 'en', 'ja', or 'en,ja'
+  forceLang?: string
 ): Promise<{ data: PokemonCard[]; totalCount: number }> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) {
     console.error('Scrydex credentials missing');
@@ -182,35 +181,33 @@ export async function searchPokemonCards(
   }
 
   try {
-    // 1. AS REQUESTED: Use the root endpoint, NOT /en/ or /ja/
+    // AS REQUESTED: Use the root endpoint (no /en/ or /ja/)
     const url = new URL(`${SCRYDEX_BASE}/cards`);
     
-    // 2. Build the Lucene query
+    // BUILD THE LUCENE QUERY
     let luceneQuery = '';
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
-      // We search the name. If the query is "Pineco", ScryDex will find the English metadata 
-      // even in the global index.
-      luceneQuery = terms.map(t => `name:*${t}*`).join(' AND ');
+      // PERFORMANCE: Removed leading asterisk.
+      // TRANSLATION: Search both 'name' (canonical/English) and 'printed_name' (localized/Japanese).
+      luceneQuery = terms.map(t => `(name:${t}* OR printed_name:${t}*)`).join(' AND ');
     }
 
-    // 3. APPLY LANGUAGE FILTERS VIA QUERY
-    // This solves the Pineco vs クヌギダマ issue: we search the global index
-    // but filter for the language printed print.
+    // APPLY LANGUAGE FILTERS
+    // We use lang:ja or lang:en inside the query string to filter the global index.
     if (forceLang) {
       const langParts = forceLang.split(',').map(l => l.trim().toLowerCase());
       const langFilters = langParts.map(l => {
-        // ScryDex usually uses 'ja' or 'en' language IDs
-        const code = l === 'jp' ? 'ja' : l;
-        return `language.id:${code}`;
+        const code = (l === 'jp' || l === 'ja') ? 'ja' : 'en';
+        return `lang:${code}`;
       });
       
-      if (luceneQuery) luceneQuery = `(${luceneQuery}) AND `;
-      luceneQuery += `(${langFilters.join(' OR ')})`;
+      const filterStr = langFilters.length > 1 ? `(${langFilters.join(' OR ')})` : langFilters[0];
+      luceneQuery = luceneQuery ? `(${luceneQuery}) AND ${filterStr}` : filterStr;
     } else {
-      // If no forced lang, but user types Japanese, prioritize Japanese records
+      // If no forced lang, detect if user typed Japanese characters
       if (isJapanese(query)) {
-        if (luceneQuery) luceneQuery = `(${luceneQuery}) AND language.id:ja`;
+        luceneQuery = luceneQuery ? `(${luceneQuery}) AND lang:ja` : `lang:ja`;
       }
     }
 
@@ -239,8 +236,7 @@ export async function searchPokemonCards(
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      console.error(`Scrydex API error (${response.status}):`, errorText);
+      console.error(`Scrydex API error (${response.status})`);
       return { data: [], totalCount: 0 };
     }
 
@@ -248,8 +244,6 @@ export async function searchPokemonCards(
     const rawCards = json?.data || [];
     const totalCount = json?.total || rawCards.length;
 
-    // Use a Map to deduplicate prints if needed, though language.id filter 
-    // usually returns unique physical prints.
     const mappedCards = rawCards.map((c: any) => mapScrydexCard(c));
 
     return {
@@ -269,7 +263,6 @@ export async function searchJapanesePokemonCards(query: string, page: number = 1
 export async function getPokemonSets(): Promise<PokemonSet[]> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return [];
   try {
-    // Root expansions endpoint
     const response = await fetch(`${SCRYDEX_BASE}/expansions?pageSize=250&casing=camel`, {
       headers: {
         'X-Api-Key': SCRYDEX_API_KEY,
