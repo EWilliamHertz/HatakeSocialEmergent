@@ -64,7 +64,7 @@ export interface PokemonSet {
   symbol?: string;
 }
 
-// Detect Japanese characters to auto-apply filters
+// Detect Japanese characters to auto-apply filters if needed
 function isJapanese(text: string): boolean {
   return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uff00-\uffef]/.test(text);
 }
@@ -133,8 +133,8 @@ function mapScrydexCard(card: any): PokemonCard {
       normal: frontImage?.medium || '',
       large: frontImage?.large || '',
     },
-    lang: card.language_code?.toLowerCase(),
-    language_code: card.language_code,
+    lang: card.language?.id || card.language_code?.toLowerCase(),
+    language_code: card.language?.id || card.language_code,
     pricing: price ? { usd: price } : null,
     prices: price ? { usd: price } : null,
   };
@@ -176,43 +176,35 @@ export async function searchPokemonCards(
   }
 
   try {
-    // 1. FIXED: Use root endpoint as requested, NOT /en/ or /ja/
+    // 1. AS REQUESTED: Use the ROOT endpoint, NOT /en/ or /ja/
     const url = new URL(`${SCRYDEX_BASE}/cards`);
     
-    // 2. Build optimized Lucene query
+    // 2. Build the Lucene query
     let luceneParts: string[] = [];
     
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
-      // PERFORMANCE: Trailing wildcards only.
-      // TRANSLATION: Search both 'name' and 'printed_name' to support English terms finding Japanese cards.
-      const nameQuery = terms.map(t => `(name:${t}* OR printed_name:${t}*)`).join(' AND ');
+      // TRANSLATION FIX: Search both 'name' (Japanese text for JA cards) 
+      // and 'translation' (English name for JA cards).
+      const nameQuery = terms.map(t => `(name:${t}* OR translation:${t}*)`).join(' AND ');
       luceneParts.push(nameQuery);
     }
 
-    // 3. APPLY LANGUAGE FILTERS
+    // 3. Apply Language Filter via Query
     if (forceLang) {
-      const langCodes = forceLang.split(',').map(l => {
-        const code = l.trim().toLowerCase();
-        return code === 'jp' ? 'ja' : code;
-      });
+      const langCodes = forceLang.split(',').map(l => l.trim().toLowerCase() === 'jp' ? 'ja' : l.trim());
       const langFilter = `(${langCodes.map(c => `language.id:${c}`).join(' OR ')})`;
       luceneParts.push(langFilter);
     } else if (isJapanese(query)) {
-      // Auto-detect Japanese if user types characters like クヌギダマ
+      // Auto-detect Japanese if query contains Japanese characters
       luceneParts.push('language.id:ja');
     }
 
-    if (setCode) {
-      luceneParts.push(`expansion.id:${setCode.toLowerCase()}`);
-    }
+    if (setCode) luceneParts.push(`expansion.id:${setCode.toLowerCase()}`);
+    if (cardNumber) luceneParts.push(`number:${cardNumber}`);
 
-    if (cardNumber) {
-      luceneParts.push(`number:${cardNumber}`);
-    }
-
-    const fullQuery = luceneParts.join(' AND ');
-    if (fullQuery) url.searchParams.append('q', fullQuery);
+    const q = luceneParts.join(' AND ');
+    if (q) url.searchParams.append('q', q);
     
     url.searchParams.append('page', page.toString());
     url.searchParams.append('pageSize', limit.toString());
