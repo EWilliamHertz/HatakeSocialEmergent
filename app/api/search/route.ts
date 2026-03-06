@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const cardNumber = searchParams.get('number') || undefined;
     const setCode = searchParams.get('set') || undefined;
     const lang = searchParams.get('lang') || undefined;
-
+    
     // Allow search without query if set or number is provided (for cards only)
     if (!query && !setCode && !cardNumber) {
       return NextResponse.json(
@@ -97,8 +97,8 @@ export async function GET(request: NextRequest) {
       // Use Promise.all for parallel API calls when game='all'
       if (game === 'all') {
         const searchPromises: Promise<any>[] = [
-          // Pokemon: Library now handles parallel EN/JA internally
-          searchPokemonCards(query, page, limit, setCode, cardNumber, lang as any).catch(err => {
+          // Pokemon: Library now handles parallel EN/JA internally if lang is undefined or 'en,ja'
+          searchPokemonCards(query, page, limit, setCode, cardNumber, lang).catch(err => {
             console.error('Pokemon search error:', err);
             return { data: [], totalCount: 0 };
           }),
@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
         }
       } else if (game === 'pokemon') {
         try {
-          const pokemonData = await searchPokemonCards(query, page, limit, setCode, cardNumber, lang as any);
+          const pokemonData = await searchPokemonCards(query, page, limit, setCode, cardNumber, lang);
           results = pokemonData.data.slice(0, limit).map((card) => ({
             ...card,
             game: 'pokemon',

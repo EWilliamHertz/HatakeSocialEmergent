@@ -173,19 +173,26 @@ export async function searchPokemonCards(
   limit: number = 50,
   setCode?: string,
   cardNumber?: string,
-  forceLang?: 'en' | 'ja'
+  forceLang?: string // Now supports 'en', 'ja', or 'en,ja'
 ): Promise<{ data: PokemonCard[]; totalCount: number }> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) {
     console.error('Scrydex credentials missing');
     return { data: [], totalCount: 0 };
   }
 
-  // Determine if we need to search JA, EN, or Both
-  const needsJA = forceLang === 'ja' || isJapanese(query);
-  const needsEN = forceLang === 'en' || (hasEnglish(query) || !needsJA);
+  // Determine which endpoints to hit
+  const langsToSearch: ('en' | 'ja')[] = [];
+  if (forceLang) {
+    if (forceLang.includes('en')) langsToSearch.push('en');
+    if (forceLang.includes('ja')) langsToSearch.push('ja');
+  } else {
+    // If no forceLang, intelligently search based on query
+    if (isJapanese(query)) langsToSearch.push('ja');
+    if (hasEnglish(query) || langsToSearch.length === 0) langsToSearch.push('en');
+  }
 
   const fetchFromLang = async (lang: 'en' | 'ja') => {
-    const langPath = lang === 'ja' ? '/ja' : '/en';
+    const langPath = `/${lang}`;
     
     let luceneQuery = '';
     if (query) {
@@ -206,19 +213,14 @@ export async function searchPokemonCards(
       headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID },
       signal: AbortSignal.timeout(15000)
     });
-    if (!res.ok) return { data: [], total: 0 };
-    return await res.json();
+    return res.ok ? await res.json() : { data: [], total: 0 };
   };
 
   try {
-    const promises = [];
-    if (needsEN) promises.push(fetchFromLang('en'));
-    if (needsJA) promises.push(fetchFromLang('ja'));
-
-    const settleResults = await Promise.all(promises);
+    const results = await Promise.all(langsToSearch.map(lang => fetchFromLang(lang)));
     
-    // Combine and deduplicate cards by ID
-    const allRawCards = settleResults.flatMap(r => r.data || []);
+    // Combine results and deduplicate by ID
+    const allRawCards = results.flatMap(r => r.data || []);
     const uniqueCardsMap = new Map();
     allRawCards.forEach(card => {
       if (!uniqueCardsMap.has(card.id)) {
@@ -226,8 +228,8 @@ export async function searchPokemonCards(
       }
     });
 
-    const combinedData = Array.from(uniqueCardsMap.values());
-    const totalCount = settleResults.reduce((acc, r) => acc + (r.total || 0), 0);
+    const combinedData = Array.from(uniqueCardsMap.values()).slice(0, limit);
+    const totalCount = results.reduce((acc, r) => acc + (r.total || 0), 0);
 
     return { data: combinedData, totalCount };
   } catch (error) {
