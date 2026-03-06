@@ -179,8 +179,7 @@ export async function searchPokemonCards(
 
     // FETCH ENRICHMENT: Pull detailed data for each card to guarantee pricing appears
     const enrichedCards = await Promise.all(
-      mappedCards.map(async (card) => {
-        try {
+mappedCards.map(async (card: PokemonCard) => {        try {
           const fullCard = await getPokemonCard(card.id, lang);
           return fullCard || card;
         } catch {
