@@ -20,27 +20,62 @@ function buildScryDexJaId(setId: string, localId: string): string {
 /**
  * Extract the best price from ScryDex variants[].prices[] response.
  * ScryDex prices are TCGPlayer market prices (USD — US market).
+ * Handles both array and object price shapes, and string/number values.
  */
 function extractScryDexPrice(variants: any[]): number | null {
   if (!Array.isArray(variants)) return null;
   for (const variant of variants) {
-    const prices: any[] = Array.isArray(variant.prices) ? variant.prices : [];
+    const pricesData = variant.prices;
+    // prices can be an array of price objects, or an object of named prices
+    const prices: any[] = Array.isArray(pricesData)
+      ? pricesData
+      : (pricesData && typeof pricesData === 'object' ? Object.values(pricesData) : []);
     for (const p of prices) {
       // Try various possible field names
-      const val =
+      const rawVal =
         p?.market ?? p?.marketPrice ?? p?.market_price ??
         p?.mid ?? p?.midPrice ?? p?.mid_price ??
         p?.low ?? p?.lowPrice ?? p?.low_price ??
         p?.value ?? p?.price ?? null;
-      if (val && typeof val === 'number' && val > 0) return val;
+      if (rawVal == null) continue;
+      const val = parseFloat(String(rawVal));
+      if (!isNaN(val) && val > 0) return val;
     }
   }
   return null;
 }
 
 /**
+ * Search ScryDex for a JA card by expansion + number (fallback when direct ID fails).
+ */
+async function fetchScryDexJaPriceBySearch(expansionId: string, number: string): Promise<number | null> {
+  if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return null;
+  try {
+    const url = `${SCRYDEX_BASE}/pokemon/v1/ja/cards?q=expansion.id:${expansionId} number:${number}&include=prices&pageSize=5`;
+    const res = await fetch(url, {
+      headers: {
+        'X-Api-Key': SCRYDEX_API_KEY,
+        'X-Team-ID': SCRYDEX_TEAM_ID,
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const cards: any[] = json?.data ?? [];
+    for (const card of cards) {
+      const price = extractScryDexPrice(card?.variants ?? []);
+      if (price !== null) return price;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Fetch price for a single Japanese card from ScryDex.
  * Returns price in USD (US market / TCGPlayer).
+ * Falls back to search-by-expansion if direct ID lookup returns no price.
  */
 async function fetchScryDexJaPrice(scrydexId: string): Promise<number | null> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return null;
@@ -53,10 +88,19 @@ async function fetchScryDexJaPrice(scrydexId: string): Promise<number | null> {
       },
       signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const card = json?.data ?? json;
-    return extractScryDexPrice(card?.variants ?? []);
+    if (res.ok) {
+      const json = await res.json();
+      const card = json?.data ?? json;
+      const price = extractScryDexPrice(card?.variants ?? []);
+      if (price !== null) return price;
+    }
+    // Fallback: search by expansion.id + number
+    // scrydexId format: sv4a_ja-25 → expansionId=sv4a, number=25
+    const match = scrydexId.match(/^(.+?)_ja-(\d+)$/);
+    if (match) {
+      return fetchScryDexJaPriceBySearch(match[1], match[2]);
+    }
+    return null;
   } catch {
     return null;
   }

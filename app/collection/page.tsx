@@ -107,7 +107,7 @@ export default function CollectionPage() {
   const [addCardQuantity, setAddCardQuantity] = useState(1);
   const [addCardCondition, setAddCardCondition] = useState('Near Mint');
   const [addCardFoil, setAddCardFoil] = useState(false);
-  const [addCardLang, setAddCardLang] = useState<'all' | 'en' | 'ja' | 'fr' | 'de' | 'it' | 'pt' | 'es' | 'zh-tw'>('en');
+  const [addCardLang, setAddCardLang] = useState<'all' | 'en' | 'ja'>('en');
   const [addingCard, setAddingCard] = useState(false);
   
   // Enhanced add card modal state
@@ -684,31 +684,21 @@ export default function CollectionPage() {
             const isAsciiOnly = addCardName.trim().length >= 2 && /^[\x00-\x7F]+$/.test(addCardName.trim()) && !addCardSetCode.trim();
             const enCards = await fetchFromLang('en').catch(() => [] as any[]);
             let jaCards: any[] = [];
-            let zhCards: any[] = [];
             if (isAsciiOnly) {
               // Get dexId to find JA-exclusive sets (e.g. SV4A Mimikyu that has no EN equivalent)
               const dexIds = await getDexIds(enCards);
               if (dexIds.length > 0) {
-                [jaCards, zhCards] = await Promise.all([
-                  fetchByDexId('ja', dexIds).catch(() => []),
-                  fetchByDexId('zh-tw', dexIds).catch(() => []),
-                ]);
+                jaCards = await fetchByDexId('ja', dexIds).catch(() => []);
               } else {
                 // Trainer/energy: no dexId, fall back to set+localId cross-fetch
-                [jaCards, zhCards] = await Promise.all([
-                  crossFetchBySetId('ja', enCards).catch(() => []),
-                  crossFetchBySetId('zh-tw', enCards).catch(() => []),
-                ]);
+                jaCards = await crossFetchBySetId('ja', enCards).catch(() => []);
               }
             } else {
-              // Non-ASCII (native characters): direct name search in each language
-              [jaCards, zhCards] = await Promise.all([
-                fetchFromLang('ja').catch(() => [] as any[]),
-                fetchFromLang('zh-tw').catch(() => [] as any[]),
-              ]);
+              // Non-ASCII (native characters): direct name search in Japanese
+              jaCards = await fetchFromLang('ja').catch(() => [] as any[]);
             }
             const seen = new Set<string>();
-            for (const card of [...enCards, ...jaCards, ...zhCards]) {
+            for (const card of [...enCards, ...jaCards]) {
               if (!seen.has(card.id)) { seen.add(card.id); cards.push(card); }
             }
           } else if (
@@ -840,6 +830,10 @@ export default function CollectionPage() {
       if (card?.prices?.eur_foil && item.foil) return { value: parseFloat(card.prices.eur_foil), currency: 'EUR' };
       if (card?.prices?.usd) return { value: parseFloat(card.prices.usd) * 0.92, currency: 'EUR' };
       if (card?.prices?.usd_foil && item.foil) return { value: parseFloat(card.prices.usd_foil) * 0.92, currency: 'EUR' };
+    } else if (item.game === 'lorcana') {
+      // Lorcana prices are USD from ScryDex — convert to EUR for portfolio total
+      const usdPrice = card?.pricing?.usd ? parseFloat(String(card.pricing.usd)) : 0;
+      if (usdPrice > 0) return { value: usdPrice * 0.92, currency: 'EUR' };
     }
     if (card?.purchase_price && card.purchase_price > 0) {
       return { value: card.purchase_price, currency: 'EUR' };
@@ -2331,7 +2325,7 @@ export default function CollectionPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
                   <div className="flex flex-wrap gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                    {([{code:'all',label:'🌐 All (EN·JA·ZH)'},{code:'en',label:'🇬🇧 English'},{code:'ja',label:'🇯🇵 Japanese'},{code:'zh-tw',label:'🇹🇼 Chinese'},{code:'fr',label:'🇫🇷 French'},{code:'de',label:'🇩🇪 German'},{code:'it',label:'🇮🇹 Italian'},{code:'pt',label:'🇵🇹 Portuguese'},{code:'es',label:'🇪🇸 Spanish'}] as {code:'all'|'en'|'ja'|'fr'|'de'|'it'|'pt'|'es'|'zh-tw',label:string}[]).map(({code,label}) => (
+                    {([{code:'en',label:'🇬🇧 English'},{code:'ja',label:'🇯🇵 Japanese'},{code:'all',label:'🇬🇧+🇯🇵 EN + JP'}] as {code:'all'|'en'|'ja',label:string}[]).map(({code,label}) => (
                       <button
                         key={code}
                         onClick={() => { setAddCardLang(code); setAddCardSearchResults([]); }}
@@ -2346,7 +2340,7 @@ export default function CollectionPage() {
                     ))}
                   </div>
                   {addCardLang === 'all' && (
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">⚡ Searches English, Japanese &amp; Chinese simultaneously</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">⚡ Searches English &amp; Japanese simultaneously</p>
                   )}
                 </div>
               )}
@@ -2456,6 +2450,11 @@ export default function CollectionPage() {
                         if (pricing?.avg) return `€${pricing.avg.toFixed(2)}`;
                         if (pricing?.trend) return `€${pricing.trend.toFixed(2)}`;
                         return null;
+                      } else if (addCardGame === 'lorcana') {
+                        // Lorcana prices are USD from ScryDex
+                        const usd = card.pricing?.usd;
+                        if (usd) return `$${parseFloat(String(usd)).toFixed(2)}`;
+                        return null;
                       } else {
                         // MTG - Scryfall prices, prefer EUR
                         const prices = card.prices;
@@ -2504,10 +2503,10 @@ export default function CollectionPage() {
                             // Fetch full card data with pricing if Pokemon
                             if (addCardGame === 'pokemon' && card.id && !card.pricing) {
                               const cardLang = (card as any)._srcLang || addCardLang;
-                              const isForeign = cardLang === 'ja' || cardLang === 'zh-tw' || cardLang === 'zh';
+                              const isForeign = cardLang === 'ja';
                               setLoadingCardPrice(true);
                               if (isForeign) {
-                                // Use real CardMarket/Apify prices for JA/ZH cards
+                                // ScryDex for Japanese Pokémon (US, TCGPlayer prices)
                                 const dexIds: number[] = Array.isArray((card as any).dexId)
                                   ? (card as any).dexId
                                   : ((card as any).dexId ? [(card as any).dexId] : []);
@@ -2520,18 +2519,31 @@ export default function CollectionPage() {
                                   .then(data => {
                                     // Route keys by collectionId; -1 used as sentinel
                                     const price = (data.prices as Record<string, number | null>)?.['-1'] ?? (data.prices as Record<number, number | null>)?.[-1];
-                                    if (price != null) setCardPriceData({ cardmarket: { avg: price } });
+                                    if (price != null) setCardPriceData({ usd: price });
                                     setLoadingCardPrice(false);
                                   })
                                   .catch(() => setLoadingCardPrice(false));
                               } else {
-                              fetch(`https://api.tcgdex.net/v2/en/cards/${card.id}`)
-                                .then(res => res.json())
-                                .then(data => {
-                                  setCardPriceData(data.pricing);
-                                  setLoadingCardPrice(false);
-                                })
-                                .catch(() => setLoadingCardPrice(false));
+                                // pokemontcg.io for English Pokémon (EU, CardMarket prices)
+                                const name = (card.name || '').replace(/"/g, '');
+                                fetch(`https://api.pokemontcg.io/v2/cards?q=name:"${encodeURIComponent(name)}"&pageSize=20`)
+                                  .then(r => r.json())
+                                  .then(data => {
+                                    const allCards: any[] = data.data || [];
+                                    const tcgdexSet = (card.set_code || (card.id || '').split('-')[0] || '').toLowerCase();
+                                    const tcgdexNum = ((card.collector_number || (card.id || '').split('-').pop()) || '').replace(/^0+/, '');
+                                    let match = allCards.find((c: any) =>
+                                      c.set?.id?.toLowerCase() === tcgdexSet && c.number === tcgdexNum
+                                    );
+                                    if (!match) match = allCards[0];
+                                    if (match?.cardmarket?.prices) {
+                                      const cm = match.cardmarket.prices;
+                                      const avg = cm.averageSellPrice || cm.trendPrice || cm.avg1;
+                                      if (avg) setCardPriceData({ cardmarket: { avg } });
+                                    }
+                                    setLoadingCardPrice(false);
+                                  })
+                                  .catch(() => setLoadingCardPrice(false));
                               }
                             } else {
                               setCardPriceData(card.pricing || card.prices);
@@ -2599,17 +2611,24 @@ export default function CollectionPage() {
                         {addCardGame === 'pokemon' && cardPriceData.cardmarket && (
                           <>
                             {cardPriceData.cardmarket.avg && (
-                              <p className="text-lg font-bold text-green-600">€{cardPriceData.cardmarket.avg.toFixed(2)}</p>
+                              <p className="text-lg font-bold text-green-600">€{Number(cardPriceData.cardmarket.avg).toFixed(2)}</p>
                             )}
                             {cardPriceData.cardmarket.trend && (
-                              <p className="text-xs text-gray-500">Trend: €{cardPriceData.cardmarket.trend.toFixed(2)}</p>
+                              <p className="text-xs text-gray-500">Trend: €{Number(cardPriceData.cardmarket.trend).toFixed(2)}</p>
                             )}
+                            <p className="text-xs text-gray-400">EU, CardMarket</p>
+                          </>
+                        )}
+                        {addCardGame === 'pokemon' && !cardPriceData.cardmarket && cardPriceData.usd && (
+                          <>
+                            <p className="text-lg font-bold text-green-600">${Number(cardPriceData.usd).toFixed(2)}</p>
+                            <p className="text-xs text-gray-400">US, TCGPlayer</p>
                           </>
                         )}
                         {addCardGame === 'lorcana' && cardPriceData.usd && (
                           <>
-                            <p className="text-lg font-bold text-green-600">${cardPriceData.usd}</p>
-                            <p className="text-xs text-gray-400">US market price (TCGPlayer)</p>
+                            <p className="text-lg font-bold text-green-600">${Number(cardPriceData.usd).toFixed(2)}</p>
+                            <p className="text-xs text-gray-400">US, TCGPlayer</p>
                           </>
                         )}
                         {addCardGame === 'mtg' && (
@@ -2617,6 +2636,7 @@ export default function CollectionPage() {
                             {cardPriceData.eur && <p className="text-lg font-bold text-green-600">€{cardPriceData.eur}</p>}
                             {cardPriceData.eur_foil && <p className="text-xs text-gray-500">Foil: €{cardPriceData.eur_foil}</p>}
                             {!cardPriceData.eur && cardPriceData.usd && <p className="text-lg font-bold text-green-600">${cardPriceData.usd}</p>}
+                            <p className="text-xs text-gray-400">EU, CardMarket</p>
                           </>
                         )}
                       </div>
@@ -2708,7 +2728,7 @@ export default function CollectionPage() {
                 </label>
                 {isGraded && (
                   <p className="text-xs text-gray-400 dark:text-gray-500 ml-6">
-                    Graded card prices reflect US market values (TCGPlayer)
+                    Graded card prices reflect US market values (US, TCGPlayer)
                   </p>
                 )}
               </div>
