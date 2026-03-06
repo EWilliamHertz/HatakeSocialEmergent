@@ -1,5 +1,6 @@
 // Pokemon TCG API using TCGdex (free, no API key required) & ScryDex
 // Supports English and Japanese card searches
+import { fetchTCGdexCached } from './api-cache';
 
 export interface PokemonCard {
   id: string;
@@ -56,10 +57,8 @@ function isJapanese(text: string): boolean {
 
 // Route to correct API base
 function getLangBase(lang: string): string {
-  if (lang === 'ja') {
-    return 'https://api.scrydex.com/v1'; // Plugged into ScryDex
-  }
-  return `https://api.tcgdex.net/v2/${lang}`;
+  // Use ScryDex for everything
+  return 'https://api.scrydex.com/v1';
 }
 
 // Map card to standard format
@@ -96,13 +95,9 @@ function mapTCGdexCard(card: any, lang = 'en'): PokemonCard {
 // Get a specific Pokemon card by ID
 export async function getPokemonCard(cardId: string, lang: string = 'en'): Promise<PokemonCard | null> {
   try {
-    const response = await fetch(`${getLangBase(lang)}/cards/${cardId}`, {
-      signal: AbortSignal.timeout(10000)
-    });
+    const card = await fetchTCGdexCached(`${getLangBase(lang)}/cards/${cardId}`);
 
-    if (!response.ok) return null;
-
-    const card = await response.json();
+    if (!card) return null;
 
     return {
       id: card.id,
@@ -152,10 +147,8 @@ export async function searchPokemonCards(
     let url = `${base}/cards`;
     if (query) url += `?name=${encodeURIComponent(query)}`;
 
-    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!response.ok) return { data: [], totalCount: 0 };
-
-    let cards = await response.json();
+    let cards = await fetchTCGdexCached(url);
+    if (!cards || !Array.isArray(cards)) return { data: [], totalCount: 0 };
 
     if (setCode) {
       const setLower = setCode.toLowerCase();
@@ -204,9 +197,8 @@ export async function searchJapanesePokemonCards(query: string, page: number = 1
 
 export async function getPokemonSets(): Promise<PokemonSet[]> {
   try {
-    const response = await fetch(`${getLangBase('en')}/sets`, { signal: AbortSignal.timeout(15000) });
-    if (!response.ok) return [];
-    const sets = await response.json();
+    const sets = await fetchTCGdexCached(`${getLangBase('en')}/sets`);
+    if (!sets || !Array.isArray(sets)) return [];
     return sets.map((set: any) => ({
       id: set.id,
       name: set.name,
@@ -223,9 +215,8 @@ export async function getPokemonSets(): Promise<PokemonSet[]> {
 
 export async function getCardsFromSet(setId: string): Promise<PokemonCard[]> {
   try {
-    const response = await fetch(`${getLangBase('en')}/sets/${setId}`, { signal: AbortSignal.timeout(15000) });
-    if (!response.ok) return [];
-    const setData = await response.json();
+    const setData = await fetchTCGdexCached(`${getLangBase('en')}/sets/${setId}`);
+    if (!setData || !setData.cards) return [];
     const cards = setData.cards || [];
     return cards.map((card: any) => ({
       id: card.id,

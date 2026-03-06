@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     console.log('[MTG Proxy] Searching Scryfall:', scryfallQuery);
 
-    const data = await fetchScryfallCached(
+   const data = await fetchScryfallCached(
       `https://api.scryfall.com/cards/search?q=${encodeURIComponent(scryfallQuery)}&unique=prints&order=released`
     );
 
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, cards: [] });
     }
 
-    const cards = data.data?.slice(0, 30) || [];
+    const cards = data.data?.slice(0, 1000) || [];
 
     return NextResponse.json({ success: true, cards });
   } catch (error: any) {

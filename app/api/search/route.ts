@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
     const game = searchParams.get('game') || 'all';
     const searchType = searchParams.get('type') || 'cards'; // cards, users, all
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '200'), MAX_RESULTS);
+   const limit = Math.min(parseInt(searchParams.get('limit') || '200'), MAX_RESULTS);
     const cardNumber = searchParams.get('number') || undefined;
-    const setCode = searchParams.get('set') || undefined; // ADD THIS LINE
-
+    const setCode = searchParams.get('set') || undefined;
+    const lang = searchParams.get('lang') || undefined;
     // Allow search without query if set or number is provided (for cards only)
     if (!query && !setCode && !cardNumber) {
       return NextResponse.json(
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       // Use Promise.all for parallel API calls when game='all'
       if (game === 'all') {
         const [pokemonResults, mtgResults] = await Promise.allSettled([
-          searchPokemonCards(query, page, limit, setCode, cardNumber).catch(err => {
+          searchPokemonCards(query, page, limit, setCode, cardNumber, lang as any).catch(err => {
             console.error('Pokemon search error:', err);
             return { data: [], totalCount: 0 };
           }),
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
         }
       } else if (game === 'pokemon') {
         try {
-          const pokemonData = await searchPokemonCards(query, page, limit, setCode, cardNumber);
+          const pokemonData = await searchPokemonCards(query, page, limit, setCode, cardNumber, lang as any);
           results = pokemonData.data.slice(0, limit).map((card) => ({
             ...card,
             game: 'pokemon',

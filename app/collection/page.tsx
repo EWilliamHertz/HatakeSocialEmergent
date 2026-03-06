@@ -604,167 +604,32 @@ export default function CollectionPage() {
           setAddCardSearchResults([]);
         }
       } else {
-        // TCGdex API for Pokemon
+        // Pokemon API via backend (uses ScryDex & caching)
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
-          let cards: any[] = [];
-
-          // Helper: fetch from one TCGdex language endpoint
-          const fetchFromLang = async (lang: string): Promise<any[]> => {
-            let langCards: any[] = [];
-            if (resolvedSetCode && addCardCollectorNum.trim() && !addCardName.trim()) {
-              const collNum = addCardCollectorNum.trim().padStart(3, '0');
-              const cardId = `${resolvedSetCode}-${collNum}`;
-              const r1 = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${cardId}`, { signal: controller.signal });
-              if (r1.ok) { langCards = [await r1.json()]; }
-              else {
-                const cardIdNoPad = `${resolvedSetCode}-${addCardCollectorNum.trim()}`;
-                const r2 = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${cardIdNoPad}`, { signal: controller.signal });
-                if (r2.ok) langCards = [await r2.json()];
-              }
-            } else {
-              const searchParams = new URLSearchParams();
-              if (addCardName.trim()) searchParams.append('name', addCardName.trim());
-              const apiUrl = `https://api.tcgdex.net/v2/${lang}/cards` + (searchParams.toString() ? '?' + searchParams.toString() : '');
-              const res = await fetch(apiUrl, { signal: controller.signal });
-              if (res.ok) {
-                langCards = await res.json();
-                if (addCardSetCode.trim()) {
-                  langCards = langCards.filter((c: any) => c.id?.toLowerCase().includes(resolvedSetCode) || c.set?.id?.toLowerCase() === resolvedSetCode);
-                }
-                if (addCardCollectorNum.trim()) {
-                  const collNum = addCardCollectorNum.trim();
-                  const paddedCollNum = collNum.padStart(3, '0');
-                  langCards = langCards.filter((c: any) => {
-                    const localId = c.localId?.toString() || '';
-                    const idNum = c.id?.split('-').pop() || '';
-                    return localId === collNum || localId === paddedCollNum || idNum === collNum || idNum === paddedCollNum;
-                  });
-                }
-              }
-            }
-            return langCards.map((c: any) => ({ ...c, _srcLang: lang }));
-          };
-
-          // Helper: given a list of EN cards, fetch the dexId from the first Pokémon card
-          const getDexIds = async (enCards: any[]): Promise<number[]> => {
-            if (enCards.length === 0) return [];
-            try {
-              const r = await fetch(`https://api.tcgdex.net/v2/en/cards/${enCards[0].id}`, { signal: controller.signal });
-              if (!r.ok) return [];
-              const detail = await r.json();
-              return Array.isArray(detail.dexId) && detail.dexId.length > 0 ? detail.dexId : [];
-            } catch { return []; }
-          };
-
-          // Helper: search a language by dexId(s) — finds JA-exclusive sets too
-          const fetchByDexId = async (lang: string, dexIds: number[]): Promise<any[]> => {
-            const res = await Promise.allSettled(
-              dexIds.map(async (dexId) => {
-                const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards?dexId=eq:${dexId}`, { signal: controller.signal });
-                if (!r.ok) return [] as any[];
-                const c = await r.json();
-                return (Array.isArray(c) ? c : []).map((x: any) => ({ ...x, _srcLang: lang }));
-              })
-            );
-            return res.flatMap(r => r.status === 'fulfilled' ? r.value : []);
-          };
-
-          // Helper: cross-fetch by EN set+localId (fallback for trainer/energy with no dexId)
-          const crossFetchBySetId = async (lang: string, enCards: any[]): Promise<any[]> => {
-            const res = await Promise.allSettled(
-              enCards.map(async (enCard: any) => {
-                const setId = enCard.set?.id || enCard.id?.split('-')[0];
-                const localId = enCard.localId || enCard.id?.split('-').pop();
-                if (!setId || !localId) return null;
-                const r = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${setId}-${localId}`, { signal: controller.signal });
-                if (!r.ok) return null;
-                const fc = await r.json();
-                return { ...fc, _srcLang: lang };
-              })
-            );
-            return res.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null).map(r => r.value);
-          };
-
-          if (addCardLang === 'all') {
-            const isAsciiOnly = addCardName.trim().length >= 2 && /^[\x00-\x7F]+$/.test(addCardName.trim()) && !addCardSetCode.trim();
-            const enCards = await fetchFromLang('en').catch(() => [] as any[]);
-            let jaCards: any[] = [];
-            if (isAsciiOnly) {
-              // Get dexId to find JA-exclusive sets (e.g. SV4A Mimikyu that has no EN equivalent)
-              const dexIds = await getDexIds(enCards);
-              if (dexIds.length > 0) {
-                jaCards = await fetchByDexId('ja', dexIds).catch(() => []);
-              } else {
-                // Trainer/energy: no dexId, fall back to set+localId cross-fetch
-                jaCards = await crossFetchBySetId('ja', enCards).catch(() => []);
-              }
-            } else {
-              // Non-ASCII (native characters): direct name search in Japanese
-              jaCards = await fetchFromLang('ja').catch(() => [] as any[]);
-            }
-            const seen = new Set<string>();
-            for (const card of [...enCards, ...jaCards]) {
-              if (!seen.has(card.id)) { seen.add(card.id); cards.push(card); }
-            }
-          } else if (
-            addCardLang !== 'en' &&
-            addCardName.trim().length >= 2 &&
-            /^[\x00-\x7F]+$/.test(addCardName.trim()) &&
-            !addCardSetCode.trim()
-          ) {
-            // ASCII query + any non-EN language: use dexId so we find cards by Pokédex number
-            // (DE searches "Charmander" directly returns nothing; dexId finds "Glurak" etc.)
-            const targetLang = addCardLang;
-            const enResults = await fetchFromLang('en').catch(() => [] as any[]);
-            const dexIds = await getDexIds(enResults);
-            if (dexIds.length > 0) {
-              cards = await fetchByDexId(targetLang, dexIds).catch(() => []);
-            } else {
-              // Trainer/energy fallback
-              const foreignResults = await Promise.allSettled(
-                enResults.map(async (enCard: any) => {
-                  const setId = enCard.set?.id || enCard.id?.split('-')[0];
-                  const localId = enCard.localId || enCard.id?.split('-').pop();
-                  if (!setId || !localId) return null;
-                  const r = await fetch(`https://api.tcgdex.net/v2/${targetLang}/cards/${setId}-${localId}`, { signal: controller.signal });
-                  if (!r.ok) return null;
-                  const fc = await r.json();
-                  return { ...fc, _srcLang: targetLang };
-                })
-              );
-              cards = foreignResults
-                .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null)
-                .map(r => r.value);
-            }
-          } else {
-            cards = await fetchFromLang(addCardLang);
+          const params = new URLSearchParams();
+          if (addCardName.trim()) params.append('q', addCardName.trim());
+          if (resolvedSetCode) params.append('set', resolvedSetCode);
+          if (addCardCollectorNum.trim()) params.append('number', addCardCollectorNum.trim());
+          params.append('game', 'pokemon');
+          params.append('type', 'cards');
+          if (addCardLang && addCardLang !== 'all') params.append('lang', addCardLang);
+          
+          if (!params.toString()) {
+            setAddCardSearchResults([]);
+            return;
           }
-          clearTimeout(timeoutId);
           
-          const mappedCards = cards.map((card: any) => ({
-            id: card.id,
-            name: card.name,
-            game: 'pokemon',
-            rarity: card.rarity || 'Unknown',
-            image_uris: {
-              small: card.image ? card.image + '/low.webp' : null,
-              normal: card.image ? card.image + '/high.webp' : null,
-              large: card.image ? card.image + '/high.webp' : null
-            },
-            images: {
-              small: card.image ? card.image + '/low.webp' : null,
-              large: card.image ? card.image + '/high.webp' : null
-            },
-            set_name: card.set?.name || '',
-            set_code: card.set?.id || card.id?.split('-')[0] || '',
-            collector_number: card.localId || card.id?.split('-').pop() || '',
-            set: { id: card.set?.id, name: card.set?.name },
-            pricing: card.pricing
-          }));
+          const searchRes = await fetch(`/api/search?${params.toString()}`, {
+            credentials: 'include',
+            signal: AbortSignal.timeout(15000)
+          });
           
-          setAddCardSearchResults(mappedCards);
+          if (searchRes.ok) {
+            const data = await searchRes.json();
+            setAddCardSearchResults(data.results || []);
+          } else {
+            setAddCardSearchResults([]);
+          }
         } catch (fetchError) {
           setAddCardSearchResults([]);
         }
@@ -2488,6 +2353,8 @@ const filteredItems = items.filter(item => {
                         const pricing = card.pricing?.cardmarket;
                         if (pricing?.avg) return `€${pricing.avg.toFixed(2)}`;
                         if (pricing?.trend) return `€${pricing.trend.toFixed(2)}`;
+                        const usd = card.pricing?.usd || card.prices?.usd;
+                        if (usd) return `€${(parseFloat(String(usd)) * 0.92).toFixed(2)}`;
                         return null;
                       } else if (addCardGame === 'lorcana') {
                         // Lorcana prices are USD from ScryDex
@@ -2539,55 +2406,7 @@ const filteredItems = items.filter(item => {
                             setAddCardQuantity(1);
                             setAddCardCondition('Near Mint');
                             setIsGraded(false);
-                            // Fetch full card data with pricing if Pokemon
-                            if (addCardGame === 'pokemon' && card.id && !card.pricing) {
-                              const cardLang = (card as any)._srcLang || addCardLang;
-                              const isForeign = cardLang === 'ja';
-                              setLoadingCardPrice(true);
-                              if (isForeign) {
-                                // ScryDex for Japanese Pokémon (US, TCGPlayer prices)
-                                const dexIds: number[] = Array.isArray((card as any).dexId)
-                                  ? (card as any).dexId
-                                  : ((card as any).dexId ? [(card as any).dexId] : []);
-                                fetch('/api/prices/cardmarket', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ cards: [{ collectionId: -1, tcgdexId: card.id, lang: cardLang, dexIds }] }),
-                                })
-                                  .then(r => r.json())
-                                  .then(data => {
-                                    // Route keys by collectionId; -1 used as sentinel
-                                    const price = (data.prices as Record<string, number | null>)?.['-1'] ?? (data.prices as Record<number, number | null>)?.[-1];
-                                    if (price != null) setCardPriceData({ usd: price });
-                                    setLoadingCardPrice(false);
-                                  })
-                                  .catch(() => setLoadingCardPrice(false));
-                              } else {
-                                // pokemontcg.io for English Pokémon (EU, CardMarket prices)
-                                const name = (card.name || '').replace(/["*[\\]]/g, '').trim();
-                                const enPricingUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent('name:' + name)}&pageSize=20`;
-                                fetch(enPricingUrl)
-                                  .then(r => r.json())
-                                  .then(data => {
-                                    const allCards: any[] = data.data || [];
-                                    const tcgdexSet = (card.set_code || (card.id || '').split('-')[0] || '').toLowerCase();
-                                    const tcgdexNum = ((card.collector_number || (card.id || '').split('-').pop()) || '').replace(/^0+/, '');
-                                    let match = allCards.find((c: any) =>
-                                      c.set?.id?.toLowerCase() === tcgdexSet && c.number === tcgdexNum
-                                    );
-                                    if (!match) match = allCards[0];
-                                    if (match?.cardmarket?.prices) {
-                                      const cm = match.cardmarket.prices;
-                                      const avg = cm.averageSellPrice || cm.trendPrice || cm.avg1;
-                                      if (avg) setCardPriceData({ cardmarket: { avg } });
-                                    }
-                                    setLoadingCardPrice(false);
-                                  })
-                                  .catch(() => setLoadingCardPrice(false));
-                              }
-                            } else {
-                              setCardPriceData(card.pricing || card.prices);
-                            }
+                            setCardPriceData(card.pricing || card.prices);
                           }}
                           className="w-full px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center justify-center gap-1"
                         >
