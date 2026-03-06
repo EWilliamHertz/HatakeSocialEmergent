@@ -160,6 +160,61 @@ export default function CollectionPage() {
   const gradingCompanies = ['PSA', 'BGS', 'CGC', 'SGC', 'PCG', 'Ace'];
   const gradeValues = ['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6', '5.5', '5', '4', '3', '2', '1'];
 
+  const getPriceForFinish = (card: any, game: string, finish: string) => {
+    if (!card) return null;
+    
+    if (game === 'pokemon') {
+      const tcgPrices = card.tcgplayer?.prices || card.pricing?.tcgplayer;
+      if (tcgPrices) {
+        let key = 'normal';
+        if (finish === 'Holofoil') key = 'holofoil';
+        else if (finish === 'Reverse Holofoil') key = 'reverseHolofoil';
+        else if (finish === 'Pokeball Holofoil') key = 'pokeballHolofoil';
+        else if (finish === 'Masterball Holofoil') key = 'masterballHolofoil';
+        
+        const finishPrice = tcgPrices[key]?.market !== undefined ? tcgPrices[key].market : tcgPrices[key];
+        if (finishPrice !== undefined && finishPrice !== null) return { value: parseFloat(finishPrice) * 0.92, currency: 'EUR' }; 
+      }
+      
+      const cmPrices = card.cardmarket?.prices || card.pricing?.cardmarket;
+      if (cmPrices) {
+         if (finish === 'Reverse Holofoil' && (cmPrices.reverseHoloAvg || cmPrices.reverseHoloSell || cmPrices.reverseHoloTrend)) {
+            const price = cmPrices.reverseHoloAvg || cmPrices.reverseHoloSell || cmPrices.reverseHoloTrend;
+            if (price) return { value: parseFloat(price), currency: 'EUR' };
+         } else if (finish === 'Normal' || finish === 'Holofoil') {
+            const price = cmPrices.avg || cmPrices.averageSellPrice || cmPrices.trendPrice || cmPrices.trend;
+            if (price) return { value: parseFloat(price), currency: 'EUR' };
+         }
+      }
+      
+      if (finish === 'Normal' || finish === 'Holofoil') {
+         const usd = card.pricing?.usd || card.prices?.usd;
+         if (usd) return { value: parseFloat(usd) * 0.92, currency: 'EUR' };
+      }
+    } else if (game === 'mtg') {
+       const isFoil = finish !== 'Normal';
+       const prices = card.prices || card.pricing;
+       if (prices) {
+         if (isFoil && prices.eur_foil) return { value: parseFloat(prices.eur_foil), currency: 'EUR' };
+         if (!isFoil && prices.eur) return { value: parseFloat(prices.eur), currency: 'EUR' };
+         if (isFoil && prices.usd_foil) return { value: parseFloat(prices.usd_foil) * 0.92, currency: 'EUR' };
+         if (!isFoil && prices.usd) return { value: parseFloat(prices.usd) * 0.92, currency: 'EUR' };
+       }
+    } else if (game === 'lorcana') {
+       const isFoil = finish !== 'Normal';
+       const prices = card.tcgplayer?.prices || card.pricing?.tcgplayer || card.pricing;
+       if (prices) {
+         if (isFoil && prices.foil?.market) return { value: parseFloat(prices.foil.market) * 0.92, currency: 'EUR' };
+         if (!isFoil && prices.normal?.market) return { value: parseFloat(prices.normal.market) * 0.92, currency: 'EUR' };
+       }
+       if (!isFoil) {
+         const usd = card.pricing?.usd;
+         if (usd) return { value: parseFloat(usd) * 0.92, currency: 'EUR' };
+       }
+    }
+    return null;
+  };
+
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
@@ -2347,33 +2402,68 @@ const filteredItems = items.filter(item => {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {addCardSearchResults.map((card) => {
-                    // Calculate price display - prefer EUR
-                    const getCardPriceDisplay = () => {
+                    const getCardPriceDisplays = () => {
+                      const prices: string[] = [];
                       if (addCardGame === 'pokemon') {
-                        const pricing = card.pricing?.cardmarket;
-                        if (pricing?.avg) return `€${pricing.avg.toFixed(2)}`;
-                        if (pricing?.trend) return `€${pricing.trend.toFixed(2)}`;
+                        const tcgPrices = card.tcgplayer?.prices || card.pricing?.tcgplayer;
+                        if (tcgPrices) {
+                           if (tcgPrices.normal?.market || typeof tcgPrices.normal === 'number') {
+                              const val = parseFloat(tcgPrices.normal?.market ?? tcgPrices.normal) * 0.92;
+                              if (val > 0) prices.push(`€${val.toFixed(2)}`);
+                           }
+                           if (tcgPrices.holofoil?.market || typeof tcgPrices.holofoil === 'number') {
+                              const val = parseFloat(tcgPrices.holofoil?.market ?? tcgPrices.holofoil) * 0.92;
+                              if (val > 0) prices.push(`€${val.toFixed(2)} (Holo)`);
+                           }
+                           if (tcgPrices.reverseHolofoil?.market || typeof tcgPrices.reverseHolofoil === 'number') {
+                              const val = parseFloat(tcgPrices.reverseHolofoil?.market ?? tcgPrices.reverseHolofoil) * 0.92;
+                              if (val > 0) prices.push(`€${val.toFixed(2)} (Rev)`);
+                           }
+                           if (tcgPrices.pokeballHolofoil?.market || typeof tcgPrices.pokeballHolofoil === 'number') {
+                              const val = parseFloat(tcgPrices.pokeballHolofoil?.market ?? tcgPrices.pokeballHolofoil) * 0.92;
+                              if (val > 0) prices.push(`€${val.toFixed(2)} (PB)`);
+                           }
+                           if (tcgPrices.masterballHolofoil?.market || typeof tcgPrices.masterballHolofoil === 'number') {
+                              const val = parseFloat(tcgPrices.masterballHolofoil?.market ?? tcgPrices.masterballHolofoil) * 0.92;
+                              if (val > 0) prices.push(`€${val.toFixed(2)} (MB)`);
+                           }
+                           if (prices.length > 0) return prices;
+                        }
+
+                        const cmPrices = card.cardmarket?.prices || card.pricing?.cardmarket;
+                        if (cmPrices) {
+                           if (cmPrices.avg || cmPrices.trend) {
+                              prices.push(`€${parseFloat(cmPrices.avg || cmPrices.trend).toFixed(2)}`);
+                           }
+                           if (cmPrices.reverseHoloAvg || cmPrices.reverseHoloTrend) {
+                              prices.push(`€${parseFloat(cmPrices.reverseHoloAvg || cmPrices.reverseHoloTrend).toFixed(2)} (Rev)`);
+                           }
+                           if (prices.length > 0) return prices;
+                        }
+
                         const usd = card.pricing?.usd || card.prices?.usd;
-                        if (usd) return `€${(parseFloat(String(usd)) * 0.92).toFixed(2)}`;
+                        if (usd) return [`€${(parseFloat(String(usd)) * 0.92).toFixed(2)}`];
                         return null;
                       } else if (addCardGame === 'lorcana') {
-                        // Lorcana prices are USD from ScryDex
                         const usd = card.pricing?.usd;
-                        if (usd) return `$${parseFloat(String(usd)).toFixed(2)}`;
-                        return null;
+                        if (usd) prices.push(`$${parseFloat(String(usd)).toFixed(2)}`);
+                        const foil = card.pricing?.foil || card.tcgplayer?.prices?.foil?.market;
+                        if (foil) prices.push(`$${parseFloat(String(foil)).toFixed(2)} (Foil)`);
+                        return prices.length > 0 ? prices : null;
                       } else {
-                        // MTG - Scryfall prices, prefer EUR
-                        const prices = card.prices;
-                        if (prices?.eur) return `€${prices.eur}`;
-                        if (prices?.eur_foil) return `€${prices.eur_foil} (Foil)`;
-                        // Fallback to USD
-                        if (prices?.usd) return `$${prices.usd}`;
-                        if (prices?.usd_foil) return `$${prices.usd_foil} (Foil)`;
-                        return null;
+                        const mtgPrices = card.prices;
+                        if (mtgPrices?.eur) prices.push(`€${mtgPrices.eur}`);
+                        if (mtgPrices?.eur_foil) prices.push(`€${mtgPrices.eur_foil} (Foil)`);
+                        
+                        if (prices.length === 0) {
+                          if (mtgPrices?.usd) prices.push(`$${mtgPrices.usd}`);
+                          if (mtgPrices?.usd_foil) prices.push(`$${mtgPrices.usd_foil} (Foil)`);
+                        }
+                        return prices.length > 0 ? prices : null;
                       }
                     };
                     
-                    const priceDisplay = getCardPriceDisplay();
+                    const priceDisplays = getCardPriceDisplays();
                     
                     return (
                       <div key={card.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition">
@@ -2383,9 +2473,13 @@ const filteredItems = items.filter(item => {
                             alt={card.name}
                             className="w-full h-full object-contain rounded"
                           />
-                          {priceDisplay && (
-                            <div className="absolute top-1 right-1 bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                              {priceDisplay}
+                          {priceDisplays && priceDisplays.length > 0 && (
+                            <div className="absolute top-1 right-1 flex flex-col gap-0.5 items-end">
+                              {priceDisplays.map((p, i) => (
+                                <div key={i} className="bg-green-600/90 text-white text-[10px] leading-tight font-bold px-1.5 py-0.5 rounded shadow-sm backdrop-blur-sm">
+                                  {p}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>
@@ -2456,58 +2550,27 @@ const filteredItems = items.filter(item => {
                   />
                 </div>
 
-                {/* Price Info */}
+             {/* Price Info */}
                 <div className="flex-1">
                   <div className="mb-3">
-                    {loadingCardPrice ? (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Fetching price...</span>
-                      </div>
-                    ) : cardPriceData ? (
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Market Price:</p>
-                        {addCardGame === 'pokemon' && cardPriceData.cardmarket && (
-                          <>
-                            {cardPriceData.cardmarket.avg && (
-                              <p className="text-lg font-bold text-green-600">€{Number(cardPriceData.cardmarket.avg).toFixed(2)}</p>
-                            )}
-                            {cardPriceData.cardmarket.trend && (
-                              <p className="text-xs text-gray-500">Trend: €{Number(cardPriceData.cardmarket.trend).toFixed(2)}</p>
-                            )}
-                            <p className="text-xs text-gray-400">EU, CardMarket</p>
-                          </>
-                        )}
-                        {addCardGame === 'pokemon' && !cardPriceData.cardmarket && cardPriceData.usd && (
-                          <>
-                            <p className="text-lg font-bold text-green-600">${Number(cardPriceData.usd).toFixed(2)}</p>
-                            <p className="text-xs text-gray-400">US, TCGPlayer</p>
-                          </>
-                        )}
-                        {addCardGame === 'lorcana' && cardPriceData.usd && (
-                          <>
-                            <p className="text-lg font-bold text-green-600">${Number(cardPriceData.usd).toFixed(2)}</p>
-                            <p className="text-xs text-gray-400">US, TCGPlayer</p>
-                          </>
-                        )}
-                        {addCardGame === 'mtg' && (
-                          <>
-                            {cardPriceData.eur && <p className="text-lg font-bold text-green-600">€{cardPriceData.eur}</p>}
-                            {cardPriceData.eur_foil && <p className="text-xs text-gray-500">Foil: €{cardPriceData.eur_foil}</p>}
-                            {!cardPriceData.eur && cardPriceData.usd && <p className="text-lg font-bold text-green-600">${cardPriceData.usd}</p>}
-                            <p className="text-xs text-gray-400">EU, CardMarket</p>
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      (() => {
+                    {(() => {
+                      const selectedPrice = getPriceForFinish(selectedCardToAdd, addCardGame, cardFinish);
+                      if (selectedPrice) {
+                        return (
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Market Price ({cardFinish}):</p>
+                            <p className="text-lg font-bold text-green-600">{selectedPrice.currency === 'EUR' ? '€' : '$'}{selectedPrice.value.toFixed(2)}</p>
+                            <p className="text-xs text-gray-400">Estimated current value</p>
+                          </div>
+                        );
+                      } else {
                         const _lang = selectedCardToAdd?.card_data?.language || selectedCardToAdd?.card_data?._srcLang || '';
                         const _isZh = _lang === 'zh-tw' || _lang === 'zh';
-                        return _isZh
+                        return _isZh 
                           ? <p className="text-sm text-amber-600 dark:text-amber-400">Pricing not available for Chinese cards</p>
                           : <p className="text-sm text-gray-500">Price not available</p>;
-                      })()
-                    )}
+                      }
+                    })()}
                   </div>
                 </div>
               </div>
@@ -2538,9 +2601,11 @@ const filteredItems = items.filter(item => {
                     onChange={(e) => setCardFinish(e.target.value)}
                     className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   >
-                    {(addCardGame === 'pokemon' ? pokemonFinishOptions : addCardGame === 'lorcana' ? lorcanaFinishOptions : mtgFinishOptions).map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
+                    {(addCardGame === 'pokemon' ? pokemonFinishOptions : addCardGame === 'lorcana' ? lorcanaFinishOptions : mtgFinishOptions).map(opt => {
+                        const price = getPriceForFinish(selectedCardToAdd, addCardGame, opt);
+                        const priceStr = price ? ` - ${price.currency === 'EUR' ? '€' : '$'}${price.value.toFixed(2)}` : '';
+                        return <option key={opt} value={opt}>{opt}{priceStr}</option>;
+                    })}
                   </select>
                 </div>
 
