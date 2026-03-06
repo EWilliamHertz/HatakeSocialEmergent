@@ -4,7 +4,7 @@ import { searchScryfallCards } from '@/lib/scryfall-api';
 import sql from '@/lib/db';
 
 // Maximum results to return to prevent timeouts
-const MAX_RESULTS = 200; // Increased to allow cards with massive print runs (like Lightning Bolt)
+const MAX_RESULTS = 200;
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const game = searchParams.get('game') || 'all';
     const searchType = searchParams.get('type') || 'cards'; // cards, users, all
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '200'), MAX_RESULTS);    const setCode = searchParams.get('set') || undefined;
+    const limit = Math.min(parseInt(searchParams.get('limit') || '200'), MAX_RESULTS);
     const cardNumber = searchParams.get('number') || undefined;
 
     // Allow search without query if set or number is provided (for cards only)

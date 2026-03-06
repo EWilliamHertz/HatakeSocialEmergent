@@ -1,4 +1,4 @@
-// Pokemon TCG API using TCGdex (free, no API key required)
+// Pokemon TCG API using TCGdex (free, no API key required) & ScryDex
 // Supports English and Japanese card searches
 
 export interface PokemonCard {
@@ -34,9 +34,9 @@ export interface PokemonCard {
     url?: string;
     prices?: any;
   };
-  lang?: string; // 'en' | 'ja'
-  prices?: any;  // NEW: Keep raw prices data
-  pricing?: any; // NEW: Keep raw pricing data
+  lang?: string; 
+  prices?: any;  
+  pricing?: any; 
 }
 
 export interface PokemonSet {
@@ -49,16 +49,20 @@ export interface PokemonSet {
   symbol?: string;
 }
 
-// Detect Japanese characters (hiragana, katakana, kanji)
+// Detect Japanese characters
 function isJapanese(text: string): boolean {
   return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uff00-\uffef]/.test(text);
 }
 
+// Route to correct API base
 function getLangBase(lang: string): string {
+  if (lang === 'ja') {
+    return 'https://api.scrydex.com/v1'; // Plugged into ScryDex
+  }
   return `https://api.tcgdex.net/v2/${lang}`;
 }
 
-// Update the mapping function
+// Map card to standard format
 function mapTCGdexCard(card: any, lang = 'en'): PokemonCard {
   return {
     id: card.id,
@@ -82,97 +86,21 @@ function mapTCGdexCard(card: any, lang = 'en'): PokemonCard {
     tcgplayer: card.pricing?.tcgplayer ? {
       url: '',
       prices: card.pricing.tcgplayer
-    } : (card.tcgplayer || undefined), // Safely check if tcgplayer already exists
-    prices: card.prices || card.pricing || undefined, // Capture ScryDex/TCGdex prices
-    pricing: card.pricing || card.prices || undefined, 
+    } : (card.tcgplayer || undefined),
+    prices: card.prices || card.pricing || undefined,
+    pricing: card.pricing || card.prices || undefined,
     lang,
   };
 }
-// Search for Pokemon cards
-// - Automatically uses Japanese endpoint when query contains Japanese characters
-// - Falls back to English endpoint for all other queries
-export async function searchPokemonCards(
-  query: string,
-  page: number = 1,
-  limit: number = 50,
-  setCode?: string,
-  cardNumber?: string,
-  forceLang?: 'en' | 'ja'
-): Promise<{ data: PokemonCard[]; totalCount: number }> {
-  try {
-    // Auto-detect language from query characters
-    const lang = forceLang || (isJapanese(query) ? 'ja' : 'en');
-    const base = getLangBase(lang);
-
-    let url = `${base}/cards`;
-    if (query) {
-      url += `?name=${encodeURIComponent(query)}`;
-    }
-
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(15000)
-    });
-
-    if (!response.ok) {
-      console.error('TCGdex API error:', response.status);
-      return { data: [], totalCount: 0 };
-    }
-
-    let cards = await response.json();
-
-    // Filter by set code if provided
-    if (setCode) {
-      const setLower = setCode.toLowerCase();
-      cards = cards.filter((card: any) =>
-        card.id?.toLowerCase().includes(setLower) ||
-        card.set?.id?.toLowerCase() === setLower
-      );
-    }
-
-    // Filter by card number if provided
-    if (cardNumber) {
-      cards = cards.filter((card: any) =>
-        card.localId === cardNumber ||
-        card.id?.endsWith('-' + cardNumber)
-      );
-    }
-
-    // Pagination
-    const startIndex = (page - 1) * limit;
-    const paginatedCards = cards.slice(startIndex, startIndex + limit);
-
-    // Map to standard format
-    const mappedCards = paginatedCards.map((c: any) => mapTCGdexCard(c, lang));
-
-    return {
-      data: mappedCards,
-      totalCount: cards.length
-    };
-  } catch (error) {
-    console.error('Error searching Pokemon cards:', error);
-    return { data: [], totalCount: 0 };
-  }
-}
-
-// Search Japanese Pokémon cards explicitly (useful for add-to-collection flow)
-export async function searchJapanesePokemonCards(
-  query: string,
-  page: number = 1,
-  limit: number = 50
-): Promise<{ data: PokemonCard[]; totalCount: number }> {
-  return searchPokemonCards(query, page, limit, undefined, undefined, 'ja');
-}
 
 // Get a specific Pokemon card by ID
-export async function getPokemonCard(cardId: string): Promise<PokemonCard | null> {
+export async function getPokemonCard(cardId: string, lang: string = 'en'): Promise<PokemonCard | null> {
   try {
-    const response = await fetch(`${getLangBase('en')}/cards/${cardId}`, {
+    const response = await fetch(`${getLangBase(lang)}/cards/${cardId}`, {
       signal: AbortSignal.timeout(10000)
     });
 
-    if (!response.ok) {
-      return null;
-    }
+    if (!response.ok) return null;
 
     const card = await response.json();
 
@@ -201,7 +129,7 @@ export async function getPokemonCard(cardId: string): Promise<PokemonCard | null
       } : (card.tcgplayer || undefined),
       prices: card.prices || card.pricing || undefined,
       pricing: card.pricing || card.prices || undefined,
-      lang: card.lang || 'en'
+      lang: card.lang || lang
     };
   } catch (error) {
     console.error('Error getting Pokemon card:', error);
@@ -209,19 +137,77 @@ export async function getPokemonCard(cardId: string): Promise<PokemonCard | null
   }
 }
 
-// Get all Pokemon sets
-export async function getPokemonSets(): Promise<PokemonSet[]> {
+export async function searchPokemonCards(
+  query: string,
+  page: number = 1,
+  limit: number = 50,
+  setCode?: string,
+  cardNumber?: string,
+  forceLang?: 'en' | 'ja'
+): Promise<{ data: PokemonCard[]; totalCount: number }> {
   try {
-    const response = await fetch(`${getLangBase('en')}/sets`, {
-      signal: AbortSignal.timeout(15000)
-    });
+    const lang = forceLang || (isJapanese(query) ? 'ja' : 'en');
+    const base = getLangBase(lang);
 
-    if (!response.ok) {
-      return [];
+    let url = `${base}/cards`;
+    if (query) url += `?name=${encodeURIComponent(query)}`;
+
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return { data: [], totalCount: 0 };
+
+    let cards = await response.json();
+
+    if (setCode) {
+      const setLower = setCode.toLowerCase();
+      cards = cards.filter((card: any) =>
+        card.id?.toLowerCase().includes(setLower) ||
+        card.set?.id?.toLowerCase() === setLower
+      );
     }
 
-    const sets = await response.json();
+    if (cardNumber) {
+      cards = cards.filter((card: any) =>
+        card.localId === cardNumber ||
+        card.id?.endsWith('-' + cardNumber)
+      );
+    }
 
+    const startIndex = (page - 1) * limit;
+    const paginatedCards = cards.slice(startIndex, startIndex + limit);
+
+    const mappedCards = paginatedCards.map((c: any) => mapTCGdexCard(c, lang));
+
+    // FETCH ENRICHMENT: Pull detailed data for each card to guarantee pricing appears
+    const enrichedCards = await Promise.all(
+      mappedCards.map(async (card) => {
+        try {
+          const fullCard = await getPokemonCard(card.id, lang);
+          return fullCard || card;
+        } catch {
+          return card;
+        }
+      })
+    );
+
+    return {
+      data: enrichedCards,
+      totalCount: cards.length
+    };
+  } catch (error) {
+    console.error('Error searching Pokemon cards:', error);
+    return { data: [], totalCount: 0 };
+  }
+}
+
+export async function searchJapanesePokemonCards(query: string, page: number = 1, limit: number = 50) {
+  return searchPokemonCards(query, page, limit, undefined, undefined, 'ja');
+}
+
+export async function getPokemonSets(): Promise<PokemonSet[]> {
+  try {
+    const response = await fetch(`${getLangBase('en')}/sets`, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return [];
+    const sets = await response.json();
     return sets.map((set: any) => ({
       id: set.id,
       name: set.name,
@@ -232,32 +218,20 @@ export async function getPokemonSets(): Promise<PokemonSet[]> {
       symbol: set.symbol ? `${set.symbol}/high.webp` : undefined,
     }));
   } catch (error) {
-    console.error('Error getting Pokemon sets:', error);
     return [];
   }
 }
 
-// Search cards within a specific set
 export async function getCardsFromSet(setId: string): Promise<PokemonCard[]> {
   try {
-    const response = await fetch(`${getLangBase('en')}/sets/${setId}`, {
-      signal: AbortSignal.timeout(15000)
-    });
-
-    if (!response.ok) {
-      return [];
-    }
-
+    const response = await fetch(`${getLangBase('en')}/sets/${setId}`, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return [];
     const setData = await response.json();
     const cards = setData.cards || [];
-
     return cards.map((card: any) => ({
       id: card.id,
       name: card.name,
-      set: {
-        id: setId,
-        name: setData.name || '',
-      },
+      set: { id: setId, name: setData.name || '' },
       number: card.localId || '',
       images: {
         small: card.image ? `${card.image}/low.webp` : '',
@@ -265,7 +239,6 @@ export async function getCardsFromSet(setId: string): Promise<PokemonCard[]> {
       }
     }));
   } catch (error) {
-    console.error('Error getting cards from set:', error);
     return [];
   }
 }
