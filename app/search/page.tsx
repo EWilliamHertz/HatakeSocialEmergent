@@ -205,20 +205,28 @@ const getPrice = (card: Card) => {
 
       if (game === 'pokemon') {
         let price = 0;
-        // Use type assertion to access lang/language if it's not on the main interface
         const isJapanese = (card as any).lang === 'ja' || (card as any).language === 'Japanese';
 
+        // 1. Japanese (ScryDex JPY conversion)
         if (isJapanese) {
-          const yenPrice = card.prices?.yen || card.prices?.jpy || card.prices?.market || (card as any).pricing?.market || 0;
-          if (yenPrice > 0) {
-            return `€${(Number(yenPrice) * 0.0061).toFixed(2)}`;
-          }
+          const yenPrice = 
+            card.prices?.yen || 
+            card.prices?.jpy || 
+            card.prices?.market || 
+            (card as any).pricing?.market || 
+            0;
+            
+          if (yenPrice > 0) return `€${(Number(yenPrice) * 0.0061).toFixed(2)}`;
         }
 
+        // 2. English (Cardmarket fallback)
         if ((card as any).pricing?.cardmarket) {
           price = (card as any).pricing.cardmarket.avg || (card as any).pricing.cardmarket.trend || 0;
+        } else if (card.prices?.cardmarket) {
+          price = card.prices.cardmarket.avg || card.prices.cardmarket.trend || 0;
         }
         
+        // 3. English (TCGplayer fallback to EUR)
         if (!price && card.tcgplayer?.prices) {
           const p = card.tcgplayer.prices;
           const usdPrice = 
@@ -229,11 +237,17 @@ const getPrice = (card: Card) => {
             p.unlimited?.market || 
             p["1stEditionHolofoil"]?.market || 
             p["1stEdition"]?.market || 
+            p.market || 
             0;
-          price = usdPrice * 0.92; // Convert USD to EUR
+          price = usdPrice * 0.92; // USD to EUR
         }
 
-        // Failsafe for massive numbers accidentally interpreted as USD
+        // 4. ScryDex General USD catch-all
+        if (!price && (card.prices?.usd || (card as any).pricing?.usd)) {
+          price = Number(card.prices?.usd || (card as any).pricing?.usd) * 0.92;
+        }
+
+        // Massive Japanese number failsafe 
         if (isJapanese && price > 200) {
           return `€${(price * 0.0061).toFixed(2)}`;
         }
@@ -258,7 +272,6 @@ const getPrice = (card: Card) => {
     }
     return 'N/A';
   };
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {isAuthenticated && <Navbar />}

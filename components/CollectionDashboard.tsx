@@ -32,28 +32,22 @@ export default function CollectionDashboard({ items, priceOverrides = {}, prices
         return Number(priceOverrides[item.id]) || 0;
       }
 
-      // 2. Pokemon Pricing (TCGDex & ScryDex)
+     // 2. Pokemon Pricing (TCGDex & ScryDex)
       if (game === 'pokemon') {
         let price = 0;
         const isJapanese = card.lang === 'ja' || card.language === 'Japanese';
 
-        // A) Japanese Cards (ScryDex integration)
         if (isJapanese) {
-          // Assuming ScryDex returns prices in Yen. Check your specific ScryDex JSON structure here:
-          const yenPrice = card.prices?.yen || card.prices?.jpy || card.pricing?.market || 0;
-          
-          if (yenPrice > 0) {
-            // Convert JPY to EUR (Current exchange rate: ~1 JPY = 0.0061 EUR)
-            return Number(yenPrice) * 0.0061;
-          }
+          const yenPrice = card.prices?.yen || card.prices?.jpy || card.prices?.market || card.pricing?.market || 0;
+          if (yenPrice > 0) return Number(yenPrice) * 0.0061;
         }
 
-        // B) English/European Cards (Cardmarket / TCGPlayer)
         if (card.pricing?.cardmarket) {
           price = card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || card.pricing.cardmarket.low || 0;
-        } 
+        } else if (card.prices?.cardmarket) {
+          price = card.prices.cardmarket.avg || card.prices.cardmarket.trend || card.prices.cardmarket.low || 0;
+        }
         
-        // C) Expanded TCGPlayer Fallbacks (Fixes missing Charmander prices)
         if (!price && card.tcgplayer?.prices) {
           const p = card.tcgplayer.prices;
           const usdPrice = 
@@ -64,18 +58,21 @@ export default function CollectionDashboard({ items, priceOverrides = {}, prices
             p.unlimited?.market || 
             p["1stEditionHolofoil"]?.market || 
             p["1stEdition"]?.market || 
+            p.market || 
             0;
-          price = usdPrice * 0.92; // Convert USD to EUR
+          price = usdPrice * 0.92;
         }
 
-        // Failsafe: If a Japanese card somehow bypassed the Yen check and has a massive number (e.g., 5000+ "USD")
+        if (!price && (card.prices?.usd || card.pricing?.usd)) {
+          price = Number(card.prices?.usd || card.pricing?.usd) * 0.92;
+        }
+
         if (isJapanese && price > 200) {
           return price * 0.0061; 
         }
 
         return Number(price) || 0;
       }
-
       // 3. Magic: The Gathering (Scryfall)
       else if (game === 'mtg') {
         if (item.foil && card.prices?.eur_foil) return parseFloat(card.prices.eur_foil);

@@ -35,6 +35,8 @@ export interface PokemonCard {
     prices?: any;
   };
   lang?: string; // 'en' | 'ja'
+  prices?: any;  // NEW: Keep raw prices data
+  pricing?: any; // NEW: Keep raw pricing data
 }
 
 export interface PokemonSet {
@@ -56,7 +58,7 @@ function getLangBase(lang: string): string {
   return `https://api.tcgdex.net/v2/${lang}`;
 }
 
-// Map TCGdex card to our standard format
+// Update the mapping function
 function mapTCGdexCard(card: any, lang = 'en'): PokemonCard {
   return {
     id: card.id,
@@ -80,11 +82,12 @@ function mapTCGdexCard(card: any, lang = 'en'): PokemonCard {
     tcgplayer: card.pricing?.tcgplayer ? {
       url: '',
       prices: card.pricing.tcgplayer
-    } : undefined,
+    } : (card.tcgplayer || undefined), // Safely check if tcgplayer already exists
+    prices: card.prices || card.pricing || undefined, // Capture ScryDex/TCGdex prices
+    pricing: card.pricing || card.prices || undefined, 
     lang,
   };
 }
-
 // Search for Pokemon cards
 // - Automatically uses Japanese endpoint when query contains Japanese characters
 // - Falls back to English endpoint for all other queries
@@ -195,7 +198,10 @@ export async function getPokemonCard(cardId: string): Promise<PokemonCard | null
       tcgplayer: card.pricing?.tcgplayer ? {
         url: '',
         prices: card.pricing.tcgplayer
-      } : undefined
+      } : (card.tcgplayer || undefined),
+      prices: card.prices || card.pricing || undefined,
+      pricing: card.pricing || card.prices || undefined,
+      lang: card.lang || 'en'
     };
   } catch (error) {
     console.error('Error getting Pokemon card:', error);
