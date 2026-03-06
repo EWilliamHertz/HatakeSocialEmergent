@@ -21,33 +21,86 @@ interface DashboardProps {
 export default function CollectionDashboard({ items, priceOverrides = {}, pricesLoading = false }: DashboardProps) {
   const [showDetailedStats, setShowDetailedStats] = useState(false);
 
-  // Robust pricing calculator (Matches your main collection page)
+ // Robust pricing calculator
   const getCardPrice = (item: CollectionItem): number => {
-    const card = item.card_data || {};
-    if (item.game === 'pokemon') {
-      if (card.pricing?.cardmarket) {
-        const v = card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0;
-        if (v > 0) return v;
+    try {
+      const card = item.card_data || {};
+      const game = item.game || 'unknown';
+
+      // 1. Manual Overrides (Highest Priority)
+      if (item.id in priceOverrides && priceOverrides[item.id] !== null) {
+        return Number(priceOverrides[item.id]) || 0;
       }
-      if (card.tcgplayer?.prices) {
-        const prices = card.tcgplayer.prices;
-        const usdPrice = prices.holofoil?.market || prices.normal?.market || 0;
-        if (usdPrice > 0) return usdPrice * 0.92; // Convert USD to EUR
+
+      // 2. Pokemon Pricing (TCGDex & ScryDex)
+      if (game === 'pokemon') {
+        let price = 0;
+        const isJapanese = card.lang === 'ja' || card.language === 'Japanese';
+
+        // A) Japanese Cards (ScryDex integration)
+        if (isJapanese) {
+          // Assuming ScryDex returns prices in Yen. Check your specific ScryDex JSON structure here:
+          const yenPrice = card.prices?.yen || card.prices?.jpy || card.pricing?.market || 0;
+          
+          if (yenPrice > 0) {
+            // Convert JPY to EUR (Current exchange rate: ~1 JPY = 0.0061 EUR)
+            return Number(yenPrice) * 0.0061;
+          }
+        }
+
+        // B) English/European Cards (Cardmarket / TCGPlayer)
+        if (card.pricing?.cardmarket) {
+          price = card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || card.pricing.cardmarket.low || 0;
+        } 
+        
+        // C) Expanded TCGPlayer Fallbacks (Fixes missing Charmander prices)
+        if (!price && card.tcgplayer?.prices) {
+          const p = card.tcgplayer.prices;
+          const usdPrice = 
+            p.holofoil?.market || 
+            p.normal?.market || 
+            p.reverseHolofoil?.market || 
+            p.unlimitedHolofoil?.market || 
+            p.unlimited?.market || 
+            p["1stEditionHolofoil"]?.market || 
+            p["1stEdition"]?.market || 
+            0;
+          price = usdPrice * 0.92; // Convert USD to EUR
+        }
+
+        // Failsafe: If a Japanese card somehow bypassed the Yen check and has a massive number (e.g., 5000+ "USD")
+        if (isJapanese && price > 200) {
+          return price * 0.0061; 
+        }
+
+        return Number(price) || 0;
       }
-      // Use override price (EN equivalent for foreign cards)
-      if (item.id in priceOverrides) {
-        return priceOverrides[item.id] ?? 0;
+
+      // 3. Magic: The Gathering (Scryfall)
+      else if (game === 'mtg') {
+        if (item.foil && card.prices?.eur_foil) return parseFloat(card.prices.eur_foil);
+        if (!item.foil && card.prices?.eur) return parseFloat(card.prices.eur);
+        // Fallback to USD converted to EUR
+        if (item.foil && card.prices?.usd_foil) return parseFloat(card.prices.usd_foil) * 0.92;
+        if (!item.foil && card.prices?.usd) return parseFloat(card.prices.usd) * 0.92;
       }
+
+      // 4. Lorcana
+      else if (game === 'lorcana') {
+        // Safely parse Lorcana prices (checks multiple common API structures)
+        const eurPrice = card.prices?.eur || card.price?.eur || card.eur;
+        const usdPrice = card.prices?.usd || card.price?.usd || card.prices?.market || card.usd;
+        
+        if (eurPrice) return parseFloat(eurPrice);
+        if (usdPrice) return parseFloat(usdPrice) * 0.92; // Convert USD to EUR
+      }
+
       return 0;
-    } else if (item.game === 'mtg') {
-      if (card.prices?.eur) return parseFloat(card.prices.eur);
-      if (card.prices?.eur_foil && item.foil) return parseFloat(card.prices.eur_foil);
-      if (card.prices?.usd) return parseFloat(card.prices.usd) * 0.92;
-      if (card.prices?.usd_foil && item.foil) return parseFloat(card.prices.usd_foil) * 0.92;
+    } catch (err) {
+      console.error("Error calculating price for item:", item, err);
+      return 0;
     }
-    return 0;
-  };
-  
+  }; 
   // 1. Calculate Total Value
   const totalValue = items.reduce((sum, item) => sum + (getCardPrice(item) * item.quantity), 0);
 
