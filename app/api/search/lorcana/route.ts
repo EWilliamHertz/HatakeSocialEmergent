@@ -22,8 +22,9 @@ export async function GET(req: NextRequest) {
 
   try {
     // Search Lorcana cards by name using ScryDex Lucene query syntax
-    const query = `name:${q.includes(' ') ? `"${q}"` : q}`;
-    const url = `${SCRYDEX_BASE}/lorcana/v1/cards?q=${encodeURIComponent(query)}&pageSize=${pageSize}&include=prices&casing=camel`;
+   const terms = q.split(/\s+/).filter(Boolean);
+   const query = terms.map(t => `name:*${t}*`).join(' AND ');
+   const url = `${SCRYDEX_BASE}/lorcana/v1/cards?q=${encodeURIComponent(query)}&pageSize=${pageSize}&include=prices&casing=camel`;
 
     const res = await fetch(url, {
       headers: {
