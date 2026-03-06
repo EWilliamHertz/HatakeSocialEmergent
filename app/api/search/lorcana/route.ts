@@ -44,19 +44,25 @@ export async function GET(req: NextRequest) {
 
     /**
      * Extract the best price from a card's variants.
-     * ScryDex prices are TCGPlayer market prices (USD — US market).
+     * ScryDex Lorcana prices are TCGPlayer market prices (USD — US market).
+     * Handles both numeric and string values.
      */
     function extractPrice(variants: any[]): number | null {
       if (!Array.isArray(variants)) return null;
       for (const variant of variants) {
-        const prices: any[] = Array.isArray(variant.prices) ? variant.prices : [];
+        const pricesData = variant.prices;
+        const prices: any[] = Array.isArray(pricesData)
+          ? pricesData
+          : (pricesData && typeof pricesData === 'object' ? Object.values(pricesData) : []);
         for (const p of prices) {
-          const val =
+          const rawVal =
             p?.market ?? p?.marketPrice ?? p?.market_price ??
             p?.mid ?? p?.midPrice ?? p?.mid_price ??
             p?.low ?? p?.lowPrice ?? p?.low_price ??
             p?.value ?? p?.price ?? null;
-          if (val && typeof val === 'number' && val > 0) return val;
+          if (rawVal == null) continue;
+          const val = parseFloat(String(rawVal));
+          if (!isNaN(val) && val > 0) return val;
         }
       }
       return null;

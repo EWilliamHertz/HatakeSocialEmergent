@@ -19,19 +19,20 @@ function buildScryDexJaId(setId: string, localId: string): string {
 
 /**
  * Extract the best price from ScryDex variants[].prices[] response.
- * ScryDex prices are TCGPlayer market prices (USD — US market).
+ * Returns { value, currency } so callers can convert JPY → USD if needed.
  * Handles both array and object price shapes, and string/number values.
  */
-function extractScryDexPrice(variants: any[]): number | null {
+function extractScryDexPrice(variants: any[]): { value: number; currency: string } | null {
   if (!Array.isArray(variants)) return null;
   for (const variant of variants) {
+    // Currency may be at variant level (e.g. "JPY" for JA market, "USD" for US)
+    const variantCurrency = String(variant.currency || variant.priceCurrency || 'USD').toUpperCase();
     const pricesData = variant.prices;
-    // prices can be an array of price objects, or an object of named prices
     const prices: any[] = Array.isArray(pricesData)
       ? pricesData
       : (pricesData && typeof pricesData === 'object' ? Object.values(pricesData) : []);
     for (const p of prices) {
-      // Try various possible field names
+      const priceCurrency = String(p?.currency || variantCurrency).toUpperCase();
       const rawVal =
         p?.market ?? p?.marketPrice ?? p?.market_price ??
         p?.mid ?? p?.midPrice ?? p?.mid_price ??
@@ -39,14 +40,21 @@ function extractScryDexPrice(variants: any[]): number | null {
         p?.value ?? p?.price ?? null;
       if (rawVal == null) continue;
       const val = parseFloat(String(rawVal));
-      if (!isNaN(val) && val > 0) return val;
+      if (!isNaN(val) && val > 0) return { value: val, currency: priceCurrency };
     }
   }
   return null;
 }
 
+/** Convert a ScryDex price result to USD. JPY is divided by 150. */
+function toUSD(result: { value: number; currency: string }): number {
+  if (result.currency === 'JPY') return result.value / 150;
+  return result.value; // assume USD already
+}
+
 /**
  * Search ScryDex for a JA card by expansion + number (fallback when direct ID fails).
+ * Returns USD price (converts JPY → USD if needed).
  */
 async function fetchScryDexJaPriceBySearch(expansionId: string, number: string): Promise<number | null> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return null;
@@ -63,8 +71,8 @@ async function fetchScryDexJaPriceBySearch(expansionId: string, number: string):
     const json = await res.json();
     const cards: any[] = json?.data ?? [];
     for (const card of cards) {
-      const price = extractScryDexPrice(card?.variants ?? []);
-      if (price !== null) return price;
+      const result = extractScryDexPrice(card?.variants ?? []);
+      if (result !== null) return toUSD(result);
     }
     return null;
   } catch {
@@ -74,7 +82,7 @@ async function fetchScryDexJaPriceBySearch(expansionId: string, number: string):
 
 /**
  * Fetch price for a single Japanese card from ScryDex.
- * Returns price in USD (US market / TCGPlayer).
+ * Returns price in USD (converts JPY → USD automatically).
  * Falls back to search-by-expansion if direct ID lookup returns no price.
  */
 async function fetchScryDexJaPrice(scrydexId: string): Promise<number | null> {
@@ -91,8 +99,11 @@ async function fetchScryDexJaPrice(scrydexId: string): Promise<number | null> {
     if (res.ok) {
       const json = await res.json();
       const card = json?.data ?? json;
-      const price = extractScryDexPrice(card?.variants ?? []);
-      if (price !== null) return price;
+      const result = extractScryDexPrice(card?.variants ?? []);
+      if (result !== null) {
+        const usd = toUSD(result);
+        if (usd > 0) return usd;
+      }
     }
     // Fallback: search by expansion.id + number
     // scrydexId format: sv4a_ja-25 → expansionId=sv4a, number=25
@@ -215,7 +226,13 @@ export async function POST(req: NextRequest) {
       for (const card of jaCards) {
         const cachedVal = cacheMap.get(card.tcgdexId);
         if (cachedVal !== null && cachedVal !== undefined) {
-          cachedPrices[card.collectionId] = cachedVal;
+          // PostgreSQL NUMERIC columns come back as strings — always parse to float
+          const parsed = parseFloat(String(cachedVal));
+          if (!isNaN(parsed) && parsed > 0) {
+            cachedPrices[card.collectionId] = parsed;
+          } else {
+            uncached.push(card);
+          }
         } else {
           uncached.push(card);
         }

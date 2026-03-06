@@ -315,9 +315,16 @@ export default function CollectionPage() {
           const next = { ...prev };
           for (const [k, v] of Object.entries(prices)) {
             const id = Number(k);
-            // Only write null if we have never seen a price for this card
-            if (v !== null || !(id in next)) {
-              next[id] = v as number | null;
+            if (v !== null && v !== undefined) {
+              // Parse to number — DB NUMERIC columns may arrive as strings
+              const num = parseFloat(String(v));
+              if (!isNaN(num) && num > 0) {
+                next[id] = num;
+              } else if (!(id in next)) {
+                next[id] = null;
+              }
+            } else if (!(id in next)) {
+              next[id] = null;
             }
           }
           return next;
@@ -810,18 +817,25 @@ export default function CollectionPage() {
     const card = item.card_data;
     if (item.game === 'pokemon') {
       if (card?.pricing?.cardmarket) {
-        const v = card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0;
+        // Always parse to number — DB may return strings
+        const v = Number(card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0);
         if (v > 0) return { value: v, currency: 'EUR' };
       }
       if (card?.tcgplayer?.prices) {
         const prices = card.tcgplayer.prices;
-        const usdPrice = prices.holofoil?.market || prices.normal?.market || 0;
+        const usdPrice = Number(prices.holofoil?.market || prices.normal?.market || 0);
         if (usdPrice > 0) return { value: usdPrice * 0.92, currency: 'EUR' };
       }
-      // Check override cache (EN equivalent for foreign cards)
+      // JA cards stored with ScryDex USD price (after JPY→USD conversion at fetch time)
+      if (card?.pricing?.usd) {
+        const usd = parseFloat(String(card.pricing.usd));
+        if (!isNaN(usd) && usd > 0) return { value: usd * 0.92, currency: 'EUR' };
+      }
+      // Check override cache (from background enrichForeignPrices)
       if (item.id in priceOverrides) {
         const overridePrice = priceOverrides[item.id];
-        if (overridePrice !== null) return { value: overridePrice, currency: 'EUR', isEstimated: true };
+        // Always Number() — priceOverrides may contain DB string values
+        if (overridePrice !== null) return { value: Number(overridePrice), currency: 'EUR', isEstimated: true };
         return { value: 0, currency: 'EUR', noPrice: true };
       }
       return { value: 0, currency: 'EUR' };
@@ -847,7 +861,7 @@ export default function CollectionPage() {
     if (result.value === 0 && item.game === 'pokemon' && pricesLoading && !(item.id in priceOverrides)) {
       return '...';
     }
-    return `${result.isEstimated ? '~' : ''}€${result.value.toFixed(2)}`;
+    return `${result.isEstimated ? '~' : ''}€${Number(result.value).toFixed(2)}`;
   };
   
   const calculateTotalValue = () => {
@@ -1933,7 +1947,7 @@ export default function CollectionPage() {
                             {item.card_data?.name || 'Unknown'}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Market: {marketPrice.currency === 'EUR' ? '€' : '$'}{marketPrice.value.toFixed(2)}
+                            Market: {marketPrice.currency === 'EUR' ? '€' : '$'}{Number(marketPrice.value).toFixed(2)}
                             {item.quantity > 1 && ` × ${item.quantity}`}
                           </p>
                         </div>
@@ -2525,8 +2539,9 @@ export default function CollectionPage() {
                                   .catch(() => setLoadingCardPrice(false));
                               } else {
                                 // pokemontcg.io for English Pokémon (EU, CardMarket prices)
-                                const name = (card.name || '').replace(/"/g, '');
-                                fetch(`https://api.pokemontcg.io/v2/cards?q=name:"${encodeURIComponent(name)}"&pageSize=20`)
+                                const name = (card.name || '').replace(/["*[\\]]/g, '').trim();
+                                const enPricingUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent('name:' + name)}&pageSize=20`;
+                                fetch(enPricingUrl)
                                   .then(r => r.json())
                                   .then(data => {
                                     const allCards: any[] = data.data || [];
