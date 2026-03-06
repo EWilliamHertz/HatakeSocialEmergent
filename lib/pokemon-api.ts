@@ -176,28 +176,64 @@ export async function searchPokemonCards(
   }
 
   try {
-    // 1. AS REQUESTED: Use the ROOT endpoint, NOT /en/ or /ja/
+    // 1. Use the ROOT endpoint, NOT /en/ or /ja/
     const url = new URL(`${SCRYDEX_BASE}/cards`);
     
     // 2. Build the Lucene query
     let luceneParts: string[] = [];
-    
+
+    // Normalise the forceLang value so "jp" is always treated as "ja"
+    const normalisedLang = forceLang
+      ? forceLang.split(',').map(l => l.trim().toLowerCase() === 'jp' ? 'ja' : l.trim().toLowerCase()).join(',')
+      : undefined;
+
+    // Determine whether we are doing a Japanese-inclusive search
+    const wantsJapanese = normalisedLang === 'ja' || (normalisedLang?.includes('ja') ?? false);
+    const wantsEnglish  = !normalisedLang || normalisedLang === 'en' || normalisedLang.includes('en');
+    const wantsJapaneseOnly = wantsJapanese && !wantsEnglish;
+    const wantsBoth = wantsJapanese && wantsEnglish;
+
+    // Auto-detect Japanese characters in the query when no explicit lang is set
+    const queryIsJapanese = isJapanese(query);
+
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
-      // TRANSLATION FIX: Search both 'name' (Japanese text for JA cards) 
-      // and 'translation' (English name for JA cards).
-      const nameQuery = terms.map(t => `(name:${t}* OR translation:${t}*)`).join(' AND ');
-      luceneParts.push(nameQuery);
+
+      if (wantsJapaneseOnly || queryIsJapanese) {
+        // Japanese-only search:
+        //   - match the Japanese card name directly (name field)
+        //   - OR match via the English translation stored in translation.en.name
+        const nameQuery = terms.map(t => `(name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
+        luceneParts.push(nameQuery);
+      } else if (wantsBoth) {
+        // English + Japanese search:
+        //   - match English card name (name field for EN cards)
+        //   - OR match Japanese card name directly
+        //   - OR match English translation of a Japanese card (translation.en.name)
+        const nameQuery = terms.map(t => `(name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
+        luceneParts.push(nameQuery);
+      } else {
+        // English-only search (default):
+        //   - match name field only; no translation lookup needed
+        const nameQuery = terms.map(t => `name:${t}*`).join(' AND ');
+        luceneParts.push(nameQuery);
+      }
     }
 
     // 3. Apply Language Filter via Query
-    if (forceLang) {
-      const langCodes = forceLang.split(',').map(l => l.trim().toLowerCase() === 'jp' ? 'ja' : l.trim());
-      const langFilter = `(${langCodes.map(c => `language.id:${c}`).join(' OR ')})`;
-      luceneParts.push(langFilter);
-    } else if (isJapanese(query)) {
-      // Auto-detect Japanese if query contains Japanese characters
-      luceneParts.push('language.id:ja');
+    if (normalisedLang) {
+      const langCodes = normalisedLang.split(',');
+      if (langCodes.length === 1) {
+        // Single language: language_code:EN or language_code:JA
+        luceneParts.push(`language_code:${langCodes[0].toUpperCase()}`);
+      } else {
+        // Multiple languages: (language_code:EN OR language_code:JA)
+        const langFilter = `(${langCodes.map(c => `language_code:${c.toUpperCase()}`).join(' OR ')})`;
+        luceneParts.push(langFilter);
+      }
+    } else if (queryIsJapanese) {
+      // Auto-detect: if the query contains Japanese characters, restrict to JA cards
+      luceneParts.push('language_code:JA');
     }
 
     if (setCode) luceneParts.push(`expansion.id:${setCode.toLowerCase()}`);

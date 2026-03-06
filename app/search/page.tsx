@@ -71,6 +71,8 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // Language filter for Pokémon searches: 'en' | 'ja' | 'en,ja'
+  const [pokemonLang, setPokemonLang] = useState<'en' | 'ja' | 'en,ja'>('en');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [authPromptAction, setAuthPromptAction] = useState('');
@@ -88,25 +90,27 @@ function SearchContent() {
       const set = searchParams.get('set');
       const num = searchParams.get('number');
       const gameParam = searchParams.get('game');
+      const langParam = searchParams.get('lang') as 'en' | 'ja' | 'en,ja' | null;
       
       if (q) setQuery(q);
       if (set) setSetCode(set);
       if (num) setCardNumber(num);
       if (gameParam) setGame(gameParam);
+      if (langParam) setPokemonLang(langParam);
       
       if (q || set || num) {
         // Use the game param directly to avoid stale state
-        performSearch(q || '', set || '', num || '', gameParam || 'all');
+        performSearch(q || '', set || '', num || '', gameParam || 'all', langParam || 'en');
       }
     }
   }, [searchParams]);
 
-  const performSearch = async (searchQuery: string, set?: string, num?: string, gameType?: string) => {
+  const performSearch = async (searchQuery: string, set?: string, num?: string, gameType?: string, lang?: string) => {
     if (!searchQuery.trim() && !set && !num) return;
     
     setLoading(true);
     try {
- const params = new URLSearchParams();
+      const params = new URLSearchParams();
       if (searchQuery) params.append('q', searchQuery);
       // Map category to game param
       const activeGame = gameType || game;
@@ -115,8 +119,12 @@ function SearchContent() {
       params.append('limit', '200'); // ALWAYS request enough items
       if (set) params.append('set', set);
       if (num) params.append('number', num);
+      // Forward language filter for Pokémon searches
+      const activeLang = lang || pokemonLang;
+      if (activeLang && (activeGame === 'pokemon' || activeGame === 'all')) {
+        params.append('lang', activeLang);
+      }
 
-      
       const res = await fetch(`/api/search?${params.toString()}`, {
         credentials: 'include'
       });
@@ -138,13 +146,14 @@ function SearchContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    performSearch(query, setCode, cardNumber, game);
+    performSearch(query, setCode, cardNumber, game, pokemonLang);
     
     const params = new URLSearchParams();
     if (query) params.append('q', query);
     if (game && game !== 'all') params.append('game', game);
     if (setCode) params.append('set', setCode);
     if (cardNumber) params.append('number', cardNumber);
+    if (pokemonLang && (game === 'pokemon' || game === 'all')) params.append('lang', pokemonLang);
     router.push(`/search?${params.toString()}`);
   };
 
@@ -364,6 +373,44 @@ const getPrice = (card: Card) => {
               ))}
             </div>
             
+            {/* Language Filter — shown whenever Pokémon or All is selected */}
+            {(category === 'pokemon' || category === 'all') && (
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Language:</span>
+                  {([
+                    { code: 'en',    label: '🇬🇧 English' },
+                    { code: 'ja',    label: '🇯🇵 Japanese' },
+                    { code: 'en,ja', label: '🇬🇧+🇯🇵 EN + JP' },
+                  ] as { code: 'en' | 'ja' | 'en,ja'; label: string }[]).map(({ code, label }) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setPokemonLang(code)}
+                      data-testid={`lang-filter-${code}`}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                        pokemonLang === code
+                          ? 'bg-yellow-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  {pokemonLang === 'en,ja' && (
+                    <span className="text-xs text-yellow-600 dark:text-yellow-400 ml-1">
+                      Searches English names and Japanese card names simultaneously
+                    </span>
+                  )}
+                  {pokemonLang === 'ja' && (
+                    <span className="text-xs text-yellow-600 dark:text-yellow-400 ml-1">
+                      Searches Japanese cards by name or English translation
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Advanced Filters */}
             {showAdvanced && (
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -8,9 +8,11 @@ export async function GET(req: NextRequest) {
   const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '2000'), 5000);
   const setCode = searchParams.get('set') || undefined;
   const cardNumber = searchParams.get('number') || undefined;
+  // Forward the lang param so language filters (en / ja / en,ja) are respected
+  const lang = searchParams.get('lang') || undefined;
 
   try {
-    const result = await searchPokemonCards(q, page, pageSize, setCode, cardNumber);
+    const result = await searchPokemonCards(q, page, pageSize, setCode, cardNumber, lang);
     
     // Ensure game: 'pokemon' is added to each card for the frontend
     const cards = result.data.map(card => ({
