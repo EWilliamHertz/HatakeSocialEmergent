@@ -161,6 +161,9 @@ export async function getPokemonCard(cardId: string): Promise<PokemonCard | null
     return null;
   }
 }
+function hasEnglish(text: string): boolean {
+  return /[a-zA-Z]/.test(text);
+}
 
 export async function searchPokemonCards(
   query: string,
@@ -170,31 +173,21 @@ export async function searchPokemonCards(
   cardNumber?: string,
   forceLang?: 'en' | 'ja'
 ): Promise<{ data: PokemonCard[]; totalCount: number }> {
-  if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) {
-    console.error('Scrydex credentials missing');
-    return { data: [], totalCount: 0 };
-  }
+  if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return { data: [], totalCount: 0 };
 
-  try {
-    const lang = forceLang || (isJapanese(query) ? 'ja' : 'en');
+  // Determine if we need one or both languages
+  const needsJA = forceLang === 'ja' || isJapanese(query);
+  const needsEN = forceLang === 'en' || (hasEnglish(query) || !needsJA);
+
+  const fetchFromLang = async (lang: 'en' | 'ja') => {
     const langPath = lang === 'ja' ? '/ja' : '/en';
-    
-    // Build Lucene query
     let luceneQuery = '';
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
       luceneQuery = terms.map(t => `name:*${t}*`).join(' AND ');
     }
-
-    if (setCode) {
-      if (luceneQuery) luceneQuery += ' AND ';
-      luceneQuery += `expansion.id:${setCode.toLowerCase()}`;
-    }
-
-    if (cardNumber) {
-      if (luceneQuery) luceneQuery += ' AND ';
-      luceneQuery += `number:${cardNumber}`;
-    }
+    if (setCode) luceneQuery += (luceneQuery ? ' AND ' : '') + `expansion.id:${setCode.toLowerCase()}`;
+    if (cardNumber) luceneQuery += (luceneQuery ? ' AND ' : '') + `number:${cardNumber}`;
 
     const url = new URL(`${SCRYDEX_BASE}${langPath}/cards`);
     if (luceneQuery) url.searchParams.append('q', luceneQuery);
@@ -203,32 +196,30 @@ export async function searchPokemonCards(
     url.searchParams.append('include', 'prices');
     url.searchParams.append('casing', 'camel');
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        'X-Api-Key': SCRYDEX_API_KEY,
-        'X-Team-ID': SCRYDEX_TEAM_ID,
-      },
+    const res = await fetch(url.toString(), {
+      headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID },
       signal: AbortSignal.timeout(15000)
     });
+    return res.ok ? await res.json() : { data: [], total: 0 };
+  };
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      console.error(`Scrydex API error (${response.status}):`, errorText);
-      return { data: [], totalCount: 0 };
-    }
+  try {
+    const promises = [];
+    if (needsEN) promises.push(fetchFromLang('en'));
+    if (needsJA) promises.push(fetchFromLang('ja'));
 
-    const json = await response.json();
-    const rawCards = json?.data || [];
-    const totalCount = json?.total || rawCards.length;
-
-    const mappedCards = rawCards.map((c: any) => mapScrydexCard(c));
-
+    const settleResults = await Promise.all(promises);
+    
+    // Combine results and remove duplicates (by ID)
+    const allRawCards = settleResults.flatMap(r => r.data || []);
+    const uniqueCards = Array.from(new Map(allRawCards.map(c => [c.id, c])).values());
+    
     return {
-      data: mappedCards,
-      totalCount: totalCount
+      data: uniqueCards.slice(0, limit).map(mapScrydexCard),
+      totalCount: settleResults.reduce((acc, r) => acc + (r.total || 0), 0)
     };
   } catch (error) {
-    console.error('Error searching Pokemon cards:', error);
+    console.error('Pokemon search error:', error);
     return { data: [], totalCount: 0 };
   }
 }
