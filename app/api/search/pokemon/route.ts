@@ -5,7 +5,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get('q')?.trim() || '';
   const page = parseInt(searchParams.get('page') || '1');
-  const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '20'), 50);
+  const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '2000'), 5000);
   const setCode = searchParams.get('set') || undefined;
   const cardNumber = searchParams.get('number') || undefined;
 
