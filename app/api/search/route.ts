@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = Math.min(parseInt(searchParams.get('limit') || '200'), MAX_RESULTS);
     const cardNumber = searchParams.get('number') || undefined;
+    const setCode = searchParams.get('set') || undefined; // ADD THIS LINE
 
     // Allow search without query if set or number is provided (for cards only)
     if (!query && !setCode && !cardNumber) {

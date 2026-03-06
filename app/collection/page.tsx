@@ -890,11 +890,36 @@ export default function CollectionPage() {
     }
   };
 
-  const filteredItems = items.filter(item => {
+const filteredItems = items.filter(item => {
     if (!searchQuery) return true;
-    return item.card_data.name?.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+    const query = searchQuery.toLowerCase().trim();
+    
+    // 1. Search by Card Name
+    if (item.card_data?.name?.toLowerCase().includes(query)) return true;
+    
+    // 2. Search by Set Name
+    if (item.card_data?.set_name?.toLowerCase().includes(query)) return true;
+    if (item.card_data?.set?.name?.toLowerCase().includes(query)) return true;
+    
+    // 3. Search by Set Code
+    if (item.card_data?.set_code?.toLowerCase().includes(query)) return true;
+    if (item.card_data?.set?.id?.toLowerCase().includes(query)) return true;
+    if (typeof item.card_data?.set === 'string' && item.card_data.set.toLowerCase().includes(query)) return true;
+    
+    // 4. Search by Collector Number
+    if (item.card_data?.collector_number?.toString().toLowerCase().includes(query)) return true;
+    if (item.card_data?.number?.toString().toLowerCase().includes(query)) return true;
+    if (item.card_data?.localId?.toString().toLowerCase().includes(query)) return true;
+    
+    // 5. Search by Condition
+    if (item.condition?.toLowerCase().includes(query)) return true;
+    
+    // 6. Search by Finish/Foil
+    if (item.finish?.toLowerCase().includes(query)) return true;
+    if (query === 'foil' && item.foil) return true;
 
+    return false;
+  });
   // Import functions
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
