@@ -3,6 +3,10 @@ import { searchPokemonCards } from '@/lib/pokemon-api';
 import { searchScryfallCards } from '@/lib/scryfall-api';
 import sql from '@/lib/db';
 
+const SCRYDEX_API_KEY = process.env.SCRYDEX_API_KEY || '';
+const SCRYDEX_TEAM_ID = process.env.SCRYDEX_TEAM_ID || '';
+const SCRYDEX_BASE = 'https://api.scrydex.com';
+
 // Maximum results to return to prevent timeouts
 const MAX_RESULTS = 200;
 
@@ -91,7 +95,7 @@ export async function GET(request: NextRequest) {
     if (searchType === 'all' || searchType === 'cards') {
       // Use Promise.all for parallel API calls when game='all'
       if (game === 'all') {
-        const [pokemonResults, mtgResults] = await Promise.allSettled([
+        const searchPromises: Promise<any>[] = [
           searchPokemonCards(query, page, limit, setCode, cardNumber, lang as any).catch(err => {
             console.error('Pokemon search error:', err);
             return { data: [], totalCount: 0 };
@@ -100,10 +104,34 @@ export async function GET(request: NextRequest) {
             console.error('Scryfall search error:', err);
             return { data: [], total_cards: 0 };
           }),
-        ]);
+        ];
 
-        if (pokemonResults.status === 'fulfilled' && pokemonResults.value) {
-          const pokemonData = pokemonResults.value;
+        // Add Lorcana if credentials exist
+        if (SCRYDEX_API_KEY && SCRYDEX_TEAM_ID && query) {
+          const lorcanaSearch = async () => {
+            try {
+              const terms = query.split(/\s+/).filter(Boolean);
+              const luceneQuery = terms.map(t => `name:*${t}*`).join(' AND ');
+              const res = await fetch(`${SCRYDEX_BASE}/lorcana/v1/cards?q=${encodeURIComponent(luceneQuery)}&pageSize=${limit}&include=prices&casing=camel`, {
+                headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID },
+                signal: AbortSignal.timeout(10000)
+              });
+              if (!res.ok) return { cards: [] };
+              const json = await res.json();
+              return { cards: json.data || [], total: json.total || 0 };
+            } catch (e) {
+              console.error('Lorcana search error in all:', e);
+              return { cards: [] };
+            }
+          };
+          searchPromises.push(lorcanaSearch());
+        }
+
+        const settleResults = await Promise.allSettled(searchPromises);
+
+        // 0: Pokemon
+        if (settleResults[0].status === 'fulfilled' && settleResults[0].value) {
+          const pokemonData = settleResults[0].value;
           results = [...results, ...pokemonData.data.slice(0, limit).map((card: any) => ({
             ...card,
             game: 'pokemon',
@@ -111,13 +139,37 @@ export async function GET(request: NextRequest) {
           totalCount += pokemonData.totalCount || 0;
         }
 
-        if (mtgResults.status === 'fulfilled' && mtgResults.value) {
-          const scryfallData = mtgResults.value;
+        // 1: MTG
+        if (settleResults[1].status === 'fulfilled' && settleResults[1].value) {
+          const scryfallData = settleResults[1].value;
           results = [...results, ...scryfallData.data.slice(0, limit).map((card: any) => ({
             ...card,
             game: 'mtg',
           }))];
           totalCount += scryfallData.total_cards || 0;
+        }
+
+        // 2: Lorcana
+        if (settleResults[2]?.status === 'fulfilled' && settleResults[2].value) {
+          const lorcanaData = settleResults[2].value;
+          results = [...results, ...lorcanaData.cards.slice(0, limit).map((card: any) => {
+            const images = Array.isArray(card.images) ? card.images : [];
+            const frontImage = images.find((i: any) => i.type === 'front') ?? images[0];
+            return {
+              ...card,
+              game: 'lorcana',
+              image_uris: {
+                small: frontImage?.small || null,
+                normal: frontImage?.medium || null,
+                large: frontImage?.large || null,
+              },
+              images: {
+                small: frontImage?.small || null,
+                large: frontImage?.large || null,
+              }
+            };
+          })];
+          totalCount += lorcanaData.total || 0;
         }
       } else if (game === 'pokemon') {
         try {

@@ -2,35 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 
 const CRON_SECRET = process.env.CRON_SECRET || 'hatake-price-update-2026';
-
-// Convert TCGdex set ID format (sv01-247) to pokemontcg.io format (sv1-247)
-// pokemontcg.io drops the leading zero from the set number
-function tcgdexToPokemontcgId(cardId: string): string {
-  // Match pattern: letters + optional zeros + digits + dash + rest
-  const match = cardId.match(/^([a-zA-Z]+)0*(\d+)-(.+)$/);
-  if (match) {
-    return `${match[1]}${match[2]}-${match[3]}`;
-  }
-  return cardId;
-}
+const SCRYDEX_API_KEY = process.env.SCRYDEX_API_KEY || '';
+const SCRYDEX_TEAM_ID = process.env.SCRYDEX_TEAM_ID || '';
+const SCRYDEX_BASE = 'https://api.scrydex.com';
 
 async function fetchPokemonPrice(cardId: string): Promise<number> {
-  const altId = tcgdexToPokemontcgId(cardId);
-  const idsToTry = Array.from(new Set([cardId, altId]));
-
-  for (const id of idsToTry) {
-    try {
-      const res = await fetch(`https://api.pokemontcg.io/v2/cards/${id}`, {
-        signal: AbortSignal.timeout(8000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const price = data.data?.cardmarket?.prices?.averageSellPrice;
-        if (price && price > 0) return parseFloat(price);
+  if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return 0;
+  try {
+    // Try direct ID lookup on Scrydex first
+    const res = await fetch(`${SCRYDEX_BASE}/pokemon/v1/cards/${cardId}?include=prices`, {
+      headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const card = json?.data ?? json;
+      const variants = card?.variants || [];
+      for (const v of variants) {
+        const prices = Array.isArray(v.prices) ? v.prices : Object.values(v.prices || {});
+        for (const p of prices as any[]) {
+          const val = p?.market || p?.mid || p?.value || p?.price;
+          if (val) return parseFloat(val) * 0.92; // USD to EUR approx
+        }
       }
-    } catch {
-      // Try next ID format
     }
+  } catch (e) {
+    console.error('Scrydex price fetch error:', e);
   }
   return 0;
 }

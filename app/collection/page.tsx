@@ -659,14 +659,12 @@ export default function CollectionPage() {
           setAddCardSearchResults([]);
         }
       } else {
-        // Pokemon API via backend (uses ScryDex & caching)
+        // Pokemon API via dedicated endpoint (uses ScryDex & caching)
         try {
           const params = new URLSearchParams();
           if (addCardName.trim()) params.append('q', addCardName.trim());
           if (resolvedSetCode) params.append('set', resolvedSetCode);
           if (addCardCollectorNum.trim()) params.append('number', addCardCollectorNum.trim());
-          params.append('game', 'pokemon');
-          params.append('type', 'cards');
           if (addCardLang && addCardLang !== 'all') params.append('lang', addCardLang);
           
           if (!params.toString()) {
@@ -674,14 +672,14 @@ export default function CollectionPage() {
             return;
           }
           
-          const searchRes = await fetch(`/api/search?${params.toString()}`, {
+          const searchRes = await fetch(`/api/search/pokemon?${params.toString()}`, {
             credentials: 'include',
             signal: AbortSignal.timeout(15000)
           });
           
           if (searchRes.ok) {
             const data = await searchRes.json();
-            setAddCardSearchResults(data.results || []);
+            setAddCardSearchResults(data.cards || []);
           } else {
             setAddCardSearchResults([]);
           }
