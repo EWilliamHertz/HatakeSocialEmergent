@@ -1,6 +1,5 @@
-// Pokemon TCG API using TCGdex (free, no API key required) & ScryDex
+// Pokemon TCG API using ScryDex exclusively (fast, pricing included)
 // Supports English and Japanese card searches
-import { fetchTCGdexCached } from './api-cache';
 
 export interface PokemonCard {
   id: string;
@@ -57,8 +56,8 @@ function isJapanese(text: string): boolean {
 
 // Route to correct API base
 function getLangBase(lang: string): string {
-  // Use ScryDex for everything
-  return 'https://api.scrydex.com/v1';
+  // Use ScryDex for EVERYTHING to avoid TCGdex rate limits and get inline pricing
+  return 'https://api.scrydex.com/v1'; 
 }
 
 // Map card to standard format
@@ -95,37 +94,13 @@ function mapTCGdexCard(card: any, lang = 'en'): PokemonCard {
 // Get a specific Pokemon card by ID
 export async function getPokemonCard(cardId: string, lang: string = 'en'): Promise<PokemonCard | null> {
   try {
-    const card = await fetchTCGdexCached(`${getLangBase(lang)}/cards/${cardId}`);
+    const response = await fetch(`${getLangBase(lang)}/cards/${cardId}`, {
+      signal: AbortSignal.timeout(10000)
+    });
 
-    if (!card) return null;
-
-    return {
-      id: card.id,
-      name: card.name,
-      supertype: card.category || 'Pokemon',
-      subtypes: card.stage ? [card.stage] : [],
-      hp: card.hp?.toString(),
-      types: card.types || [],
-      set: {
-        id: card.set?.id || '',
-        name: card.set?.name || '',
-        series: card.set?.serie || '',
-      },
-      number: card.localId || '',
-      artist: card.illustrator,
-      rarity: card.rarity,
-      images: {
-        small: card.image ? `${card.image}/low.webp` : '',
-        large: card.image ? `${card.image}/high.webp` : '',
-      },
-      tcgplayer: card.pricing?.tcgplayer ? {
-        url: '',
-        prices: card.pricing.tcgplayer
-      } : (card.tcgplayer || undefined),
-      prices: card.prices || card.pricing || undefined,
-      pricing: card.pricing || card.prices || undefined,
-      lang: card.lang || lang
-    };
+    if (!response.ok) return null;
+    const card = await response.json();
+    return mapTCGdexCard(card, card.lang || lang);
   } catch (error) {
     console.error('Error getting Pokemon card:', error);
     return null;
@@ -147,8 +122,10 @@ export async function searchPokemonCards(
     let url = `${base}/cards`;
     if (query) url += `?name=${encodeURIComponent(query)}`;
 
-    let cards = await fetchTCGdexCached(url);
-    if (!cards || !Array.isArray(cards)) return { data: [], totalCount: 0 };
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return { data: [], totalCount: 0 };
+
+    let cards = await response.json();
 
     if (setCode) {
       const setLower = setCode.toLowerCase();
@@ -168,21 +145,11 @@ export async function searchPokemonCards(
     const startIndex = (page - 1) * limit;
     const paginatedCards = cards.slice(startIndex, startIndex + limit);
 
+    // Map cards directly. No 50x fetch loop needed since ScryDex provides pricing in the array!
     const mappedCards = paginatedCards.map((c: any) => mapTCGdexCard(c, lang));
 
-    // FETCH ENRICHMENT: Pull detailed data for each card to guarantee pricing appears
-    const enrichedCards = await Promise.all(
-mappedCards.map(async (card: PokemonCard) => {        try {
-          const fullCard = await getPokemonCard(card.id, lang);
-          return fullCard || card;
-        } catch {
-          return card;
-        }
-      })
-    );
-
     return {
-      data: enrichedCards,
+      data: mappedCards,
       totalCount: cards.length
     };
   } catch (error) {
@@ -197,8 +164,9 @@ export async function searchJapanesePokemonCards(query: string, page: number = 1
 
 export async function getPokemonSets(): Promise<PokemonSet[]> {
   try {
-    const sets = await fetchTCGdexCached(`${getLangBase('en')}/sets`);
-    if (!sets || !Array.isArray(sets)) return [];
+    const response = await fetch(`${getLangBase('en')}/sets`, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return [];
+    const sets = await response.json();
     return sets.map((set: any) => ({
       id: set.id,
       name: set.name,
@@ -215,8 +183,9 @@ export async function getPokemonSets(): Promise<PokemonSet[]> {
 
 export async function getCardsFromSet(setId: string): Promise<PokemonCard[]> {
   try {
-    const setData = await fetchTCGdexCached(`${getLangBase('en')}/sets/${setId}`);
-    if (!setData || !setData.cards) return [];
+    const response = await fetch(`${getLangBase('en')}/sets/${setId}`, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return [];
+    const setData = await response.json();
     const cards = setData.cards || [];
     return cards.map((card: any) => ({
       id: card.id,
