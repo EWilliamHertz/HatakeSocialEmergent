@@ -106,12 +106,13 @@ function SearchContent() {
     
     setLoading(true);
     try {
-      const params = new URLSearchParams();
+    const params = new URLSearchParams();
       if (searchQuery) params.append('q', searchQuery);
       // Map category to game param
       const activeGame = gameType || game;
       params.append('game', activeGame);
       params.append('type', 'all'); // Search everything
+      params.append('limit', '200'); // Explicitly request up to 200 cards
       if (set) params.append('set', set);
       if (num) params.append('number', num);
       
