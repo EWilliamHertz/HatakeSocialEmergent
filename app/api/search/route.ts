@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       // Use Promise.all for parallel API calls when game='all'
       if (game === 'all') {
         const searchPromises: Promise<any>[] = [
-          // Pokemon: Now uses global /cards endpoint and Lucene language filters
+          // Pokemon: Now uses the fixed root-level search with language filters
           searchPokemonCards(query, page, limit, setCode, cardNumber, lang).catch(err => {
             console.error('Pokemon search error:', err);
             return { data: [], totalCount: 0 };

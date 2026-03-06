@@ -1,5 +1,5 @@
 // Pokemon TCG API using ScryDex exclusively (fast, pricing included)
-// Supports English and Japanese card searches using global root endpoints
+// Supports English and Japanese card searches via global root endpoints
 
 const SCRYDEX_API_KEY = process.env.SCRYDEX_API_KEY || '';
 const SCRYDEX_TEAM_ID = process.env.SCRYDEX_TEAM_ID || '';
@@ -64,14 +64,9 @@ export interface PokemonSet {
   symbol?: string;
 }
 
-// Detect Japanese characters
+// Detect Japanese characters to auto-apply filters
 function isJapanese(text: string): boolean {
   return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uff00-\uffef]/.test(text);
-}
-
-// Detect English characters
-function hasEnglish(text: string): boolean {
-  return /[a-zA-Z]/.test(text);
 }
 
 /**
@@ -173,7 +168,7 @@ export async function searchPokemonCards(
   limit: number = 50,
   setCode?: string,
   cardNumber?: string,
-  forceLang?: string
+  forceLang?: string // "en", "ja", or "en,ja"
 ): Promise<{ data: PokemonCard[]; totalCount: number }> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) {
     console.error('Scrydex credentials missing');
@@ -181,47 +176,44 @@ export async function searchPokemonCards(
   }
 
   try {
-    // AS REQUESTED: Use the root endpoint (no /en/ or /ja/)
+    // 1. FIXED: Use root endpoint as requested, NOT /en/ or /ja/
     const url = new URL(`${SCRYDEX_BASE}/cards`);
     
-    // BUILD THE LUCENE QUERY
-    let luceneQuery = '';
+    // 2. Build optimized Lucene query
+    let luceneParts: string[] = [];
+    
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
-      // PERFORMANCE: Removed leading asterisk.
-      // TRANSLATION: Search both 'name' (canonical/English) and 'printed_name' (localized/Japanese).
-      luceneQuery = terms.map(t => `(name:${t}* OR printed_name:${t}*)`).join(' AND ');
+      // PERFORMANCE: Trailing wildcards only.
+      // TRANSLATION: Search both 'name' and 'printed_name' to support English terms finding Japanese cards.
+      const nameQuery = terms.map(t => `(name:${t}* OR printed_name:${t}*)`).join(' AND ');
+      luceneParts.push(nameQuery);
     }
 
-    // APPLY LANGUAGE FILTERS
-    // We use lang:ja or lang:en inside the query string to filter the global index.
+    // 3. APPLY LANGUAGE FILTERS
     if (forceLang) {
-      const langParts = forceLang.split(',').map(l => l.trim().toLowerCase());
-      const langFilters = langParts.map(l => {
-        const code = (l === 'jp' || l === 'ja') ? 'ja' : 'en';
-        return `lang:${code}`;
+      const langCodes = forceLang.split(',').map(l => {
+        const code = l.trim().toLowerCase();
+        return code === 'jp' ? 'ja' : code;
       });
-      
-      const filterStr = langFilters.length > 1 ? `(${langFilters.join(' OR ')})` : langFilters[0];
-      luceneQuery = luceneQuery ? `(${luceneQuery}) AND ${filterStr}` : filterStr;
-    } else {
-      // If no forced lang, detect if user typed Japanese characters
-      if (isJapanese(query)) {
-        luceneQuery = luceneQuery ? `(${luceneQuery}) AND lang:ja` : `lang:ja`;
-      }
+      const langFilter = `(${langCodes.map(c => `language.id:${c}`).join(' OR ')})`;
+      luceneParts.push(langFilter);
+    } else if (isJapanese(query)) {
+      // Auto-detect Japanese if user types characters like クヌギダマ
+      luceneParts.push('language.id:ja');
     }
 
     if (setCode) {
-      if (luceneQuery) luceneQuery += ' AND ';
-      luceneQuery += `expansion.id:${setCode.toLowerCase()}`;
+      luceneParts.push(`expansion.id:${setCode.toLowerCase()}`);
     }
 
     if (cardNumber) {
-      if (luceneQuery) luceneQuery += ' AND ';
-      luceneQuery += `number:${cardNumber}`;
+      luceneParts.push(`number:${cardNumber}`);
     }
 
-    if (luceneQuery) url.searchParams.append('q', luceneQuery);
+    const fullQuery = luceneParts.join(' AND ');
+    if (fullQuery) url.searchParams.append('q', fullQuery);
+    
     url.searchParams.append('page', page.toString());
     url.searchParams.append('pageSize', limit.toString());
     url.searchParams.append('include', 'prices');
@@ -236,7 +228,8 @@ export async function searchPokemonCards(
     });
 
     if (!response.ok) {
-      console.error(`Scrydex API error (${response.status})`);
+      const errorText = await response.text().catch(() => '');
+      console.error(`Scrydex API error (${response.status}):`, errorText);
       return { data: [], totalCount: 0 };
     }
 
@@ -254,10 +247,6 @@ export async function searchPokemonCards(
     console.error('Error searching Pokemon cards:', error);
     return { data: [], totalCount: 0 };
   }
-}
-
-export async function searchJapanesePokemonCards(query: string, page: number = 1, limit: number = 50) {
-  return searchPokemonCards(query, page, limit, undefined, undefined, 'ja');
 }
 
 export async function getPokemonSets(): Promise<PokemonSet[]> {
