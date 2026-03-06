@@ -199,14 +199,62 @@ function SearchContent() {
     return card.collector_number || card.number || '';
   };
 
-  const getPrice = (card: Card) => {
-    if (card.game === 'pokemon' && card.tcgplayer?.prices) {
-      const prices = card.tcgplayer.prices;
-      if (prices.holofoil?.market) return `$${prices.holofoil.market.toFixed(2)}`;
-      if (prices.normal?.market) return `$${prices.normal.market.toFixed(2)}`;
-    }
-    if (card.game === 'mtg' && card.prices) {
-      if (card.prices.usd) return `$${card.prices.usd}`;
+const getPrice = (card: Card) => {
+    try {
+      const game = card.game || 'unknown';
+
+      if (game === 'pokemon') {
+        let price = 0;
+        // Use type assertion to access lang/language if it's not on the main interface
+        const isJapanese = (card as any).lang === 'ja' || (card as any).language === 'Japanese';
+
+        if (isJapanese) {
+          const yenPrice = card.prices?.yen || card.prices?.jpy || card.prices?.market || (card as any).pricing?.market || 0;
+          if (yenPrice > 0) {
+            return `€${(Number(yenPrice) * 0.0061).toFixed(2)}`;
+          }
+        }
+
+        if ((card as any).pricing?.cardmarket) {
+          price = (card as any).pricing.cardmarket.avg || (card as any).pricing.cardmarket.trend || 0;
+        }
+        
+        if (!price && card.tcgplayer?.prices) {
+          const p = card.tcgplayer.prices;
+          const usdPrice = 
+            p.holofoil?.market || 
+            p.normal?.market || 
+            p.reverseHolofoil?.market || 
+            p.unlimitedHolofoil?.market || 
+            p.unlimited?.market || 
+            p["1stEditionHolofoil"]?.market || 
+            p["1stEdition"]?.market || 
+            0;
+          price = usdPrice * 0.92; // Convert USD to EUR
+        }
+
+        // Failsafe for massive numbers accidentally interpreted as USD
+        if (isJapanese && price > 200) {
+          return `€${(price * 0.0061).toFixed(2)}`;
+        }
+
+        if (price > 0) return `€${price.toFixed(2)}`;
+      } 
+      
+      else if (game === 'mtg') {
+        if (card.prices?.eur) return `€${parseFloat(card.prices.eur).toFixed(2)}`;
+        if (card.prices?.usd) return `€${(parseFloat(card.prices.usd) * 0.92).toFixed(2)}`;
+      } 
+      
+      else if (game === 'lorcana') {
+        const eurPrice = card.prices?.eur || (card as any).price?.eur || (card as any).eur;
+        const usdPrice = card.prices?.usd || (card as any).price?.usd || card.prices?.market || (card as any).usd;
+        
+        if (eurPrice) return `€${parseFloat(eurPrice).toFixed(2)}`;
+        if (usdPrice) return `€${(parseFloat(usdPrice) * 0.92).toFixed(2)}`;
+      }
+    } catch (err) {
+      console.error("Error formatting price:", err);
     }
     return 'N/A';
   };
