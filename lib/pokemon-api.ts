@@ -1,5 +1,5 @@
 // Pokemon TCG API using ScryDex exclusively (fast, pricing included)
-// Supports English and Japanese card searches
+// Supports English and Japanese card searches using global root endpoints
 
 const SCRYDEX_API_KEY = process.env.SCRYDEX_API_KEY || '';
 const SCRYDEX_TEAM_ID = process.env.SCRYDEX_TEAM_ID || '';
@@ -149,6 +149,7 @@ function mapScrydexCard(card: any): PokemonCard {
 export async function getPokemonCard(cardId: string): Promise<PokemonCard | null> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return null;
   try {
+    // Root endpoint for specific cards
     const response = await fetch(`${SCRYDEX_BASE}/cards/${cardId}?include=prices&casing=camel`, {
       headers: {
         'X-Api-Key': SCRYDEX_API_KEY,
@@ -180,58 +181,81 @@ export async function searchPokemonCards(
     return { data: [], totalCount: 0 };
   }
 
-  // Determine which endpoints to hit
-  const langsToSearch: ('en' | 'ja')[] = [];
-  if (forceLang) {
-    if (forceLang.includes('en')) langsToSearch.push('en');
-    if (forceLang.includes('ja')) langsToSearch.push('ja');
-  } else {
-    // If no forceLang, intelligently search based on query
-    if (isJapanese(query)) langsToSearch.push('ja');
-    if (hasEnglish(query) || langsToSearch.length === 0) langsToSearch.push('en');
-  }
-
-  const fetchFromLang = async (lang: 'en' | 'ja') => {
-    const langPath = `/${lang}`;
+  try {
+    // 1. AS REQUESTED: Use the root endpoint, NOT /en/ or /ja/
+    const url = new URL(`${SCRYDEX_BASE}/cards`);
     
+    // 2. Build the Lucene query
     let luceneQuery = '';
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
+      // We search the name. If the query is "Pineco", ScryDex will find the English metadata 
+      // even in the global index.
       luceneQuery = terms.map(t => `name:*${t}*`).join(' AND ');
     }
-    if (setCode) luceneQuery += (luceneQuery ? ' AND ' : '') + `expansion.id:${setCode.toLowerCase()}`;
-    if (cardNumber) luceneQuery += (luceneQuery ? ' AND ' : '') + `number:${cardNumber}`;
 
-    const url = new URL(`${SCRYDEX_BASE}${langPath}/cards`);
+    // 3. APPLY LANGUAGE FILTERS VIA QUERY
+    // This solves the Pineco vs クヌギダマ issue: we search the global index
+    // but filter for the language printed print.
+    if (forceLang) {
+      const langParts = forceLang.split(',').map(l => l.trim().toLowerCase());
+      const langFilters = langParts.map(l => {
+        // ScryDex usually uses 'ja' or 'en' language IDs
+        const code = l === 'jp' ? 'ja' : l;
+        return `language.id:${code}`;
+      });
+      
+      if (luceneQuery) luceneQuery = `(${luceneQuery}) AND `;
+      luceneQuery += `(${langFilters.join(' OR ')})`;
+    } else {
+      // If no forced lang, but user types Japanese, prioritize Japanese records
+      if (isJapanese(query)) {
+        if (luceneQuery) luceneQuery = `(${luceneQuery}) AND language.id:ja`;
+      }
+    }
+
+    if (setCode) {
+      if (luceneQuery) luceneQuery += ' AND ';
+      luceneQuery += `expansion.id:${setCode.toLowerCase()}`;
+    }
+
+    if (cardNumber) {
+      if (luceneQuery) luceneQuery += ' AND ';
+      luceneQuery += `number:${cardNumber}`;
+    }
+
     if (luceneQuery) url.searchParams.append('q', luceneQuery);
     url.searchParams.append('page', page.toString());
     url.searchParams.append('pageSize', limit.toString());
     url.searchParams.append('include', 'prices');
     url.searchParams.append('casing', 'camel');
 
-    const res = await fetch(url.toString(), {
-      headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID },
+    const response = await fetch(url.toString(), {
+      headers: {
+        'X-Api-Key': SCRYDEX_API_KEY,
+        'X-Team-ID': SCRYDEX_TEAM_ID,
+      },
       signal: AbortSignal.timeout(15000)
     });
-    return res.ok ? await res.json() : { data: [], total: 0 };
-  };
 
-  try {
-    const results = await Promise.all(langsToSearch.map(lang => fetchFromLang(lang)));
-    
-    // Combine results and deduplicate by ID
-    const allRawCards = results.flatMap(r => r.data || []);
-    const uniqueCardsMap = new Map();
-    allRawCards.forEach(card => {
-      if (!uniqueCardsMap.has(card.id)) {
-        uniqueCardsMap.set(card.id, mapScrydexCard(card));
-      }
-    });
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      console.error(`Scrydex API error (${response.status}):`, errorText);
+      return { data: [], totalCount: 0 };
+    }
 
-    const combinedData = Array.from(uniqueCardsMap.values()).slice(0, limit);
-    const totalCount = results.reduce((acc, r) => acc + (r.total || 0), 0);
+    const json = await response.json();
+    const rawCards = json?.data || [];
+    const totalCount = json?.total || rawCards.length;
 
-    return { data: combinedData, totalCount };
+    // Use a Map to deduplicate prints if needed, though language.id filter 
+    // usually returns unique physical prints.
+    const mappedCards = rawCards.map((c: any) => mapScrydexCard(c));
+
+    return {
+      data: mappedCards,
+      totalCount: totalCount
+    };
   } catch (error) {
     console.error('Error searching Pokemon cards:', error);
     return { data: [], totalCount: 0 };
@@ -245,7 +269,8 @@ export async function searchJapanesePokemonCards(query: string, page: number = 1
 export async function getPokemonSets(): Promise<PokemonSet[]> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return [];
   try {
-    const response = await fetch(`${SCRYDEX_BASE}/en/expansions?pageSize=250&casing=camel`, {
+    // Root expansions endpoint
+    const response = await fetch(`${SCRYDEX_BASE}/expansions?pageSize=250&casing=camel`, {
       headers: {
         'X-Api-Key': SCRYDEX_API_KEY,
         'X-Team-ID': SCRYDEX_TEAM_ID,

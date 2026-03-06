@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       // Use Promise.all for parallel API calls when game='all'
       if (game === 'all') {
         const searchPromises: Promise<any>[] = [
-          // Pokemon: Library now handles parallel EN/JA internally if lang is undefined or 'en,ja'
+          // Pokemon: Library now uses the global /cards endpoint and filters by lang
           searchPokemonCards(query, page, limit, setCode, cardNumber, lang).catch(err => {
             console.error('Pokemon search error:', err);
             return { data: [], totalCount: 0 };
