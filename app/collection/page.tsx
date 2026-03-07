@@ -2856,7 +2856,6 @@ const filteredItems = items.filter(item => {
           </div>
         </div>
       )}
- )}
 
       {/* Sealed Products Modal */}
       {showAddSealedModal && (
