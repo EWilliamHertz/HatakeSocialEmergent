@@ -163,9 +163,9 @@ export async function searchPokemonCards(
         if (terms.length > 0) {
           luceneQuery = terms.map(t => {
             // For Japanese endpoint, we explicitly check translation.name for English name hits
-            return ep.lang === 'ja' 
-              ? `(name:${t}* OR translation.name:${t}*)` 
-              : `name:${t}*`;
+          return ep.lang === 'ja' 
+  ? `(name:${t}* OR translation.en.name:${t}*)` 
+  : `name:${t}*`;
           }).join(' AND ');
           
           if (filters.length > 0) {
@@ -206,12 +206,14 @@ export async function searchPokemonCards(
 
     const results = await Promise.all(searchPromises);
     
-    for (const res of results) {
-      for (const card of res.cards) {
-        if (!cardMap.has(card.id)) {
-          cardMap.set(card.id, card);
-        }
-      }
+ for (const res of results) {
+  for (const card of res.cards) {
+    // Create a unique key using ID and Language
+    const cardKey = `${card.id}-${card.lang}`; 
+    if (!cardMap.has(cardKey)) {
+      cardMap.set(cardKey, card);
+    }
+  }
       totalCount += res.total;
     }
 
