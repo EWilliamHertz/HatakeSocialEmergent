@@ -101,8 +101,7 @@ function mapScrydexCard(card: any): PokemonCard {
   let price = extractPrice(card.variants ?? []);
   const langId = card.language?.id?.toLowerCase() || card.language_code?.toLowerCase() || '';
 
-  // FIX: Convert Yen (JPY) to USD for Japanese cards.
-  // 1 JPY ≈ 0.0067 USD. Your frontend (price * 0.92) will then output correct Euros.
+  // 1 JPY ≈ 0.0067 USD. Frontend (price * 0.92) will then output correct Euros.
   if (price !== null && (langId === 'ja' || langId === 'jp' || langId === 'japanese')) {
     price = parseFloat((price * 0.0067).toFixed(2));
   }
@@ -120,12 +119,12 @@ function mapScrydexCard(card: any): PokemonCard {
     retreatCost: card.retreat_cost || [],
     convertedRetreatCost: card.converted_retreat_cost,
     set: {
-      id: card.expansion?.id || card.set?.id || '',
-      name: card.expansion?.name || card.set?.name || '',
-      series: card.expansion?.series || card.set?.series || '',
-      printedTotal: card.expansion?.printed_total || card.set?.printedTotal,
-      total: card.expansion?.total || card.set?.total,
-      releaseDate: card.expansion?.release_date || card.set?.releaseDate,
+      id: card.set?.id || card.expansion?.id || '',
+      name: card.set?.name || card.expansion?.name || '',
+      series: card.set?.series || card.expansion?.series || '',
+      printedTotal: card.set?.printedTotal || card.expansion?.printed_total,
+      total: card.set?.total || card.expansion?.total,
+      releaseDate: card.set?.releaseDate || card.expansion?.release_date,
     },
     number: card.number || '',
     printedNumber: card.printed_number,
@@ -148,7 +147,6 @@ function mapScrydexCard(card: any): PokemonCard {
     prices: price ? { usd: price } : null,
   };
 }
-
 // Get a specific Pokemon card by ID
 export async function getPokemonCard(cardId: string): Promise<PokemonCard | null> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return null;
@@ -186,19 +184,16 @@ export async function searchPokemonCards(
       ? forceLang.split(',').map(l => l.trim().toLowerCase() === 'jp' ? 'ja' : l.trim().toLowerCase()).join(',')
       : 'all';
 
-    const queryIsJapanese = isJapanese(query);
-    const wantsJapanese = normalisedLang === 'all' || normalisedLang.includes('ja') || queryIsJapanese;
-    const wantsEnglish  = normalisedLang === 'all' || normalisedLang.includes('en') || (!wantsJapanese);
-    const wantsJapaneseOnly = wantsJapanese && !wantsEnglish;
+    const wantsJapanese = normalisedLang === 'all' || normalisedLang.includes('ja') || isJapanese(query);
+    const wantsEnglish  = normalisedLang === 'all' || normalisedLang.includes('en') || !wantsJapanese;
 
-    // 1. Build base filters (Set and Number)
-    const conditions: string[] = [];
-    if (setCode) conditions.push(`set.id:${setCode.toLowerCase()}`);
-    if (cardNumber) conditions.push(`number:${cardNumber}`);
+    // Build base filters using correct Scrydex field names
+    const filters: string[] = [];
+    if (setCode) filters.push(`set.id:${setCode.toLowerCase()}`);
+    if (cardNumber) filters.push(`number:${cardNumber}`);
 
-    // 2. Setup endpoints using Scrydex's language routing
     const endpoints = [];
-    if (wantsEnglish && !wantsJapaneseOnly) endpoints.push({ path: '/en/cards', lang: 'en' });
+    if (wantsEnglish && normalisedLang !== 'ja') endpoints.push({ path: '/en/cards', lang: 'en' });
     if (wantsJapanese) endpoints.push({ path: '/ja/cards', lang: 'ja' });
 
     const cardMap = new Map<string, PokemonCard>();
@@ -206,26 +201,22 @@ export async function searchPokemonCards(
 
     const searchPromises = endpoints.map(async (ep) => {
       try {
-        let finalLucene = '';
-        const searchTerms = query.split(/\s+/).filter(Boolean);
-        
-        if (searchTerms.length > 0) {
-          const textQuery = searchTerms.map(t => {
-            // For Japanese endpoint, we MUST check the translation field for English names
-            return ep.lang === 'ja' 
-              ? `(name:${t}* OR translation.name:${t}*)` 
-              : `name:${t}*`;
+        let q = '';
+        const terms = query.split(/\s+/).filter(Boolean);
+        if (terms.length > 0) {
+          q = terms.map(t => {
+            // Searching without a prefix (naked term) forces Scrydex to check all text fields (including translation)
+            return `(${t}* OR name:${t}* OR translation.name:${t}*)`;
           }).join(' AND ');
-          
-          finalLucene = conditions.length > 0 ? `(${textQuery}) AND ${conditions.join(' AND ')}` : textQuery;
-        } else if (conditions.length > 0) {
-          finalLucene = conditions.join(' AND ');
+          if (filters.length > 0) q = `(${q}) AND ${filters.join(' AND ')}`;
+        } else if (filters.length > 0) {
+          q = filters.join(' AND ');
         }
 
         const url = new URL(`${SCRYDEX_BASE}${ep.path}`);
-        if (finalLucene) url.searchParams.append('q', finalLucene);
-        url.searchParams.append('page', page.toString());
+        if (q) url.searchParams.append('q', q);
         url.searchParams.append('pageSize', limit.toString());
+        url.searchParams.append('page', page.toString());
         url.searchParams.append('include', 'prices');
         url.searchParams.append('casing', 'camel');
 
@@ -236,12 +227,19 @@ export async function searchPokemonCards(
 
         if (!response.ok) return { cards: [], total: 0 };
         const json = await response.json();
-        const rawCards = json?.data || [];
-        return { cards: rawCards.map((c: any) => mapScrydexCard(c)), total: json?.total || rawCards.length };
-      } catch (e) {
-        return { cards: [], total: 0 };
-      }
+        return { cards: (json?.data || []).map((c: any) => mapScrydexCard(c)), total: json?.total || 0 };
+      } catch (e) { return { cards: [], total: 0 }; }
     });
+
+    const results = await Promise.all(searchPromises);
+    results.forEach(res => {
+      res.cards.forEach(card => { if (!cardMap.has(card.id)) cardMap.set(card.id, card); });
+      totalCount += res.total;
+    });
+
+    return { data: Array.from(cardMap.values()), totalCount };
+  } catch (error) { return { data: [], totalCount: 0 }; }
+}
 
     const results = await Promise.all(searchPromises);
    results.forEach((res: any) => {
