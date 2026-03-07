@@ -62,14 +62,13 @@ function extractPrice(variants: any[]): number | null {
   return null;
 }
 
-// Part 2: Convert JPY to USD for Japanese cards before returning
 function mapScrydexCard(card: any): PokemonCard {
   const images = Array.isArray(card.images) ? card.images : [];
   const frontImage = images.find((i: any) => i.type === 'front') ?? images[0];
   let price = extractPrice(card.variants ?? []);
   const langId = card.language?.id?.toLowerCase() || card.language_code?.toLowerCase() || '';
 
-  // Part 2: Detect Japanese language and convert JPY → USD (rate: 1 JPY = 0.0067 USD)
+  // FIX: Convert Yen (JPY) whole numbers to USD decimals
   if (price !== null && (langId === 'ja' || langId === 'jp')) {
     price = parseFloat((price * 0.0067).toFixed(2));
   }
@@ -107,7 +106,6 @@ function mapScrydexCard(card: any): PokemonCard {
   };
 }
 
-// Part 1: Fix Japanese Card & English Translation Search
 export async function searchPokemonCards(
   query: string,
   page: number = 1,
@@ -119,72 +117,57 @@ export async function searchPokemonCards(
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return { data: [], totalCount: 0 };
 
   try {
+    const normalizedQuery = query.trim();
     const normalisedLang = forceLang && forceLang !== 'all' ? forceLang.toLowerCase() : 'all';
-
-    // Part 1: Detect Japanese set codes (e.g., SV4A, JTG, S12A)
+    
+    // Detect Japanese set codes to force the JA endpoint
     const isJapaneseSet = setCode && (
-      setCode.toLowerCase().endsWith('a') ||
+      setCode.toLowerCase().endsWith('a') || 
       setCode.toLowerCase().startsWith('s') ||
       ['jtg', 'cp'].includes(setCode.toLowerCase())
     );
 
-    // Part 1: Determine which language endpoints to query
-    const wantsJapanese = normalisedLang === 'all' || normalisedLang === 'ja' || isJapaneseSet || isJapanese(query);
-    const wantsEnglish  = normalisedLang === 'all' || normalisedLang === 'en' || (normalisedLang !== 'ja' && !isJapaneseSet);
-
-    const filters: string[] = [];
-    if (setCode) filters.push(`expansion.id:${setCode.toLowerCase()}`);
-    if (cardNumber) filters.push(`number:${cardNumber}`);
+    const wantsJapanese = normalisedLang === 'all' || normalisedLang.includes('ja') || isJapaneseSet || isJapanese(normalizedQuery);
+    const wantsEnglish  = (normalisedLang === 'all' || normalisedLang.includes('en')) && !isJapaneseSet;
 
     const endpoints: Array<{ path: string; lang: string }> = [];
-    if (wantsEnglish)  endpoints.push({ path: '/en/cards', lang: 'en' });
+    if (wantsEnglish) endpoints.push({ path: '/en/cards', lang: 'en' });
     if (wantsJapanese) endpoints.push({ path: '/ja/cards', lang: 'ja' });
 
-    if (endpoints.length === 0) {
-      endpoints.push({ path: '/en/cards', lang: 'en' });
-      endpoints.push({ path: '/ja/cards', lang: 'ja' });
-    }
-
-    // Part 1: De-duplication using composite key card.id + card.lang
     const cardMap = new Map<string, PokemonCard>();
     let apiTotal = 0;
 
     const searchPromises = endpoints.map(async (ep) => {
       try {
-        let luceneParts: string[] = [];
-        const terms = query.split(/\s+/).filter(Boolean);
-
-        if (terms.length > 0) {
-          // Part 1: Japanese endpoint checks both native name and English translation
-          const termQuery = terms.map(t => {
-            if (ep.lang === 'ja') {
-              return `(name:${t}* OR translation.en.name:${t}*)`;
-            } else {
-              return `name:${t}*`;
-            }
-          }).join(' AND ');
-          luceneParts.push(`(${termQuery})`);
-        }
-
-        if (filters.length > 0) luceneParts.push(...filters);
-
         const url = new URL(`${SCRYDEX_BASE}${ep.path}`);
-        if (luceneParts.length > 0) url.searchParams.append('q', luceneParts.join(' AND '));
+        
+        // FIX: Use plain text query string as ScryDex Lucene syntax is currently failing
+        if (normalizedQuery) url.searchParams.append('q', normalizedQuery);
+        
+        // Use expansion.id for set filtering as per ScryDex indexing
+        if (setCode) url.searchParams.append('expansion.id', setCode.toLowerCase());
+        if (cardNumber) url.searchParams.append('number', cardNumber);
+
         url.searchParams.append('pageSize', limit.toString());
         url.searchParams.append('page', page.toString());
         url.searchParams.append('include', 'prices');
         url.searchParams.append('casing', 'camel');
 
         const response = await fetch(url.toString(), {
-          headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID },
+          headers: { 
+            'X-Api-Key': SCRYDEX_API_KEY, 
+            'X-Team-ID': SCRYDEX_TEAM_ID 
+          },
           signal: AbortSignal.timeout(15000)
         });
 
         if (!response.ok) return { cards: [], total: 0 };
         const json = await response.json();
-        return {
-          cards: (json?.data || []).map((c: any) => mapScrydexCard(c)),
-          total: json?.totalCount || json?.total || 0
+        const rawCards = json?.data || [];
+        
+        return { 
+          cards: rawCards.map((c: any) => mapScrydexCard(c)), 
+          total: json?.totalCount || json?.total || rawCards.length 
         };
       } catch (e) {
         return { cards: [], total: 0 };
@@ -194,9 +177,11 @@ export async function searchPokemonCards(
     const results = await Promise.all(searchPromises);
     for (const res of results) {
       for (const card of res.cards) {
-        // Part 1: Composite key prevents same-name cards in different languages overwriting each other
-        const cardKey = `${card.id}-${card.lang}`;
-        if (!cardMap.has(cardKey)) cardMap.set(cardKey, card);
+        // Unique key by ID and Language to allow duplicates in "All" view
+        const cardKey = `${card.id}-${card.lang}`; 
+        if (!cardMap.has(cardKey)) {
+          cardMap.set(cardKey, card);
+        }
       }
       apiTotal += res.total;
     }
@@ -207,25 +192,13 @@ export async function searchPokemonCards(
   }
 }
 
-export async function getCardById(id: string, lang: string = 'en'): Promise<PokemonCard | null> {
-  if (!SCRYDEX_API_KEY) return null;
-  try {
-    const response = await fetch(`${SCRYDEX_BASE}/${lang.toLowerCase()}/cards/${id}?include=prices&casing=camel`, {
-      headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID }
-    });
-    if (!response.ok) return null;
-    const json = await response.json();
-    return mapScrydexCard(json.data);
-  } catch (error) {
-    return null;
-  }
-}
-
 export async function getPokemonSets(): Promise<PokemonSet[]> {
+  if (!SCRYDEX_API_KEY) return [];
   try {
     const response = await fetch(`${SCRYDEX_BASE}/expansions?pageSize=250&casing=camel`, {
       headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID }
     });
+    if (!response.ok) return [];
     const json = await response.json();
     return (json?.data || []).map((set: any) => ({
       id: set.id,
@@ -237,15 +210,17 @@ export async function getPokemonSets(): Promise<PokemonSet[]> {
       logo: set.images?.find((i: any) => i.type === 'logo')?.large,
       symbol: set.images?.find((i: any) => i.type === 'symbol')?.large,
     }));
-  } catch (e) { return []; }
+  } catch (error) { return []; }
 }
 
-export async function getCardsFromSet(setId: string, lang: string = 'en'): Promise<PokemonCard[]> {
+export async function getCardsFromSet(setId: string): Promise<PokemonCard[]> {
+  if (!SCRYDEX_API_KEY) return [];
   try {
-    const response = await fetch(`${SCRYDEX_BASE}/${lang}/expansions/${setId}/cards?pageSize=250&include=prices&casing=camel`, {
+    const response = await fetch(`${SCRYDEX_BASE}/expansions/${setId}/cards?pageSize=250&include=prices&casing=camel`, {
       headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID }
     });
+    if (!response.ok) return [];
     const json = await response.json();
     return (json?.data || []).map((card: any) => mapScrydexCard(card));
-  } catch (e) { return []; }
+  } catch (error) { return []; }
 }
