@@ -244,10 +244,12 @@ export async function searchPokemonCards(
     });
 
     const results = await Promise.all(searchPromises);
-    results.forEach(res => {
-      res.cards.forEach(card => { if (!cardMap.has(card.id)) cardMap.set(card.id, card); });
-      totalCount += res.total;
-    });
+   results.forEach((res: any) => {
+  res.cards.forEach((card: any) => { 
+    if (!cardMap.has(card.id)) cardMap.set(card.id, card); 
+  });
+  totalCount += res.total;
+});
 
     return { data: Array.from(cardMap.values()), totalCount };
   } catch (error) {
