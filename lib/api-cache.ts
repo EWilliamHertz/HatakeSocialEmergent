@@ -1,3 +1,4 @@
+// lib/api-cache.ts
 import sql from './db';
 
 interface CachedResponse {
@@ -12,6 +13,7 @@ const CACHE_TTL = {
   tcgdex_card: 86400,        // 24 hours
   tcgdex_search: 3600,       // 1 hour
   tcgdex_set: 86400,         // 24 hours
+  scrydex_default: 3600      // 1 hour
 };
 
 // Initialize cache table
@@ -25,34 +27,26 @@ async function initCache() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
-    // Create index for cleanup
     await sql`CREATE INDEX IF NOT EXISTS idx_api_cache_expires ON api_cache(expires_at)`;
-    console.log('[Cache] Initialized cache table');
+    console.log('[Cache] Initialized Neon cache table');
   } catch (e) {
     console.error('[Cache] Init error:', e);
   }
 }
 
-// Initialize on module load
 initCache();
 
-// Get from cache
 export async function getFromCache(key: string): Promise<any | null> {
   try {
     const result = await sql`
-      SELECT response_data, expires_at 
+      SELECT response_data 
       FROM api_cache 
       WHERE cache_key = ${key} AND expires_at > NOW()
     `;
-    
     if (result.length > 0) {
-      console.log('[Cache] HIT:', key);
-      return typeof result[0].response_data === 'string' 
-        ? JSON.parse(result[0].response_data) 
-        : result[0].response_data;
+      const data = result[0].response_data;
+      return typeof data === 'string' ? JSON.parse(data) : data;
     }
-    
-    console.log('[Cache] MISS:', key);
     return null;
   } catch (e) {
     console.error('[Cache] Get error:', e);
@@ -60,184 +54,116 @@ export async function getFromCache(key: string): Promise<any | null> {
   }
 }
 
-// Set to cache
 export async function setToCache(key: string, data: any, ttlSeconds: number): Promise<void> {
   try {
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
-    
     await sql`
       INSERT INTO api_cache (cache_key, response_data, expires_at)
       VALUES (${key}, ${JSON.stringify(data)}, ${expiresAt})
       ON CONFLICT (cache_key) 
       DO UPDATE SET 
-        response_data = ${JSON.stringify(data)},
-        expires_at = ${expiresAt}
+        response_data = EXCLUDED.response_data,
+        expires_at = EXCLUDED.expires_at
     `;
-    
-    console.log('[Cache] SET:', key);
   } catch (e) {
     console.error('[Cache] Set error:', e);
   }
 }
 
-// Clean expired entries (run periodically)
 export async function cleanExpiredCache(): Promise<number> {
   try {
     const result = await sql`DELETE FROM api_cache WHERE expires_at < NOW()`;
-    const count = (result as any).count || 0;
-    if (count > 0) {
-      console.log('[Cache] Cleaned', count, 'expired entries');
-    }
-    return count;
-  } catch (e) {
-    console.error('[Cache] Clean error:', e);
-    return 0;
-  }
+    return (result as any).count || 0;
+  } catch (e) { return 0; }
 }
 
-// Cached fetch helper for Scryfall
-export async function fetchScryfallCached(url: string): Promise<any> {
-  const cacheKey = `scryfall:${url}`;
-  
-  // Check cache first
-  const cached = await getFromCache(cacheKey);
-  if (cached) return cached;
-  
-  // Fetch from API
-  try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(10000),
-      headers: { 'Accept': 'application/json' }
-    });
-    
-    if (!res.ok) {
-      if (res.status === 404) return null;
-      throw new Error(`Scryfall error: ${res.status}`);
-    }
-    
-    const data = await res.json();
-    
-    // Determine TTL based on URL
-    const ttl = url.includes('/search') ? CACHE_TTL.scryfall_search : CACHE_TTL.scryfall_card;
-    await setToCache(cacheKey, data, ttl);
-    
-    return data;
-  } catch (e: any) {
-    console.error('[Cache] Scryfall fetch error:', e.message);
-    return null;
-  }
-}
-
-// Cached fetch helper for TCGdex
-export async function fetchTCGdexCached(url: string): Promise<any> {
-  const cacheKey = `tcgdex:${url}`;
-  
-  // Check cache first
-  const cached = await getFromCache(cacheKey);
-  if (cached) return cached;
-  
-  // Fetch from API
-  try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(10000),
-      headers: { 'Accept': 'application/json' }
-    });
-    
-    if (!res.ok) {
-      if (res.status === 404) return null;
-      throw new Error(`TCGdex error: ${res.status}`);
-    }
-    
-    const data = await res.json();
-    
-    // Determine TTL based on URL
-    let ttl = CACHE_TTL.tcgdex_card;
-    if (url.includes('/cards?') || url.includes('/search')) {
-      ttl = CACHE_TTL.tcgdex_search;
-    } else if (url.includes('/sets/')) {
-      ttl = CACHE_TTL.tcgdex_set;
-    }
-    
-    await setToCache(cacheKey, data, ttl);
-    
-    return data;
-  } catch (e: any) {
-    console.error('[Cache] TCGdex fetch error:', e.message);
-    return null;
-  }
-}
-
-// Cache stats
 export async function getCacheStats(): Promise<{ total: number; size: number }> {
   try {
     const result = await sql`
-      SELECT 
-        COUNT(*) as total,
-        COALESCE(SUM(LENGTH(response_data::text)), 0) as size
-      FROM api_cache 
-      WHERE expires_at > NOW()
+      SELECT COUNT(*) as total, COALESCE(SUM(LENGTH(response_data::text)), 0) as size
+      FROM api_cache WHERE expires_at > NOW()
     `;
-    return {
-      total: Number(result[0]?.total || 0),
-      size: Number(result[0]?.size || 0)
-    };
-  } catch (e) {
-    return { total: 0, size: 0 };
-  }
+    return { total: Number(result[0]?.total || 0), size: Number(result[0]?.size || 0) };
+  } catch (e) { return { total: 0, size: 0 }; }
 }
-// Cached fetch helper for Scrydex
-export async function fetchScrydexCached(url: string, headers: Record<string, string> = {}): Promise<any> {
+
+/**
+ * Robust Scrydex Fetcher
+ * Includes Neon caching, X-Team-ID header, and casing normalization.
+ */
+export async function fetchScrydex(endpoint: string, queryParams: string = '', ttl: number = 3600): Promise<any | null> {
+  // Normalize endpoint: ensure no double slashes and add casing
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+  const separator = queryParams ? '&' : '';
+  const url = `https://api.scrydex.com/pokemon/v1/${cleanEndpoint}?${queryParams}${separator}casing=camel`;
   const cacheKey = `scrydex:${url}`;
-  
-  // Check cache first
+
+  // 1. Check Cache
   const cached = await getFromCache(cacheKey);
   if (cached) return cached;
-  
-  // Fetch from API
+
+  // 2. Fetch Fresh
   try {
     const res = await fetch(url, {
-      signal: AbortSignal.timeout(15000),
-      headers: { 
+      headers: {
+        'X-Api-Key': process.env.SCRYDEX_API_KEY || '',
+        'X-Team-ID': process.env.SCRYDEX_TEAM_ID || 'hatakekb',
         'Accept': 'application/json',
-        ...headers 
-      }
+      },
+      next: { revalidate: 0 }
     });
-    
-    if (!res.ok) {
-      if (res.status === 404) return null;
-      throw new Error(`Scrydex error: ${res.status}`);
-    }
-    
+
+    if (!res.ok) return null;
     const data = await res.json();
     
-    // Set cache for 1 hour (3600 seconds)
-    await setToCache(cacheKey, data, 3600);
-    
+    // 3. Save to Neon
+    await setToCache(cacheKey, data, ttl);
     return data;
-  } catch (e: any) {
-    console.error('[Cache] Scrydex fetch error:', e.message);
+  } catch (e) {
+    console.error('[Scrydex Fetch Error]', e);
     return null;
   }
 }
-export async function fetchScrydex(endpoint: string, queryParams: string = ''): Promise<any | null> {
-  const url = `https://api.scrydex.com/pokemon/v1/${endpoint}?${queryParams}&casing=camel`;
-  const cacheKey = `scrydex:${url}`;
 
+// Compatibility helpers for Scryfall/TCGdex
+export async function fetchScryfallCached(url: string): Promise<any> {
+  const cacheKey = `scryfall:${url}`;
   const cached = await getFromCache(cacheKey);
   if (cached) return cached;
+  try {
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const ttl = url.includes('/search') ? CACHE_TTL.scryfall_search : CACHE_TTL.scryfall_card;
+    await setToCache(cacheKey, data, ttl);
+    return data;
+  } catch (e) { return null; }
+}
 
-  const res = await fetch(url, {
-    headers: {
-      'X-Api-Key': process.env.SCRYDEX_API_KEY || '',
-      'X-Team-ID': process.env.SCRYDEX_TEAM_ID || '',
-      'Accept': 'application/json',
-    },
-    next: { revalidate: 0 },
-  });
+export async function fetchTCGdexCached(url: string): Promise<any> {
+  const cacheKey = `tcgdex:${url}`;
+  const cached = await getFromCache(cacheKey);
+  if (cached) return cached;
+  try {
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    let ttl = CACHE_TTL.tcgdex_card;
+    if (url.includes('/cards?') || url.includes('/search')) ttl = CACHE_TTL.tcgdex_search;
+    await setToCache(cacheKey, data, ttl);
+    return data;
+  } catch (e) { return null; }
+}
 
-  if (!res.ok) return null;
-
-  const data = await res.json();
-  await setToCache(cacheKey, data, 86400);
-  return data;
+export async function fetchScrydexCached(url: string, headers: Record<string, string> = {}): Promise<any> {
+    const cacheKey = `scrydex_raw:${url}`;
+    const cached = await getFromCache(cacheKey);
+    if (cached) return cached;
+    try {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json', ...headers } });
+      if (!res.ok) return null;
+      const data = await res.json();
+      await setToCache(cacheKey, data, 3600);
+      return data;
+    } catch (e) { return null; }
 }

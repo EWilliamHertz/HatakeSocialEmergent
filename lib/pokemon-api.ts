@@ -1,6 +1,6 @@
 // lib/pokemon-api.ts
-const SCRYDEX_API_KEY = process.env.SCRYDEX_API_KEY || '';
-const SCRYDEX_TEAM_ID = process.env.SCRYDEX_TEAM_ID || '';
+import { fetchScrydex } from './api-cache';
+
 const SCRYDEX_BASE = 'https://api.scrydex.com/pokemon/v1';
 
 export interface PokemonCard {
@@ -68,7 +68,8 @@ function mapScrydexCard(card: any): PokemonCard {
   let price = extractPrice(card.variants ?? []);
   const langId = card.language?.id?.toLowerCase() || card.language_code?.toLowerCase() || '';
 
-  // FIX: Convert Yen (JPY) whole numbers to USD decimals
+  // Yen to USD conversion: Japanese cards return whole Yen numbers (e.g. 500) 
+  // we convert to decimal (3.35) so your frontend logic works.
   if (price !== null && (langId === 'ja' || langId === 'jp')) {
     price = parseFloat((price * 0.0067).toFixed(2));
   }
@@ -114,13 +115,11 @@ export async function searchPokemonCards(
   cardNumber?: string,
   forceLang?: string
 ): Promise<{ data: PokemonCard[]; totalCount: number }> {
-  if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return { data: [], totalCount: 0 };
-
   try {
     const normalizedQuery = query.trim();
     const normalisedLang = forceLang && forceLang !== 'all' ? forceLang.toLowerCase() : 'all';
     
-    // Detect Japanese set codes to force the JA endpoint
+    // Detect Japanese set codes to force JA endpoint (e.g. sv4a, s12a, jtg)
     const isJapaneseSet = setCode && (
       setCode.toLowerCase().endsWith('a') || 
       setCode.toLowerCase().startsWith('s') ||
@@ -131,53 +130,37 @@ export async function searchPokemonCards(
     const wantsEnglish  = (normalisedLang === 'all' || normalisedLang.includes('en')) && !isJapaneseSet;
 
     const endpoints: Array<{ path: string; lang: string }> = [];
-    if (wantsEnglish) endpoints.push({ path: '/en/cards', lang: 'en' });
-    if (wantsJapanese) endpoints.push({ path: '/ja/cards', lang: 'ja' });
+    if (wantsEnglish) endpoints.push({ path: 'en/cards', lang: 'en' });
+    if (wantsJapanese) endpoints.push({ path: 'ja/cards', lang: 'ja' });
 
     const cardMap = new Map<string, PokemonCard>();
     let apiTotal = 0;
 
     const searchPromises = endpoints.map(async (ep) => {
-      try {
-        const url = new URL(`${SCRYDEX_BASE}${ep.path}`);
-        
-        // FIX: Use plain text query string as ScryDex Lucene syntax is currently failing
-        if (normalizedQuery) url.searchParams.append('q', normalizedQuery);
-        
-        // Use expansion.id for set filtering as per ScryDex indexing
-        if (setCode) url.searchParams.append('expansion.id', setCode.toLowerCase());
-        if (cardNumber) url.searchParams.append('number', cardNumber);
+      const params = new URLSearchParams();
+      // FIX: Use plain text query string
+      if (normalizedQuery) params.append('q', normalizedQuery);
+      if (setCode) params.append('expansion.id', setCode.toLowerCase());
+      if (cardNumber) params.append('number', cardNumber);
 
-        url.searchParams.append('pageSize', limit.toString());
-        url.searchParams.append('page', page.toString());
-        url.searchParams.append('include', 'prices');
-        url.searchParams.append('casing', 'camel');
+      params.append('pageSize', limit.toString());
+      params.append('page', page.toString());
+      params.append('include', 'prices');
 
-        const response = await fetch(url.toString(), {
-          headers: { 
-            'X-Api-Key': SCRYDEX_API_KEY, 
-            'X-Team-ID': SCRYDEX_TEAM_ID 
-          },
-          signal: AbortSignal.timeout(15000)
-        });
-
-        if (!response.ok) return { cards: [], total: 0 };
-        const json = await response.json();
-        const rawCards = json?.data || [];
-        
-        return { 
-          cards: rawCards.map((c: any) => mapScrydexCard(c)), 
-          total: json?.totalCount || json?.total || rawCards.length 
-        };
-      } catch (e) {
-        return { cards: [], total: 0 };
-      }
+      const json = await fetchScrydex(ep.path, params.toString());
+      if (!json) return { cards: [], total: 0 };
+      const rawCards = json?.data || [];
+      
+      return { 
+        cards: rawCards.map((c: any) => mapScrydexCard(c)), 
+        total: json?.totalCount || json?.total || rawCards.length 
+      };
     });
 
     const results = await Promise.all(searchPromises);
     for (const res of results) {
       for (const card of res.cards) {
-        // Unique key by ID and Language to allow duplicates in "All" view
+        // Unique key by ID + Lang to allow EN/JP versions to coexist
         const cardKey = `${card.id}-${card.lang}`; 
         if (!cardMap.has(cardKey)) {
           cardMap.set(cardKey, card);
@@ -188,39 +171,30 @@ export async function searchPokemonCards(
 
     return { data: Array.from(cardMap.values()), totalCount: cardMap.size || apiTotal };
   } catch (error) {
+    console.error('Search error:', error);
     return { data: [], totalCount: 0 };
   }
 }
 
 export async function getPokemonSets(): Promise<PokemonSet[]> {
-  if (!SCRYDEX_API_KEY) return [];
-  try {
-    const response = await fetch(`${SCRYDEX_BASE}/expansions?pageSize=250&casing=camel`, {
-      headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID }
-    });
-    if (!response.ok) return [];
-    const json = await response.json();
-    return (json?.data || []).map((set: any) => ({
-      id: set.id,
-      name: set.name,
-      series: set.series,
-      releaseDate: set.releaseDate,
-      total: set.total,
-      printedTotal: set.printedTotal,
-      logo: set.images?.find((i: any) => i.type === 'logo')?.large,
-      symbol: set.images?.find((i: any) => i.type === 'symbol')?.large,
-    }));
-  } catch (error) { return []; }
+  const json = await fetchScrydex('expansions', 'pageSize=250');
+  if (!json) return [];
+  const sets = json?.data || [];
+  return sets.map((set: any) => ({
+    id: set.id,
+    name: set.name,
+    series: set.series,
+    releaseDate: set.releaseDate,
+    total: set.total,
+    printedTotal: set.printedTotal,
+    logo: set.images?.find((i: any) => i.type === 'logo')?.large,
+    symbol: set.images?.find((i: any) => i.type === 'symbol')?.large,
+  }));
 }
 
 export async function getCardsFromSet(setId: string): Promise<PokemonCard[]> {
-  if (!SCRYDEX_API_KEY) return [];
-  try {
-    const response = await fetch(`${SCRYDEX_BASE}/expansions/${setId}/cards?pageSize=250&include=prices&casing=camel`, {
-      headers: { 'X-Api-Key': SCRYDEX_API_KEY, 'X-Team-ID': SCRYDEX_TEAM_ID }
-    });
-    if (!response.ok) return [];
-    const json = await response.json();
-    return (json?.data || []).map((card: any) => mapScrydexCard(card));
-  } catch (error) { return []; }
+  const json = await fetchScrydex(`expansions/${setId}/cards`, 'pageSize=250&include=prices');
+  if (!json) return [];
+  const cards = json?.data || [];
+  return cards.map((card: any) => mapScrydexCard(card));
 }

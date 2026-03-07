@@ -1,7 +1,5 @@
 // lib/sealed-api.ts
-const SCRYDEX_API_KEY = process.env.SCRYDEX_API_KEY || '';
-const SCRYDEX_TEAM_ID = process.env.SCRYDEX_TEAM_ID || '';
-const SCRYDEX_BASE = 'https://api.scrydex.com/pokemon/v1';
+import { fetchScrydex } from './api-cache';
 
 export async function searchSealedProducts(
   query: string, 
@@ -9,40 +7,28 @@ export async function searchSealedProducts(
   limit: number = 50, 
   setCode?: string
 ) {
-  if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return { data: [], totalCount: 0 };
-
   try {
-    // FIX: Sealed products endpoint is global (no /en/ or /ja/)
-    const url = new URL(`${SCRYDEX_BASE}/sealed`);
+    const params = new URLSearchParams();
     
-    // FIX: Use plain text query string
+    // FIX: Using plain text query string
     if (query.trim()) {
-      url.searchParams.append('q', query.trim());
+      params.append('q', query.trim());
     }
     
     if (setCode) {
-      url.searchParams.append('expansion.id', setCode.toLowerCase());
+      params.append('expansion.id', setCode.toLowerCase());
     }
 
-    url.searchParams.append('page', page.toString());
-    url.searchParams.append('pageSize', limit.toString());
-    url.searchParams.append('include', 'prices');
-    url.searchParams.append('casing', 'camel');
+    params.append('page', page.toString());
+    params.append('pageSize', limit.toString());
+    params.append('include', 'prices');
 
-    const res = await fetch(url.toString(), {
-      headers: {
-        'X-Api-Key': SCRYDEX_API_KEY,
-        'X-Team-ID': SCRYDEX_TEAM_ID,
-      },
-      next: { revalidate: 3600 }
-    });
-
-    if (!res.ok) {
-      console.error('Sealed API error:', await res.text());
-      return { data: [], totalCount: 0 };
-    }
+    // SEALED ENDPOINT IS GLOBAL: hit /sealed directly via cached fetcher
+    // This removes the /en/ prefix that causes empty results
+    const json = await fetchScrydex('sealed', params.toString(), 3600);
     
-    const json = await res.json();
+    if (!json) return { data: [], totalCount: 0 };
+
     return {
       data: json.data || [],
       totalCount: json.totalCount || json.total || 0
@@ -54,16 +40,7 @@ export async function searchSealedProducts(
 }
 
 export async function getSealedProductById(id: string) {
-  if (!SCRYDEX_API_KEY) return null;
-  try {
-    const res = await fetch(`${SCRYDEX_BASE}/sealed/${id}?include=prices&casing=camel`, {
-      headers: {
-        'X-Api-Key': SCRYDEX_API_KEY,
-        'X-Team-ID': SCRYDEX_TEAM_ID,
-      }
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data;
-  } catch (e) { return null; }
+  // Global endpoint for single product
+  const json = await fetchScrydex(`sealed/${id}`, 'include=prices');
+  return json?.data || null;
 }
