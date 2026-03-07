@@ -62,13 +62,14 @@ function extractPrice(variants: any[]): number | null {
   return null;
 }
 
+// Part 2: Convert JPY to USD for Japanese cards before returning
 function mapScrydexCard(card: any): PokemonCard {
   const images = Array.isArray(card.images) ? card.images : [];
   const frontImage = images.find((i: any) => i.type === 'front') ?? images[0];
   let price = extractPrice(card.variants ?? []);
   const langId = card.language?.id?.toLowerCase() || card.language_code?.toLowerCase() || '';
 
-  // Yen to USD conversion
+  // Part 2: Detect Japanese language and convert JPY → USD (rate: 1 JPY = 0.0067 USD)
   if (price !== null && (langId === 'ja' || langId === 'jp')) {
     price = parseFloat((price * 0.0067).toFixed(2));
   }
@@ -106,6 +107,7 @@ function mapScrydexCard(card: any): PokemonCard {
   };
 }
 
+// Part 1: Fix Japanese Card & English Translation Search
 export async function searchPokemonCards(
   query: string,
   page: number = 1,
@@ -118,18 +120,15 @@ export async function searchPokemonCards(
 
   try {
     const normalisedLang = forceLang && forceLang !== 'all' ? forceLang.toLowerCase() : 'all';
-    
-    // FIX: Detect Japanese set codes (e.g., SV4A, S12A, JTG)
+
+    // Part 1: Detect Japanese set codes (e.g., SV4A, JTG, S12A)
     const isJapaneseSet = setCode && (
-      setCode.toLowerCase().endsWith('a') || 
+      setCode.toLowerCase().endsWith('a') ||
       setCode.toLowerCase().startsWith('s') ||
       ['jtg', 'cp'].includes(setCode.toLowerCase())
     );
 
-    // FIX: Determine which language endpoints to query
-    // If user explicitly selects 'ja', only search Japanese
-    // If user selects 'en', only search English
-    // If user selects 'all' or doesn't specify, search both
+    // Part 1: Determine which language endpoints to query
     const wantsJapanese = normalisedLang === 'all' || normalisedLang === 'ja' || isJapaneseSet || isJapanese(query);
     const wantsEnglish  = normalisedLang === 'all' || normalisedLang === 'en' || (normalisedLang !== 'ja' && !isJapaneseSet);
 
@@ -138,15 +137,15 @@ export async function searchPokemonCards(
     if (cardNumber) filters.push(`number:${cardNumber}`);
 
     const endpoints: Array<{ path: string; lang: string }> = [];
-    if (wantsEnglish) endpoints.push({ path: '/en/cards', lang: 'en' });
+    if (wantsEnglish)  endpoints.push({ path: '/en/cards', lang: 'en' });
     if (wantsJapanese) endpoints.push({ path: '/ja/cards', lang: 'ja' });
-    
-    // FIX: If no endpoints were selected (shouldn't happen), default to all
+
     if (endpoints.length === 0) {
       endpoints.push({ path: '/en/cards', lang: 'en' });
       endpoints.push({ path: '/ja/cards', lang: 'ja' });
     }
 
+    // Part 1: De-duplication using composite key card.id + card.lang
     const cardMap = new Map<string, PokemonCard>();
     let apiTotal = 0;
 
@@ -154,24 +153,19 @@ export async function searchPokemonCards(
       try {
         let luceneParts: string[] = [];
         const terms = query.split(/\s+/).filter(Boolean);
-        
+
         if (terms.length > 0) {
-          // FIX: Improved search for Japanese cards. 
-          // If searching in /ja/cards, we should look at the 'name' field which contains Japanese.
-          // If searching in /en/cards, we look at 'name' (English).
+          // Part 1: Japanese endpoint checks both native name and English translation
           const termQuery = terms.map(t => {
             if (ep.lang === 'ja') {
-              // For Japanese endpoint, 'name' is Japanese, 'translation.en.name' is English.
-              // If the term is Japanese, it will match 'name'. If it's English, it will match 'translation.en.name'.
               return `(name:${t}* OR translation.en.name:${t}*)`;
             } else {
-              // For English endpoint, 'name' is English.
               return `name:${t}*`;
             }
           }).join(' AND ');
           luceneParts.push(`(${termQuery})`);
         }
-        
+
         if (filters.length > 0) luceneParts.push(...filters);
 
         const url = new URL(`${SCRYDEX_BASE}${ep.path}`);
@@ -188,9 +182,9 @@ export async function searchPokemonCards(
 
         if (!response.ok) return { cards: [], total: 0 };
         const json = await response.json();
-        return { 
-          cards: (json?.data || []).map((c: any) => mapScrydexCard(c)), 
-          total: json?.totalCount || json?.total || 0 
+        return {
+          cards: (json?.data || []).map((c: any) => mapScrydexCard(c)),
+          total: json?.totalCount || json?.total || 0
         };
       } catch (e) {
         return { cards: [], total: 0 };
@@ -200,7 +194,8 @@ export async function searchPokemonCards(
     const results = await Promise.all(searchPromises);
     for (const res of results) {
       for (const card of res.cards) {
-        const cardKey = `${card.id}-${card.lang}`; 
+        // Part 1: Composite key prevents same-name cards in different languages overwriting each other
+        const cardKey = `${card.id}-${card.lang}`;
         if (!cardMap.has(cardKey)) cardMap.set(cardKey, card);
       }
       apiTotal += res.total;
