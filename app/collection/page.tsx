@@ -1224,7 +1224,7 @@ const filteredItems = items.filter(item => {
                 >
                   ✕ Clear
                 </button>
-</div>    
+    
                     {showBulkMenu && (
                       <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-10 min-w-48">
                         <button
