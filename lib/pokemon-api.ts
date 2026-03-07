@@ -170,7 +170,7 @@ export async function searchPokemonCards(
   limit: number = 50,
   setCode?: string,
   cardNumber?: string,
-  forceLang?: string // "all", "en", "ja", or "en,ja"
+  forceLang?: string
 ): Promise<{ data: PokemonCard[]; totalCount: number }> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) {
     console.error('Scrydex credentials missing');
@@ -178,41 +178,39 @@ export async function searchPokemonCards(
   }
 
   try {
-    // Treat undefined as 'all' so we search both endpoints by default
-    const normalisedLang = forceLang
+    // 1. Properly handle 'all' and normalize 'jp' to 'ja'
+    const normalisedLang = forceLang && forceLang !== 'all'
       ? forceLang.split(',').map(l => l.trim().toLowerCase() === 'jp' ? 'ja' : l.trim().toLowerCase()).join(',')
       : 'all';
 
     const queryIsJapanese = isJapanese(query);
 
-    // If 'all' is passed, we explicitly want both English and Japanese
-    const wantsJapanese = normalisedLang === 'all' || normalisedLang === 'ja' || normalisedLang.includes('ja') || queryIsJapanese;
-    const wantsEnglish  = normalisedLang === 'all' || normalisedLang === 'en' || normalisedLang.includes('en') || (!wantsJapanese);
+    // 2. Set boolean flags correctly
+    const wantsJapanese = normalisedLang === 'all' || normalisedLang.includes('ja') || queryIsJapanese;
+    const wantsEnglish  = normalisedLang === 'all' || normalisedLang.includes('en') || (!wantsJapanese);
     const wantsJapaneseOnly = wantsJapanese && !wantsEnglish;
 
-    // Build the Lucene query for the search term
+    // 3. Build the Lucene query
     let luceneQuery = '';
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
-      
-      // Broaden search to include standard name, translation.name, and translation.en.name
-      // This ensures English queries successfully pull up the JP cards
+      // We apply this broad search to BOTH English and Japanese so cross-language search always works
       luceneQuery = terms.map(t => `(name:${t}* OR translation.name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
     }
 
-    // Add set and card number filters
+    // 4. Add set and card number filters
     if (setCode) {
-      luceneQuery = luceneQuery
-        ? `${luceneQuery} AND expansion.id:${setCode}`
-        : `expansion.id:${setCode}`;
+      luceneQuery = luceneQuery 
+        ? `${luceneQuery} AND expansion.id:${setCode.toLowerCase()}`
+        : `expansion.id:${setCode.toLowerCase()}`;
     }
-
     if (cardNumber) {
       luceneQuery = luceneQuery
         ? `${luceneQuery} AND number:${cardNumber}`
         : `number:${cardNumber}`;
     }
-    // Setup endpoints strictly pointing to the root /cards path with language filters appended
+
+    // 5. Setup endpoints
     const endpoints: Array<{ url: string; lang: string; langFilter?: string }> = [];
 
     if (wantsEnglish && !wantsJapaneseOnly) {
@@ -231,7 +229,7 @@ export async function searchPokemonCards(
       });
     }
 
-    // Execute queries in parallel
+    // 6. Execute queries in parallel
     const cardMap = new Map<string, PokemonCard>();
     let totalCount = 0;
 
@@ -239,11 +237,11 @@ export async function searchPokemonCards(
       try {
         const url = new URL(endpoint.url);
         
-        // Ensure language filter works seamlessly on empty queries or appended correctly
+        // Wrap the entire luceneQuery in parentheses before appending the language filter
         let finalQuery = luceneQuery;
         if (endpoint.langFilter) {
           finalQuery = finalQuery 
-            ? `${finalQuery} AND language_code:${endpoint.langFilter}` 
+            ? `(${finalQuery}) AND language_code:${endpoint.langFilter}` 
             : `language_code:${endpoint.langFilter}`;
         }
         
@@ -292,10 +290,8 @@ export async function searchPokemonCards(
       totalCount += result.total;
     }
 
-    const mappedCards = Array.from(cardMap.values());
-
     return {
-      data: mappedCards,
+      data: Array.from(cardMap.values()),
       totalCount: totalCount
     };
   } catch (error) {
@@ -303,7 +299,6 @@ export async function searchPokemonCards(
     return { data: [], totalCount: 0 };
   }
 }
-
 export async function getPokemonSets(): Promise<PokemonSet[]> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return [];
   try {
