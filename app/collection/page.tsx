@@ -173,8 +173,8 @@ export default function CollectionPage() {
         body: JSON.stringify({
           name: manualSealed.name,
           game: manualSealed.game,
-          type: manualSealed.type,
-          purchase_price: parseFloat(manualSealed.price) || 0,
+          productType: manualSealed.type,
+          purchasePrice: parseFloat(manualSealed.price) || 0,
         })
       });
       if (res.ok) {

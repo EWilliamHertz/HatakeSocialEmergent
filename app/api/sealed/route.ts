@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
+    await ensureSealedTable();
+
     const { searchParams } = new URL(request.url);
     const game = searchParams.get('game');
 
@@ -60,6 +62,35 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Auto-create sealed_products table if it doesn't exist yet
+async function ensureSealedTable() {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS sealed_products (
+        id SERIAL PRIMARY KEY,
+        product_id VARCHAR(255) UNIQUE NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        name VARCHAR(500) NOT NULL,
+        game VARCHAR(50) DEFAULT 'pokemon',
+        product_type VARCHAR(100),
+        set_name VARCHAR(255),
+        set_code VARCHAR(50),
+        language VARCHAR(10) DEFAULT 'EN',
+        quantity INTEGER DEFAULT 1,
+        purchase_price DECIMAL(10,2) DEFAULT 0,
+        current_value DECIMAL(10,2),
+        purchase_date DATE,
+        notes TEXT,
+        image_url TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+  } catch (e) {
+    console.error('[sealed] ensureSealedTable error:', e);
+  }
+}
+
 // POST - Add a sealed product
 export async function POST(request: NextRequest) {
   try {
@@ -67,6 +98,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
+
+    // Ensure table exists before inserting
+    await ensureSealedTable();
 
     const body = await request.json();
     const { 
