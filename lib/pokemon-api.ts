@@ -145,7 +145,7 @@ export async function searchPokemonCards(
 
     // Build filters using Scrydex-standard fields (set.id)
     const filters: string[] = [];
-    if (setCode) filters.push(`set.id:${setCode.toLowerCase()}`);
+    if (setCode) filters.push(`expansion.id:${setCode.toLowerCase()}`);
     if (cardNumber) filters.push(`number:${cardNumber}`);
 
     const endpoints: Array<{ path: string; lang: string }> = [];
