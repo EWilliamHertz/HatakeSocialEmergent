@@ -16,13 +16,15 @@ interface DashboardProps {
   items: CollectionItem[];
   priceOverrides?: Record<number, number | null>;
   pricesLoading?: boolean;
+  sealedProducts?: any[]; // <--- ADDED
 }
 
-export default function CollectionDashboard({ items, priceOverrides = {}, pricesLoading = false }: DashboardProps) {
+export default function CollectionDashboard({ items, priceOverrides = {}, pricesLoading = false, sealedProducts = [] }: DashboardProps) {
   const [showDetailedStats, setShowDetailedStats] = useState(false);
 
- // Robust pricing calculator
+  // Robust pricing calculator for cards
   const getCardPrice = (item: CollectionItem): number => {
+    // ... [KEEP YOUR EXISTING getCardPrice LOGIC EXACTLY AS IT IS] ...
     try {
       const card = item.card_data || {};
       const game = item.game || 'unknown';
@@ -32,7 +34,7 @@ export default function CollectionDashboard({ items, priceOverrides = {}, prices
         return Number(priceOverrides[item.id]) || 0;
       }
 
-     // 2. Pokemon Pricing (TCGDex & ScryDex)
+      // 2. Pokemon Pricing (TCGDex & ScryDex)
       if (game === 'pokemon') {
         let price = 0;
         const isJapanese = card.lang === 'ja' || card.language === 'Japanese';
@@ -77,30 +79,30 @@ export default function CollectionDashboard({ items, priceOverrides = {}, prices
       else if (game === 'mtg') {
         if (item.foil && card.prices?.eur_foil) return parseFloat(card.prices.eur_foil);
         if (!item.foil && card.prices?.eur) return parseFloat(card.prices.eur);
-        // Fallback to USD converted to EUR
         if (item.foil && card.prices?.usd_foil) return parseFloat(card.prices.usd_foil) * 0.92;
         if (!item.foil && card.prices?.usd) return parseFloat(card.prices.usd) * 0.92;
       }
-
       // 4. Lorcana
       else if (game === 'lorcana') {
-        // Safely parse Lorcana prices (checks multiple common API structures)
         const eurPrice = card.prices?.eur || card.price?.eur || card.eur;
         const usdPrice = card.prices?.usd || card.price?.usd || card.prices?.market || card.usd;
-        
         if (eurPrice) return parseFloat(eurPrice);
-        if (usdPrice) return parseFloat(usdPrice) * 0.92; // Convert USD to EUR
+        if (usdPrice) return parseFloat(usdPrice) * 0.92;
       }
-
       return 0;
     } catch (err) {
       console.error("Error calculating price for item:", item, err);
       return 0;
     }
   }; 
-  // 1. Calculate Total Value
-  const totalValue = items.reduce((sum, item) => sum + (getCardPrice(item) * item.quantity), 0);
-
+const cardValue = items.reduce((sum, item) => sum + (getCardPrice(item) * item.quantity), 0);
+// <--- ADDED SEALED VALUE CALCULATION
+  const sealedValue = sealedProducts.reduce((sum, product) => {
+    const price = parseFloat(product.purchase_price) || parseFloat(product.price) || 0;
+    return sum + price;
+  }, 0);
+  
+  const totalValue = cardValue + sealedValue; // <--- COMBINED TOTAL  // ... [THE REST OF THE COMPONENT REMAINS EXACTLY THE SAME] ...
   // Total and Unique cards
   const totalCards = items.reduce((sum, item) => sum + item.quantity, 0);
   const uniqueCards = items.length;

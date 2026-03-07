@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { LayoutGrid, List as ListIcon, Grid3X3, BookOpen } from 'lucide-react'; // Add these icons
 import CollectionDashboard from '@/components/CollectionDashboard'; // Import the new component
 import CollectionValueChart from '@/components/CollectionValueChart';
-
+import AddSealedModal from '@/components/collection/AddSealedModal';
 interface CollectionItem {
   id: number;
   card_id: string;
@@ -95,7 +95,85 @@ export default function CollectionPage() {
   const [originalCsvContent, setOriginalCsvContent] = useState<string>(''); // Store original CSV for full import
   const [totalCardsToImport, setTotalCardsToImport] = useState<number>(0); // Track total cards in CSV
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  // Sealed Modal State
+  const [showAddSealedModal, setShowAddSealedModal] = useState(false);
+  const [sealedSearch, setSealedSearch] = useState('');
+  const [sealedSearchResults, setSealedSearchResults] = useState<any[]>([]);
+  const [isSearchingSealed, setIsSearchingSealed] = useState(false);
+  const [manualSealed, setManualSealed] = useState({ name: '', game: 'pokemon', type: 'Booster Box', price: '' });
+  const [addingSealedProduct, setAddingSealedProduct] = useState(false);
+
+  const handleSearchSealed = async () => {
+    if (sealedSearch.length < 3) return;
+    setIsSearchingSealed(true);
+    try {
+      const res = await fetch(`/api/sealed/search?q=${encodeURIComponent(sealedSearch)}`);
+      const data = await res.json();
+      setSealedSearchResults(data.results || []);
+    } catch (error) {
+      console.error('Failed to search sealed products:', error);
+      setSealedSearchResults([]);
+    } finally {
+      setIsSearchingSealed(false);
+    }
+  };
+
+  const handleAddSealedFromSearch = async (product: any) => {
+    setAddingSealedProduct(true);
+    try {
+      const res = await fetch('/api/sealed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: product.name,
+          game: 'pokemon', // ScryDex results are mostly Pokemon currently
+          type: product.type,
+          purchase_price: product.price,
+          image_url: product.imageUrl,
+        })
+      });
+      if (res.ok) {
+        loadSealedProducts();
+        setShowAddSealedModal(false);
+      } else {
+        alert('Failed to add sealed product');
+      }
+    } catch (error) {
+      console.error('Add sealed product error:', error);
+    } finally {
+      setAddingSealedProduct(false);
+    }
+  };
+
+  const handleAddManualSealed = async () => {
+    setAddingSealedProduct(true);
+    try {
+      const res = await fetch('/api/sealed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: manualSealed.name,
+          game: manualSealed.game,
+          type: manualSealed.type,
+          purchase_price: parseFloat(manualSealed.price) || 0,
+        })
+      });
+      if (res.ok) {
+        loadSealedProducts();
+        setShowAddSealedModal(false);
+        setManualSealed({ name: '', game: 'pokemon', type: 'Booster Box', price: '' });
+      } else {
+        alert('Failed to add manual sealed product');
+      }
+    } catch (error) {
+      console.error('Add manual sealed product error:', error);
+    } finally {
+      setAddingSealedProduct(false);
+    }
+  };
+
   // Manual add card state
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [addCardGame, setAddCardGame] = useState<'mtg' | 'pokemon' | 'lorcana'>('mtg');
@@ -1056,13 +1134,13 @@ const filteredItems = items.filter(item => {
                 <h1 className="text-3xl font-bold mb-2 dark:text-white">Sealed Products</h1>
                 <p className="text-gray-600 dark:text-gray-400">{sealedProducts.length} products in your collection</p>
               </div>
-              <a
-                href="/sealed"
+              <button
+                onClick={() => setShowAddSealedModal(true)}
                 className="px-4 py-2 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                Manage Sealed Products
-              </a>
+                Add Sealed Products
+              </button>
             </div>
           )}
 
@@ -1179,8 +1257,7 @@ const filteredItems = items.filter(item => {
         {activeTab === 'cards' && (<>
 
         {/* 1. NEW DASHBOARD STATS */}
-        <CollectionDashboard items={items} priceOverrides={priceOverrides} pricesLoading={pricesLoading} />
-
+<CollectionDashboard items={items} priceOverrides={priceOverrides} pricesLoading={pricesLoading} sealedProducts={sealedProducts} />
         {/* View Toggles */}
         <div className="flex justify-end mb-4">
            <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
@@ -1403,10 +1480,11 @@ const filteredItems = items.filter(item => {
                 <Package className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">No sealed products yet</h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">Track your booster boxes, ETBs, and other sealed TCG products</p>
-                <a href="/sealed" className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                {/* Changed <a> to a <button> that triggers the modal */}
+                <button onClick={() => setShowAddSealedModal(true)} className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
                   <Plus className="w-4 h-4" />
                   Add Sealed Products
-                </a>
+                </button>
               </>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
@@ -2777,6 +2855,28 @@ const filteredItems = items.filter(item => {
             </div>
           </div>
         </div>
+      )}
+ )}
+
+      {/* Sealed Products Modal */}
+      {showAddSealedModal && (
+        <AddSealedModal
+          sealedSearch={sealedSearch}
+          setSealedSearch={setSealedSearch}
+          sealedSearchResults={sealedSearchResults}
+          isSearchingSealed={isSearchingSealed}
+          manualSealed={manualSealed}
+          setManualSealed={setManualSealed}
+          addingSealedProduct={addingSealedProduct}
+          onSearch={handleSearchSealed}
+          onAddFromSearch={handleAddSealedFromSearch}
+          onAddManual={handleAddManualSealed}
+          onClose={() => {
+            setShowAddSealedModal(false);
+            setSealedSearchResults([]);
+            setSealedSearch('');
+          }}
+        />
       )}
     </div>
   );
