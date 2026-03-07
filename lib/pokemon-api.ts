@@ -162,10 +162,9 @@ export async function searchPokemonCards(
         
         if (terms.length > 0) {
           luceneQuery = terms.map(t => {
-            // For Japanese endpoint, we explicitly check translation.name for English name hits
           return ep.lang === 'ja' 
-  ? `(name:${t}* OR translation.en.name:${t}*)` 
-  : `name:${t}*`;
+          ? `(name:${t}* OR translation.en.name:${t}*)` 
+          : `name:${t}*`;
           }).join(' AND ');
           
           if (filters.length > 0) {
@@ -217,7 +216,7 @@ export async function searchPokemonCards(
       totalCount += res.total;
     }
 
-    return { data: Array.from(cardMap.values()), totalCount };
+return { data: Array.from(cardMap.values()), totalCount: cardMap.size };
   } catch (error) {
     console.error('Search error:', error);
     return { data: [], totalCount: 0 };
