@@ -67,11 +67,15 @@ function renderContent(text: string) {
 
 function Avatar({ picture, name, size = 40 }: { picture?: string; name: string; size?: number }) {
   if (picture) {
-    return <Image src={picture} alt={name} width={size} height={size} className="rounded-full object-cover" unoptimized />;
+    return (
+      <div style={{ width: size, height: size }} className="flex-shrink-0">
+        <Image src={picture} alt={name} width={size} height={size} className="rounded-full object-cover w-full h-full" unoptimized />
+      </div>
+    );
   }
   return (
     <div
-      className="bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold shrink-0"
+      className="bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0"
       style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
       {name.charAt(0).toUpperCase()}
