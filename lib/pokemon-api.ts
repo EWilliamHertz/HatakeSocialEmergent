@@ -66,12 +66,19 @@ function mapScrydexCard(card: any): PokemonCard {
   const images = Array.isArray(card.images) ? card.images : [];
   const frontImage = images.find((i: any) => i.type === 'front') ?? images[0];
   let price = extractPrice(card.variants ?? []);
-  const langId = card.language?.id?.toLowerCase() || card.language_code?.toLowerCase() || '';
 
-  // Yen to USD conversion: Japanese cards return whole Yen numbers (e.g. 500) 
-  // we convert to decimal (3.35) so your frontend logic works.
-  if (price !== null && (langId === 'ja' || langId === 'jp')) {
-    price = parseFloat((price * 0.0067).toFixed(2));
+  // Detect language — API returns camelCase (languageCode) due to casing=camel param,
+  // but also support snake_case fallback and string 'Japanese' check.
+  const langCode = (
+    card.languageCode ||
+    card.language_code ||
+    (card.language === 'Japanese' ? 'JA' : '') ||
+    ''
+  ).toLowerCase();
+
+  // Convert JPY → EUR (1 JPY ≈ 0.0062 EUR)
+  if (price !== null && (langCode === 'ja' || langCode === 'jp')) {
+    price = parseFloat((price * 0.0062).toFixed(2));
   }
 
   return {
@@ -84,26 +91,27 @@ function mapScrydexCard(card: any): PokemonCard {
     attacks: card.attacks || [],
     weaknesses: card.weaknesses || [],
     resistances: card.resistances || [],
-    retreatCost: card.retreat_cost || [],
-    convertedRetreatCost: card.converted_retreat_cost,
+    retreatCost: card.retreat_cost || card.retreatCost || [],
+    convertedRetreatCost: card.converted_retreat_cost || card.convertedRetreatCost,
     set: {
       id: card.set?.id || card.expansion?.id || '',
       name: card.set?.name || card.expansion?.name || '',
       series: card.set?.series || card.expansion?.series || '',
-      printedTotal: card.set?.printedTotal || card.expansion?.printed_total,
+      printedTotal: card.set?.printedTotal || card.expansion?.printed_total || card.expansion?.printedTotal,
       total: card.set?.total || card.expansion?.total,
-      releaseDate: card.set?.releaseDate || card.expansion?.release_date,
+      releaseDate: card.set?.releaseDate || card.expansion?.release_date || card.expansion?.releaseDate,
     },
     number: card.number || '',
     images: {
       small: frontImage?.small || '',
       large: frontImage?.large || frontImage?.medium || '',
     },
-    lang: langId,
-    language_code: langId.toUpperCase(),
+    lang: langCode,
+    language_code: langCode.toUpperCase(),
     translation: card.translation,
-    pricing: price ? { usd: price } : null,
-    prices: price ? { usd: price } : null,
+    // Store price as 'eur' so the frontend displays it correctly without double-conversion
+    pricing: price ? { eur: price } : null,
+    prices: price ? { eur: price } : null,
   };
 }
 
@@ -138,7 +146,7 @@ export async function searchPokemonCards(
 
     const searchPromises = endpoints.map(async (ep) => {
       const params = new URLSearchParams();
-      // FIX: Use plain text query string
+      // Plain text query — ScryDex does not support Lucene field syntax
       if (normalizedQuery) params.append('q', normalizedQuery);
       if (setCode) params.append('expansion.id', setCode.toLowerCase());
       if (cardNumber) params.append('number', cardNumber);
