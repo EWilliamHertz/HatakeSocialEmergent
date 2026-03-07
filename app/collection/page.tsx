@@ -665,7 +665,11 @@ export default function CollectionPage() {
           if (addCardName.trim()) params.append('q', addCardName.trim());
           if (resolvedSetCode) params.append('set', resolvedSetCode);
           if (addCardCollectorNum.trim()) params.append('number', addCardCollectorNum.trim());
-          if (addCardLang && addCardLang !== 'all') params.append('lang', addCardLang);
+          // Convert 'all' to 'en,ja' for combined search, otherwise use the language code as-is
+          if (addCardLang) {
+            const langParam = addCardLang === 'all' ? 'en,ja' : addCardLang;
+            params.append('lang', langParam);
+          }
           
           if (!params.toString()) {
             setAddCardSearchResults([]);
