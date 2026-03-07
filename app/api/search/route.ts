@@ -174,7 +174,9 @@ export async function GET(request: NextRequest) {
         }
       } else if (game === 'pokemon') {
         try {
-          const pokemonData = await searchPokemonCards(query, page, limit, setCode, cardNumber, lang);
+          // FIX: When lang is not specified, search both Japanese and English for mixed results
+          const effectiveLang = lang || 'all';
+          const pokemonData = await searchPokemonCards(query, page, limit, setCode, cardNumber, effectiveLang);
           results = pokemonData.data.slice(0, limit).map((card) => ({
             ...card,
             game: 'pokemon',
