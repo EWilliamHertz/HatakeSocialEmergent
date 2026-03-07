@@ -103,6 +103,13 @@ export default function FeedPage() {
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
   const [submittingComment, setSubmittingComment] = useState<string | null>(null);
 
+  // Comment emoji + reply state
+  const [commentEmojiPickerFor, setCommentEmojiPickerFor] = useState<string | null>(null);
+  const commentPickerRef = useRef<HTMLDivElement>(null);
+  const [replyingTo, setReplyingTo] = useState<{ postId: string; commentId: string; name: string } | null>(null);
+  const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
+  const [submittingReply, setSubmittingReply] = useState<string | null>(null);
+
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
@@ -114,11 +121,14 @@ export default function FeedPage() {
       .catch(() => router.push('/auth/login'));
   }, [router, tab]);
 
-  // Close emoji picker on outside click
+  // Close emoji pickers on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
         setEmojiPickerFor(null);
+      }
+      if (commentPickerRef.current && !commentPickerRef.current.contains(e.target as Node)) {
+        setCommentEmojiPickerFor(null);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -271,6 +281,69 @@ export default function FeedPage() {
       console.error('Submit comment error:', e);
     } finally {
       setSubmittingComment(null);
+    }
+  };
+
+  const toggleCommentReaction = async (postId: string, commentId: string, emoji: string) => {
+    setCommentEmojiPickerFor(null);
+    // Optimistic update
+    setPostComments(prev => ({
+      ...prev,
+      [postId]: (prev[postId] || []).map(c => {
+        if (c.comment_id !== commentId) return c;
+        const existing = (c.reactions || []).find((r: any) => r.emoji === emoji);
+        let reactions: any[];
+        if (existing) {
+          reactions = existing.userReacted
+            ? existing.count <= 1
+              ? (c.reactions || []).filter((r: any) => r.emoji !== emoji)
+              : (c.reactions || []).map((r: any) => r.emoji === emoji ? { ...r, count: r.count - 1, userReacted: false } : r)
+            : (c.reactions || []).map((r: any) => r.emoji === emoji ? { ...r, count: r.count + 1, userReacted: true } : r);
+        } else {
+          reactions = [...(c.reactions || []), { emoji, count: 1, userReacted: true }];
+        }
+        return { ...c, reactions };
+      }),
+    }));
+    try {
+      await fetch(`/api/feed/${postId}/comments/${commentId}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ emoji }),
+      });
+    } catch (e) {
+      console.error('Comment reaction error:', e);
+    }
+  };
+
+  const submitReply = async (postId: string, parentCommentId: string) => {
+    const content = (replyInputs[parentCommentId] || '').trim();
+    if (!content) return;
+    setSubmittingReply(parentCommentId);
+    try {
+      const res = await fetch(`/api/feed/${postId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content, parentCommentId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReplyInputs(prev => ({ ...prev, [parentCommentId]: '' }));
+        setReplyingTo(null);
+        setPostComments(prev => ({
+          ...prev,
+          [postId]: [...(prev[postId] || []), data.comment],
+        }));
+        setPosts(prev => prev.map(p =>
+          p.post_id === postId ? { ...p, comment_count: (p.comment_count || 0) + 1 } : p
+        ));
+      }
+    } catch (e) {
+      console.error('Submit reply error:', e);
+    } finally {
+      setSubmittingReply(null);
     }
   };
 
@@ -529,57 +602,162 @@ export default function FeedPage() {
                 </div>
 
                 {/* ── Comment section ── */}
-                {commentsOpen.has(post.post_id) && (
-                  <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
-                    {/* Existing comments */}
-                    {loadingComments.has(post.post_id) ? (
-                      <div className="flex justify-center py-4">
-                        <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                      </div>
-                    ) : (postComments[post.post_id] || []).length === 0 ? (
-                      <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-2">No comments yet — be the first!</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {(postComments[post.post_id] || []).map((comment: any) => (
-                          <div key={comment.comment_id} className="flex gap-3">
-                            <Avatar picture={comment.picture} name={comment.name || '?'} size={32} />
-                            <div className="flex-1 bg-gray-50 dark:bg-gray-700/50 rounded-xl px-3 py-2">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <Link href={`/profile/${comment.user_id}`}>
-                                  <span className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">{comment.name}</span>
-                                </Link>
-                                <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(comment.created_at).toLocaleDateString()}</span>
-                              </div>
-                              <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{comment.content}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                {commentsOpen.has(post.post_id) && (() => {
+                  const allComments = postComments[post.post_id] || [];
+                  const topLevel = allComments.filter((c: any) => !c.parent_comment_id);
+                  const repliesMap: Record<string, any[]> = {};
+                  allComments.filter((c: any) => c.parent_comment_id).forEach((c: any) => {
+                    if (!repliesMap[c.parent_comment_id]) repliesMap[c.parent_comment_id] = [];
+                    repliesMap[c.parent_comment_id].push(c);
+                  });
 
-                    {/* New comment input */}
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        value={commentInputs[post.post_id] || ''}
-                        onChange={e => setCommentInputs(prev => ({ ...prev, [post.post_id]: e.target.value }))}
-                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.post_id); } }}
-                        placeholder="Write a comment..."
-                        className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      />
-                      <button
-                        onClick={() => submitComment(post.post_id)}
-                        disabled={!commentInputs[post.post_id]?.trim() || submittingComment === post.post_id}
-                        className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full disabled:opacity-40 transition flex-shrink-0"
-                        title="Post comment"
-                      >
-                        {submittingComment === post.post_id
-                          ? <Loader2 className="w-4 h-4 animate-spin" />
-                          : <Send className="w-4 h-4" />}
-                      </button>
+                  const renderComment = (comment: any, isReply = false) => (
+                    <div key={comment.comment_id} className={`flex gap-2.5 ${isReply ? 'ml-10 mt-2' : ''}`}>
+                      <Avatar picture={comment.picture} name={comment.name || '?'} size={isReply ? 28 : 32} />
+                      <div className="flex-1 min-w-0">
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-3 py-2">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <Link href={`/profile/${comment.user_id}`}>
+                              <span className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">{comment.name}</span>
+                            </Link>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(comment.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{comment.content}</p>
+                        </div>
+
+                        {/* Comment reaction bubbles */}
+                        {(comment.reactions || []).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1 ml-1">
+                            {(comment.reactions as any[]).map((r: any) => (
+                              <button
+                                key={r.emoji}
+                                onClick={() => toggleCommentReaction(post.post_id, comment.comment_id, r.emoji)}
+                                className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border transition ${
+                                  r.userReacted
+                                    ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-400 text-blue-700 dark:text-blue-300'
+                                    : 'bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                }`}
+                              >
+                                <span>{r.emoji}</span>
+                                <span className="font-medium">{r.count}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Comment action row: Reply + Emoji */}
+                        <div className="flex items-center gap-3 mt-1 ml-1">
+                          <button
+                            onClick={() => setReplyingTo(
+                              replyingTo?.commentId === comment.comment_id
+                                ? null
+                                : { postId: post.post_id, commentId: comment.comment_id, name: comment.name }
+                            )}
+                            className="text-xs text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition"
+                          >
+                            {replyingTo?.commentId === comment.comment_id ? 'Cancel' : 'Reply'}
+                          </button>
+
+                          {/* Per-comment emoji picker */}
+                          <div
+                            className="relative"
+                            ref={commentEmojiPickerFor === comment.comment_id ? commentPickerRef : undefined}
+                          >
+                            <button
+                              onClick={() => setCommentEmojiPickerFor(
+                                commentEmojiPickerFor === comment.comment_id ? null : comment.comment_id
+                              )}
+                              className="text-gray-400 hover:text-yellow-500 transition"
+                              title="React to comment"
+                            >
+                              <Smile className="w-3.5 h-3.5" />
+                            </button>
+                            {commentEmojiPickerFor === comment.comment_id && (
+                              <div className="absolute bottom-full left-0 mb-1 bg-white dark:bg-gray-700 rounded-xl shadow-lg border border-gray-200 dark:border-gray-600 p-1.5 flex gap-0.5 z-30">
+                                {EMOJI_OPTIONS.map(e => (
+                                  <button
+                                    key={e}
+                                    onClick={() => toggleCommentReaction(post.post_id, comment.comment_id, e)}
+                                    className="text-base hover:scale-125 transition-transform p-0.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
+                                  >
+                                    {e}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Reply input for this comment */}
+                        {replyingTo?.commentId === comment.comment_id && (
+                          <div className="flex gap-2 items-center mt-2">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={replyInputs[comment.comment_id] || ''}
+                              onChange={e => setReplyInputs(prev => ({ ...prev, [comment.comment_id]: e.target.value }))}
+                              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply(post.post_id, comment.comment_id); } }}
+                              placeholder={`Reply to ${comment.name}...`}
+                              className="flex-1 px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            />
+                            <button
+                              onClick={() => submitReply(post.post_id, comment.comment_id)}
+                              disabled={!replyInputs[comment.comment_id]?.trim() || submittingReply === comment.comment_id}
+                              className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full disabled:opacity-40 transition flex-shrink-0"
+                            >
+                              {submittingReply === comment.comment_id
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <Send className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Nested replies */}
+                        {!isReply && (repliesMap[comment.comment_id] || []).map((reply: any) =>
+                          renderComment(reply, true)
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+
+                  return (
+                    <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
+                      {loadingComments.has(post.post_id) ? (
+                        <div className="flex justify-center py-4">
+                          <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                        </div>
+                      ) : topLevel.length === 0 ? (
+                        <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-2">No comments yet — be the first!</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {topLevel.map((comment: any) => renderComment(comment))}
+                        </div>
+                      )}
+
+                      {/* New top-level comment input */}
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={commentInputs[post.post_id] || ''}
+                          onChange={e => setCommentInputs(prev => ({ ...prev, [post.post_id]: e.target.value }))}
+                          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.post_id); } }}
+                          placeholder="Write a comment..."
+                          className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        />
+                        <button
+                          onClick={() => submitComment(post.post_id)}
+                          disabled={!commentInputs[post.post_id]?.trim() || submittingComment === post.post_id}
+                          className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full disabled:opacity-40 transition flex-shrink-0"
+                          title="Post comment"
+                        >
+                          {submittingComment === post.post_id
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : <Send className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>
