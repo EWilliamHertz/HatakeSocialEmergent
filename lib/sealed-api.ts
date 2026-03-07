@@ -26,13 +26,9 @@ export interface SealedProduct {
   language_code?: string;
 }
 
-function isJapanese(text: string): boolean {
-  return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uff00-\uffef]/.test(text);
-}
-
 /**
- * Searches for sealed products across the whole database or a specific set.
- * Supports Japanese and English sealed products.
+ * Searches for sealed Pokémon products.
+ * Part 3: Uses the language-agnostic /pokemon/v1/sealed endpoint (no /en/ or /ja/ prefix).
  */
 export async function searchSealedProducts(
   query: string,
@@ -47,102 +43,55 @@ export async function searchSealedProducts(
   }
 
   try {
-    const normalisedLang = forceLang && forceLang !== 'all' ? forceLang.toLowerCase() : 'all';
-    
-    // FIX: Detect Japanese set codes (e.g., SV4A, S12A)
-    const isJapaneseSet = setCode && (
-      setCode.toLowerCase().endsWith('a') || 
-      setCode.toLowerCase().startsWith('s') ||
-      ['jtg', 'cp'].includes(setCode.toLowerCase())
-    );
+    // Part 3: No language prefix — use /pokemon/v1/sealed directly
+    const url = new URL(`${SCRYDEX_BASE}/sealed`);
 
-    const wantsJapanese = normalisedLang === 'all' || normalisedLang.includes('ja') || isJapaneseSet || isJapanese(query);
-    const wantsEnglish  = (normalisedLang === 'all' || normalisedLang.includes('en')) && !isJapaneseSet;
+    const filters: string[] = [];
 
-    const endpoints: Array<{ path: string; lang: string }> = [];
-    if (wantsEnglish) endpoints.push({ path: '/en/sealed', lang: 'en' });
-    if (wantsJapanese) endpoints.push({ path: '/ja/sealed', lang: 'ja' });
-
-    const sealedMap = new Map<string, SealedProduct>();
-    let apiTotal = 0;
-
-    const searchPromises = endpoints.map(async (ep) => {
-      try {
-        const url = new URL(`${SCRYDEX_BASE}${ep.path}`);
-        
-        const filters: string[] = [];
-        if (query) {
-          // Build Lucene query with wildcard matching
-          const terms = query.split(/\s+/).filter(Boolean);
-          if (terms.length > 0) {
-            // For sealed products, search in name field
-            const termQuery = terms.map(t => {
-              if (ep.lang === 'ja') {
-                // For Japanese endpoint, support both Japanese and English searches
-                return `(name:${t}* OR translation.en.name:${t}*)`;
-              } else {
-                // For English endpoint, search name
-                return `name:${t}*`;
-              }
-            }).join(' AND ');
-            filters.push(`(${termQuery})`);
-          }
-        }
-        
-        if (setCode) {
-          filters.push(`expansion.id:${setCode.toLowerCase()}`);
-        }
-
-        if (filters.length > 0) {
-          url.searchParams.append('q', filters.join(' AND '));
-        }
-
-        url.searchParams.append('page', page.toString());
-        url.searchParams.append('pageSize', limit.toString());
-        url.searchParams.append('include', 'prices');
-        url.searchParams.append('casing', 'camel');
-
-        const res = await fetch(url.toString(), {
-          headers: {
-            'X-Api-Key': SCRYDEX_API_KEY,
-            'X-Team-ID': SCRYDEX_TEAM_ID,
-          },
-          signal: AbortSignal.timeout(15000)
-        });
-
-        if (!res.ok) {
-          const err = await res.text();
-          console.error(`ScryDex Sealed API Error (${ep.lang}):`, err);
-          return { products: [], total: 0 };
-        }
-
-        const json = await res.json();
-        const products = (json?.data || []).map((product: any) => ({
-          ...product,
-          language: ep.lang,
-          language_code: ep.lang.toUpperCase(),
-        }));
-        return { products, total: json?.totalCount || json?.total || 0 };
-      } catch (error) {
-        console.error(`Sealed search fetch error (${ep.lang}):`, error);
-        return { products: [], total: 0 };
+    if (query) {
+      // Part 3: Lucene query with wildcard support for partial name matches
+      const terms = query.split(/\s+/).filter(Boolean);
+      if (terms.length > 0) {
+        const termQuery = terms.map(t => `name:${t}*`).join(' AND ');
+        filters.push(`(${termQuery})`);
       }
-    });
-
-    const results = await Promise.all(searchPromises);
-    for (const res of results) {
-      for (const product of res.products) {
-        const productKey = `${product.id}-${product.language}`;
-        if (!sealedMap.has(productKey)) {
-          sealedMap.set(productKey, product);
-        }
-      }
-      apiTotal += res.total;
     }
 
+    // Part 3: Use expansion.id filter when a set code is provided
+    if (setCode) {
+      filters.push(`expansion.id:${setCode.toLowerCase()}`);
+    }
+
+    if (filters.length > 0) {
+      url.searchParams.append('q', filters.join(' AND '));
+    }
+
+    url.searchParams.append('page', page.toString());
+    url.searchParams.append('pageSize', limit.toString());
+    url.searchParams.append('include', 'prices');
+    url.searchParams.append('casing', 'camel');
+
+    // Part 3: Include both X-Api-Key and X-Team-ID headers
+    const res = await fetch(url.toString(), {
+      headers: {
+        'X-Api-Key': SCRYDEX_API_KEY,
+        'X-Team-ID': SCRYDEX_TEAM_ID,
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('ScryDex Sealed API Error:', err);
+      return { data: [], totalCount: 0 };
+    }
+
+    const json = await res.json();
+    const data: SealedProduct[] = json?.data || [];
+
     return {
-      data: Array.from(sealedMap.values()),
-      totalCount: sealedMap.size || apiTotal
+      data,
+      totalCount: json?.totalCount || json?.total || 0,
     };
   } catch (error) {
     console.error('Sealed search error:', error);
@@ -152,26 +101,23 @@ export async function searchSealedProducts(
 
 /**
  * Fetches a single sealed product by its ID.
+ * Part 3: Uses the language-agnostic /pokemon/v1/sealed/{id} endpoint.
  */
-export async function getSealedProductById(id: string, lang: string = 'en'): Promise<SealedProduct | null> {
+export async function getSealedProductById(id: string): Promise<SealedProduct | null> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) return null;
-  
+
   try {
-    const langPath = lang.toLowerCase() === 'ja' ? '/ja' : '/en';
-    const res = await fetch(`${SCRYDEX_BASE}${langPath}/sealed/${id}?include=prices&casing=camel`, {
+    // Part 3: No language prefix for sealed endpoint
+    const res = await fetch(`${SCRYDEX_BASE}/sealed/${id}?include=prices&casing=camel`, {
       headers: {
         'X-Api-Key': SCRYDEX_API_KEY,
         'X-Team-ID': SCRYDEX_TEAM_ID,
-      }
+      },
     });
-    
+
     if (!res.ok) return null;
     const json = await res.json();
-    return {
-      ...json.data,
-      language: lang.toLowerCase(),
-      language_code: lang.toUpperCase(),
-    };
+    return json.data || null;
   } catch (e) {
     return null;
   }
