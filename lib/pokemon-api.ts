@@ -190,42 +190,40 @@ export async function searchPokemonCards(
     const wantsEnglish  = normalisedLang === 'all' || normalisedLang.includes('en') || (!wantsJapanese);
     const wantsJapaneseOnly = wantsJapanese && !wantsEnglish;
 
-    // 3. Build the Lucene query
+    // 3. Build the Lucene query for the card parameters
     let luceneQuery = '';
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
-      // We apply this broad search to BOTH English and Japanese so cross-language search always works
+      // Keep this broad so English terms successfully query the Japanese endpoint's translation registry
       luceneQuery = terms.map(t => `(name:${t}* OR translation.name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
     }
 
-    // 4. Add set and card number filters
+    // 4. Group search terms and append set/number filters
     if (setCode) {
       luceneQuery = luceneQuery 
-        ? `${luceneQuery} AND expansion.id:${setCode.toLowerCase()}`
+        ? `(${luceneQuery}) AND expansion.id:${setCode.toLowerCase()}`
         : `expansion.id:${setCode.toLowerCase()}`;
     }
     if (cardNumber) {
       luceneQuery = luceneQuery
-        ? `${luceneQuery} AND number:${cardNumber}`
+        ? `(${luceneQuery}) AND number:${cardNumber}`
         : `number:${cardNumber}`;
     }
 
-    // 5. Setup endpoints
-    const endpoints: Array<{ url: string; lang: string; langFilter?: string }> = [];
+    // 5. Setup endpoints using Scrydex's language-specific routing!
+    const endpoints: Array<{ url: string; lang: string }> = [];
 
     if (wantsEnglish && !wantsJapaneseOnly) {
       endpoints.push({
-        url: `${SCRYDEX_BASE}/cards`,
-        lang: 'en',
-        langFilter: 'EN'
+        url: `${SCRYDEX_BASE}/en/cards`,
+        lang: 'en'
       });
     }
 
     if (wantsJapanese) {
       endpoints.push({
-        url: `${SCRYDEX_BASE}/cards`,
-        lang: 'ja',
-        langFilter: 'JA'
+        url: `${SCRYDEX_BASE}/ja/cards`,
+        lang: 'ja'
       });
     }
 
@@ -237,15 +235,7 @@ export async function searchPokemonCards(
       try {
         const url = new URL(endpoint.url);
         
-        // Wrap the entire luceneQuery in parentheses before appending the language filter
-        let finalQuery = luceneQuery;
-        if (endpoint.langFilter) {
-          finalQuery = finalQuery 
-            ? `(${finalQuery}) AND language_code:${endpoint.langFilter}` 
-            : `language_code:${endpoint.langFilter}`;
-        }
-        
-        if (finalQuery) url.searchParams.append('q', finalQuery);
+        if (luceneQuery) url.searchParams.append('q', luceneQuery);
         url.searchParams.append('page', page.toString());
         url.searchParams.append('pageSize', limit.toString());
         url.searchParams.append('include', 'prices');
