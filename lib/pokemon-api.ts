@@ -146,10 +146,19 @@ export async function searchPokemonCards(
         const terms = query.split(/\s+/).filter(Boolean);
         
         if (terms.length > 0) {
-          const termQuery = terms.map(t => ep.lang === 'ja' 
-            ? `(name:${t}* OR translation.en.name:${t}*)` 
-            : `name:${t}*`
-          ).join(' AND ');
+          // FIX: Improved search for Japanese cards. 
+          // If searching in /ja/cards, we should look at the 'name' field which contains Japanese.
+          // If searching in /en/cards, we look at 'name' (English).
+          const termQuery = terms.map(t => {
+            if (ep.lang === 'ja') {
+              // For Japanese endpoint, 'name' is Japanese, 'translation.en.name' is English.
+              // If the term is Japanese, it will match 'name'. If it's English, it will match 'translation.en.name'.
+              return `(name:${t}* OR translation.en.name:${t}*)`;
+            } else {
+              // For English endpoint, 'name' is English.
+              return `name:${t}*`;
+            }
+          }).join(' AND ');
           luceneParts.push(`(${termQuery})`);
         }
         
