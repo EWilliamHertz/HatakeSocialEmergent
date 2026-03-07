@@ -183,19 +183,20 @@ export async function searchPokemonCards(
       ? forceLang.split(',').map(l => l.trim().toLowerCase() === 'jp' ? 'ja' : l.trim().toLowerCase()).join(',')
       : undefined;
 
-    const wantsJapanese = normalisedLang === 'ja' || (normalisedLang?.includes('ja') ?? false);
+    // Auto-detect Japanese characters in the query
+    const queryIsJapanese = isJapanese(query);
+
+    // Determine intent ensuring even explicit JP queries flip the flag
+    const wantsJapanese = normalisedLang === 'ja' || (normalisedLang?.includes('ja') ?? false) || queryIsJapanese;
     const wantsEnglish  = !normalisedLang || normalisedLang === 'en' || normalisedLang.includes('en');
     const wantsJapaneseOnly = wantsJapanese && !wantsEnglish;
-
-    // Auto-detect Japanese characters in the query when no explicit lang is set
-    const queryIsJapanese = isJapanese(query);
 
     // Build the Lucene query for the search term
     let luceneQuery = '';
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
       
-      if (wantsJapanese || queryIsJapanese) {
+      if (wantsJapanese) {
         // For Japanese search: match name OR translation.en.name (English translation)
         luceneQuery = terms.map(t => `(name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
       } else {
@@ -216,44 +217,87 @@ export async function searchPokemonCards(
         : `number:${cardNumber}`;
     }
 
-    // Properly append Language filters to the Lucene Query
-    const langFilters: string[] = [];
-    if (wantsEnglish && !wantsJapaneseOnly) langFilters.push('EN');
-    if (wantsJapanese) langFilters.push('JA');
+    // Setup endpoints strictly pointing to the root /cards path with language filters appended
+    const endpoints: Array<{ url: string; lang: string; langFilter?: string }> = [];
 
-    if (langFilters.length > 0) {
-      const langCondition = langFilters.map(l => `language_code:${l}`).join(' OR ');
-      luceneQuery = luceneQuery
-        ? `(${luceneQuery}) AND (${langCondition})`
-        : `(${langCondition})`;
+    if (wantsEnglish && !wantsJapaneseOnly) {
+      endpoints.push({
+        url: `${SCRYDEX_BASE}/cards`,
+        lang: 'en',
+        langFilter: 'EN'
+      });
     }
 
-    // Use a single request to the root /cards endpoint
-    const url = new URL(`${SCRYDEX_BASE}/cards`);
-    if (luceneQuery) url.searchParams.append('q', luceneQuery);
-    url.searchParams.append('page', page.toString());
-    url.searchParams.append('pageSize', limit.toString());
-    url.searchParams.append('include', 'prices');
-    url.searchParams.append('casing', 'camel');
+    if (wantsJapanese) {
+      endpoints.push({
+        url: `${SCRYDEX_BASE}/cards`,
+        lang: 'ja',
+        langFilter: 'JA'
+      });
+    }
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        'X-Api-Key': SCRYDEX_API_KEY,
-        'X-Team-ID': SCRYDEX_TEAM_ID,
-      },
-      signal: AbortSignal.timeout(15000)
+    // Execute queries in parallel
+    const cardMap = new Map<string, PokemonCard>();
+    let totalCount = 0;
+
+    const searchPromises = endpoints.map(async (endpoint) => {
+      try {
+        const url = new URL(endpoint.url);
+        
+        // Ensure language filter works seamlessly on empty queries or appended correctly
+        let finalQuery = luceneQuery;
+        if (endpoint.langFilter) {
+          finalQuery = finalQuery 
+            ? `${finalQuery} AND language_code:${endpoint.langFilter}` 
+            : `language_code:${endpoint.langFilter}`;
+        }
+        
+        if (finalQuery) url.searchParams.append('q', finalQuery);
+        url.searchParams.append('page', page.toString());
+        url.searchParams.append('pageSize', limit.toString());
+        url.searchParams.append('include', 'prices');
+        url.searchParams.append('casing', 'camel');
+
+        const response = await fetch(url.toString(), {
+          headers: {
+            'X-Api-Key': SCRYDEX_API_KEY,
+            'X-Team-ID': SCRYDEX_TEAM_ID,
+          },
+          signal: AbortSignal.timeout(15000)
+        });
+
+        if (!response.ok) {
+          console.error(`Scrydex API error (${response.status}) for ${endpoint.lang} endpoint`);
+          return { cards: [], total: 0 };
+        }
+
+        const json = await response.json();
+        const rawCards = json?.data || [];
+        const total = json?.total || rawCards.length;
+
+        return {
+          cards: rawCards.map((c: any) => mapScrydexCard(c)),
+          total: total
+        };
+      } catch (error) {
+        console.error(`Error searching ${endpoint.lang} cards:`, error);
+        return { cards: [], total: 0 };
+      }
     });
 
-    if (!response.ok) {
-      console.error(`Scrydex API error (${response.status})`);
-      return { data: [], totalCount: 0 };
+    const results = await Promise.all(searchPromises);
+
+    // Combine results and deduplicate by card ID
+    for (const result of results) {
+      for (const card of result.cards) {
+        if (!cardMap.has(card.id)) {
+          cardMap.set(card.id, card);
+        }
+      }
+      totalCount += result.total;
     }
 
-    const json = await response.json();
-    const rawCards = json?.data || [];
-    const totalCount = json?.total || rawCards.length;
-
-    const mappedCards = rawCards.map((c: any) => mapScrydexCard(c));
+    const mappedCards = Array.from(cardMap.values());
 
     return {
       data: mappedCards,
