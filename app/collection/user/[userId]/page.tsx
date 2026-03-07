@@ -96,22 +96,31 @@ export default function UserCollectionPage() {
     return '/placeholder-card.png';
   };
 
-  const getCardPrice = (item: CollectionItem) => {
+  const getCardPrice = (item: CollectionItem): number => {
     const card = item.card_data;
-    if (!card) return { value: 0 };
+    if (!card) return 0;
+
     if (item.game === 'pokemon') {
-      if (card.pricing?.cardmarket) return { value: card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0 };
-      if (card.tcgplayer?.prices) { const p = card.tcgplayer.prices; return { value: (p.holofoil?.market || p.normal?.market || 0) * 0.92 }; }
+      // Primary: pricing.usd stored by mapScrydexCard (convert to EUR)
+      if (card.pricing?.usd) return card.pricing.usd * 0.92;
+      // Fallback: cardmarket pricing
+      if (card.pricing?.cardmarket) return card.pricing.cardmarket.avg || card.pricing.cardmarket.trend || 0;
+      // Fallback: tcgplayer
+      if (card.tcgplayer?.prices) {
+        const p = card.tcgplayer.prices;
+        return (p.holofoil?.market || p.normal?.market || 0) * 0.92;
+      }
     } else if (item.game === 'mtg') {
-      if (card.prices?.eur) return { value: parseFloat(card.prices.eur) };
-      if (card.prices?.eur_foil && item.is_foil) return { value: parseFloat(card.prices.eur_foil) };
-      if (card.prices?.usd) return { value: parseFloat(card.prices.usd) * 0.92 };
+      if (item.is_foil && card.prices?.eur_foil) return parseFloat(card.prices.eur_foil);
+      if (card.prices?.eur) return parseFloat(card.prices.eur);
+      if (card.prices?.usd) return parseFloat(card.prices.usd) * 0.92;
     }
-    return { value: 0 };
+
+    return 0;
   };
 
   const calculateTotalValue = () => {
-    const total = items.reduce((sum, item) => sum + getCardPrice(item).value * item.quantity, 0);
+    const total = items.reduce((sum, item) => sum + getCardPrice(item) * item.quantity, 0);
     return `€${total.toFixed(2)}`;
   };
 
@@ -172,22 +181,28 @@ export default function UserCollectionPage() {
           <>
             {viewMode === 'grid' && (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {filteredItems.map((item) => (
-                  <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition">
-                    <div className="relative aspect-[2/3]">
-                      <Image src={getCardImage(item)} alt={item.card_data?.name || 'Card'} fill className="object-cover" unoptimized />
-                      {item.quantity > 1 && <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">x{item.quantity}</div>}
-                      {item.is_foil && <div className="absolute bottom-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">FOIL</div>}
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-semibold text-sm mb-1 truncate dark:text-white">{item.card_data?.name || 'Unknown Card'}</h3>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{item.condition || 'NM'}</span>
-                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">€{getCardPrice(item).value.toFixed(2)}</span>
+                {filteredItems.map((item) => {
+                  const price = getCardPrice(item);
+                  return (
+                    <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition">
+                      <div className="relative aspect-[2/3]">
+                        <Image src={getCardImage(item)} alt={item.card_data?.name || 'Card'} fill className="object-cover" unoptimized />
+                        {item.quantity > 1 && <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">x{item.quantity}</div>}
+                        {item.is_foil && <div className="absolute bottom-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">FOIL</div>}
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-semibold text-sm mb-1 truncate dark:text-white">{item.card_data?.name || 'Unknown Card'}</h3>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{item.condition || 'NM'}</span>
+                          {price > 0
+                            ? <span className="text-sm font-bold text-blue-600 dark:text-blue-400">€{price.toFixed(2)}</span>
+                            : <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                          }
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
             {viewMode === 'binder' && (
@@ -213,14 +228,19 @@ export default function UserCollectionPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {filteredItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="p-4 font-medium dark:text-white">{item.card_data?.name}</td>
-                        <td className="p-4"><span className="uppercase text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{item.card_data?.set?.id || item.card_data?.set_code}</span></td>
-                        <td className="p-4"><span className="px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">{item.condition || 'NM'}</span></td>
-                        <td className="p-4 text-right font-mono dark:text-white">€{getCardPrice(item).value.toFixed(2)}</td>
-                      </tr>
-                    ))}
+                    {filteredItems.map((item) => {
+                      const price = getCardPrice(item);
+                      return (
+                        <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <td className="p-4 font-medium dark:text-white">{item.card_data?.name}</td>
+                          <td className="p-4"><span className="uppercase text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{item.card_data?.set?.id || item.card_data?.set_code}</span></td>
+                          <td className="p-4"><span className="px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">{item.condition || 'NM'}</span></td>
+                          <td className="p-4 text-right font-mono dark:text-white">
+                            {price > 0 ? `€${price.toFixed(2)}` : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
