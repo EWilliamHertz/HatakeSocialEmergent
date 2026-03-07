@@ -229,6 +229,7 @@ export async function fetchScrydex(endpoint: string, queryParams: string = ''): 
   const res = await fetch(url, {
     headers: {
       'X-Api-Key': process.env.SCRYDEX_API_KEY || '',
+      'X-Team-ID': process.env.SCRYDEX_TEAM_ID || '',
       'Accept': 'application/json',
     },
     next: { revalidate: 0 },
