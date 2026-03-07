@@ -4,7 +4,7 @@ import { FileSpreadsheet, X, Upload, CheckCircle, AlertCircle } from 'lucide-rea
 import { ImportCard } from '@/hooks/useImport';
 
 interface ImportModalProps {
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   importStatus: 'idle' | 'preview' | 'importing' | 'done';
   setImportStatus: (v: 'idle' | 'preview' | 'importing' | 'done') => void;
   importCards: ImportCard[];
