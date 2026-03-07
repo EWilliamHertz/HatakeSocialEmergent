@@ -24,6 +24,7 @@ interface Card {
   rarity?: string;
   tcgplayer?: { prices?: any };
   prices?: any;
+  translation?: { en?: { name?: string } };
 }
 
 interface UserResult {
