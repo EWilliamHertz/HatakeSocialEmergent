@@ -126,8 +126,12 @@ export async function searchPokemonCards(
       ['jtg', 'cp'].includes(setCode.toLowerCase())
     );
 
-    const wantsJapanese = normalisedLang === 'all' || normalisedLang.includes('ja') || isJapaneseSet || isJapanese(query);
-    const wantsEnglish  = (normalisedLang === 'all' || normalisedLang.includes('en')) && !isJapaneseSet;
+    // FIX: Determine which language endpoints to query
+    // If user explicitly selects 'ja', only search Japanese
+    // If user selects 'en', only search English
+    // If user selects 'all' or doesn't specify, search both
+    const wantsJapanese = normalisedLang === 'all' || normalisedLang === 'ja' || isJapaneseSet || isJapanese(query);
+    const wantsEnglish  = normalisedLang === 'all' || normalisedLang === 'en' || (normalisedLang !== 'ja' && !isJapaneseSet);
 
     const filters: string[] = [];
     if (setCode) filters.push(`expansion.id:${setCode.toLowerCase()}`);
@@ -136,6 +140,12 @@ export async function searchPokemonCards(
     const endpoints: Array<{ path: string; lang: string }> = [];
     if (wantsEnglish) endpoints.push({ path: '/en/cards', lang: 'en' });
     if (wantsJapanese) endpoints.push({ path: '/ja/cards', lang: 'ja' });
+    
+    // FIX: If no endpoints were selected (shouldn't happen), default to all
+    if (endpoints.length === 0) {
+      endpoints.push({ path: '/en/cards', lang: 'en' });
+      endpoints.push({ path: '/ja/cards', lang: 'ja' });
+    }
 
     const cardMap = new Map<string, PokemonCard>();
     let apiTotal = 0;

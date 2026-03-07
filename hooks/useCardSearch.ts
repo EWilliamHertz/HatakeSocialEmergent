@@ -84,7 +84,7 @@ export function useCardSearch() {
   const [addCardSearching, setAddCardSearching] = useState(false);
   const [addCardQuantity, setAddCardQuantity] = useState(1);
   const [addCardCondition, setAddCardCondition] = useState('Near Mint');
-  const [addCardLang, setAddCardLang] = useState<'all' | 'en' | 'ja'>('en');
+  const [addCardLang, setAddCardLang] = useState<'all' | 'en' | 'ja'>('all');
   const [addingCard, setAddingCard] = useState(false);
 
   const [selectedCardToAdd, setSelectedCardToAdd] = useState<any>(null);
