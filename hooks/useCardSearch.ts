@@ -138,11 +138,11 @@ export function useCardSearch() {
         if (res.ok) { const data = await res.json(); setAddCardSearchResults(data.cards || []); }
         else setAddCardSearchResults([]);
       } else {
-        const params = new URLSearchParams();
+       const params = new URLSearchParams();
         if (addCardName.trim()) params.append('q', addCardName.trim());
         if (resolvedSetCode) params.append('set', resolvedSetCode);
         if (addCardCollectorNum.trim()) params.append('number', addCardCollectorNum.trim());
-        if (addCardLang && addCardLang !== 'all') params.append('lang', addCardLang);
+        if (addCardLang) params.append('lang', addCardLang); // Let 'all' pass through
         if (!params.toString()) { setAddCardSearchResults([]); return; }
         const res = await fetch(`/api/search/pokemon?${params}`, { credentials: 'include', signal: AbortSignal.timeout(15000) });
         if (res.ok) { const data = await res.json(); setAddCardSearchResults(data.cards || []); }

@@ -170,7 +170,7 @@ export async function searchPokemonCards(
   limit: number = 50,
   setCode?: string,
   cardNumber?: string,
-  forceLang?: string // "en", "ja", or "en,ja"
+  forceLang?: string // "all", "en", "ja", or "en,ja"
 ): Promise<{ data: PokemonCard[]; totalCount: number }> {
   if (!SCRYDEX_API_KEY || !SCRYDEX_TEAM_ID) {
     console.error('Scrydex credentials missing');
@@ -178,17 +178,16 @@ export async function searchPokemonCards(
   }
 
   try {
-    // Normalize the forceLang value so "jp" is always treated as "ja"
+    // Treat undefined as 'all' so we search both endpoints by default
     const normalisedLang = forceLang
       ? forceLang.split(',').map(l => l.trim().toLowerCase() === 'jp' ? 'ja' : l.trim().toLowerCase()).join(',')
-      : undefined;
+      : 'all';
 
-    // Auto-detect Japanese characters in the query
     const queryIsJapanese = isJapanese(query);
 
-    // Determine intent ensuring even explicit JP queries flip the flag
-    const wantsJapanese = normalisedLang === 'ja' || (normalisedLang?.includes('ja') ?? false) || queryIsJapanese;
-    const wantsEnglish  = !normalisedLang || normalisedLang === 'en' || normalisedLang.includes('en');
+    // If 'all' is passed, we explicitly want both English and Japanese
+    const wantsJapanese = normalisedLang === 'all' || normalisedLang === 'ja' || normalisedLang.includes('ja') || queryIsJapanese;
+    const wantsEnglish  = normalisedLang === 'all' || normalisedLang === 'en' || normalisedLang.includes('en') || (!wantsJapanese);
     const wantsJapaneseOnly = wantsJapanese && !wantsEnglish;
 
     // Build the Lucene query for the search term
@@ -196,27 +195,23 @@ export async function searchPokemonCards(
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
       
-      if (wantsJapanese) {
-        // For Japanese search: match name OR translation.en.name (English translation)
-        luceneQuery = terms.map(t => `(name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
-      } else {
-        // For English search: just match name
-        luceneQuery = terms.map(t => `name:${t}*`).join(' AND ');
-      }
+      // Broaden search to include standard name, translation.name, and translation.en.name
+      // This ensures English queries successfully pull up the JP cards
+      luceneQuery = terms.map(t => `(name:${t}* OR translation.name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
     }
 
     // Add set and card number filters
     if (setCode) {
-      luceneQuery = luceneQuery 
-        ? `${luceneQuery} AND expansion.id:${setCode.toLowerCase()}`
-        : `expansion.id:${setCode.toLowerCase()}`;
+      luceneQuery = luceneQuery
+        ? `${luceneQuery} AND expansion.id:${setCode}`
+        : `expansion.id:${setCode}`;
     }
+
     if (cardNumber) {
       luceneQuery = luceneQuery
         ? `${luceneQuery} AND number:${cardNumber}`
         : `number:${cardNumber}`;
     }
-
     // Setup endpoints strictly pointing to the root /cards path with language filters appended
     const endpoints: Array<{ url: string; lang: string; langFilter?: string }> = [];
 
