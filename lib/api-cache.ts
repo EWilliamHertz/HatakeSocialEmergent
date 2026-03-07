@@ -185,3 +185,37 @@ export async function getCacheStats(): Promise<{ total: number; size: number }> 
     return { total: 0, size: 0 };
   }
 }
+// Cached fetch helper for Scrydex
+export async function fetchScrydexCached(url: string, headers: Record<string, string> = {}): Promise<any> {
+  const cacheKey = `scrydex:${url}`;
+  
+  // Check cache first
+  const cached = await getFromCache(cacheKey);
+  if (cached) return cached;
+  
+  // Fetch from API
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(15000),
+      headers: { 
+        'Accept': 'application/json',
+        ...headers 
+      }
+    });
+    
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      throw new Error(`Scrydex error: ${res.status}`);
+    }
+    
+    const data = await res.json();
+    
+    // Set cache for 1 hour (3600 seconds)
+    await setToCache(cacheKey, data, 3600);
+    
+    return data;
+  } catch (e: any) {
+    console.error('[Cache] Scrydex fetch error:', e.message);
+    return null;
+  }
+}
