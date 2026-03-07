@@ -98,12 +98,21 @@ function extractPrice(variants: any[]): number | null {
 function mapScrydexCard(card: any): PokemonCard {
   const images = Array.isArray(card.images) ? card.images : [];
   const frontImage = images.find((i: any) => i.type === 'front') ?? images[0];
-  const price = extractPrice(card.variants ?? []);
+  
+  let price = extractPrice(card.variants ?? []);
+  const lang = card.language?.id?.toLowerCase() || card.language_code?.toLowerCase();
+
+  // FIX: Convert Yen (JPY) to USD for Japanese cards.
+  // 1 JPY is approximately 0.0067 USD. 
+  // This ensures your frontend's USD-to-EUR conversion (price * 0.92) outputs the correct Euro amount!
+  if (price !== null && lang === 'ja') {
+    price = parseFloat((price * 0.0067).toFixed(2));
+  }
 
   return {
     id: card.id,
     name: card.name,
-    supertype: card.supertype,
+    supertype: card.supertype, 
     subtypes: card.subtypes || [],
     hp: card.hp,
     types: card.types || [],
@@ -190,12 +199,13 @@ export async function searchPokemonCards(
     const wantsEnglish  = normalisedLang === 'all' || normalisedLang.includes('en') || (!wantsJapanese);
     const wantsJapaneseOnly = wantsJapanese && !wantsEnglish;
 
-    // 3. Build the Lucene query for the card parameters
-    let luceneQuery = '';
+   let luceneQuery = '';
     if (query) {
       const terms = query.split(/\s+/).filter(Boolean);
-      // Keep this broad so English terms successfully query the Japanese endpoint's translation registry
-      luceneQuery = terms.map(t => `(name:${t}* OR translation.name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
+      // FIX: By including the bare terms (${t} and ${t}*), we force the Scrydex Lucene engine 
+      // to scan ALL available text fields, guaranteeing it finds the English name regardless 
+      // of which translation object the API buried it in.
+      luceneQuery = terms.map(t => `(${t} OR ${t}* OR name:${t}* OR translation.name:${t}* OR translations.en.name:${t}*)`).join(' AND ');
     }
 
     // 4. Group search terms and append set/number filters
