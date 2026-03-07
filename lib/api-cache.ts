@@ -219,3 +219,24 @@ export async function fetchScrydexCached(url: string, headers: Record<string, st
     return null;
   }
 }
+export async function fetchScrydex(endpoint: string, queryParams: string = ''): Promise<any | null> {
+  const url = `https://api.scrydex.com/pokemon/v1/${endpoint}?${queryParams}&casing=camel`;
+  const cacheKey = `scrydex:${url}`;
+
+  const cached = await getFromCache(cacheKey);
+  if (cached) return cached;
+
+  const res = await fetch(url, {
+    headers: {
+      'X-Api-Key': process.env.SCRYDEX_API_KEY || '',
+      'Accept': 'application/json',
+    },
+    next: { revalidate: 0 },
+  });
+
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  await setToCache(cacheKey, data, 86400);
+  return data;
+}
