@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Users, Globe, Hash, Heart, MessageCircle, Send, Smile, X } from 'lucide-react';
+import { Users, Globe, Hash, Heart, MessageCircle, Send, Smile, X, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -95,6 +95,13 @@ export default function FeedPage() {
   const [reactorsModal, setReactorsModal] = useState<{ postId: string; filter?: string } | null>(null);
   const [reactorsData, setReactorsData] = useState<ReactorsData | null>(null);
   const [reactorsLoading, setReactorsLoading] = useState(false);
+
+  // Comments state
+  const [commentsOpen, setCommentsOpen] = useState<Set<string>>(new Set());
+  const [postComments, setPostComments] = useState<Record<string, any[]>>({});
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
+  const [submittingComment, setSubmittingComment] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -206,6 +213,64 @@ export default function FeedPage() {
       console.error('Reactors fetch error:', e);
     } finally {
       setReactorsLoading(false);
+    }
+  };
+
+  const loadComments = async (postId: string) => {
+    setLoadingComments(prev => new Set(prev).add(postId));
+    try {
+      const res = await fetch(`/api/feed/${postId}/comments`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setPostComments(prev => ({ ...prev, [postId]: data.comments || [] }));
+      }
+    } catch (e) {
+      console.error('Load comments error:', e);
+    } finally {
+      setLoadingComments(prev => { const s = new Set(prev); s.delete(postId); return s; });
+    }
+  };
+
+  const toggleComments = (postId: string) => {
+    setCommentsOpen(prev => {
+      const next = new Set(prev);
+      if (next.has(postId)) {
+        next.delete(postId);
+      } else {
+        next.add(postId);
+        if (!postComments[postId]) loadComments(postId);
+      }
+      return next;
+    });
+  };
+
+  const submitComment = async (postId: string) => {
+    const content = (commentInputs[postId] || '').trim();
+    if (!content) return;
+    setSubmittingComment(postId);
+    try {
+      const res = await fetch(`/api/feed/${postId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+        setPostComments(prev => ({
+          ...prev,
+          [postId]: [...(prev[postId] || []), data.comment],
+        }));
+        // Update comment count optimistically
+        setPosts(prev => prev.map(p =>
+          p.post_id === postId ? { ...p, comment_count: (p.comment_count || 0) + 1 } : p
+        ));
+      }
+    } catch (e) {
+      console.error('Submit comment error:', e);
+    } finally {
+      setSubmittingComment(null);
     }
   };
 
@@ -420,7 +485,10 @@ export default function FeedPage() {
                   </button>
 
                   {/* Comment */}
-                  <button className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition">
+                  <button
+                    onClick={() => toggleComments(post.post_id)}
+                    className={`flex items-center gap-1.5 transition ${commentsOpen.has(post.post_id) ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400 hover:text-blue-600'}`}
+                  >
                     <MessageCircle className="w-5 h-5" />
                     <span>{post.comment_count || 0}</span>
                   </button>
@@ -459,6 +527,59 @@ export default function FeedPage() {
                     </button>
                   )}
                 </div>
+
+                {/* ── Comment section ── */}
+                {commentsOpen.has(post.post_id) && (
+                  <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
+                    {/* Existing comments */}
+                    {loadingComments.has(post.post_id) ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                      </div>
+                    ) : (postComments[post.post_id] || []).length === 0 ? (
+                      <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-2">No comments yet — be the first!</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {(postComments[post.post_id] || []).map((comment: any) => (
+                          <div key={comment.comment_id} className="flex gap-3">
+                            <Avatar picture={comment.picture} name={comment.name || '?'} size={32} />
+                            <div className="flex-1 bg-gray-50 dark:bg-gray-700/50 rounded-xl px-3 py-2">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <Link href={`/profile/${comment.user_id}`}>
+                                  <span className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">{comment.name}</span>
+                                </Link>
+                                <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(comment.created_at).toLocaleDateString()}</span>
+                              </div>
+                              <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{comment.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* New comment input */}
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={commentInputs[post.post_id] || ''}
+                        onChange={e => setCommentInputs(prev => ({ ...prev, [post.post_id]: e.target.value }))}
+                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.post_id); } }}
+                        placeholder="Write a comment..."
+                        className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      />
+                      <button
+                        onClick={() => submitComment(post.post_id)}
+                        disabled={!commentInputs[post.post_id]?.trim() || submittingComment === post.post_id}
+                        className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full disabled:opacity-40 transition flex-shrink-0"
+                        title="Post comment"
+                      >
+                        {submittingComment === post.post_id
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <Send className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

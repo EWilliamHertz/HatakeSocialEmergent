@@ -683,18 +683,29 @@ export default function CollectionPage() {
   };
 
   // Pokemon set code aliases - common abbreviations users might use
+  // Values must match ScryDex internal IDs (e.g. sv9, not sv09)
   const pokemonSetAliases: Record<string, string> = {
-    'jtg': 'sv09',          // Journey Together
-    'journey': 'sv09',      // Journey Together
-    'journeytogether': 'sv09',
-    'tef': 'sv05',          // Temporal Forces
-    'temporal': 'sv05',     
-    'par': 'sv04',          // Paradox Rift
-    'obsidian': 'sv03',     // Obsidian Flames
-    'paldea': 'sv02',       // Paldea Evolved
-    'scarlet': 'sv01',      // Scarlet & Violet Base
-    'violet': 'sv01',
-    'svbase': 'sv01',
+    'jtg': 'sv9',           // Journey Together (code: JTG → id: sv9)
+    'journey': 'sv9',
+    'journeytogether': 'sv9',
+    'tef': 'sv5',           // Temporal Forces (code: TEF → id: sv5)
+    'temporal': 'sv5',
+    'par': 'sv4',           // Paradox Rift (code: PAR → id: sv4)
+    'obsidian': 'sv3',      // Obsidian Flames (code: OBF → id: sv3)
+    'paldea': 'sv2',        // Paldea Evolved (code: PAL → id: sv2)
+    'scarlet': 'sv1',       // Scarlet & Violet Base (code: SVI → id: sv1)
+    'violet': 'sv1',
+    'svbase': 'sv1',
+    'sv01': 'sv1',          // Leading-zero variants
+    'sv02': 'sv2',
+    'sv03': 'sv3',
+    'sv04': 'sv4',
+    'sv05': 'sv5',
+    'sv06': 'sv6',
+    'sv07': 'sv7',
+    'sv08': 'sv8',
+    'sv09': 'sv9',
+    'sv10': 'sv10',
   };
 
   // Search for card - supports name search or set+number search
