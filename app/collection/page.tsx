@@ -1224,8 +1224,17 @@ const filteredItems = items.filter(item => {
                 >
                   ✕ Clear
                 </button>
-    
-                    {showBulkMenu && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowBulkMenu(!showBulkMenu)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    data-testid="bulk-actions-btn"
+                  >
+                    {selectedItems.size} selected
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                  
+                  {showBulkMenu && (
                       <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-10 min-w-48">
                         <button
                           onClick={bulkList}
