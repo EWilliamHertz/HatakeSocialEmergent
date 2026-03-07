@@ -158,7 +158,7 @@ export async function searchPokemonCards(
           // Part 1: Japanese endpoint checks both native name and English translation
           const termQuery = terms.map(t => {
             if (ep.lang === 'ja') {
-              return `(name:${t}* OR translation.en.name:${t}*)`;
+              return `(name:${t}* OR translatedName:${t}*)`;
             } else {
               return `name:${t}*`;
             }

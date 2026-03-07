@@ -50,9 +50,10 @@ export async function searchSealedProducts(
 
     if (query) {
       // Part 3: Lucene query with wildcard support for partial name matches
+      // Include both name and translatedName to match any language variation
       const terms = query.split(/\s+/).filter(Boolean);
       if (terms.length > 0) {
-        const termQuery = terms.map(t => `name:${t}*`).join(' AND ');
+        const termQuery = terms.map(t => `(name:${t}* OR translatedName:${t}*)`).join(' AND ');
         filters.push(`(${termQuery})`);
       }
     }
