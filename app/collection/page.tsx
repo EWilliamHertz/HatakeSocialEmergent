@@ -60,6 +60,7 @@ export default function CollectionPage() {
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [loadingWishlist, setLoadingWishlist] = useState(false);
   const [sealedProducts, setSealedProducts] = useState<any[]>([]);
+  const [sealedTotals, setSealedTotals] = useState<any>(null);
   const [loadingSealed, setLoadingSealed] = useState(false);
   const [bookmarkedCollections, setBookmarkedCollections] = useState<any[]>([]);
   const [loadingBookmarks, setLoadingBookmarks] = useState(false);
@@ -391,12 +392,25 @@ export default function CollectionPage() {
       const data = await res.json();
       if (data.success) {
         setSealedProducts(data.products || []);
+        setSealedTotals(data.totals || null);
       }
     } catch (error) {
       console.error('Load sealed products error:', error);
     } finally {
       setLoadingSealed(false);
     }
+  };
+
+  const getSealedTypeInfo = (type: string | null | undefined) => {
+    const t = (type || '').toLowerCase();
+    if (t.includes('elite trainer') || t.includes('etb')) return { emoji: '⭐', label: type, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' };
+    if (t.includes('booster box')) return { emoji: '📦', label: type, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' };
+    if (t.includes('blister')) return { emoji: '🎴', label: type, color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400' };
+    if (t.includes('booster pack') || t.includes('booster bundle')) return { emoji: '🎴', label: type, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+    if (t.includes('tin')) return { emoji: '🥫', label: type, color: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' };
+    if (t.includes('starter')) return { emoji: '🃏', label: type, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' };
+    if (t.includes('premium') || t.includes('collection') || t.includes('gift')) return { emoji: '🎁', label: type, color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' };
+    return { emoji: '📦', label: type || 'Sealed Product', color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' };
   };
 
   const enrichForeignPrices = async (loadedItems: CollectionItem[]) => {
@@ -1148,8 +1162,22 @@ const filteredItems = items.filter(item => {
           {activeTab === 'sealed' && (
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold mb-2 dark:text-white">Sealed Products</h1>
-                <p className="text-gray-600 dark:text-gray-400">{sealedProducts.length} products in your collection</p>
+                <h1 className="text-3xl font-bold mb-1 dark:text-white">Sealed Products</h1>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <p className="text-gray-600 dark:text-gray-400">{sealedProducts.length} products</p>
+                  {sealedTotals && Number(sealedTotals.total_invested) > 0 && (
+                    <>
+                      <span className="text-gray-300 dark:text-gray-600">•</span>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Invested: <span className="font-bold text-blue-600 dark:text-blue-400">€{(Number(sealedTotals.total_invested) * 0.92).toFixed(2)}</span>
+                      </p>
+                      <span className="text-gray-300 dark:text-gray-600">•</span>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Est. Value: <span className="font-bold text-green-600 dark:text-green-400">€{(Number(sealedTotals.total_value) * 0.92).toFixed(2)}</span>
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setShowAddSealedModal(true)}
@@ -1504,19 +1532,45 @@ const filteredItems = items.filter(item => {
                 </button>
               </>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
-                {sealedProducts.map((product: any) => (
-                  <div key={product.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Package className="w-8 h-8 text-gray-400" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
+                {sealedProducts.map((product: any) => {
+                  const typeInfo = getSealedTypeInfo(product.product_type);
+                  const price = Number(product.purchase_price || 0);
+                  return (
+                    <div key={product.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
+                      {/* Product Image */}
+                      <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
+                        {product.image_url ? (
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="h-full w-full object-contain p-2"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 text-gray-300 dark:text-gray-500">
+                            <span className="text-5xl">{typeInfo.emoji}</span>
+                          </div>
+                        )}
+                        {/* Type badge overlay */}
+                        <span className={`absolute top-2 left-2 text-xs font-bold px-2 py-0.5 rounded-full ${typeInfo.color}`}>
+                          {typeInfo.emoji} {typeInfo.label}
+                        </span>
+                      </div>
+                      {/* Product Info */}
+                      <div className="p-3 flex-1 flex flex-col justify-between">
+                        <h4 className="font-semibold dark:text-white text-sm leading-snug mb-1" title={product.name}>{product.name}</h4>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 uppercase font-mono">{product.game || 'pokemon'}</span>
+                          {price > 0 && (
+                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                              €{(price * 0.92).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold dark:text-white truncate">{product.name}</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{product.type || 'Sealed Product'}</p>
-                      {product.purchase_price && <p className="text-sm font-bold text-blue-600">€{product.purchase_price}</p>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

@@ -17,7 +17,19 @@ interface AddSealedModalProps {
   onClose: () => void;
 }
 
-const PRODUCT_TYPES = ['Booster Box', 'Elite Trainer Box', 'Booster Bundle', 'Collection Box', 'Tin', 'Starter Deck', 'Other'];
+const PRODUCT_TYPES = [
+  'Booster Box',
+  'Elite Trainer Box',
+  'Booster Pack',
+  'Booster Bundle',
+  'Blister Pack',
+  'Tin',
+  'Collection Box',
+  'Starter Deck',
+  'Premium Collection',
+  'Gift Box',
+  'Other',
+];
 const GAMES = [
   { value: 'pokemon', label: '⚡ Pokémon' },
   { value: 'mtg', label: '🃏 Magic' },
