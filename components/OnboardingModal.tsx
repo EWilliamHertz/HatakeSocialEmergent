@@ -44,11 +44,16 @@ export default function OnboardingModal() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    // Small delay so layout finishes before showing modal
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       try {
         const done = localStorage.getItem(STORAGE_KEY);
-        if (!done) setVisible(true);
+        if (done) return;
+
+        // Only show to logged-in, verified users
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) return;
+
+        setVisible(true);
       } catch {}
     }, 1500);
     return () => clearTimeout(timer);
