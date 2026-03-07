@@ -1,0 +1,22 @@
+Hooks → drop into hooks/
+hooks/useCollection.ts
+hooks/useCardSearch.ts
+hooks/useSelection.ts
+hooks/useImport.ts
+hooks/useTabData.ts
+Page → replaces your existing file
+app/collection/page.tsx          ← replaces the original
+Components → new folder inside your existing components/
+components/collection/CardViews.tsx
+components/collection/EditCardModal.tsx
+components/collection/AddCardModal.tsx
+components/collection/AddSealedModal.tsx
+components/collection/BulkListModal.tsx
+components/collection/ImportModal.tsx
+components/collection/TabContent.tsx
+API route → new folder inside app/api/sealed/
+app/api/sealed/search/route.ts
+Lib → merge into your existing lib/api-cache.ts
+lib/api-cache-scrydex.ts         ← don't create this as a new file
+                                    copy the fetchScrydex() function into
+                                    your existing lib/api-cache.ts instead

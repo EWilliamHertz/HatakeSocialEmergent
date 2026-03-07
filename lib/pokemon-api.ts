@@ -183,11 +183,9 @@ export async function searchPokemonCards(
       ? forceLang.split(',').map(l => l.trim().toLowerCase() === 'jp' ? 'ja' : l.trim().toLowerCase()).join(',')
       : undefined;
 
-    // Determine which endpoints to query
     const wantsJapanese = normalisedLang === 'ja' || (normalisedLang?.includes('ja') ?? false);
     const wantsEnglish  = !normalisedLang || normalisedLang === 'en' || normalisedLang.includes('en');
     const wantsJapaneseOnly = wantsJapanese && !wantsEnglish;
-    const wantsBoth = wantsJapanese && wantsEnglish;
 
     // Auto-detect Japanese characters in the query when no explicit lang is set
     const queryIsJapanese = isJapanese(query);
@@ -199,7 +197,6 @@ export async function searchPokemonCards(
       
       if (wantsJapanese || queryIsJapanese) {
         // For Japanese search: match name OR translation.en.name (English translation)
-        // We use a broader search for Japanese cards to ensure English names match
         luceneQuery = terms.map(t => `(name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
       } else {
         // For English search: just match name
@@ -219,113 +216,44 @@ export async function searchPokemonCards(
         : `number:${cardNumber}`;
     }
 
-    // Determine which endpoints to query based on language selection
-    const endpoints: Array<{ url: string; lang: string }> = [];
+    // Properly append Language filters to the Lucene Query
+    const langFilters: string[] = [];
+    if (wantsEnglish && !wantsJapaneseOnly) langFilters.push('EN');
+    if (wantsJapanese) langFilters.push('JA');
 
-    if (wantsEnglish && !wantsJapaneseOnly) {
-      endpoints.push({
-        url: `${SCRYDEX_BASE}/en/cards`,
-        lang: 'en'
-      });
+    if (langFilters.length > 0) {
+      const langCondition = langFilters.map(l => `language_code:${l}`).join(' OR ');
+      luceneQuery = luceneQuery
+        ? `(${luceneQuery}) AND (${langCondition})`
+        : `(${langCondition})`;
     }
 
-    if (wantsJapanese) {
-      endpoints.push({
-        url: `${SCRYDEX_BASE}/ja/cards`,
-        lang: 'ja'
-      });
-    }
+    // Use a single request to the root /cards endpoint
+    const url = new URL(`${SCRYDEX_BASE}/cards`);
+    if (luceneQuery) url.searchParams.append('q', luceneQuery);
+    url.searchParams.append('page', page.toString());
+    url.searchParams.append('pageSize', limit.toString());
+    url.searchParams.append('include', 'prices');
+    url.searchParams.append('casing', 'camel');
 
-    // Execute queries in parallel
-    const cardMap = new Map<string, PokemonCard>();
-    let totalCount = 0;
-
-    const searchPromises = endpoints.map(async (endpoint) => {
-      try {
-        const url = new URL(endpoint.url);
-        if (luceneQuery) url.searchParams.append('q', luceneQuery);
-        url.searchParams.append('page', page.toString());
-        url.searchParams.append('pageSize', limit.toString());
-        url.searchParams.append('include', 'prices');
-        url.searchParams.append('casing', 'camel');
-
-        const response = await fetch(url.toString(), {
-          headers: {
-            'X-Api-Key': SCRYDEX_API_KEY,
-            'X-Team-ID': SCRYDEX_TEAM_ID,
-          },
-          signal: AbortSignal.timeout(15000)
-        });
-
-        if (!response.ok) {
-          console.error(`Scrydex API error (${response.status}) for ${endpoint.lang} endpoint`);
-          return { cards: [], total: 0 };
-        }
-
-        const json = await response.json();
-        const rawCards = json?.data || [];
-        const total = json?.total || rawCards.length;
-
-        return {
-          cards: rawCards.map((c: any) => mapScrydexCard(c)),
-          total: total
-        };
-      } catch (error) {
-        console.error(`Error searching ${endpoint.lang} cards:`, error);
-        return { cards: [], total: 0 };
-      }
+    const response = await fetch(url.toString(), {
+      headers: {
+        'X-Api-Key': SCRYDEX_API_KEY,
+        'X-Team-ID': SCRYDEX_TEAM_ID,
+      },
+      signal: AbortSignal.timeout(15000)
     });
 
-    const results = await Promise.all(searchPromises);
-
-    // Combine results and deduplicate by card ID
-    for (const result of results) {
-      for (const card of result.cards) {
-        if (!cardMap.has(card.id)) {
-          cardMap.set(card.id, card);
-        }
-      }
-      totalCount += result.total;
+    if (!response.ok) {
+      console.error(`Scrydex API error (${response.status})`);
+      return { data: [], totalCount: 0 };
     }
 
-    // FALLBACK: If we wanted Japanese cards but found none with the language-specific endpoint,
-    // try the root endpoint with a language filter. This is a safety net for English name matching.
-    if (wantsJapanese && cardMap.size === 0 && query) {
-      try {
-        const fallbackUrl = new URL(`${SCRYDEX_BASE}/cards`);
-        // Use the same lucene query but add a language filter
-        const fallbackQuery = `${luceneQuery} AND language_code:JA`;
-        fallbackUrl.searchParams.append('q', fallbackQuery);
-        fallbackUrl.searchParams.append('page', page.toString());
-        fallbackUrl.searchParams.append('pageSize', limit.toString());
-        fallbackUrl.searchParams.append('include', 'prices');
-        fallbackUrl.searchParams.append('casing', 'camel');
+    const json = await response.json();
+    const rawCards = json?.data || [];
+    const totalCount = json?.total || rawCards.length;
 
-        const response = await fetch(fallbackUrl.toString(), {
-          headers: {
-            'X-Api-Key': SCRYDEX_API_KEY,
-            'X-Team-ID': SCRYDEX_TEAM_ID,
-          },
-          signal: AbortSignal.timeout(15000)
-        });
-
-        if (response.ok) {
-          const json = await response.json();
-          const rawCards = json?.data || [];
-          for (const c of rawCards) {
-            const card = mapScrydexCard(c);
-            if (!cardMap.has(card.id)) {
-              cardMap.set(card.id, card);
-            }
-          }
-          totalCount += json?.total || rawCards.length;
-        }
-      } catch (e) {
-        console.error('Fallback search error:', e);
-      }
-    }
-
-    const mappedCards = Array.from(cardMap.values());
+    const mappedCards = rawCards.map((c: any) => mapScrydexCard(c));
 
     return {
       data: mappedCards,
