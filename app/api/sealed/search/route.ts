@@ -8,9 +8,11 @@ export async function GET(request: Request) {
   const setCode = searchParams.get('setCode') || undefined;
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '50');
+  const lang = searchParams.get('lang') || undefined;
 
   try {
-    const result = await searchSealedProducts(query, page, limit, setCode);
+    // FIX: Support language parameter for sealed product searches
+    const result = await searchSealedProducts(query, page, limit, setCode, lang);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Sealed Route Error:', error);
