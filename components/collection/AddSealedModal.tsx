@@ -7,7 +7,7 @@ interface AddSealedModalProps {
   setSealedSearch: (v: string) => void;
   sealedSearchResults: any[];
   isSearchingSealed: boolean;
-  hasSearchedSealed: boolean;
+  hasSearchedSealed?: boolean;
   manualSealed: { name: string; game: string; price: string; type: string };
   setManualSealed: (v: any) => void;
   addingSealedProduct: boolean;
@@ -27,7 +27,7 @@ const GAMES = [
 
 export default function AddSealedModal({
   sealedSearch, setSealedSearch, sealedSearchResults, isSearchingSealed,
-  hasSearchedSealed,
+  hasSearchedSealed = false,
   manualSealed, setManualSealed, addingSealedProduct,
   onSearch, onAddFromSearch, onAddManual, onClose,
 }: AddSealedModalProps) {
