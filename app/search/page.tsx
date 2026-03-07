@@ -606,6 +606,9 @@ const getPrice = (card: Card) => {
                 <div className="p-3 border-t border-gray-100 dark:border-gray-700">
                   <h3 className="font-semibold text-sm mb-1 truncate text-gray-900 dark:text-white" title={card.name}>
                     {card.name}
+                    {card.translation?.en?.name && card.translation.en.name !== card.name && (
+                      <span className="ml-1 text-xs text-gray-400 font-normal">({card.translation.en.name})</span>
+                    )}
                   </h3>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

@@ -199,6 +199,10 @@ export async function searchPokemonCards(
       
       if (wantsJapaneseOnly || queryIsJapanese) {
         // For Japanese search: match name OR translation.en.name (English translation)
+        // We use a broader search for Japanese cards to ensure English names match
+        luceneQuery = terms.map(t => `(name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
+      } else if (wantsBoth) {
+        // For combined search: match name OR translation.en.name
         luceneQuery = terms.map(t => `(name:${t}* OR translation.en.name:${t}*)`).join(' AND ');
       } else {
         // For English search: just match name
@@ -232,14 +236,6 @@ export async function searchPokemonCards(
       endpoints.push({
         url: `${SCRYDEX_BASE}/ja/cards`,
         lang: 'ja'
-      });
-    }
-
-    if (wantsBoth && !queryIsJapanese) {
-      // For combined search without Japanese query, also query root endpoint
-      endpoints.push({
-        url: `${SCRYDEX_BASE}/cards`,
-        lang: 'both'
       });
     }
 

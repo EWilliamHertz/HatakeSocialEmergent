@@ -2485,7 +2485,12 @@ const filteredItems = items.filter(item => {
                             </div>
                           )}
                         </div>
-                        <h4 className="font-medium text-sm truncate dark:text-white" title={card.name}>{card.name}</h4>
+                        <h4 className="font-medium text-sm truncate dark:text-white" title={card.name}>
+                          {card.name}
+                          {card.translation?.en?.name && card.translation.en.name !== card.name && (
+                            <span className="ml-1 text-[10px] text-gray-400 font-normal">({card.translation.en.name})</span>
+                          )}
+                        </h4>
                         <div className="flex items-center gap-1 mb-2">
                           <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1 rounded font-mono uppercase">
                             {card.set_code || card.set?.id || card.set || card.set_name?.slice(0, 3) || '???'}
@@ -2529,6 +2534,9 @@ const filteredItems = items.filter(item => {
                   <h2 className="text-xl font-bold dark:text-white">Add to Collection</h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedCardToAdd.name}
+                    {selectedCardToAdd.translation?.en?.name && selectedCardToAdd.translation.en.name !== selectedCardToAdd.name && (
+                      <span className="ml-1 text-xs text-gray-400 font-normal">({selectedCardToAdd.translation.en.name})</span>
+                    )}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500">
                     {selectedCardToAdd.set_code || selectedCardToAdd.set?.id || ''} #{selectedCardToAdd.collector_number || selectedCardToAdd.localId || selectedCardToAdd.number || ''}
