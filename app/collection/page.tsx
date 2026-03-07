@@ -100,6 +100,7 @@ export default function CollectionPage() {
   const [sealedSearch, setSealedSearch] = useState('');
   const [sealedSearchResults, setSealedSearchResults] = useState<any[]>([]);
   const [isSearchingSealed, setIsSearchingSealed] = useState(false);
+  const [hasSearchedSealed, setHasSearchedSealed] = useState(false);
   const [manualSealed, setManualSealed] = useState({ name: '', game: 'pokemon', type: 'Booster Box', price: '' });
   const [addingSealedProduct, setAddingSealedProduct] = useState(false);
 
@@ -109,6 +110,7 @@ export default function CollectionPage() {
     if (!sealedSearch.trim()) return;
     
     setIsSearchingSealed(true);
+    setHasSearchedSealed(true);
     setSealedSearchResults([]); // Clear previous results immediately
     
     try {
@@ -142,10 +144,10 @@ export default function CollectionPage() {
         credentials: 'include',
         body: JSON.stringify({
           name: product.name,
-          game: 'pokemon', // ScryDex results are mostly Pokemon currently
-          type: product.type,
-          purchase_price: product.price,
-          image_url: product.imageUrl,
+          game: 'pokemon',
+          productType: product.type || 'Sealed Product',
+          purchasePrice: product.price || 0,
+          imageUrl: product.imageUrl,
         })
       });
       if (res.ok) {
@@ -2879,6 +2881,7 @@ const filteredItems = items.filter(item => {
           setSealedSearch={setSealedSearch}
           sealedSearchResults={sealedSearchResults}
           isSearchingSealed={isSearchingSealed}
+          hasSearchedSealed={hasSearchedSealed}
           manualSealed={manualSealed}
           setManualSealed={setManualSealed}
           addingSealedProduct={addingSealedProduct}
@@ -2889,6 +2892,7 @@ const filteredItems = items.filter(item => {
             setShowAddSealedModal(false);
             setSealedSearchResults([]);
             setSealedSearch('');
+            setHasSearchedSealed(false);
           }}
         />
       )}

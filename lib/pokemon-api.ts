@@ -50,13 +50,20 @@ function isJapanese(text: string): boolean {
   return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uff00-\uffef]/.test(text);
 }
 
+// Returns price normalised to USD (converts JPY → USD using live-ish rate)
 function extractPrice(variants: any[]): number | null {
   if (!Array.isArray(variants)) return null;
   for (const variant of variants) {
     const prices = Array.isArray(variant.prices) ? variant.prices : Object.values(variant.prices || {});
     for (const p of prices as any[]) {
       const rawVal = p?.market ?? p?.mid ?? p?.low ?? p?.price ?? null;
-      if (rawVal != null) return parseFloat(String(rawVal));
+      if (rawVal != null) {
+        const val = parseFloat(String(rawVal));
+        const currency = (p?.currency || '').toUpperCase();
+        // Convert JPY → USD so the UI's standard ×0.92 gives correct EUR
+        if (currency === 'JPY') return parseFloat((val * 0.0067).toFixed(4));
+        return val; // USD (or unknown — treat as USD)
+      }
     }
   }
   return null;
@@ -65,21 +72,15 @@ function extractPrice(variants: any[]): number | null {
 function mapScrydexCard(card: any): PokemonCard {
   const images = Array.isArray(card.images) ? card.images : [];
   const frontImage = images.find((i: any) => i.type === 'front') ?? images[0];
-  let price = extractPrice(card.variants ?? []);
+  // extractPrice now returns a USD-normalised value (JPY already converted → USD)
+  const priceUsd = extractPrice(card.variants ?? []);
 
-  // Detect language — API returns camelCase (languageCode) due to casing=camel param,
-  // but also support snake_case fallback and string 'Japanese' check.
   const langCode = (
     card.languageCode ||
     card.language_code ||
     (card.language === 'Japanese' ? 'JA' : '') ||
     ''
   ).toLowerCase();
-
-  // Convert JPY → EUR (1 JPY ≈ 0.0062 EUR)
-  if (price !== null && (langCode === 'ja' || langCode === 'jp')) {
-    price = parseFloat((price * 0.0062).toFixed(2));
-  }
 
   return {
     id: card.id,
@@ -109,9 +110,10 @@ function mapScrydexCard(card: any): PokemonCard {
     lang: langCode,
     language_code: langCode.toUpperCase(),
     translation: card.translation,
-    // Store price as 'eur' so the frontend displays it correctly without double-conversion
-    pricing: price ? { eur: price } : null,
-    prices: price ? { eur: price } : null,
+    // Store as 'usd' — the UI reads pricing.usd and multiplies by 0.92 to get EUR.
+    // extractPrice already normalised JPY → USD, so this is always USD.
+    pricing: priceUsd ? { usd: priceUsd } : null,
+    prices: priceUsd ? { usd: priceUsd } : null,
   };
 }
 

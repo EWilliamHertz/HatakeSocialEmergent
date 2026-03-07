@@ -7,6 +7,7 @@ interface AddSealedModalProps {
   setSealedSearch: (v: string) => void;
   sealedSearchResults: any[];
   isSearchingSealed: boolean;
+  hasSearchedSealed: boolean;
   manualSealed: { name: string; game: string; price: string; type: string };
   setManualSealed: (v: any) => void;
   addingSealedProduct: boolean;
@@ -26,6 +27,7 @@ const GAMES = [
 
 export default function AddSealedModal({
   sealedSearch, setSealedSearch, sealedSearchResults, isSearchingSealed,
+  hasSearchedSealed,
   manualSealed, setManualSealed, addingSealedProduct,
   onSearch, onAddFromSearch, onAddManual, onClose,
 }: AddSealedModalProps) {
@@ -96,7 +98,7 @@ export default function AddSealedModal({
               </div>
             )}
 
-            {sealedSearchResults.length === 0 && sealedSearch.length >= 3 && !isSearchingSealed && (
+            {hasSearchedSealed && sealedSearchResults.length === 0 && !isSearchingSealed && (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">No results found. Try the manual entry below.</p>
             )}
           </div>
