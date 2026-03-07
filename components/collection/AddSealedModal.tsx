@@ -50,14 +50,19 @@ export default function AddSealedModal({
               <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">Live prices</span>
             </div>
             <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="e.g. Evolving Skies Booster Box"
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={sealedSearch}
-                onChange={(e) => setSealedSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-              />
+             <input
+  type="text"
+  placeholder="Search for Pokémon Booster Boxes, ETBs... (Press Enter)"
+  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+  value={sealedSearch}
+  onChange={(e) => setSealedSearch(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onSearch(); // Triggers the handleSearchSealed from page.tsx
+    }
+  }}
+/>
               <button onClick={onSearch} disabled={sealedSearch.length < 3}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
                 {isSearchingSealed ? <Loader2 className="animate-spin w-5 h-5" /> : <Search className="w-5 h-5" />}

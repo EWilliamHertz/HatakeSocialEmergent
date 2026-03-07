@@ -103,13 +103,29 @@ export default function CollectionPage() {
   const [manualSealed, setManualSealed] = useState({ name: '', game: 'pokemon', type: 'Booster Box', price: '' });
   const [addingSealedProduct, setAddingSealedProduct] = useState(false);
 
+  // FIXED: Sealed Search Logic
   const handleSearchSealed = async () => {
-    if (sealedSearch.length < 3) return;
+    // Only search if there is actually a query
+    if (!sealedSearch.trim()) return;
+    
     setIsSearchingSealed(true);
+    setSealedSearchResults([]); // Clear previous results immediately
+    
     try {
-      const res = await fetch(`/api/sealed/search?q=${encodeURIComponent(sealedSearch)}`);
+      // Added a cache-busting timestamp and ensured query is trimmed
+      const res = await fetch(`/api/sealed/search?q=${encodeURIComponent(sealedSearch.trim())}&t=${Date.now()}`);
+      
+      if (!res.ok) throw new Error('Search failed');
+      
       const data = await res.json();
-      setSealedSearchResults(data.results || []);
+      
+      // Ensure we handle both 'results' and 'products' keys often used by ScryDex
+      const results = data.results || data.products || [];
+      setSealedSearchResults(results);
+      
+      if (results.length === 0) {
+        console.log("No Pokémon products found for query:", sealedSearch);
+      }
     } catch (error) {
       console.error('Failed to search sealed products:', error);
       setSealedSearchResults([]);
@@ -117,7 +133,6 @@ export default function CollectionPage() {
       setIsSearchingSealed(false);
     }
   };
-
   const handleAddSealedFromSearch = async (product: any) => {
     setAddingSealedProduct(true);
     try {
@@ -1206,19 +1221,10 @@ const filteredItems = items.filter(item => {
                     onClick={() => setSelectedItems(new Set())}
                     className="flex items-center gap-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white text-sm"
                     title="Clear selection"
-                  >
-                    ✕ Clear
-                  </button>
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowBulkMenu(!showBulkMenu)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                      data-testid="bulk-actions-btn"
-                    >
-                      {selectedItems.size} selected
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                    
+                >
+                  ✕ Clear
+                </button>
+</div>    
                     {showBulkMenu && (
                       <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-10 min-w-48">
                         <button
