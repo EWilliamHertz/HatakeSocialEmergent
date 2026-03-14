@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ShoppingCart, Package, Truck, Shield, Mail, Loader2, X } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Package, Truck, Shield, Mail, Loader2, X, CheckCircle, MapPin } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -100,8 +100,27 @@ export default function ShopPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
 
+  // Checkout state
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutEmail, setCheckoutEmail] = useState('');
+  const [checkoutAddress, setCheckoutAddress] = useState('');
+  const [checkoutNotes, setCheckoutNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
   useEffect(() => {
     loadProducts();
+    // Try to get logged-in user's email
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.user) {
+          setCurrentUser(data.user);
+          setCheckoutEmail(data.user.email || '');
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const loadProducts = async () => {
@@ -111,7 +130,6 @@ export default function ShopPage() {
       if (data.success && data.products.length > 0) {
         setProducts(data.products);
       } else {
-        // Use default products if database is empty
         setProducts(DEFAULT_PRODUCTS);
       }
     } catch (error) {
@@ -122,11 +140,10 @@ export default function ShopPage() {
     }
   };
 
-  const filteredProducts = selectedCategory === 'All' 
-    ? products 
+  const filteredProducts = selectedCategory === 'All'
+    ? products
     : products.filter(p => p.category === selectedCategory);
 
-  // Render description with **bold** support
   const renderDescription = (text: string) => {
     const parts = text.split(/(\*\*[^*]+\*\*)/g);
     return parts.map((part, i) => {
@@ -141,12 +158,16 @@ export default function ShopPage() {
     setCart(prev => {
       const existing = prev.find(item => item.id === productId);
       if (existing) {
-        return prev.map(item => 
+        return prev.map(item =>
           item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
       return [...prev, { id: productId, quantity: 1 }];
     });
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCart(prev => prev.filter(item => item.id !== productId));
   };
 
   const cartTotal = cart.reduce((sum, item) => {
@@ -155,6 +176,44 @@ export default function ShopPage() {
   }, 0);
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const submitOrder = async () => {
+    if (!checkoutEmail) return;
+    setSubmitting(true);
+    try {
+      const items = cart.map(item => {
+        const product = products.find(p => p.id === item.id)!;
+        return { id: item.id, name: product.name, quantity: item.quantity, price: product.price };
+      });
+
+      const res = await fetch('/api/shop/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          items,
+          totalAmount: cartTotal,
+          email: checkoutEmail,
+          shippingAddress: checkoutAddress,
+          notes: checkoutNotes,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setOrderSuccess(data.order_id);
+        setCart([]);
+        setShowCheckout(false);
+      } else {
+        alert(data.error || 'Something went wrong. Please try again.');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Failed to submit order. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -179,7 +238,10 @@ export default function ShopPage() {
             <span className="font-bold text-xl text-gray-900 dark:text-white">Hatake.Social Shop</span>
           </Link>
           <div className="relative">
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <button
+              onClick={() => cartCount > 0 && setShowCheckout(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
               <ShoppingCart className="w-5 h-5" />
               <span>{cartCount > 0 ? `${cartCount} items` : 'Cart'}</span>
             </button>
@@ -216,6 +278,24 @@ export default function ShopPage() {
         </div>
       </section>
 
+      {/* Order Success Banner */}
+      {orderSuccess && (
+        <div className="container mx-auto px-4 pt-6">
+          <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-xl p-4 flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-green-800 dark:text-green-300">Order placed successfully! 🌿</p>
+              <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+                Your order <strong>{orderSuccess}</strong> has been received. Check your email for a confirmation — we'll be in touch shortly with payment details.
+              </p>
+            </div>
+            <button onClick={() => setOrderSuccess(null)} className="ml-auto text-green-600 hover:text-green-800">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
         {/* Category Filter */}
@@ -246,8 +326,8 @@ export default function ShopPage() {
           /* Products Grid */
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProducts.map(product => (
-              <div 
-                key={product.id} 
+              <div
+                key={product.id}
                 className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
                 data-testid={`product-${product.id}`}
                 onClick={() => { setSelectedProduct(product); setGalleryIndex(0); }}
@@ -290,24 +370,15 @@ export default function ShopPage() {
                       {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
                     </p>
                   )}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); addToCart(product.id); }}
-                      disabled={product.stock === 0}
-                      className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      data-testid={`add-to-cart-${product.id}`}
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Add to Cart
-                    </button>
-                    <a
-                      href="mailto:ernst@hatake.eu?subject=Product Inquiry"
-                      onClick={(e) => e.stopPropagation()}
-                      className="py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                    >
-                      <Mail className="w-4 h-4" />
-                    </a>
-                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); addToCart(product.id); }}
+                    disabled={product.stock === 0}
+                    className="w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-testid={`add-to-cart-${product.id}`}
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             ))}
@@ -320,7 +391,7 @@ export default function ShopPage() {
             Wholesale Inquiries
           </h2>
           <p className="text-gray-600 dark:text-gray-300 text-center mb-8 max-w-2xl mx-auto">
-            If you're a store or distributor, contact us for wholesale pricing (60-80% of retail). 
+            If you're a store or distributor, contact us for wholesale pricing (60-80% of retail).
             Final pricing depends on delivery address and order quantities.
           </p>
           <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -367,9 +438,12 @@ export default function ShopPage() {
               const product = products.find(p => p.id === item.id);
               if (!product) return null;
               return (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-300">{product.name} x{item.quantity}</span>
-                  <span className="text-gray-900 dark:text-white">{(product.price * item.quantity).toFixed(2)}</span>
+                <div key={item.id} className="flex justify-between text-sm items-center">
+                  <span className="text-gray-600 dark:text-gray-300 flex-1 truncate">{product.name} ×{item.quantity}</span>
+                  <span className="text-gray-900 dark:text-white ml-2">{(product.price * item.quantity).toFixed(2)}</span>
+                  <button onClick={() => removeFromCart(item.id)} className="ml-2 text-gray-400 hover:text-red-500">
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
               );
             })}
@@ -379,27 +453,13 @@ export default function ShopPage() {
               <span className="text-gray-900 dark:text-white">Total</span>
               <span className="text-blue-600">SEK {cartTotal.toFixed(2)}</span>
             </div>
-            
-            {/* Payment Information */}
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4 text-xs">
-              <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment Options:</p>
-              <div className="space-y-1 text-gray-600 dark:text-gray-400">
-                <p><span className="font-medium">Swish:</span> 123-587 57 37</p>
-                <p><span className="font-medium">Kontonummer:</span> 9660-357 25 85</p>
-                <p><span className="font-medium">Bankgiro:</span> 5051-0031</p>
-              </div>
-            </div>
-            
-            <a
-              href={`mailto:ernst@hatake.eu?subject=Order from Hatake.Social Shop&body=I would like to order:%0A%0A${cart.map(item => {
-                const product = products.find(p => p.id === item.id);
-                return `${product?.name} x${item.quantity}`;
-              }).join('%0A')}%0A%0ATotal: SEK ${cartTotal.toFixed(2)}%0A%0A---%0APayment Options:%0ASwish: 123-587 57 37%0AKontonummer: 9660-357 25 85%0ABankgiro: 5051-0031%0A%0APlease include your payment method and delivery address.`}
+            <button
+              onClick={() => setShowCheckout(true)}
               className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
             >
-              <Mail className="w-4 h-4" />
-              Send Order Inquiry
-            </a>
+              <ShoppingCart className="w-4 h-4" />
+              Place Order
+            </button>
           </div>
         </div>
       )}
@@ -429,13 +489,112 @@ export default function ShopPage() {
         </div>
       </footer>
 
+      {/* Checkout Modal */}
+      {showCheckout && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Complete your order</h3>
+              <button onClick={() => setShowCheckout(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Order summary */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 space-y-2">
+                {cart.map(item => {
+                  const product = products.find(p => p.id === item.id);
+                  if (!product) return null;
+                  return (
+                    <div key={item.id} className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-300">{product.name} ×{item.quantity}</span>
+                      <span className="text-gray-900 dark:text-white font-medium">SEK {(product.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                  );
+                })}
+                <div className="border-t dark:border-gray-600 pt-2 flex justify-between font-bold">
+                  <span className="text-gray-900 dark:text-white">Total</span>
+                  <span className="text-blue-600">SEK {cartTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email address *
+                </label>
+                <input
+                  type="email"
+                  value={checkoutEmail}
+                  onChange={e => setCheckoutEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              {/* Shipping address */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> Shipping address
+                </label>
+                <textarea
+                  value={checkoutAddress}
+                  onChange={e => setCheckoutAddress(e.target.value)}
+                  placeholder="Street address, city, postal code, country"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                />
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Notes (optional)
+                </label>
+                <input
+                  type="text"
+                  value={checkoutNotes}
+                  onChange={e => setCheckoutNotes(e.target.value)}
+                  placeholder="Any special requests..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              {/* Payment info */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-sm">
+                <p className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Payment</p>
+                <p className="text-blue-700 dark:text-blue-400 text-xs leading-relaxed">
+                  After placing your order, we'll email you payment details. Pay via <strong>Swish 123-587 57 37</strong>, <strong>Bankgiro 5051-0031</strong>, or bank transfer. Include your Order ID in the payment message.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t dark:border-gray-700">
+              <button
+                onClick={submitOrder}
+                disabled={submitting || !checkoutEmail}
+                className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {submitting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <ShoppingCart className="w-5 h-5" />
+                )}
+                {submitting ? 'Placing order...' : 'Place Order'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Product Detail Modal */}
       {selectedProduct && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedProduct(null)}
         >
-          <div 
+          <div
             className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -461,8 +620,6 @@ export default function ShopPage() {
                     );
                   })()}
                 </div>
-                
-                {/* Thumbnail Gallery */}
                 {(() => {
                   const allImages = [selectedProduct.image, ...(selectedProduct.gallery_images || [])].filter(Boolean);
                   return allImages.length > 1 && (
@@ -472,8 +629,8 @@ export default function ShopPage() {
                           key={idx}
                           onClick={() => setGalleryIndex(idx)}
                           className={`w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition ${
-                            galleryIndex === idx 
-                              ? 'border-blue-500' 
+                            galleryIndex === idx
+                              ? 'border-blue-500'
                               : 'border-transparent hover:border-gray-300 dark:hover:border-gray-500'
                           }`}
                         >
@@ -491,10 +648,10 @@ export default function ShopPage() {
                   );
                 })()}
               </div>
-              
+
               {/* Product Info */}
               <div className="p-6 flex flex-col">
-                <button 
+                <button
                   onClick={() => setSelectedProduct(null)}
                   className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                 >
@@ -510,7 +667,7 @@ export default function ShopPage() {
                 <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-4">
                   {selectedProduct.currency} {selectedProduct.price.toFixed(2)}
                 </p>
-                
+
                 <div className="text-gray-600 dark:text-gray-300 mb-6 flex-1">
                   <p className="whitespace-pre-line">{renderDescription(selectedProduct.description)}</p>
                 </div>
@@ -535,26 +692,18 @@ export default function ShopPage() {
                       {selectedProduct.stock > 0 ? `${selectedProduct.stock} in stock` : 'Out of stock'}
                     </p>
                   )}
-                  
-                  <div className="flex gap-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(selectedProduct.id);
-                      }}
-                      disabled={selectedProduct.stock === 0}
-                      className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      <ShoppingCart className="w-5 h-5" />
-                      Add to Cart
-                    </button>
-                    <a
-                      href={`mailto:ernst@hatake.eu?subject=Product Inquiry: ${selectedProduct.name}`}
-                      className="py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                    >
-                      <Mail className="w-5 h-5" />
-                    </a>
-                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(selectedProduct.id);
+                      setSelectedProduct(null);
+                    }}
+                    disabled={selectedProduct.stock === 0}
+                    className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             </div>
