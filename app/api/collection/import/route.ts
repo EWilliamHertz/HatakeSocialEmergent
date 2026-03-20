@@ -102,8 +102,11 @@ function parseCSV(csvText: string): {
   const headerSet = new Set(headers.map(h => h.toLowerCase()));
 
   // Detect format: CardMarket exports have 'cardmarketId' column
+  // Also detect by column signature in case BOM handling differs across environments
   let format: 'cardmarket' | 'manabox' | 'pokemon' | 'unknown' = 'unknown';
-  if (headerSet.has('cardmarketid')) format = 'cardmarket';
+  const isCardMarket = headerSet.has('cardmarketid')
+    || (headerSet.has('name') && headerSet.has('setcode') && headerSet.has('price') && headerSet.has('issigned'));
+  if (isCardMarket) format = 'cardmarket';
   else if (headerSet.has('manabox id') || headerSet.has('scryfall id')) format = 'manabox';
   else if (headerSet.has('edition name') && headerSet.has('set code')) format = 'pokemon';
   else if (headerSet.has('set code')) format = 'pokemon';

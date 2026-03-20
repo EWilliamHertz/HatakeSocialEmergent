@@ -2251,6 +2251,7 @@ const filteredItems = items.filter(item => {
                           <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Card Name</th>
                           <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Set</th>
                           <th className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">Qty</th>
+                          <th className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">Price</th>
                           <th className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">Foil</th>
                           <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Condition</th>
                         </tr>
@@ -2268,6 +2269,13 @@ const filteredItems = items.filter(item => {
                               <span className="inline-flex items-center justify-center min-w-[24px] h-6 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded font-medium text-xs">
                                 {card.quantity}
                               </span>
+                            </td>
+                            <td className="px-3 py-2 text-center text-xs text-gray-600 dark:text-gray-400">
+                              {(card.purchasePrice != null && card.purchasePrice > 0)
+                                ? `€${Number(card.purchasePrice).toFixed(2)}`
+                                : (card.price != null && Number(card.price) > 0)
+                                  ? `€${Number(card.price).toFixed(2)}`
+                                  : <span className="text-gray-400">—</span>}
                             </td>
                             <td className="px-3 py-2 text-center">
                               {card.foil ? (
