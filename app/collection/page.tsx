@@ -91,7 +91,9 @@ export default function CollectionPage() {
   const [importCards, setImportCards] = useState<ImportCard[]>([]);
   const [importLoading, setImportLoading] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'preview' | 'importing' | 'done'>('idle');
-  const [importResult, setImportResult] = useState<{ imported: number; errors?: string[] } | null>(null);
+  const [importResult, setImportResult] = useState<{ imported: number; uniqueCards?: number; totalCopies?: number; errors?: string[] } | null>(null);
+  const [importUnique, setImportUnique] = useState<number>(0);
+  const [importTotalCopies, setImportTotalCopies] = useState<number>(0);
   const [importGameType, setImportGameType] = useState<'mtg' | 'pokemon' | 'lorcana'>('mtg');
   const [originalCsvContent, setOriginalCsvContent] = useState<string>(''); // Store original CSV for full import
   const [totalCardsToImport, setTotalCardsToImport] = useState<number>(0); // Track total cards in CSV
@@ -980,7 +982,9 @@ const filteredItems = items.filter(item => {
       const data = await res.json();
       if (data.success) {
         setImportCards(data.cards);
-        setTotalCardsToImport(data.totalCards || data.cards.length); // Store total count from backend
+        setTotalCardsToImport(data.totalCards || data.cards.length);
+        setImportUnique(data.uniqueCards || 0);
+        setImportTotalCopies(data.totalCopies || 0);
       } else {
         alert('Failed to parse CSV: ' + (data.error || 'Unknown error'));
         setImportStatus('idle');
@@ -1024,6 +1028,8 @@ const filteredItems = items.filter(item => {
     setImportResult(null);
     setOriginalCsvContent('');
     setTotalCardsToImport(0);
+    setImportUnique(0);
+    setImportTotalCopies(0);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -2131,13 +2137,13 @@ const filteredItems = items.filter(item => {
                     {importStatus === 'idle' && 'Upload a ManaBox export file to import your cards'}
                     {importStatus === 'preview' && (
                       <>
-                        {totalCardsToImport} cards ready to import
-                        {totalCardsToImport > importCards.length && (
-                          <span className="text-xs text-gray-400"> (showing first {importCards.length} for preview)</span>
-                        )}
+                        {importUnique > 0
+                          ? <><strong>{importUnique.toLocaleString()}</strong> unique cards · <strong>{importTotalCopies.toLocaleString()}</strong> total copies</>
+                          : <>{totalCardsToImport} cards ready to import</>
+                        }
                       </>
                     )}
-                    {importStatus === 'importing' && `Importing ${totalCardsToImport} cards...`}
+                    {importStatus === 'importing' && `Importing ${importTotalCopies > 0 ? importTotalCopies.toLocaleString() : totalCardsToImport} cards...`}
                     {importStatus === 'done' && `Import complete!`}
                   </p>
                 </div>
@@ -2230,9 +2236,11 @@ const filteredItems = items.filter(item => {
                 <div className="flex-1 overflow-auto p-4">
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                      <strong>{importCards.length}</strong> cards found • 
-                      <strong> {importCards.reduce((sum, c) => sum + c.quantity, 0)}</strong> total quantity • 
-                      <strong> {importCards.reduce((sum, c) => sum + c.purchasePrice * c.quantity, 0).toFixed(2)} {importCards[0]?.currency || 'USD'}</strong> total purchase value
+                      Showing first <strong>{importCards.length}</strong> of{' '}
+                      {importUnique > 0
+                        ? <><strong>{importUnique.toLocaleString()}</strong> unique cards (<strong>{importTotalCopies.toLocaleString()}</strong> total copies)</>
+                        : <><strong>{totalCardsToImport}</strong> cards</>
+                      }
                     </p>
                   </div>
                   
@@ -2240,28 +2248,21 @@ const filteredItems = items.filter(item => {
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
                         <tr>
-                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Name</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Card Name</th>
                           <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Set</th>
-                          <th className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">#</th>
                           <th className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">Qty</th>
                           <th className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-300">Foil</th>
                           <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Condition</th>
-                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Rarity</th>
-                          <th className="px-3 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">Price</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {importCards.map((card, index) => (
                           <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                            <td className="px-3 py-2 font-medium text-gray-900 dark:text-white max-w-[200px] truncate" title={card.name}>
+                            <td className="px-3 py-2 font-medium text-gray-900 dark:text-white max-w-[260px] truncate" title={card.name}>
                               {card.name}
                             </td>
                             <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
                               <span className="uppercase text-xs font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded">{card.setCode}</span>
-                              <span className="ml-1 text-xs truncate max-w-[100px] inline-block align-bottom" title={card.setName}>{card.setName}</span>
-                            </td>
-                            <td className="px-3 py-2 text-center text-gray-600 dark:text-gray-400 font-mono text-xs">
-                              {card.collectorNumber}
                             </td>
                             <td className="px-3 py-2 text-center">
                               <span className="inline-flex items-center justify-center min-w-[24px] h-6 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded font-medium text-xs">
@@ -2274,24 +2275,11 @@ const filteredItems = items.filter(item => {
                                   Foil
                                 </span>
                               ) : (
-                                <span className="text-gray-400">-</span>
+                                <span className="text-gray-400">—</span>
                               )}
                             </td>
                             <td className="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs">
                               {card.condition}
-                            </td>
-                            <td className="px-3 py-2">
-                              <span className={`text-xs font-medium capitalize ${
-                                card.rarity === 'mythic' ? 'text-orange-600 dark:text-orange-400' :
-                                card.rarity === 'rare' ? 'text-yellow-600 dark:text-yellow-400' :
-                                card.rarity === 'uncommon' ? 'text-gray-600 dark:text-gray-400' :
-                                'text-gray-400'
-                              }`}>
-                                {card.rarity}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">
-                              {card.purchasePrice > 0 ? `${card.purchasePrice.toFixed(2)} ${card.currency}` : '-'}
                             </td>
                           </tr>
                         ))}
@@ -2317,7 +2305,9 @@ const filteredItems = items.filter(item => {
                     <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                     <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Import Complete!</h4>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      Successfully imported <strong>{importResult.imported}</strong> cards to your collection.
+                      Successfully imported <strong>{(importResult.totalCopies || importResult.imported).toLocaleString()}</strong> cards
+                      {importResult.uniqueCards ? <> (<strong>{importResult.uniqueCards.toLocaleString()}</strong> unique)</> : null}
+                      {' '}to your collection.
                     </p>
                     {importResult.errors && importResult.errors.length > 0 && (
                       <div className="text-left bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mt-4">
@@ -2359,7 +2349,7 @@ const filteredItems = items.filter(item => {
                     className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    Import {importCards.length} Cards
+                    Import {importTotalCopies > 0 ? `${importTotalCopies.toLocaleString()} Cards` : `${totalCardsToImport} Cards`}
                   </button>
                 </>
               )}
