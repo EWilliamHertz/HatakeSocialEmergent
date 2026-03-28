@@ -7,6 +7,7 @@ import MobileNav from "@/components/MobileNav";
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import OnboardingModal from '@/components/OnboardingModal';
 import NotificationProvider from '@/components/NotificationProvider';
+import { Analytics } from '@vercel/analytics/next';
 
 const syne = Syne({ variable: "--font-syne", subsets: ["latin"], weight: ["400", "600", "700", "800"] });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <MobileNav />
           <MessengerWidget />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
