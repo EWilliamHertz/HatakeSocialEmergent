@@ -2273,9 +2273,7 @@ const filteredItems = items.filter(item => {
                             <td className="px-3 py-2 text-center text-xs text-gray-600 dark:text-gray-400">
                               {(card.purchasePrice != null && card.purchasePrice > 0)
                                 ? `€${Number(card.purchasePrice).toFixed(2)}`
-                                : (card.price != null && Number(card.price) > 0)
-                                  ? `€${Number(card.price).toFixed(2)}`
-                                  : <span className="text-gray-400">—</span>}
+                                : <span className="text-gray-400">—</span>}
                             </td>
                             <td className="px-3 py-2 text-center">
                               {card.foil ? (
