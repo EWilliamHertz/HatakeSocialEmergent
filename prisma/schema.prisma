@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── 1. Core User Identity ──────────────────────────────────────────────────
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  password      String
+  role          Role      @default(USER)
+  
+  // Economy
+  hatakeCoins   Int       @default(1000) // Virtual currency for marketplace
+  
+  // Relations
+  inventory     CardInstance[]
+  decks         Deck[]
+  listings      MarketListing[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ─── 2. Global Card Dictionary ──────────────────────────────────────────────
+// A cached reference of all possible cards across games to prevent redundant API calls.
+model CardReference {
+  id            String    @id @default(cuid())
+  game          GameType  // "MTG", "POKEMON", "ONE_PIECE"
+  
+  // Original API IDs
+  apiId         String    @unique // e.g. Scryfall ID, TCGDex ID
+  
+  name          String
+  imageUrl      String
+  setCode       String?
+  rarity        String?
+  
+  // The actual JSON data from the API (oracle_text, colors, HP, abilities, etc.)
+  apiPayload    Json
+  
+  instances     CardInstance[]
+}
+
+enum GameType {
+  MTG
+  POKEMON
+  ONE_PIECE
+}
+
+// ─── 3. Player Inventory (Digital Binder) ──────────────────────────────────
+// Represents a UNIQUE physical/digital card owned by a specific user.
+model CardInstance {
+  id              String         @id @default(uuid())
+  ownerId         String
+  owner           User           @relation(fields: [ownerId], references: [id])
+  
+  cardReferenceId String
+  cardReference   CardReference  @relation(fields: [cardReferenceId], references: [id])
+  
+  condition       Condition      @default(NEAR_MINT)
+  isFoil          Boolean        @default(false)
+  
+  deckId          String?
+  deck            Deck?          @relation(fields: [deckId], references: [id])
+
+  marketListing   MarketListing?
+
+  acquiredAt      DateTime       @default(now())
+}
+
+enum Condition {
+  MINT
+  NEAR_MINT
+  LIGHTLY_PLAYED
+  MODERATELY_PLAYED
+  HEAVILY_PLAYED
+  DAMAGED
+}
+
+// ─── 4. The Global Marketplace ──────────────────────────────────────────────
+model MarketListing {
+  id              String       @id @default(cuid())
+  
+  sellerId        String
+  seller          User         @relation(fields: [sellerId], references: [id])
+  
+  cardInstanceId  String       @unique
+  cardInstance    CardInstance @relation(fields: [cardInstanceId], references: [id])
+  
+  price           Int          // In HatakeCoins
+  status          ListingStatus @default(ACTIVE)
+
+  createdAt       DateTime     @default(now())
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  CANCELLED
+}
+
+// ─── 5. Arena Decks ────────────────────────────────────────────────────────
+model Deck {
+  id          String         @id @default(cuid())
+  name        String
+  game        GameType
+  
+  ownerId     String
+  owner       User           @relation(fields: [ownerId], references: [id])
+  
+  cards       CardInstance[] // A deck holds references to the exact CardInstances owned by the user
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}

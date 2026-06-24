@@ -549,3 +549,5 @@ public/sw.js.map
 public/workbox-*.js.map
 *.env*
 .env.local
+
+/lib/generated/prisma
